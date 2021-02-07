@@ -58,3 +58,15 @@ from formatting import println, side_by_side
 
 left, right = balance_lines(L, chart)
 println(side_by_side(left, right))
+#Should print
+"""
+Assets                      Capital
+  Cash.................. 17   Equity.............. 30
+  Loans................. 80   Retained earnings...  0
+  Interest receivable...  1   Provisions..........  6
+                              Profit.............. -1
+                            Liabilities
+                              Current accounts....  3
+                              Deposits............ 60
+                              Interest payable....  0
+"""                              
