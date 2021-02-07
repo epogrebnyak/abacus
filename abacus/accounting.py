@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 Value = int
 
@@ -71,6 +71,12 @@ E = Entry
 
 
 @dataclass
+class Line:
+    text: str
+    value: Optional[int]
+
+
+@dataclass
 class Ledger:
     """Ledger to record transactions in accounts."""
 
@@ -82,6 +88,12 @@ class Ledger:
 
     def process(self, e: Entry):
         self.enter(**e.__dict__)
+
+    def balance(self, name):
+        return self.accounts[name].balance()
+
+    def get_line(self, name):
+        return Line(name, self.balance(name))
 
 
 def make_ledger(chart: Chart) -> Ledger:
@@ -110,44 +122,15 @@ def balances(ledger, chart):
     return res
 
 
-def renamer(x):
-    return x.replace("_", " ").capitalize()
+def balance_lines(L, chart):
+    from formatting import Line, fmt, make_formatter
 
-
-def as_lines(xs, chart):
-    longest = max([len(x) for x in chart.account_names])
-    l_offset = min(20, 3 + longest)
-    r_offest = 4
-
-    def line(text, value):
-        return "  " + text.ljust(l_offset, ".") + str(value).rjust(r_offest)
-
-    bs = [line(renamer(x[0]), x[1]) for x in xs]
-    return "\n".join(bs)
-
-
-def nb(ledger, name):
-    return (name, ledger.accounts[name].balance())
-
-
-def str_assets(L, chart):
-    xs = [nb(L, name) for name in chart.assets]
-    return as_lines(xs, chart)
-
-
-def str_cap(L, chart):
-    xs = [nb(L, name) for name in chart.capital] + [("profit", profit(L, chart))]
-    return as_lines(xs, chart)
-
-
-def str_liab(L, chart):
-    return as_lines([nb(L, name) for name in chart.liabilities], chart)
-
-
-def print_balance(L, chart):
-    print("Assets")
-    print(str_assets(L, chart))
-    print("Capital")
-    print(str_cap(L, chart))
-    print("Liabilities")
-    print(str_liab(L, chart))
+    assets = [L.get_line(name) for name in chart.assets]
+    left = ["Assets"] + fmt(assets)
+    cap = [L.get_line(name) for name in chart.capital] + [
+        Line("profit", profit(L, chart))
+    ]
+    liab = [L.get_line(name) for name in chart.liabilities]
+    f = make_formatter(cap + liab)
+    right = ["Capital"] + fmt(cap, f) + ["Liabilities"] + fmt(liab, f)
+    return left, right
