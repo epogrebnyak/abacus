@@ -12,12 +12,13 @@ chart=Chart(assets=['cash'],
             income=['income'],
             expenses=['expenses'])
 ```
-2. Initilise ledger 
+2. Initialise ledger 
 ```python
 L = make_ledger(chart)
 ```
 3. Run transactions like 
 ```python
+# A firm obtains a loan from a bank in cash 
 L.enter(debit='cash', credit='debt', value=50)
 ```
 4. Show the resulting balance sheet, similar to:
