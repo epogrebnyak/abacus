@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "abacus"
+version = "0.0.0"
+description = ""
+authors = ["Evgeniy Pogrebnyak <e.pogrebnyak@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+Sphinx = "^3.4.2"
+streamlit = "^0.74.0"
+myst-parser = "^0.13.1"
+pydata-sphinx-theme = "^0.4.1"
+ghp-import = "^1.0.0"
+pandas = "^1.2.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

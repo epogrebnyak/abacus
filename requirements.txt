@@ -1,0 +1,4 @@
+# This is a requirements file for streamlit app
+# The abacus package own dependencies are in pyproject.toml
+pandas
+numpy
