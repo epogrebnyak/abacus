@@ -12,7 +12,10 @@ chart=Chart(assets=['cash'],
             income=['income'],
             expenses=['expenses'])
 ```
-2. Initilise ledger `L = make_ledger(chart)`
+2. Initilise ledger 
+```python
+L = make_ledger(chart)
+```
 3. Run transactions like 
 ```python
 L.enter(debit='cash', credit='debt', value=50)
