@@ -3,9 +3,9 @@ Learn accounting from Python: T-accounts, ledger and chart of accounts
 
 Check https://github.com/epogrebnyak/abacus/blob/main/abacus/example.py as working example:
 
-1. Specify a system of accounts, similar as: 
+1. Specify a system of accounts, similar to: 
 
-```pyhton
+```python
 chart=Chart(assets=['cash'], 
             capital=['equity', 'retained_earnings'], 
             liabilities=['debt'], 
