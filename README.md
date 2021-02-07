@@ -13,8 +13,11 @@ chart=Chart(assets=['cash'],
             expenses=['expenses'])
 ```
 2. Initilise ledger `L = make_ledger(chart)`
-3. Run transactions like `L.enter(debit='cash', credit='debt', value=50)
-4. Show the resulting balance sheet, simiar to:
+3. Run transactions like 
+```python
+L.enter(debit='cash', credit='debt', value=50)
+```
+4. Show the resulting balance sheet, similar to:
 ```
 Assets                      Capital
   Cash.................. 17   Equity.............. 30
