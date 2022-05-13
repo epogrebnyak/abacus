@@ -3,30 +3,27 @@ import pandas as pd
 import numpy as np
 
 st.set_page_config(
-    page_title="abacus",
+    page_title="Accounting as Code",
     page_icon=None,
     layout="centered",
     initial_sidebar_state="collapsed",
 )
 
 
-st.title("Let's look at abacus")
+st.title("Accounding as Code")
 
-"""You have created a [Streamlit][st] app for the abacus
-package. It should be up and running with:
-
-```
-   streamlit streamlit_app.py
-```
-
-You can also look into more elaborate examples with:
-
-```
-   streamlit hello
-```
-
-[st]: https://www.streamlit.io/
 """
+A simple balance sheet:
+
+Cash = Equity
+"""
+
+balance_str = st.input_text("What is your balance equation?",
+                            value = "Cash + Inventory = Equity + Profit")
+aktiv, passiv = [item.strip() for item in line.split("+") for line in balance_str.split("=")]
+st.write(aktiv)
+st.write(passiv)
+
 
 st.header("Small examples")
 

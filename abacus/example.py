@@ -1,7 +1,7 @@
 from accounting import Chart, Entry, balances, make_ledger
 
 # 1. Lay out a system of accounts, or "chart of accounts", CoA.
-# CoA can be standardised in some countries or businesses (eg banks).
+# CoA can be standardised in some countries or by type of business (eg in banks).
 chart = Chart(
     assets=["cash", "loans", "interest_receivable"],
     expenses=["expenses"],
