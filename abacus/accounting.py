@@ -31,15 +31,23 @@ def debit_balance(account):
     return sum(account.debit_items) - sum(account.credit_items)
 
 
+def plus(xs):
+    return " + ".join(xs)
+
+
 @dataclass
 class Chart:
     """Chart of accounts."""
 
     assets: List[str]
     expenses: List[str]
-    liabilities: List[str]
     capital: List[str]
+    liabilities: List[str]
     income: List[str]
+
+    @property
+    def equation(self):
+        return plus(self.debit_accounts) + " = " + plus(self.credit_accounts)
 
     @property
     def account_names(self):
@@ -59,12 +67,19 @@ class Chart:
     def is_credit_account(self, account_name: str):
         return account_name in self.credit_accounts
 
+    def make_ledger(self):
+        return make_ledger(self)
+
 
 @dataclass
 class Entry:
     value: Value
     debit: str
     credit: str
+    description: str = ""
+
+    # def __eq__(self, x):
+    #    return self.value == x.value and self.debit== x.debit and self.credit==x.credit and self.description == x.description
 
 
 E = Entry
@@ -87,7 +102,7 @@ class Ledger:
         self.accounts[credit].credit(value)
 
     def process(self, e: Entry):
-        self.enter(**e.__dict__)
+        self.enter(e.debit, e.credit, e.value)
 
     def balance(self, name):
         return self.accounts[name].balance()
@@ -123,7 +138,7 @@ def balances(ledger, chart):
 
 
 def balance_lines(L, chart):
-    from formatting import Line, fmt, make_formatter
+    from abacus.formatting import Line, fmt, make_formatter
 
     assets = [L.get_line(name) for name in chart.assets]
     left = ["Assets"] + fmt(assets)

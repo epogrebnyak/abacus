@@ -1,12 +1,12 @@
 from accounting import Chart, Entry, balances, make_ledger
 
 # 1. Lay out a system of accounts, or "chart of accounts", CoA.
-# CoA can be standardised in some countries or by type of business (eg in banks).
+# CoA can be standardised in some countries fully or by type of business (eg in banks).
 chart = Chart(
     assets=["cash", "loans", "interest_receivable"],
     expenses=["expenses"],
-    liabilities=["current_accounts", "deposits", "interest_payable"],
     capital=["equity", "retained_earnings", "provisions"],
+    liabilities=["current_accounts", "deposits", "interest_payable"],
     income=["income"],
 )
 
@@ -58,7 +58,7 @@ from formatting import println, side_by_side
 
 left, right = balance_lines(L, chart)
 println(side_by_side(left, right))
-#Should print
+# Should print
 """
 Assets                      Capital
   Cash.................. 17   Equity.............. 30
@@ -69,4 +69,4 @@ Assets                      Capital
                               Current accounts....  3
                               Deposits............ 60
                               Interest payable....  0
-"""                              
+"""
