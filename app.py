@@ -42,7 +42,7 @@ expenses = ask("Expenses accounts", "(COGS)")
 capital = ask("Capital accounts", "(Eq)uity")
 # st.write(capital)
 
-liabilities = ask("Liabilities accounts", "")
+liabilities = ask("Liabilities accounts", "(D)ebt")
 # st.write(liabilities)
 
 income = ask("Income accounts", "(Sales)")
