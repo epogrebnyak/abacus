@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from itertools import zip_longest
-from typing import Optional
+from typing import Optional, List
 
 
 @dataclass
@@ -15,9 +15,6 @@ def longest(xs):
 
 def println(strings):
     print(*strings, sep="\n")
-
-
-from dataclasses import dataclass
 
 
 @dataclass
@@ -48,24 +45,14 @@ class Formatter:
         )
 
 
-def make_formatter(lines):
+def make_formatter(lines: List[Line]):
     return Formatter(
         longest_words=longest(x.text for x in lines),
         longest_digits=longest(str(x.value) for x in lines),
     )
 
 
-def mk_liner(data):
-    f = make_formatter(data)
-
-    def line(x):
-        text, value = x
-        return f.format_line(text, value)
-
-    return line
-
-
-def fmt(lines, formatter=None):
+def to_strings(lines, formatter=None):
     if not formatter:
         formatter = make_formatter(lines)
     return [formatter.format_line(x) for x in lines]
@@ -79,23 +66,3 @@ def side_by_side(left, right):
     width = longest(left)
     gen = zip_longest(left, right, fillvalue="")
     return ["{} {}".format(x.ljust(width, " "), y) for x, y in gen]
-
-
-if __name__ == "__main__":
-    # from accounting import Ledger, DebitAccount
-    # L = Ledger(accounts={'cash': DebitAccount(debit_items=[100, 5], credit_items=[80]),
-    #                     'loans': DebitAccount(debit_items=[80], credit_items=[])})
-    # L.get_line('cash')
-
-    data = Line("abc", 100), Line("def_def", 100000)
-    assert fmt(data) == ["  Abc.......    100", "  Def def... 100000"]
-
-    data2 = [Line("eee", 5), Line("fff", 10), Line("zzzzzzz", 1000)]
-    assert side_by_side(fmt(data), fmt(data2)) == (
-        [
-            "  Abc.......    100   Eee.......    5",
-            "  Def def... 100000   Fff.......   10",
-            "                      Zzzzzzz... 1000",
-        ]
-    )
-    println(side_by_side(left=fmt(data), right=fmt(data2)))
