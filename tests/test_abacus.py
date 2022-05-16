@@ -19,7 +19,6 @@ names = dict(
     eq="Equity",
 )
 
-#%%
 def test_chart():
     assets = "cash inv".split()
     expenses = ["cogs"]
