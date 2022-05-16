@@ -35,7 +35,7 @@ def debit_balance(account):
 
 
 def plus(xs):
-    return " + ".join(xs)
+    return "(" + " + ".join(xs) + ")"
 
 
 @dataclass
@@ -50,7 +50,8 @@ class Chart:
 
     @property
     def equation(self) -> str:
-        return plus(self.debit_accounts) + " = " + plus(self.credit_accounts)
+        return (f"{plus(self.assets)} + {plus(self.expenses)} = "
+                f"{plus(self.capital)} + {plus(self.liabilities)} + {plus(self.income)}")
 
     @property
     def debit_accounts(self):
