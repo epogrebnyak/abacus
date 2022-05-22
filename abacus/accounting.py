@@ -30,12 +30,8 @@ class CreditAccount(Account):
         return sum(self.credits) - sum(self.debits)
 
 
-def debit_balance(account):
-    return sum(account.debits) - sum(account.credits)
-
-
 def plus(xs):
-    return "(" + " + ".join(xs) + ")"
+    return "({})".format(" + ".join(xs))
 
 
 @dataclass
@@ -50,26 +46,30 @@ class Chart:
 
     @property
     def equation(self) -> str:
-        return (f"{plus(self.assets)} + {plus(self.expenses)} = "
-                f"{plus(self.capital)} + {plus(self.liabilities)} + {plus(self.income)}")
+        return (
+            f"{plus(self.assets)} + {plus(self.expenses)} = "
+            f"{plus(self.capital)} + {plus(self.liabilities)} + {plus(self.income)}"
+        )
 
     @property
     def debit_accounts(self):
         return self.assets + self.expenses
 
-    def is_debit_account(self, account_name: str):
-        return account_name in self.debit_accounts
-
     @property
     def credit_accounts(self):
         return self.capital + self.liabilities + self.income
 
-    def is_credit_account(self, account_name: str):
-        return account_name in self.credit_accounts
-
     @property
     def account_names(self):
         return self.debit_accounts + self.credit_accounts
+
+
+def is_debit_account(chart: Chart, account_name: str):
+    return account_name in chart.debit_accounts
+
+
+def is_credit_account(chart: Chart, account_name: str):
+    return account_name in chart.credit_accounts
 
 
 @dataclass

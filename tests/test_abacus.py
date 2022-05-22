@@ -19,6 +19,7 @@ names = dict(
     eq="Equity",
 )
 
+
 def test_chart():
     assets = "cash inv".split()
     expenses = ["cogs"]
@@ -74,7 +75,9 @@ def test_book_balance():
     5 interest ai
     5 ai cash
     """
-    entries = [to_entry(textline) for textline in entries_doc.split("\n") if textline.strip()]
+    entries = [
+        to_entry(textline) for textline in entries_doc.split("\n") if textline.strip()
+    ]
     book.process_all(entries)
     assert book.profit == 10
     return book
