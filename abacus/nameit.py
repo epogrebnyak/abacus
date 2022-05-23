@@ -1,9 +1,8 @@
-# Ledger -> [Entry] -> Ledger -> Balance -> str
+# Dict -> Chart -> Ledger -> [Entry] -> Ledger -> Balance -> str
 
 # %%
 from dataclasses import dataclass, field
-from typing import Dict, List, Union, Optional, Tuple
-
+from typing import Dict, List, Optional, Tuple, Union
 
 Value = int  # can be Decimal
 
@@ -66,40 +65,15 @@ Account = Union[Asset, Capital, Liability, Income, Expense]
 from pydantic import BaseModel
 
 
-class Acc(BaseModel):
-    key: str
-    name: str
-
-
 class Chart(BaseModel):
     """Chart of accounts."""
 
-    assets: List[Acc]
-    expenses: List[Acc]
-    capital: List[Acc]
-    liabilities: List[Acc]
-    incomes: List[Acc]
+    assets: Dict[str, str]
+    expenses: Dict[str, str]
+    capital: Dict[str, str]
+    liabilities: Dict[str, str]
+    income: Dict[str, str]
 
-
-chart_dict = {
-    "assets": [
-        {"key": "cash", "name": "Cash and equivalents"},
-        {"key": "inv", "name": "Inventory"},
-    ],
-    "expenses": [
-        {"key": "cogs", "name": "Cost of goods sold (COGS)"},
-        {"key": "int", "name": "Interest"},
-    ],
-    "capital": [{"key": "eq", "name": "Shareholder equity"}],
-    "liabilities": [
-        {"key": "debt", "name": "Debt"},
-        {"key": "ip", "name": "Interest payable"},
-    ],
-    "incomes": [{"key": "sales", "name": "Sales"}],
-}
-
-ch = Chart(**chart_dict)
-print(ch)
 
 # %%
 
@@ -124,24 +98,15 @@ def make_ledger(chart: Chart) -> Ledger:
         ("expenses", Expense),
         ("capital", Capital),
         ("liabilities", Liability),
-        ("incomes", Income),
+        ("income", Income),
     ]
     for attr, cls in pairs:
-        for a in getattr(chart, attr):
-            ledger[a.key] = cls(a.name)
+        for key, acc_name in getattr(chart, attr).items():
+            ledger[key] = cls(acc_name)
     return ledger
 
 
-account_dict = dict(
-    cash=Asset("Cash and equivalents"),
-    inv=Asset("Inventory"),
-    cogs=Expense("Cost of goods sold (COGS)"),
-    int=Expense("Interest"),
-    eq=Capital("Shareholder equity"),
-    debt=Liability("Debt"),
-    ip=Liability("Interest payable"),
-    sales=Income("Sales"),
- )
+#%%
 
 
 @dataclass
@@ -171,16 +136,6 @@ def process(account_dict: Ledger, entries: List[Entry]):
         account_dict = process_one(account_dict, entry)
     return account_dict
 
-
-entries = [
-    Entry(200, "cash", "eq"),
-    Entry(800, "cash", "debt"),
-    Entry(500, "inv", "cash"),
-    Entry(500, "cogs", "inv"),
-    Entry(620, "cash", "sales"),
-    Entry(80, "int", "ip"),
-]
-account_dict = process(account_dict, entries)
 
 #%%
 def pick(account_dict: Ledger, cls):
@@ -228,8 +183,6 @@ def make_balance(account_dict: Ledger) -> Balance:
         profit(account_dict),
     )
 
-
-b = make_balance(account_dict)
 
 #%%
 
@@ -303,35 +256,3 @@ def right(b: Balance) -> List[str]:
 
 def as_table(b: Balance):
     return "\n".join(side_by_side(left(b), right(b)))
-
-
-print(left(b), right(b))
-print(as_table(b))
-
-# %%
-
-b = Balance(
-    assets=[
-        Line(text="Cash and equivalents", amount=1120),
-        Line(text="Inventory", amount=0),
-    ],
-    capital=[Line(text="Shareholder equity", amount=200)],
-    liabilities=[
-        Line(text="Debt", amount=800),
-        Line(text="Interest payable", amount=80),
-    ],
-    current_profit=Line(text="Current profit", amount=40),
-)
-assert left(b) == [
-    "Assets",
-    "  Cash and equivalents... 1120",
-    "  Inventory..............    0",
-]
-assert right(b) == [
-    "Capital",
-    "  Shareholder equity... 200",
-    "  Current profit.......  40",
-    "Liabilities",
-    "  Debt................. 800",
-    "  Interest payable.....  80",
-]

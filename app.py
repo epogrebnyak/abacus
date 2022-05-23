@@ -1,9 +1,8 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-
 from typing import List
 
+import numpy as np
+import pandas as pd
+import streamlit as st
 
 st.set_page_config(
     page_title="Accounting as Code",
@@ -24,8 +23,8 @@ st.header("1. Make a chart of accounts")
 Example: `[Eq]uity` will create a shorthand `Eq` for Equity account. 
 """
 
-from abacus.naming import variable
 from abacus.formatting import side_by_side
+from abacus.naming import variable
 
 
 def as_dict(varline: str):

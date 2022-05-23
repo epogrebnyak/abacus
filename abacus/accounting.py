@@ -138,7 +138,7 @@ def balances(ledger, chart):
 def balance_lines(
     book: Ledger, chart: Chart, names_dict: Dict[str, str] = {}
 ) -> Tuple[List[str], List[str]]:
-    from abacus.formatting import Line, to_strings, make_formatter
+    from abacus.formatting import Line, make_formatter, to_strings
 
     def rename(name):
         return names_dict.get(name, name)

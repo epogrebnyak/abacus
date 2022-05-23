@@ -1,4 +1,4 @@
-from abacus.formatting import Line, to_strings, side_by_side, println
+from abacus.formatting import Line, println, side_by_side, to_strings
 
 
 def test_formatting():

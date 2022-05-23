@@ -1,11 +1,6 @@
-from abacus import __version__, Chart, Ledger
-from abacus.accounting import (
-    DebitAccount,
-    CreditAccount,
-    make_ledger,
-    make_book,
-    to_entry,
-)
+from abacus import Chart, Ledger, __version__
+from abacus.accounting import (CreditAccount, DebitAccount, make_book,
+                               make_ledger, to_entry)
 
 
 def test_version():
