@@ -57,7 +57,7 @@ entries = [
 
 
 def test_profit():
-    account_dict2 = process(account_dict.copy(), entries)
+    account_dict2 = process(account_dict, entries)
     assert 40 == profit(account_dict2).amount
 
 
@@ -65,7 +65,7 @@ from abacus.nameit import Balance, Line, left, make_balance, right
 
 
 def tets_account_dict_to_balance():
-    account_dict2 = process(account_dict.copy(), entries)
+    account_dict2 = process(account_dict, entries)
     b = make_balance(account_dict2)
     pass
 

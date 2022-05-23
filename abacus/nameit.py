@@ -126,9 +126,10 @@ class Entry:
 
 
 def process_one(account_dict: Ledger, entry: Entry):
-    account_dict[entry.debit].debit(entry.amount)
-    account_dict[entry.credit].credit(entry.amount)
-    return account_dict
+    _account_dict = account_dict.copy()
+    _account_dict[entry.debit].debit(entry.amount)
+    _account_dict[entry.credit].credit(entry.amount)
+    return _account_dict
 
 
 def process(account_dict: Ledger, entries: List[Entry]):
