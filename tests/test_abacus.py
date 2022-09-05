@@ -1,10 +1,10 @@
-from abacus import Chart, Ledger, __version__
-from abacus.accounting import (CreditAccount, DebitAccount, make_book,
-                               make_ledger, to_entry)
-
-
-def test_version():
-    assert __version__ == "0.0.0"
+from abacus import Chart, Ledger
+from abacus.accounting import (
+    DebitAccount,
+    CreditAccount,
+    make_ledger,
+)
+from abacus.formatting import make_book
 
 
 names = dict(
@@ -25,7 +25,7 @@ def test_chart():
     assert chart == Chart(
         assets=["cash", "inv"],
         expenses=["cogs"],
-        capital=["eq"],
+        equity=["eq"],
         liabilities=["debt", "ai"],
         income=["sales"],
     )
@@ -35,7 +35,7 @@ def test_book():
     chart = Chart(
         assets=["cash", "inv"],
         expenses=["cogs"],
-        capital=["eq"],
+        equity=["eq"],
         liabilities=["debt", "ai"],
         income=["sales"],
     )
@@ -56,23 +56,7 @@ def test_book_balance():
     chart = Chart(
         assets=["cash", "inv"],
         expenses=["cogs", "interest"],
-        capital=["eq"],
+        equity=["eq"],
         liabilities=["debt", "ai"],
         income=["sales"],
     )
-    book = make_book(chart)
-    entries_doc = """
-    100 cash eq
-    50 cash debt
-    120 inv cash
-    120 cogs inv
-    135 cash sales 
-    5 interest ai
-    5 ai cash
-    """
-    entries = [
-        to_entry(textline) for textline in entries_doc.split("\n") if textline.strip()
-    ]
-    book.process_all(entries)
-    assert book.profit == 10
-    return book

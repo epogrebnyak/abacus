@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
-Value = int  # can be Decimal
+Value = float
 
 
 @dataclass
@@ -16,10 +16,9 @@ class Account:
         self.credits.append(amount)
 
     def balance(self):
-        pass
+        raise NotImplementedError
 
 
-@dataclass
 class DebitAccount(Account):
     def balance(self):
         return sum(self.debits) - sum(self.credits)
@@ -30,8 +29,8 @@ class CreditAccount(Account):
         return sum(self.credits) - sum(self.debits)
 
 
-def plus(xs):
-    return "({})".format(" + ".join(xs))
+def debit_balance(account):
+    return sum(account.debits) - sum(account.credits)
 
 
 @dataclass
@@ -40,28 +39,47 @@ class Chart:
 
     assets: List[str]
     expenses: List[str]
-    capital: List[str]
+    equity: List[str]
     liabilities: List[str]
     income: List[str]
 
     @property
-    def equation(self) -> str:
-        return (
-            f"{plus(self.assets)} + {plus(self.expenses)} = "
-            f"{plus(self.capital)} + {plus(self.liabilities)} + {plus(self.income)}"
-        )
-
-    @property
-    def debit_accounts(self):
+    def debit_account_names(self) -> List[str]:
         return self.assets + self.expenses
 
+    def is_debit_account(self, account_name: str):
+        return account_name in self.debit_account_names
+
     @property
-    def credit_accounts(self):
-        return self.capital + self.liabilities + self.income
+    def credit_account_names(self) -> List[str]:
+        return self.equity + self.liabilities + self.income
+
+    def is_credit_account(self, account_name: str):
+        return account_name in self.debit_account_names
 
     @property
     def account_names(self):
-        return self.debit_accounts + self.credit_accounts
+        return self.debit_account_names + self.credit_account_names
+
+
+def equation(ch: Chart) -> str:
+    return " ".join(
+        [
+            plus(ch.assets),
+            "+",
+            plus(ch.expenses),
+            "=",
+            plus(ch.equity),
+            "+",
+            plus(ch.liabilities),
+            "+",
+            plus(ch.income),
+        ]
+    )
+
+
+def plus(xs: List[str]):
+    return "(" + " + ".join(xs) + ")"
 
 
 def is_debit_account(chart: Chart, account_name: str):
@@ -83,11 +101,6 @@ class Entry:
 E = Entry
 
 
-def to_entry(textline: str):
-    x, debit, credit = textline.split()
-    return Entry(Value(x), debit.lower(), credit.lower())
-
-
 @dataclass
 class Ledger:
     """Ledger to record transactions in accounts."""
@@ -105,71 +118,40 @@ class Ledger:
         for e in es:
             self.process(e)
 
-    def balance(self, name):
-        return self.accounts[name].balance()
+    def balance(self, account_name):
+        return self.accounts[account_name].balance()
 
 
 def make_ledger(chart: Chart) -> Ledger:
     accounts = dict()
-    for name in chart.debit_accounts:
+    for name in chart.debit_account_names:
         accounts[name] = DebitAccount()
-    for name in chart.credit_accounts:
+    for name in chart.credit_account_names:
         accounts[name] = CreditAccount()
     return Ledger(accounts)
 
 
+def sum_of_balances(ledger, account_names):
+    return sum(
+        ledger.accounts[account_name].balance() for account_name in account_names
+    )
+
+
+def income(ledger, chart):
+    return sum_of_balances(ledger, chart.income)
+
+
+def expenses(ledger, chart):
+    return sum_of_balances(ledger, chart.expenses)
+
+
 def profit(ledger, chart):
-    income, expenses = 0, 0
-    for name in chart.income:
-        income += ledger.accounts[name].balance()
-    for name in chart.expenses:
-        expenses += ledger.accounts[name].balance()
-    return income - expenses
+    return income(ledger, chart) - expenses(ledger, chart)
 
 
 def balances(ledger, chart):
     res = {}
-    for name in chart.assets + chart.liabilities + chart.capital:
+    for name in chart.assets + chart.liabilities + chart.equity:
         res[name] = ledger.accounts[name].balance()
     res["profit"] = profit(ledger, chart)
     return res
-
-
-def balance_lines(
-    book: Ledger, chart: Chart, names_dict: Dict[str, str] = {}
-) -> Tuple[List[str], List[str]]:
-    from abacus.formatting import Line, make_formatter, to_strings
-
-    def rename(name):
-        return names_dict.get(name, name)
-
-    def lines(names):
-        return [Line(rename(name), book.balance(name)) for name in names]
-
-    cap = lines(chart.capital) + [Line("profit", profit(book, chart))]
-    liab = lines(chart.liabilities)
-    f = make_formatter(cap + liab)
-    right = ["Capital"] + to_strings(cap, f) + ["Liabilities"] + to_strings(liab, f)
-    left = ["Assets"] + to_strings(lines(chart.assets))
-    return left, right
-
-
-@dataclass
-class Book:
-    chart: Chart
-    ledger: Ledger
-    names: Dict[str, str]
-
-    def balance_lines(self):
-        return balance_lines(self.ledger, self.chart, self.names)
-
-    def process_all(self, es: List[Entry]):
-        self.ledger.process_all(es)
-
-    @property
-    def profit(self):
-        return profit(self.ledger, self.chart)
-
-
-def make_book(chart, names={}):
-    return Book(chart, make_ledger(chart), names)

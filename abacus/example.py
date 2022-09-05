@@ -7,7 +7,7 @@ from accounting import Chart, Entry, balances, make_ledger
 chart = Chart(
     assets=["cash", "loans", "interest_receivable"],
     expenses=["expenses"],
-    capital=["equity", "retained_earnings", "provisions"],
+    equity=["equity", "retained_earnings", "provisions"],
     liabilities=["current_accounts", "deposits", "interest_payable"],
     income=["income"],
 )
@@ -21,21 +21,21 @@ transactions = [
     # Recapitalisation with owner funds
     Entry(value=30, debit="cash", credit="equity"),
     # Accept deposits
-    Entry(60, debit="cash", credit="deposits"),
+    Entry(value=60, debit="cash", credit="deposits"),
     # Loans provided to clients
-    Entry(80, debit="loans", credit="cash"),
+    Entry(value=80, debit="loans", credit="cash"),
     # Interest due on loans accrued
-    Entry(8, debit="interest_receivable", credit="income"),
+    Entry(value=8, debit="interest_receivable", credit="income"),
     # Сlients pay part of interest due
-    Entry(5, debit="cash", credit="interest_receivable"),
+    Entry(value=5, debit="cash", credit="interest_receivable"),
     # Loans claffified as bad, increase provisions
-    Entry(15 + 3, debit="expenses", credit="provisions"),
+    Entry(value=15 + 3, debit="expenses", credit="provisions"),
     # Bad loan paid interest, provisions decrease
-    Entry(10 + 2, debit="provisions", credit="income"),
-    Entry(2, debit="cash", credit="interest_receivable"),
+    Entry(value=10 + 2, debit="provisions", credit="income"),
+    Entry(value=2, debit="cash", credit="interest_receivable"),
     # Accrue interest on deposits
-    Entry(3, debit="expenses", credit="interest_payable"),
-    Entry(3, debit="interest_payable", credit="current_accounts"),
+    Entry(value=3, debit="expenses", credit="interest_payable"),
+    Entry(value=3, debit="interest_payable", credit="current_accounts"),
 ]
 for t in transactions:
     L.process(t)
@@ -55,14 +55,29 @@ assert balances(L, chart) == {
     "profit": -1,
 }
 
-from accounting import balance_lines
-from formatting import println, side_by_side
+from formatting import Book
 
-left, right = balance_lines(L, chart)
-println(side_by_side(left, right))
-# Should print
-"""
-Assets                      Capital
+b = Book(chart, L, {})
+assert b.left() == [
+    "Assets",
+    "  Cash.................. 17",
+    "  Loans................. 80",
+    "  Interest receivable...  1",
+]
+assert b.right() == [
+    "Capital",
+    "  Equity.............. 30",
+    "  Retained earnings...  0",
+    "  Provisions..........  6",
+    "  Profit.............. -1",
+    "Liabilities",
+    "  Current accounts....  3",
+    "  Deposits............ 60",
+    "  Interest payable....  0",
+]
+
+print(b)
+"""Assets                      Capital
   Cash.................. 17   Equity.............. 30
   Loans................. 80   Retained earnings...  0
   Interest receivable...  1   Provisions..........  6
@@ -70,5 +85,4 @@ Assets                      Capital
                             Liabilities
                               Current accounts....  3
                               Deposits............ 60
-                              Interest payable....  0
-"""
+                              Interest payable....  0"""
