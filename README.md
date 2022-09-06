@@ -1,12 +1,13 @@
 # abacus
-Learn accounting from Python: T-accounts, ledger and chart of accounts
 
-Check https://github.com/epogrebnyak/abacus/blob/main/abacus/example.py as working example:
+Learn accounting from by programming a small accounting system Python.
 
-1. Specify a system of accounts: 
+Check out [`readme.py`](readme.py) as example:
+
+1. Specify a chart of accounts of five types: assets, equity, liabilities, income and expenses.
 
 ```python
-from abacus import Chart, Entry, Book, make_ledger
+from abacus import Chart, Entry, Book, make_ledger, make_balance_sheet
 
 chart = Chart(
     assets=["cash", "goods"],
@@ -17,11 +18,13 @@ chart = Chart(
 )
 ```
 
-2. Initialise ledger 
+2. Initialise [ledger](https://en.wikipedia.org/wiki/Ledger). The ledger will hold transactions 
+that we add on the next step.
+
 ```python
-L = make_ledger(chart)
+ledger = make_ledger(chart)
 ```
-3. Run transactions:
+3. Add transactions:
 
 ```python
 entries = [
@@ -56,7 +59,7 @@ entries = [
     Entry(debit="interest", 
           credit="cash", 
           value=8, 
-          description="Paid 10% interest."),
+          description="Paid 10 percent interest."),
     Entry(
         debit="debt", 
         credit="cash", 
@@ -66,14 +69,14 @@ entries = [
 ]
 
 for e in entries:
-    L.process(e)
+    ledger.process(e)
 ```
 
 4. Show the resulting balance sheet:
 
 ```python
-b = Book(chart, L)
-print(b)
+balance_sheet = make_balance_sheet(chart, ledger)
+print(balance_sheet)
 ```
 
 ```
