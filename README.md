@@ -1,7 +1,7 @@
 # abacus
 
 A small, yet valid double-entry accounting system in Python.
-(Can accounting be a DSL? Why not?) 
+(Can accounting be a DSL? Why not?)
 
 Check out [`readme.py`](readme.py) as example:
 
@@ -13,16 +13,56 @@ from abacus import Book, Chart, BalanceSheet
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
-    equity=["equity", "retained_earnings"],
+    equity=["equity"],
     liabilities=["payables"],
     income=["sales"],
 )
 ```
 
-2. For ease of use give disticitve names to entries. For example,
-`invoice_buyer=("receivables", "sales")` means that we can use 
-named entry `("invoice_buyer", 250)` instead of 
-`RawEntry(dr="receivables", cr="sales", amount=250)`.
+2. Specify accounting entry using account codes from the chart.
+
+```python
+e1 = RawEntry(dr="cash", cr="equity", amount=1000)
+e2 = RawEntry(dr="goods_for_sale", cr="cash", amount=250)
+
+book.append_raw_entry(e1)
+book.append_raw_entry(e2)
+```
+
+3. After entries are added, let's see the general ledger.
+   It is a dictionary with account names and debit/credit side records.
+
+```python
+print(book.get_ledger())
+
+{
+    "cash": DebitAccount(debits=[1000], credits=[250]),
+    "receivables": DebitAccount(debits=[], credits=[]),
+    "goods_for_sale": DebitAccount(debits=[250], credits=[]),
+    "cogs": DebitAccount(debits=[], credits=[]),
+    "sga": DebitAccount(debits=[], credits=[]),
+    "equity": CreditAccount(debits=[], credits=[1000]),
+    "payables": CreditAccount(debits=[], credits=[]),
+    "sales": CreditAccount(debits=[], credits=[]),
+}
+```
+
+4. One can also see the interim balance sheet:
+
+```python
+print(book.get_balance_sheet())
+
+BalanceSheet(
+    assets={"cash": 750, "receivables": 0, "goods_for_sale": 250},
+    capital={"equity": 1000, "current_profit": 0},
+    liabilities={"payables": 0},
+)
+```
+
+5. For ease of use we can give disticitve names to entries.
+   For example, `invoice_buyer=("receivables", "sales")` means
+   that we can use named entry `("invoice_buyer", 250)` instead of
+   `RawEntry(dr="receivables", cr="sales", amount=250)`.
 
 ```python
 named_entry_shortcodes = dict(
@@ -35,7 +75,8 @@ named_entry_shortcodes = dict(
     pay_salary=("payables", "cash"),
 )
 ```
-3. Write some accounting entries using names defined above. 
+
+6. Write more accounting entries using names defined above.
 
 ```python
 named_entries = [
@@ -58,13 +99,14 @@ named_entries = [
 ]
 ```
 
-4. Let's create a ledger, append all entries and get a balance sheet.
+7. Append all entries to ledger and get a balance sheet.
 
 ```python
 book = Book(chart, named_entry_shortcodes)
 book.append_named_entries(named_entries)
 balance_sheet = book.get_balance_sheet()
 ```
+
 The resulting balance sheet looks like this:
 
 ```python
