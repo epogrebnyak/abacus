@@ -19,18 +19,19 @@ chart = Chart(
 )
 ```
 
-2. Specify accounting entry using account codes from the chart.
+2. Create ledger and specify a couple of accounting entries using account codes from the chart.
 
 ```python
+book = Book(chart)
+
 e1 = RawEntry(dr="cash", cr="equity", amount=1000)
 e2 = RawEntry(dr="goods_for_sale", cr="cash", amount=250)
-
 book.append_raw_entry(e1)
 book.append_raw_entry(e2)
 ```
 
 3. After entries are added, let's see the general ledger.
-   It is a dictionary with account names and debit/credit side records.
+   It is a dictionary with account names and amounts of debit and credit sides.
 
 ```python
 print(book.get_ledger())
@@ -59,7 +60,7 @@ BalanceSheet(
 )
 ```
 
-5. For ease of use we can give disticitve names to entries.
+5. For ease of use we can give distinctive names to entries.
    For example, `invoice_buyer=("receivables", "sales")` means
    that we can use named entry `("invoice_buyer", 250)` instead of
    `RawEntry(dr="receivables", cr="sales", amount=250)`.
@@ -76,7 +77,7 @@ named_entry_shortcodes = dict(
 )
 ```
 
-6. Write more accounting entries using names defined above.
+6. Write some more accounting entries using names defined above.
 
 ```python
 named_entries = [
@@ -99,7 +100,7 @@ named_entries = [
 ]
 ```
 
-7. Append all entries to ledger and get a balance sheet.
+7. Append all entries to a ledger and get a balance sheet.
 
 ```python
 book = Book(chart, named_entry_shortcodes)
