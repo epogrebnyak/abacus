@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 pytest = "^7.1.3"
+isort = "^5.12.0"
 
 [tool.poetry.dev-dependencies]
 #streamlit = "1.9.0"

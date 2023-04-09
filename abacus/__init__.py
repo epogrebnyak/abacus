@@ -1,2 +1,2 @@
-from .accounting import Chart, Ledger, Entry, make_ledger
+from .accounting import Chart, Entry, Ledger, make_ledger
 from .formatting import Book

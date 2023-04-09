@@ -1,10 +1,8 @@
-from typing import Tuple, List, Dict
 from dataclasses import dataclass, field
+from typing import Dict, List
 
 Amount = int
-Account = Tuple[List[Amount], List[Amount]]
 AccountName = str
-Legder = Dict[AccountName, Account]
 
 @dataclass
 class Account:
@@ -17,18 +15,22 @@ class Account:
     def credit(self, amount: Amount):
         self.credits.append(amount)
 
+Legder = Dict[AccountName, Account]
+
 class DebitAccount(Account):
     pass
+
 
 class CreditAccount(Account):
     pass
 
+
 def balance(account: Account) -> Amount:
     match account:
         case DebitAccount(ds, cs):
-            return sum(ds)-sum(cs)
+            return sum(ds) - sum(cs)
         case CreditAccount(ds, cs):
-            return sum(cs)-sum(ds)
+            return sum(cs) - sum(ds)
 
 
 @dataclass
@@ -51,7 +53,6 @@ class Chart:
         return self.equity + self.liabilities + self.income + self.contraccounts
 
 
-
 def account() -> Account:
     return ([], [])
 
@@ -64,15 +65,17 @@ def make_ledger(chart):
         accounts[account_name] = CreditAccount()
     return accounts
 
+
 def process_entry(ledger, entry):
     ledger[entry.dr].debit(entry.amount)
     ledger[entry.cr].credit(entry.amount)
     return ledger
 
+
 def process_entries(ledger, entries):
     for entry in entries:
         ledger = process_entry(ledger, entry)
-    return ledger    
+    return ledger
 
 
 @dataclass
@@ -80,10 +83,12 @@ class Pair:
     dr: AccountName
     cr: AccountName
 
+
 @dataclass
 class EntryP:
     amount: Amount
     pair: Pair
+
 
 @dataclass
 class Entry:
@@ -91,17 +96,21 @@ class Entry:
     cr: AccountName
     amount: Amount
 
+
 def process_named_entries(ledger, named_entries_dict, named_entries_stream):
-    for (operation, amount) in named_entries_stream:
+    for operation, amount in named_entries_stream:
         entry = Entry(*named_entries_dict[operation], amount)
-        ledger=process_entry(ledger, entry)
+        ledger = process_entry(ledger, entry)
     return ledger
+
 
 def account_names(chart):
     return chart.debit_account_names + chart.credit_account_names
 
+
 def balances(ledger):
-    return {account_name:balance(account) for account_name, account in ledger.items()}
+    return {account_name: balance(account) for account_name, account in ledger.items()}
+
 
 def sum_of_balances(ledger, account_names):
     return sum(balance(ledger[account_name]) for account_name in account_names)

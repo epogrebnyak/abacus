@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from itertools import zip_longest
-from typing import Optional, List, Dict, Tuple
-from abacus.accounting import Ledger, Chart, profit
+from typing import Dict, List, Optional, Tuple
+
+from abacus.accounting import Chart, Ledger, profit
 
 
 @dataclass

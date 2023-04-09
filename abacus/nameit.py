@@ -106,7 +106,7 @@ def make_ledger(chart: Chart) -> Ledger:
     return ledger
 
 
-#%%
+# %%
 
 
 @dataclass
@@ -138,7 +138,7 @@ def process(account_dict: Ledger, entries: List[Entry]):
     return account_dict
 
 
-#%%
+# %%
 def pick(account_dict: Ledger, cls):
     return {key: acc for key, acc in account_dict.items() if isinstance(acc, cls)}
 
@@ -175,7 +175,7 @@ def lines(accounts):
 
 
 # Accounts -> Balance:
-#%%
+# %%
 def make_balance(account_dict: Ledger) -> Balance:
     return Balance(
         lines(assets(account_dict)),
@@ -185,7 +185,7 @@ def make_balance(account_dict: Ledger) -> Balance:
     )
 
 
-#%%
+# %%
 
 
 @dataclass
@@ -240,7 +240,7 @@ def side_by_side(left, right):
     return ["{} {}".format(x.ljust(width, " "), y) for x, y in gen]
 
 
-#%%
+# %%
 def left(b: Balance) -> List[str]:
     return ["Assets"] + to_strings(b.assets)
 
