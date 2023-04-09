@@ -1,4 +1,4 @@
-from abacus import Chart, Entry, Book, make_ledger
+from abacus import Book, Chart, Entry, make_ledger
 
 chart = Chart(
     assets=["cash", "goods"],

@@ -1,6 +1,5 @@
 from abacus.formatting import Line, side_by_side
 
-
 # def test_formatting():
 #     lines = Line("Cash", 500), Line("Accounts Receivable", 100_500)
 #     assert to_strings(lines) == [

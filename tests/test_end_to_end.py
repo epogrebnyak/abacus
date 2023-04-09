@@ -1,9 +1,8 @@
-from abacus.accounting import Chart, make_ledger, balances, Entry
+from abacus.accounting import Chart, Entry, balances, make_ledger
 from abacus.formatting import Book
 
 
 def test_end_to_end():
-
     chart = Chart(
         assets=["cash", "loans", "interest_receivable"],
         expenses=["expenses"],
