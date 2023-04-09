@@ -8,7 +8,7 @@ Check out [`readme.py`](readme.py) as example:
 1. Specify a chart of accounts of five types: assets, equity, liabilities, income and expenses.
 
 ```python
-from abacus import Book, Chart, BalanceSheet
+from abacus import Book, Chart, BalanceSheet, RawEntry
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
