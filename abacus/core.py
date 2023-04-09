@@ -1,5 +1,7 @@
+# pylint: disable=missing-docstring
+
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 Amount = int
 AccountName = str
@@ -28,21 +30,15 @@ class CreditAccount(Account):
     pass
 
 
+Ledger = Dict[AccountName, Account]
+
+
 def balance(account: Account) -> Amount:
     match account:
         case DebitAccount(ds, cs):
             return sum(ds) - sum(cs)
         case CreditAccount(ds, cs):
             return sum(cs) - sum(ds)
-
-
-@dataclass
-class Balances:
-    assets: Dict[AccountName, Amount]
-    expenses: Dict[AccountName, Amount]
-    equity: Dict[AccountName, Amount]
-    liabilities: Dict[AccountName, Amount]
-    income: Dict[AccountName, Amount]
 
 
 @dataclass
@@ -74,24 +70,6 @@ def make_ledger(chart):
     return accounts
 
 
-def process_raw_entry(ledger, entry):
-    ledger[entry.dr].debit(entry.amount)
-    ledger[entry.cr].credit(entry.amount)
-    return ledger
-
-
-@dataclass
-class Pair:
-    dr: AccountName
-    cr: AccountName
-
-
-@dataclass
-class EntryP:
-    amount: Amount
-    pair: Pair
-
-
 def account_names(chart):
     return chart.debit_account_names + chart.credit_account_names
 
@@ -101,16 +79,50 @@ def balances(ledger):
 
 
 @dataclass
+class Balances:
+    assets: Dict[AccountName, Amount]
+    expenses: Dict[AccountName, Amount]
+    equity: Dict[AccountName, Amount]
+    liabilities: Dict[AccountName, Amount]
+    income: Dict[AccountName, Amount]
+
+
+@dataclass
 class RawEntry:
     dr: AccountName
     cr: AccountName
     amount: Amount
 
 
+def process_raw_entry(ledger: Ledger, entry: RawEntry):
+    ledger[entry.dr].debit(entry.amount)
+    ledger[entry.cr].credit(entry.amount)
+    return ledger
+
+
+NamedEntry = Tuple[str, Amount]
+
+
 @dataclass
-class NamedEntry:
-    name: str
-    amount: Amount
+class BalanceSheet:
+    assets: Dict[AccountName, Amount]
+    capital: Dict[AccountName, Amount]
+    liabilities: Dict[AccountName, Amount]
+
+    @property
+    def total_assets(self):
+        return dict_sum(self.assets)
+
+    @property
+    def total_capital(self):
+        return dict_sum(self.capital)
+
+    @property
+    def total_liabilities(self):
+        return dict_sum(self.liabilities)
+
+    def is_valid(self):
+        return self.total_assets == self.total_capital + self.total_liabilities
 
 
 @dataclass
@@ -120,34 +132,41 @@ class Book:
         default_factory=dict
     )
     raw_entries: List[RawEntry] = field(default_factory=list)
+    start_ledger: Optional[Ledger] = None
 
-    def validate_raw_entry(self, e: RawEntry):
-        for name in (e.dr, e.cr):
+    def validate_raw_entry(self, entry: RawEntry):
+        for name in (entry.dr, entry.cr):
             if name not in account_names(self.chart):
                 raise ValueError(name + " is not a valid account name.")
 
     def append_raw_entry(self, e: RawEntry):
         self.validate_raw_entry(e)
         self.raw_entries.append(e)
+        return self
 
     def to_raw_entry(self, named_entry: NamedEntry):
-        dr, cr = self.shortcode_dict[named_entry.name]
-        return RawEntry(dr, cr, named_entry.amount)
+        dr, cr = self.shortcode_dict[named_entry[0]]
+        return RawEntry(dr, cr, named_entry[1])
 
     def append_named_entry(self, named_entry: NamedEntry):
-        e = self.to_raw_entry(named_entry)
-        self.append_raw_entry(e)
+        entry = self.to_raw_entry(named_entry)
+        self.append_raw_entry(entry)
+        return self
 
     def append_named_entries(self, named_entries):
         for named_entry in named_entries:
             self.append_named_entry(named_entry)
+        return self
 
-    def get_ledger(self, ledger=None):
-        if not ledger:
-            ledger = make_ledger(self.chart)
-        for e in self.raw_entries:
-            ledger = process_raw_entry(ledger, e)
+    def get_ledger(self) -> Ledger:
+        ledger = self.start_ledger if self.start_ledger else make_ledger(self.chart)
+        for entry in self.raw_entries:
+            ledger = process_raw_entry(ledger, entry)
         return ledger
+
+    def get_balance_sheet(self) -> BalanceSheet:
+        balances_dict = balances(self.get_ledger())
+        return to_balance_sheet(balances_dict, self.chart)
 
 
 def subset(balances_, keys):
@@ -186,54 +205,9 @@ def dict_sum(dict_):
     return sum(dict_.values())
 
 
-chart_1 = Chart(
-    assets=["cash", "receivables", "goods_for_sale"],
-    expenses=["cogs", "sga"],
-    equity=["equity", "retained_earnings"],
-    liabilities=["payables"],
-    income=["sales"],
-)
-
-entry_shortcodes_1 = dict(
-    pay_shareholder_capital=("cash", "equity"),
-    buy_goods_for_cash=("goods_for_sale", "cash"),
-    invoice_buyer=("receivables", "sales"),
-    transfer_goods_sold=("cogs", "goods_for_sale"),
-    accept_payment=("cash", "receivables"),
-    accrue_salary=("sga", "payables"),
-    pay_salary=("payables", "cash"),
-)
-
-named_entries_1 = [
-    NamedEntry(name="pay_shareholder_capital", amount=501),
-    NamedEntry(name="pay_shareholder_capital", amount=499),
-    NamedEntry(name="buy_goods_for_cash", amount=820),
-    NamedEntry(name="invoice_buyer", amount=600),
-    NamedEntry(name="transfer_goods_sold", amount=360),
-    NamedEntry(name="accept_payment", amount=549),
-    NamedEntry(name="accrue_salary", amount=400),
-    NamedEntry(name="pay_salary", amount=345),
-    NamedEntry(name="invoice_buyer", amount=160),
-    NamedEntry(name="transfer_goods_sold", amount=80),
-    NamedEntry(name="accept_payment", amount=80),
-]
-
-
-book = Book(chart_1, entry_shortcodes_1)
-book.append_named_entries(named_entries_1)
-ledger = book.get_ledger()
-balances_dict = balances(ledger)
-print(named_entries_1)
-print(ledger)
-print(balances_dict)
-
-assets_dict = assets(balances_dict, chart_1)
-capital_dict = capital(balances_dict, chart_1)
-liabilities_dict = liabilties(balances_dict, chart_1)
-a = dict_sum(assets_dict)
-cap = dict_sum(capital_dict)
-liab = dict_sum(liabilities_dict)
-print("     Assets:", a, assets_dict)
-print("    Capital:", cap, capital_dict)
-print("Liabilities:", liab, liabilities_dict)
-assert a == cap + liab
+def to_balance_sheet(balances_dict, chart):
+    return BalanceSheet(
+        assets=assets(balances_dict, chart),
+        capital=capital(balances_dict, chart),
+        liabilities=liabilties(balances_dict, chart),
+    )

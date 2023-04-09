@@ -1,16 +1,13 @@
+# pylint: disable=missing-docstring
+
 from abacus.core import (
     Book,
     Chart,
     CreditAccount,
     DebitAccount,
-    NamedEntry,
     RawEntry,
-    assets,
+    BalanceSheet,
     balance,
-    balances,
-    capital,
-    dict_sum,
-    liabilties,
     make_ledger,
     process_raw_entry,
 )
@@ -50,31 +47,44 @@ entry_shortcodes_1 = dict(
 )
 
 named_entries_1 = [
-    NamedEntry(name="pay_shareholder_capital", amount=501),
-    NamedEntry(name="pay_shareholder_capital", amount=499),
-    NamedEntry(name="buy_goods_for_cash", amount=820),
-    NamedEntry(name="invoice_buyer", amount=600),
-    NamedEntry(name="transfer_goods_sold", amount=360),
-    NamedEntry(name="accept_payment", amount=549),
-    NamedEntry(name="accrue_salary", amount=400),
-    NamedEntry(name="pay_salary", amount=345),
-    NamedEntry(name="invoice_buyer", amount=160),
-    NamedEntry(name="transfer_goods_sold", amount=80),
-    NamedEntry(name="accept_payment", amount=80),
+    ("pay_shareholder_capital", 501),
+    ("pay_shareholder_capital", 499),
+    ("buy_goods_for_cash", 820),
+    ("invoice_buyer", 600),
+    ("transfer_goods_sold", 360),
+    ("accept_payment", 549),
+    ("accrue_salary", 400),
+    ("pay_salary", 345),
+    ("invoice_buyer", 160),
+    ("transfer_goods_sold", 80),
+    ("accept_payment", 80),
 ]
 
 
-def test_reulting_balance():
-    book = Book(chart_1, entry_shortcodes_1)
-    book.append_named_entries(named_entries_1)
-    ledger = book.get_ledger()
-    balances_dict = balances(ledger)
-    assets_dict = assets(balances_dict, chart_1)
-    capital_dict = capital(balances_dict, chart_1)
-    liabilities_dict = liabilties(balances_dict, chart_1)
-    v = dict_sum(assets_dict)
-    cap = dict_sum(capital_dict)
-    liab = dict_sum(liabilities_dict)
-    assert v == 975
-    assert cap == 920
-    assert liab == 55
+def balance_sheet():
+    return (
+        Book(chart_1, entry_shortcodes_1)
+        .append_named_entries(named_entries_1)
+        .get_balance_sheet()
+    )
+
+
+def test_balance_sheet():
+    bs = balance_sheet()
+    assert bs == BalanceSheet(
+        assets={"cash": 464, "receivables": 131, "goods_for_sale": 380},
+        capital={"equity": 1000, "retained_earnings": 0, "current_profit": -80},
+        liabilities={"payables": 55},
+    )
+
+
+def test_balance_sheet_totals():
+    bs = balance_sheet()
+    assert bs.total_assets == 975
+    assert bs.total_capital == 920
+    assert bs.total_liabilities == 55
+
+
+def test_balance_sheet_totals_sum_up():
+    bs = balance_sheet()
+    assert bs.is_valid() is True
