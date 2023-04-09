@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "abacus"
-version = "0.0.3"
+version = "0.1.0"
 description = ""
 authors = ["Evgeniy Pogrebnyak <e.pogrebnyak@gmail.com>"]
 readme = "README.md"

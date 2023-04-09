@@ -8,34 +8,17 @@ chart = Chart(
     income=["sales"],
 )
 
-book = Book(chart)
+# Example with raw entries
 
+book = Book(chart)
 e1 = RawEntry(dr="cash", cr="equity", amount=1000)
 e2 = RawEntry(dr="goods_for_sale", cr="cash", amount=250)
-
 book.append_raw_entry(e1)
 book.append_raw_entry(e2)
 print(book.get_ledger())
-
-# {
-#     "cash": DebitAccount(debits=[1000], credits=[250]),
-#     "receivables": DebitAccount(debits=[], credits=[]),
-#     "goods_for_sale": DebitAccount(debits=[250], credits=[]),
-#     "cogs": DebitAccount(debits=[], credits=[]),
-#     "sga": DebitAccount(debits=[], credits=[]),
-#     "equity": CreditAccount(debits=[], credits=[1000]),
-#     "payables": CreditAccount(debits=[], credits=[]),
-#     "sales": CreditAccount(debits=[], credits=[]),
-# }
-
 print(book.get_balance_sheet())
 
-BalanceSheet(
-    assets={"cash": 750, "receivables": 0, "goods_for_sale": 250},
-    capital={"equity": 1000, "current_profit": 0},
-    liabilities={"payables": 0},
-)
-
+# Example with named entries
 
 named_entry_shortcodes = dict(
     pay_shareholder_capital=("cash", "equity"),
@@ -68,6 +51,7 @@ named_entries = [
 
 book = Book(chart, named_entry_shortcodes)
 book.append_named_entries(named_entries)
+print(book.get_ledger())
 balance_sheet = book.get_balance_sheet()
 print(balance_sheet)
 
