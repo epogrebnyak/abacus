@@ -1,7 +1,6 @@
 # abacus
 
 A small, yet valid double-entry accounting system in Python.
-(Can accounting be a DSL? Why not?)
 
 Check out [`readme.py`](readme.py) as example:
 
