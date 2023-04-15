@@ -1,7 +1,8 @@
-# pylint: disable=missing-docstring
+# pylint: disable=missing-docstring, pointless-string-statement
 
+from collections import UserDict
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 Amount = int
 AccountName = str
@@ -30,6 +31,7 @@ class CreditAccount(Account):
     pass
 
 
+"""General ledger that holds all accounts."""
 Ledger = Dict[AccountName, Account]
 
 
@@ -61,7 +63,7 @@ class Chart:
         return self.equity + self.liabilities + self.income + self.contraccounts
 
 
-def make_ledger(chart):
+def make_ledger(chart: Chart) -> Ledger:
     accounts = {}
     for account_name in chart.debit_account_names:
         accounts[account_name] = DebitAccount()
@@ -70,21 +72,37 @@ def make_ledger(chart):
     return accounts
 
 
-def account_names(chart):
+def account_names(chart: Chart) -> List[AccountName]:
     return chart.debit_account_names + chart.credit_account_names
 
 
-def balances(ledger):
-    return {account_name: balance(account) for account_name, account in ledger.items()}
+class AccountBalanceDict(UserDict):
+    def total(self):
+        return sum(self.values())
+
+    def subset(self, account_names: List[AccountName]):
+        items = (
+            (account_name, balance)
+            for account_name, balance in self.items()
+            if account_name in account_names
+        )
+        return AccountBalanceDict(items)
+
+
+def balances(ledger: Ledger) -> AccountBalanceDict:
+    items = (
+        (account_name, balance(account)) for account_name, account in ledger.items()
+    )
+    return AccountBalanceDict(items)
 
 
 @dataclass
 class Balances:
-    assets: Dict[AccountName, Amount]
-    expenses: Dict[AccountName, Amount]
-    equity: Dict[AccountName, Amount]
-    liabilities: Dict[AccountName, Amount]
-    income: Dict[AccountName, Amount]
+    assets: AccountBalanceDict
+    expenses: AccountBalanceDict
+    equity: AccountBalanceDict
+    liabilities: AccountBalanceDict
+    income: AccountBalanceDict
 
 
 @dataclass
@@ -100,56 +118,65 @@ def process_raw_entry(ledger: Ledger, entry: RawEntry):
     return ledger
 
 
-NamedEntry = Tuple[str, Amount]
+def process_raw_entries(ledger, entries: List[RawEntry]):
+    for entry in entries:
+        ledger = process_raw_entry(ledger, entry)
+    return ledger
 
 
 @dataclass
 class BalanceSheet:
-    assets: Dict[AccountName, Amount]
-    capital: Dict[AccountName, Amount]
-    liabilities: Dict[AccountName, Amount]
-
-    @property
-    def total_assets(self):
-        return dict_sum(self.assets)
-
-    @property
-    def total_capital(self):
-        return dict_sum(self.capital)
-
-    @property
-    def total_liabilities(self):
-        return dict_sum(self.liabilities)
+    assets: AccountBalanceDict
+    capital: AccountBalanceDict
+    liabilities: AccountBalanceDict
 
     def is_valid(self):
-        return self.total_assets == self.total_capital + self.total_liabilities
+        return self.assets.total() == self.capital.total() + self.liabilities.total()
+
+
+@dataclass
+class IncomeStatement:
+    income: AccountBalanceDict
+    expenses: AccountBalanceDict
+
+    def current_profit(self):
+        return self.income.total() - self.expenses.total()
+
+
+Pair = Tuple[AccountName, AccountName]
+EntryShortcodeDict = Dict[str, Pair]
+NamedEntry = Tuple[str, Amount]
+
+
+class EntryShortcodes(UserDict):
+    def to_raw_entry(self, named_entry: NamedEntry) -> RawEntry:
+        dr, cr = self[named_entry[0]]
+        return RawEntry(dr, cr, named_entry[1])
 
 
 @dataclass
 class Book:
     chart: Chart
-    shortcode_dict: Dict[str, Tuple[AccountName, AccountName]] = field(
-        default_factory=dict
-    )
+    entry_shortcodes: EntryShortcodes = field(default_factory=EntryShortcodes)
     raw_entries: List[RawEntry] = field(default_factory=list)
-    start_ledger: Optional[Ledger] = None
 
     def validate_raw_entry(self, entry: RawEntry):
         for name in (entry.dr, entry.cr):
             if name not in account_names(self.chart):
                 raise ValueError(name + " is not a valid account name.")
 
-    def append_raw_entry(self, e: RawEntry):
-        self.validate_raw_entry(e)
-        self.raw_entries.append(e)
+    def append_raw_entry(self, entry: RawEntry):
+        self.validate_raw_entry(entry)
+        self.raw_entries.append(entry)
         return self
 
-    def to_raw_entry(self, named_entry: NamedEntry):
-        dr, cr = self.shortcode_dict[named_entry[0]]
-        return RawEntry(dr, cr, named_entry[1])
+    def append_raw_entries(self, entries: List[RawEntry]):
+        for entry in entries:
+            self.append_raw_entry(entry)
+        return self
 
     def append_named_entry(self, named_entry: NamedEntry):
-        entry = self.to_raw_entry(named_entry)
+        entry = self.entry_shortcodes.to_raw_entry(named_entry)
         self.append_raw_entry(entry)
         return self
 
@@ -159,55 +186,32 @@ class Book:
         return self
 
     def get_ledger(self) -> Ledger:
-        ledger = self.start_ledger if self.start_ledger else make_ledger(self.chart)
-        for entry in self.raw_entries:
-            ledger = process_raw_entry(ledger, entry)
-        return ledger
+        ledger = make_ledger(self.chart)
+        return process_raw_entries(ledger, self.raw_entries)
+
+    def get_balances(self):
+        return balances(self.get_ledger())
 
     def get_balance_sheet(self) -> BalanceSheet:
-        balances_dict = balances(self.get_ledger())
-        return to_balance_sheet(balances_dict, self.chart)
-
-
-def subset(balances_, keys):
-    return {k: v for k, v in balances_.items() if k in keys}
-
-
-def assets(balances_, chart):
-    return subset(balances_, chart.assets)
+        return make_balance_sheet(self.get_balances(), self.chart)
 
 
 def capital(balances_dict, chart):
-    res = subset(balances_dict, chart.equity)
-    res["current_profit"] = current_profit(balances_dict, chart)
+    res = balances_dict.subset(chart.equity)
+    res["current_profit"] = make_income_statement(balances_dict, chart).current_profit()
     return res
 
 
-def liabilties(balances_dict, chart):
-    return subset(balances_dict, chart.liabilities)
-
-
-def income(balances_dict, chart):
-    return subset(balances_dict, chart.income)
-
-
-def expenses(balances_dict, chart):
-    return subset(balances_dict, chart.expenses)
-
-
-def current_profit(balances_dict, chart):
-    return dict_sum(income(balances_dict, chart)) - dict_sum(
-        expenses(balances_dict, chart)
+def make_balance_sheet(balances_dict, chart):
+    return BalanceSheet(
+        assets=balances_dict.subset(chart.assets),
+        capital=capital(balances_dict, chart),
+        liabilities=balances_dict.subset(chart.liabilities),
     )
 
 
-def dict_sum(dict_):
-    return sum(dict_.values())
-
-
-def to_balance_sheet(balances_dict, chart):
-    return BalanceSheet(
-        assets=assets(balances_dict, chart),
-        capital=capital(balances_dict, chart),
-        liabilities=liabilties(balances_dict, chart),
+def make_income_statement(balances_dict, chart):
+    return IncomeStatement(
+        income=balances_dict.subset(chart.income),
+        expenses=balances_dict.subset(chart.expenses),
     )

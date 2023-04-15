@@ -27,17 +27,8 @@ def test_chart():
     assert chart == Chart(**chart_dict)
 
 
-from abacus.nameit import (
-    Asset,
-    Capital,
-    Entry,
-    Expense,
-    Income,
-    Liability,
-    make_ledger,
-    process,
-    profit,
-)
+from abacus.nameit import (Asset, Capital, Entry, Expense, Income, Liability,
+                           make_ledger, process, profit)
 
 account_dict = dict(
     cash=Asset("Cash and equivalents"),

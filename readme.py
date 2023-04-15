@@ -1,4 +1,5 @@
-from abacus import Book, Chart, RawEntry, BalanceSheet
+# %%
+from abacus import BalanceSheet, Book, Chart, EntryShortcodes, RawEntry
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
@@ -8,6 +9,7 @@ chart = Chart(
     income=["sales"],
 )
 
+# %%
 # Example with raw entries
 
 book = Book(chart)
@@ -18,9 +20,10 @@ book.append_raw_entry(e2)
 print(book.get_ledger())
 print(book.get_balance_sheet())
 
+# %%
 # Example with named entries
 
-named_entry_shortcodes = dict(
+named_entry_shortcodes = EntryShortcodes(
     pay_shareholder_capital=("cash", "equity"),
     buy_goods_for_cash=("goods_for_sale", "cash"),
     invoice_buyer=("receivables", "sales"),
@@ -55,8 +58,11 @@ print(book.get_ledger())
 balance_sheet = book.get_balance_sheet()
 print(balance_sheet)
 
+# %%
 assert balance_sheet == BalanceSheet(
     assets={"cash": 464, "receivables": 131, "goods_for_sale": 380},
     capital={"equity": 1000, "current_profit": -80},
     liabilities={"payables": 55},
 )
+
+# %%

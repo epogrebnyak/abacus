@@ -1,16 +1,8 @@
 # pylint: disable=missing-docstring
 
-from abacus.core import (
-    Book,
-    Chart,
-    CreditAccount,
-    DebitAccount,
-    RawEntry,
-    BalanceSheet,
-    balance,
-    make_ledger,
-    process_raw_entry,
-)
+from abacus.core import (AccountBalanceDict, BalanceSheet, Book, Chart,
+                         CreditAccount, DebitAccount, EntryShortcodes,
+                         RawEntry, balance, make_ledger, process_raw_entry)
 
 
 def test_balance_on_DebitAccount():
@@ -19,6 +11,18 @@ def test_balance_on_DebitAccount():
 
 def test_balance_on_CreditAccount():
     assert balance(CreditAccount([2, 2], [5, 4])) == 5
+
+
+def test_AccountBalanceDict():
+    assert (
+        AccountBalanceDict(
+            [
+                ("a", 3),
+                ("b", -1),
+            ]
+        ).total()
+        == 2
+    )
 
 
 def test_ledger():
@@ -63,7 +67,7 @@ named_entries_1 = [
 
 def balance_sheet():
     return (
-        Book(chart_1, entry_shortcodes_1)
+        Book(chart_1, EntryShortcodes(entry_shortcodes_1))
         .append_named_entries(named_entries_1)
         .get_balance_sheet()
     )
@@ -80,9 +84,9 @@ def test_balance_sheet():
 
 def test_balance_sheet_totals():
     bs = balance_sheet()
-    assert bs.total_assets == 975
-    assert bs.total_capital == 920
-    assert bs.total_liabilities == 55
+    assert bs.assets.total() == 975
+    assert bs.capital.total() == 920
+    assert bs.liabilities.total() == 55
 
 
 def test_balance_sheet_totals_sum_up():
