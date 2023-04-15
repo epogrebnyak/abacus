@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-
+#
 from accounting import Chart, Entry, balances, make_ledger
 
 # 1. Lay out a system of accounts, or "chart of accounts", CoA.
