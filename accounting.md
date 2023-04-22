@@ -160,7 +160,8 @@ Traditional way of teaching accounting sometimes goes like this:
 - in a double entry accounting system every entry affects two accounts;
 - accounting software guarantees nothing is lost.
 
-Why not look the accounting identity as `A = C + L + (I - E)` and start applying algebraic rules even before knowing anything in accounting. Hope this approach can flatten the asccounting learning curve by making simple things simple again.
+Why not look the accounting identity as `A = C + L + (I - E)` and start applying algebraic rules even before knowing anything in accounting. This should really flatten 
+the accounting learning curve!
 
 ## Making accounting system realistic
 
