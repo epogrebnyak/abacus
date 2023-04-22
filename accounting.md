@@ -9,19 +9,17 @@ of accounting and financial reporting systems.
 
 1. A firm keeps records of what the firm owns (assets) and sources of funds - equity (or capital) and liabilities (debt).
 
-2. Equity and liabilities are records of amounts, or claims of
-   shareholder and creditors on the firm.
+2. Equity and liabilities are records of amounts, or claims of shareholders and creditors on the firm. If a firm is instantly liquidated, these are the amounts of money the
+   shareholders and creditors should get.
 
-3. Assets are records of what the firm owns and what can be converted to cash.
-   There are current and fixed assets.
+3. Assets are records of what the firm owns and what can be converted to cash. There are current and fixed assets.
 
-4. The firm aims to make profit and distribute all or part of this profit 
-   to shareholders as dividends.
+4. The firm aims to make profit and distribute all or part of this profit to shareholders as dividends. Shareholders may want to reinvest the profit if the firm business is growing.
 
-5. We can devise a system that keeps a systematic record of assets, equity, 
-   liabilities and profit.
+5. We can devise a system that keeps a systematic record of assets, equity,
+   liabilities and how the profit is formed.
 
-6. Accounting principles must ensure the information about the firm is truthful.
+6. The accounting principles must ensure the information about the firm is truthful.
 
 ## Motivating example: a company lifecycle in 5 steps
 
@@ -108,7 +106,6 @@ Any accounting transaction can possibly only:
 
 In any case the (E1) equation is just basic algebra. If the equation breaks, then a transaction was not recorded properly and should enter the accounting books differently. Another way of saying the same thing is that (E1) reflects the principle of double-entry bookkeeping: any accounting transaction (entry) always alters two accounts and preserves the accounting identity.
 
-
 ## Reconciling with a traditional view
 
 An accounting identity [is usually shown][wiki] without profit account:
@@ -128,7 +125,7 @@ Within the period        Period end
 ------------------       ------------------------------- --------------
 
 
-Extended accounting                            
+Extended accounting
 identity,                                      Accounting identity,
 "brutto balance"                               balance sheet statement
 (not published)                                (published)
@@ -184,8 +181,8 @@ A "real" accounting system would need following additions to `E1`:
 - Asset is everything that is owned by the firm and what can be converted into cash. Assets are classified into fixed assets (like property, plant, equipment, or PPE) and current assets (like cash and inventory - raw material, work in progress and finished goods).
 
 - Traditionally, an accounting identity is written as `Assets = Equity + Liabilities`.
-This is a published form of balance sheet statement at the end of an accounting period 
-(eg a year). We do not see the current period profit as it was distributed to dividend and retained earnings and does not appear on a balance sheet.
+  This is a published form of balance sheet statement at the end of an accounting period
+  (eg a year). We do not see the current period profit as it was distributed to dividend and retained earnings and does not appear on a balance sheet.
 
 - Profit of the firm is revenue (or sales, or income) less expenses: `Profit = Income - Expenses`. The report containing this data is known as income statement. The income statement shows the performance of the company over a period of time, typically a year, and it includes the current period profit. At period end the profit (net income) is either transferred to the balance sheet as retained earnings or paid out as dividend.
 
