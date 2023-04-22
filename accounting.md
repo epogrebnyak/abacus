@@ -15,13 +15,13 @@ of accounting and financial reporting systems.
 3. Assets are records of what the firm owns and what can be converted to cash.
    There are current and fixed assets.
 
-4. The firm aims to make profit and distribute all or part of this profit
+4. The firm aims to make profit and distribute all or part of this profit 
    to shareholders as dividends.
 
-5. We can devise a system that keeps a systematic record of assets,
-   equity, liabilities and profit.
+5. We can devise a system that keeps a systematic record of assets, equity, 
+   liabilities and profit.
 
-6. There are governing accounting principles that ensure that the way we record information about the firm adequately reflects condition of the firm and is relevant to the final users of this information.
+6. Accounting principles must ensure the information about the firm is truthful.
 
 ## Motivating example: a company lifecycle in 5 steps
 
@@ -106,9 +106,14 @@ Any accounting transaction can possibly only:
 - increase some account on the right side, decrease another account on the right side;
 - decrease an account on the left side, decrease an account on the right side.
 
-In any case the (E1) equation is just basic algebra, if the equation breaks, then a transaction was not recorded properly and should enter the accounting books differently. Another way of saying the same thing is that (E1) reflects the principle of double-entry bookkeeping: any accounting transaction (entry) always alters two accounts and preserves the accounting identity.
+In any case the (E1) equation is just basic algebra. If the equation breaks, then a transaction was not recorded properly and should enter the accounting books differently. Another way of saying the same thing is that (E1) reflects the principle of double-entry bookkeeping: any accounting transaction (entry) always alters two accounts and preserves the accounting identity.
 
-An accounting identity is usually shown without current profit:
+
+## Reconciling with a traditional view
+
+An accounting identity [is usually shown][wiki] without profit account:
+
+[wiki]: https://en.wikipedia.org/wiki/Accounting_identity
 
 ```
 Assets = Equity + Liabilities
@@ -123,7 +128,8 @@ Within the period        Period end
 ------------------       ------------------------------- --------------
 
 
-Extended accounting identity,                  Accounting identity,
+Extended accounting                            
+identity,                                      Accounting identity,
 "brutto balance"                               balance sheet statement
 (not published)                                (published)
 A + E = C + L + I   ->   Profit is        ->    A = C + L
@@ -131,11 +137,9 @@ A + E = C + L + I   ->   Profit is        ->    A = C + L
                          to dividend and
                          retained earnings
 
-
 Income statement
 (published)
 P = I - E
-
 
 A = Assets
 E = Expenses
@@ -147,14 +151,13 @@ P = Profit
 
 Traditional way of teaching accounting sometimes goes like this:
 
-- here is a balance sheet `A = C + L`;
-- here is an income statement `P = I - E`;
-- they are related, but you spend few semesters in college until you figure out how (some students fail in this);
+- a balance sheet is `A = C + L`;
+- an income statement is `P = I - E`;
+- they are related, but you spend few semesters in college until you figure out how;
 - in a double entry accounting system every entry affects two accounts;
 - accounting software guarantees nothing is lost.
 
-Why not look the accounting identity as `A = C + L + P` and start applying algebraic rules
-even before knowing anything in accounting. Hope this approach can flatten the learning curve in accounting by making simple things simple again.
+Why not look the accounting identity as `A = C + L + (I - E)` and start applying algebraic rules even before knowing anything in accounting. Hope this approach can flatten the asccounting learning curve by making simple things simple again.
 
 ## Making accounting system realistic
 
@@ -181,7 +184,8 @@ A "real" accounting system would need following additions to `E1`:
 - Asset is everything that is owned by the firm and what can be converted into cash. Assets are classified into fixed assets (like property, plant, equipment, or PPE) and current assets (like cash and inventory - raw material, work in progress and finished goods).
 
 - Traditionally, an accounting identity is written as `Assets = Equity + Liabilities`.
-  This is a published form of balance sheet statement at the end of an accounting period (eg a year). In this balance sheet we do not see the current period profit as it was distributed to dividend and retained earnings and does not appear on a balance sheet.
+This is a published form of balance sheet statement at the end of an accounting period 
+(eg a year). We do not see the current period profit as it was distributed to dividend and retained earnings and does not appear on a balance sheet.
 
 - Profit of the firm is revenue (or sales, or income) less expenses: `Profit = Income - Expenses`. The report containing this data is known as income statement. The income statement shows the performance of the company over a period of time, typically a year, and it includes the current period profit. At period end the profit (net income) is either transferred to the balance sheet as retained earnings or paid out as dividend.
 
