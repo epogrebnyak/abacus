@@ -1,5 +1,12 @@
 # A quick way to understand accounting for programmers
 
+- [Small set of founding principles, or accounting axioms](#small-set-of-founding-principles-or-accounting-axioms)
+- [Motivating example: a company lifecycle in 5 steps](#motivating-example-a-company-lifecycle-in-5-steps)
+- [Accounting identity](#accounting-identity)
+- [Reconciling with a traditional view](#reconciling-with-a-traditional-view)
+- [Making accounting system realistic](#making-accounting-system-realistic)
+- [Notes and comments](#notes-and-comments)
+
 As a programmer, you might need a quick way to understand
 how business transactions are recorded and presented in financial statements.
 Given this knowledge one can create and support development
@@ -9,8 +16,7 @@ of accounting and financial reporting systems.
 
 1. A firm keeps records of what the firm owns (assets) and sources of funds - equity (or capital) and liabilities (debt).
 
-2. Equity and liabilities are records of amounts, or claims of shareholders and creditors on the firm. If a firm is instantly liquidated, these are the amounts of money the
-   shareholders and creditors should get.
+2. Equity and liabilities are records of amounts, or claims of shareholders and creditors on the firm. If a firm is instantly liquidated, these are the amounts of money the    shareholders and creditors should get.
 
 3. Assets are records of what the firm owns and what can be converted to cash. There are current and fixed assets.
 
