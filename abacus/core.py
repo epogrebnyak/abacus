@@ -11,6 +11,7 @@ from typing import Dict, List, Tuple
 Amount = int
 AccountName = str
 
+
 class AccountBalanceDict(UserDict[AccountName, Amount]):
     def total(self) -> Amount:
         return sum(self.values())
@@ -21,6 +22,7 @@ class AccountBalanceDict(UserDict[AccountName, Amount]):
             for account_name, balance in self.items()
             if account_name in account_names
         )
+
 
 TrialBalance = AccountBalanceDict
 
@@ -79,24 +81,48 @@ class Chart:
             + [self.income_summary_account]
         )
 
+
 def account_names(chart: Chart) -> List[AccountName]:
     return chart.debit_account_names + chart.credit_account_names
 
 
 class Ledger(UserDict[AccountName, Account]):
     """General ledger that holds all accounts."""
-    
+
     def trial_balance(self):
         return AccountBalanceDict(
-            (account_name, balance(account)) 
-            for account_name, account in self.items()
+            (account_name, balance(account)) for account_name, account in self.items()
         )
 
-    def closing_entries(self, chart, retained_earnings_account_name):
-        return closing_entries(self, chart, retained_earnings_account_name)   
+    def income_statement(self, chart):
+        tb = self.trial_balance()
+        return IncomeStatement(
+            income=tb.subset(chart.income),
+            expenses=tb.subset(chart.expenses),
+        )
+
+    def balance_sheet(self, chart):
+        tb = self.trial_balance()
+        return BalanceSheet(
+            assets=tb.subset(chart.assets),
+            capital=tb.subset(chart.equity),
+            liabilities=tb.subset(chart.liabilities),
+    )    
+
+    def close_entries(self, chart: Chart, retained_earnings_account_name: str):
+        inc_st = self.income_statement(chart)
+        ledger = close_entries(self, chart, retained_earnings_account_name)
+        return (inc_st, ledger)
     
-    def close(self, chart: Chart, retained_earnings_account_name: str):
-        return close_entries(self, chart, retained_earnings_account_name)
+    def accrue_dividend(self, amount, retained_earnings_account_name, dividend_payable_account_name):
+        entry = RawEntry(amount=amount, dr=retained_earnings_account_name, cr=dividend_payable_account_name)
+        return process_raw_entry(self, entry)
+
+    def disburse_dividend(self, dividend_payable_account_name, cash_account_name):
+        amount = balance(self[dividend_payable_account_name])
+        entry = RawEntry(amount=amount, dr=dividend_payable_account_name, cr=cash_account_name)
+        return process_raw_entry(self, entry)
+
 
 
 def make_ledger(chart: Chart) -> Ledger:
@@ -106,7 +132,6 @@ def make_ledger(chart: Chart) -> Ledger:
     for account_name in chart.credit_account_names:
         accounts[account_name] = CreditAccount()
     return Ledger(accounts)
-
 
 
 def closing_entries_income_accounts(ledger, chart):
@@ -131,31 +156,23 @@ def closing_entries_expense_accounts(ledger, chart):
     ]
 
 
-def closing_entries_to_retained_earnings(ledger, chart, retained_earnings_account_name):
-    return [RawEntry(
+def close_entries(ledger, chart, retained_earnings_account_name):
+    entries = closing_entries_income_accounts(ledger, chart)
+    ledger = process_raw_entries(ledger, entries)
+    entries = closing_entries_expense_accounts(ledger, chart)
+    ledger = process_raw_entries(ledger, entries)
+    entry = RawEntry(
         amount=balance(ledger[chart.income_summary_account]),
         cr=retained_earnings_account_name,
         dr=chart.income_summary_account,
-    )]
+    )
+    return process_raw_entry(ledger, entry)
 
-
-def closing_entries(ledger, chart, retained_earnings_account_name):
-    return closing_entries_income_accounts(ledger, chart) + \
-           closing_entries_expense_accounts(ledger, chart) + \
-           closing_entries_to_retained_earnings(ledger, chart, retained_earnings_account_name)
-
-
-def close_entries(ledger, chart, retained_earnings_account_name):
-    entries = closing_entries(ledger, chart, retained_earnings_account_name)
-    return process_raw_entries(ledger, entries)
 
 def balances(ledger: Ledger) -> AccountBalanceDict:
     return AccountBalanceDict(
         (account_name, balance(account)) for account_name, account in ledger.items()
     )
-
-def make_trial_balance(ledger: Ledger) -> AccountBalanceDict:
-    return balances(ledger)
 
 
 @dataclass
