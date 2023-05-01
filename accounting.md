@@ -68,7 +68,6 @@ for dividend decision is regulated by firm articles of association and/or bylaws
 ## Closing entries
 
 The current period profit at period end will be distrubuted to dividends and retained earnings. 
-
 This is done through closing entries. We will need more detailed accounts to keep track of 
 these closing entries within our accounting equation system:
 
