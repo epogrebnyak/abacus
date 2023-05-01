@@ -79,17 +79,15 @@ and retained earnings.
 Capital = Shareholder Equity + Retained Earnings       (6)
 ````
 
-Second, we add income summary account.
-
-The income summary account is used to 'reset' income and expenses
-at period end. The income summary account will show the amount of profit (or loss)
-and income and expenses will be zero and ready to record business operations of the 
+Second, we add income summary account. The income summary account is used to 'reset' income and expenses
+at period end. The income summary account will show the amount of profit (or loss). 
+The income and expenses accountts will be zero and ready to record business operations of the 
 next period.
 
 Third, we add dividends payable account will indicate the amount due to be paid to shareholders 
 after the decision on amount of dividend is announced. 
 
-With these changes the trail balance equation will look like below:
+With these changes the trail balance equation will look as following
 
 ```
 Assets + Expenses = Shareholder Equity + Retained Earnings + Liabilities + Income + Income Summary Account + Dividend Payable
@@ -101,25 +99,25 @@ The closing entries will be the following:
 1. We arrive at end of accounting period with Assets = a, Expenses = e, Shareholder Equity = s, Income = i and  Liabilities = l, and `a + e = s + i + l`. Assume this is the first year of operation and there are no retained earnings from earlier periods.
 2. Move Income and Expenses to Income Summary Account. The accounts change to the following: Expenses = 0, Income = 0, Income Summary Account = i - e.   
 3. Distribute profit from Income Summary Account into Retained Earnings and Dividend Payable accounts given the shareholder decision to pay d as dividend. Income Summary Account becomes 0, dividend payable becomes `d` and retained earning accrue by `r = (i - e) - d` (current profit less dividend). All of current profit is distributed and Income Summary Account becomes 0. Note that (i - e) = (r + d).
-4. Pay the dividend due in cash. Assets decrease by d as cash was transfered to shareholders and dividend payable becomes 0 because the dividend due was actually paid out.    
+4. Pay the dividend due in cash. Assets decrease by d as cash was transfered to shareholders and dividend payable becomes 0 because the dividend due was actually paid out. This can also happen after closing entries.  
 
-Steps 1-4 are demonstrated below using equation 7. The equation holds true at every step.  At step 4 the trial balance equation (7) becomes the accounting identity (3), or the balance sheet as presented in a published report.
-
+Steps 1-4 are demonstrated below using equation 7. The equation holds true at every step. 
 ```
     Assets + Expenses = Shareholder Equity + Retained Earnings + Liabilities + Income + Income Summary Account + Dividend Payable
-
-End of period, before closing entries:
 1)  a        e          s                    0                   l             i        0                        0
-
-Open Income Summary Account, close Income and Expenses accounts:
 2)  a        0          s                    0                   l             0        i - e                    0
-
-Distribute profit into dividend and retained earnings:
 3)  a        0          s                    r                   l             0        (i - e) - r - d = 0      d 
-
-Pay dividend in cash:
 4)  a-d      0          s                    r                   l             0        0                        0      
+
+Steps:
+1) End of period, before closing entries
+2) Open Income Summary Account, close Income and Expenses accounts
+3) Distribute profit for Income Summary Account into Dividend Payable and Retained Earnings
+4) Pay dividend in cash
 ```
+
+At step 4 the trial balance equation (7) becomes the accounting identity (3), or the balance sheet as presented in a published report.
+
 
 # A quick way to understand accounting for programmers
 
