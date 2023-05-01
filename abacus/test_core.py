@@ -1,8 +1,18 @@
 # pylint: disable=missing-docstring
 
-from abacus.core import (AccountBalanceDict, BalanceSheet, Book, Chart,
-                         CreditAccount, DebitAccount, EntryShortcodes,
-                         RawEntry, balance, make_ledger, process_raw_entry)
+from abacus.core import (
+    AccountBalanceDict,
+    BalanceSheet,
+    Book,
+    Chart,
+    CreditAccount,
+    DebitAccount,
+    EntryShortcodes,
+    RawEntry,
+    balance,
+    make_ledger,
+    process_raw_entry,
+)
 
 
 def test_balance_on_DebitAccount():

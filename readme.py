@@ -4,7 +4,7 @@ from abacus import BalanceSheet, Book, Chart, EntryShortcodes, RawEntry
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
-    equity=["equity"],
+    equity=["equity", "re"],
     liabilities=["payables"],
     income=["sales"],
 )
@@ -15,9 +15,17 @@ chart = Chart(
 book = Book(chart)
 e1 = RawEntry(dr="cash", cr="equity", amount=1000)
 e2 = RawEntry(dr="goods_for_sale", cr="cash", amount=250)
-book.append_raw_entry(e1)
-book.append_raw_entry(e2)
-print(book.get_ledger())
+e3 = RawEntry(cr="goods_for_sale", dr="cogs", amount=200)
+e4 = RawEntry(cr="sales", dr="cash", amount=400)
+e5 = RawEntry(cr="cash", dr="sga", amount=50)
+book.append_raw_entries([e1, e2, e3, e4, e5])
+ledger = book.get_ledger()
+from pprint import pprint
+pprint(ledger.closing_entries(chart, "re"))
+
+
+
+# %%
 print(book.get_balance_sheet())
 
 # %%
@@ -55,8 +63,14 @@ named_entries = [
 book = Book(chart, named_entry_shortcodes)
 book.append_named_entries(named_entries)
 print(book.get_ledger())
+
+
+# %%
 balance_sheet = book.get_balance_sheet()
 print(balance_sheet)
+
+# %%
+
 
 # %%
 assert balance_sheet == BalanceSheet(
