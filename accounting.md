@@ -49,9 +49,8 @@ so-called 'credit' accounts. The trial balance equation should hold at any point
 
 ## Decision to pay dividend or retain earnings
 
-When an accounting period expires, the firm decides on what to do about 
-current period profit. The firm has an option to pay the dividends to shareholders
-or to keep the profit within the firm. 
+When an accounting period expires, the firm decides on what to do about profit. 
+The firm has an option to pay the dividends to shareholdersor to keep the profit within the firm. 
 
 If there are opportunities to earn more money by keeping money within the firm, 
 it makes sense to pay no or little dividend and reinvest money 
