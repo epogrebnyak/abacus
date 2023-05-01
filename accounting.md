@@ -1,3 +1,22 @@
+# Accounting equations explained 
+
+## Balance sheet and income statement
+
+Balance sheet and income statement are financial reporting forms,
+their equations are the following:
+
+```
+Assets = Capital + Liabilities   (1)
+Profit = Income - Expenses       (2)
+```
+
+`(1)` shows the state of balance sheets at period end,
+after closing entries are completed. `(1)` is also known as accounting identity.
+
+`(1)` is always an instanteneous snapshot at a signle point in time 
+and `(2)` always refers to something that happened over a period of time.
+
+
 # A quick way to understand accounting for programmers
 
 - [Small set of founding principles, or accounting axioms](#small-set-of-founding-principles-or-accounting-axioms)
