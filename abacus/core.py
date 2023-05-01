@@ -107,22 +107,29 @@ class Ledger(UserDict[AccountName, Account]):
             assets=tb.subset(chart.assets),
             capital=tb.subset(chart.equity),
             liabilities=tb.subset(chart.liabilities),
-    )    
+        )
 
     def close_entries(self, chart: Chart, retained_earnings_account_name: str):
         inc_st = self.income_statement(chart)
         ledger = close_entries(self, chart, retained_earnings_account_name)
         return (inc_st, ledger)
-    
-    def accrue_dividend(self, amount, retained_earnings_account_name, dividend_payable_account_name):
-        entry = RawEntry(amount=amount, dr=retained_earnings_account_name, cr=dividend_payable_account_name)
+
+    def accrue_dividend(
+        self, amount, retained_earnings_account_name, dividend_payable_account_name
+    ):
+        entry = RawEntry(
+            amount=amount,
+            dr=retained_earnings_account_name,
+            cr=dividend_payable_account_name,
+        )
         return process_raw_entry(self, entry)
 
     def disburse_dividend(self, dividend_payable_account_name, cash_account_name):
         amount = balance(self[dividend_payable_account_name])
-        entry = RawEntry(amount=amount, dr=dividend_payable_account_name, cr=cash_account_name)
+        entry = RawEntry(
+            amount=amount, dr=dividend_payable_account_name, cr=cash_account_name
+        )
         return process_raw_entry(self, entry)
-
 
 
 def make_ledger(chart: Chart) -> Ledger:

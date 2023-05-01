@@ -22,15 +22,20 @@ book.append_raw_entries([e1, e2, e3, e4, e5])
 ledger = book.get_ledger()
 
 from pprint import pprint
+
 inc_st, ledger = ledger.close_entries(chart, "re")
-assert inc_st == IncomeStatement(income={'sales': 400}, expenses={'cogs': 200, 'sga': 50})
+assert inc_st == IncomeStatement(
+    income={"sales": 400}, expenses={"cogs": 200, "sga": 50}
+)
 pprint(inc_st)
 ledger = ledger.accrue_dividend(75, "re", "divp").disburse_dividend("divp", "cash")
-bs = ledger.balance_sheet(chart) 
+bs = ledger.balance_sheet(chart)
 pprint(bs)
-assert bs == BalanceSheet(assets={'cash': 1025, 'receivables': 0, 'goods_for_sale': 50},
-             capital={'equity': 1000, 're': 75},
-             liabilities={'divp': 0})
+assert bs == BalanceSheet(
+    assets={"cash": 1025, "receivables": 0, "goods_for_sale": 50},
+    capital={"equity": 1000, "re": 75},
+    liabilities={"divp": 0},
+)
 
 # @dataclass
 # class ClosingEntryFactory:
@@ -40,7 +45,7 @@ assert bs == BalanceSheet(assets={'cash': 1025, 'receivables': 0, 'goods_for_sal
 
 #     def accrue_dividend(self, amount):
 #         return RawEntry(self.retained_earnings, self.dividend_payable, amount)
-    
+
 #     def disburse_dividend(self, amount):
 #         return RawEntry(self.dividend_payable, self.cash, amount)
 
