@@ -15,8 +15,8 @@ after closing entries are completed. It is also known as the [accounting identit
 
 [acc_i]: https://en.wikipedia.org/wiki/Accounting_identity
 
-`(1)` is always an instanteneous snapshot at a signle point in time 
-and `(2)` always refers a flow of events that happened over a period of time.
+Balance sheet `(1)` is always an instanteneous snapshot at a signle point in time 
+and while profit `(2)` is always accumulated over a period of time.
 
 ## Trial balance
 
@@ -26,9 +26,9 @@ To keep track of events with the period before closing entries the following equ
 Assets = Capital + Profit + Liabilities                (3)
 ```
 
-The profit in `(3)` is current period profit before closing entries. 
+The profit in equation `(3)` is current period profit before closing entries. 
 
-Why is profit recorded on the same side as capital? Here is one explaination. Profit is an increment of capital invested into the firm, 
+Why is profit recorded on the same side as capital? Here is one possible explaination. Profit is an increment of capital invested into the firm, 
 so it appears next to equity. When no dividends are paid, all of the current profit will add to retained earnings, 
 which is a component of capital.
 
@@ -67,6 +67,37 @@ for dividend decision is regulated by firm articles of association and/or bylaws
 
 ## Closing entries
 
+Closing entries happen at the end of an accounting period. They reflect calculation of
+profit in the income summary account and may involve accrual of dividend, if dividend 
+was announced at the end of accounting period as well.
+
+### 1. Closing income and expense accounts
+
+The income summary account is used to 'reset' income and expenses accounts at the end of an accounting period.
+Income and expenses accountts will be zero and ready to record business operations of the 
+next period. 
+
+We start with the trail balance and add Income Summary Account:
+
+```
+Assets + Expenses = Capital + Liabilities + Income + Income Summary Account     (6)
+100      20         10        60            50       0
+```
+
+Then we close income and expenses accounts and calculate a profit at Income Summary Account:
+
+```
+Assets + Expenses = Capital + Liabilities + Income + Income Summary Account     (6)
+100      0          10        60            0        30 = 50 - 20
+```
+
+The firm profit in the example is 30, it will next be distributed to retained earnings
+and, possibly, dividend, if the firm chooses to pay dividends.
+
+### 2. Retained earnings.
+
+** Start over here **
+
 The current period profit at period end will be distrubuted to dividends and retained earnings. 
 This is done through closing entries. We will need more detailed accounts to keep track of 
 these closing entries within our accounting equation system:
@@ -78,10 +109,6 @@ and retained earnings.
 Capital = Shareholder Equity + Retained Earnings       (6)
 ````
 
-Second, we add income summary account. The income summary account is used to 'reset' income and expenses
-at period end. The income summary account will show the amount of profit (or loss). 
-The income and expenses accountts will be zero and ready to record business operations of the 
-next period.
 
 Third, we add dividends payable account will indicate the amount due to be paid to shareholders 
 after the decision on amount of dividend is announced. 
