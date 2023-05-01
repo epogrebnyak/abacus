@@ -15,7 +15,7 @@ after closing entries are completed. It is also known as the [accounting identit
 
 [acc_i]: https://en.wikipedia.org/wiki/Accounting_identity
 
-Balance sheet `(1)` is always an instanteneous snapshot at a signle point in time 
+Balance sheet `(1)` is always an instanteneous snapshot at a single point in time 
 and while profit `(2)` is always accumulated over a period of time.
 
 ## Trial balance
@@ -25,8 +25,6 @@ To keep track of events with the period before closing entries the following equ
 ```
 Assets = Capital + Profit + Liabilities                (3)
 ```
-
-The profit in equation `(3)` is current period profit before closing entries. 
 
 Why is profit recorded on the same side as capital? Here is one possible explaination. Profit is an increment of capital invested into the firm, 
 so it appears next to equity. When no dividends are paid, all of the current profit will add to retained earnings, 
@@ -47,27 +45,36 @@ Assets + Expenses = Capital + Liabilities + Income     (5)
 On the left we have the sum of so-called 'debit' accounts and on the left the sum of 
 so-called 'credit' accounts. The trial balance equation should hold at any point in time.
 
-## Decision to pay dividend or retain earnings
-
-When an accounting period expires, the firm decides on what to do about profit. 
-The firm has an option to pay the dividends to shareholdersor to keep the profit within the firm. 
-
-If there are opportunities to earn more money by keeping money within the firm, 
-it makes sense to pay no or little dividend and reinvest money 
-into firm's profitable projects or lines of business.
-
-If the shareholders do not see growth opportunities for the firm,
-they are likely to decide to pay entire or larger amount of the profit 
-as divivdends.
-
-The decison to pay dividend is decided by shareholder vote based on 
-management proposal. Differnt shareholders may have conflicting views about 
-the proper amount of dividend. The amount of shareholder votes required
-for dividend decision is regulated by firm articles of association and/or bylaws.
-
 ## Closing entries
 
-Closing entries happen at the end of an accounting period. They reflect calculation of
+There are few things to be completed at the at the end of reporting period.
+
+First, we close the income accounts and revenue accounts and calculate the profit or loss
+amount at income summary account. This is similar to rearranging equation `(5)` back into equation 
+`(3)`. 
+
+Second, if no divident is paid the current period profit is added to retained earnings.
+At this oiint we close all temporary accounts and work further with permanent accounts. 
+
+Third, if dividend is announced, retained earnings are decreased by amount of didvidend, 
+and dividend payable is increased and shown as a liability. 
+
+Forth, the dividend may be paid.
+
+
+---
+
+
+
+Closing entries allow to 
+Closing entries will do the follwoing:
+- close the temporary accounts and move the account balances to permanent accounts
+
+
+Also if dividend is announced at end of reporting period, the closing entries will indicate the 
+
+
+happen at the end of an accounting period. They reflect calculation of
 profit in the income summary account and may involve accrual of dividend, if dividend 
 was announced at the end of accounting period as well.
 
@@ -93,6 +100,26 @@ Assets + Expenses = Capital + Liabilities + Income + Income Summary Account     
 
 The firm profit in the example is 30, it will next be distributed to retained earnings
 and, possibly, dividend, if the firm chooses to pay dividends.
+
+
+## Decision to pay dividend or retain earnings
+
+When an accounting period expires, the firm decides on what to do about profit. 
+The firm has an option to pay the dividends to shareholdersor to keep the profit within the firm. 
+
+If there are opportunities to earn more money by keeping money within the firm, 
+it makes sense to pay no or little dividend and reinvest money 
+into firm's profitable projects or lines of business.
+
+If the shareholders do not see growth opportunities for the firm,
+they are likely to decide to pay entire or larger amount of the profit 
+as divivdends.
+
+The decison to pay dividend is decided by shareholder vote based on 
+management proposal. Differnt shareholders may have conflicting views about 
+the proper amount of dividend. The amount of shareholder votes required
+for dividend decision is regulated by firm articles of association and/or bylaws.
+
 
 ### 2. Retained earnings.
 
