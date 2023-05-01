@@ -2,32 +2,29 @@
 
 ## Balance sheet and income statement
 
-Balance sheet and income statement are published financial reporting forms,
-their equations are the following:
+Balance sheet and income statement equations are the following:
 
 ```
-Assets = Capital + Liabilities   (1)
-Profit = Income - Expenses       (2)
+Assets = Capital + Liabilities                        (1)
+Profit = Income - Expenses                            (2)
 ```
 
-`(1)` shows the state of balance sheets at period end,
-after closing entries are completed. It is also known as the [accounting identity][acc_i].
+`(1)` shows the state of balance sheets at reporting period end, after closing entries are completed. 
+It is also known as the [accounting identity][acc_i].
 
 [acc_i]: https://en.wikipedia.org/wiki/Accounting_identity
 
-Balance sheet `(1)` is always an instanteneous snapshot at a single point in time 
-and while profit `(2)` is always accumulated over a period of time.
-
 ## Trial balance
 
-To keep track of events with the period before closing entries the following equation is helpful.
+Within the reporting period before closing entries the following equation is valid.
 
 ```
 Assets = Capital + Profit + Liabilities                (3)
 ```
 
-Why is profit recorded on the same side as capital? Here is one possible explaination. Profit is an increment of capital invested into the firm, 
-so it appears next to equity. When no dividends are paid, all of the current profit will add to retained earnings, 
+Why is profit recorded on the same side as capital? Here is one possible explaination. 
+Profit is an increment of capital invested into the firm, so it appears next to equity. 
+When no dividends are paid, all of the current profit will add up to retained earnings, 
 which is a component of capital.
 
 Substituting `(2)` into `(3)` we get:
@@ -47,60 +44,28 @@ so-called 'credit' accounts. The trial balance equation should hold at any point
 
 ## Closing entries
 
-There are few things to be completed at the at the end of reporting period.
+What happens to the accounts at the end of reporting period? 
 
-First, we close the income accounts and revenue accounts and calculate the profit or loss
-amount at income summary account. This is similar to rearranging equation `(5)` back into equation 
-`(3)`. 
+First, we close the temporary accounts and tranfer their balances to permanent accounts.
+This is are similar to rearranging equation `(5)` back into equation 
+`(1)`:
+- add income account balance to income summary account
+- deduct expense account balance from income summary account
+- the balance of income summary account is the current period profit (or loss, if negative)
+- income and expenses account balances are zero
+- tranfer income summary account balance to increase retained earnings. If there is was a loss, 
+  it will decrease the retained earnings.  
 
-Second, if no divident is paid the current period profit is added to retained earnings.
-At this oiint we close all temporary accounts and work further with permanent accounts. 
+Second, if there was a profit in current period and a decision to pay dividend, 
+we account for dividend:
+- the retained earnings are decreased by the amount of dividend
+- dividend payable account is increased and shown as a liability. 
 
-Third, if dividend is announced, retained earnings are decreased by amount of didvidend, 
-and dividend payable is increased and shown as a liability. 
-
-Forth, the dividend may be paid.
-
-
----
-
-
-
-Closing entries allow to 
-Closing entries will do the follwoing:
-- close the temporary accounts and move the account balances to permanent accounts
-
-
-Also if dividend is announced at end of reporting period, the closing entries will indicate the 
-
-
-happen at the end of an accounting period. They reflect calculation of
-profit in the income summary account and may involve accrual of dividend, if dividend 
-was announced at the end of accounting period as well.
-
-### 1. Closing income and expense accounts
-
-The income summary account is used to 'reset' income and expenses accounts at the end of an accounting period.
-Income and expenses accountts will be zero and ready to record business operations of the 
-next period. 
-
-We start with the trail balance and add Income Summary Account:
-
-```
-Assets + Expenses = Capital + Liabilities + Income + Income Summary Account     (6)
-100      20         10        60            50       0
-```
-
-Then we close income and expenses accounts and calculate a profit at Income Summary Account:
-
-```
-Assets + Expenses = Capital + Liabilities + Income + Income Summary Account     (6)
-100      0          10        60            0        30 = 50 - 20
-```
-
-The firm profit in the example is 30, it will next be distributed to retained earnings
-and, possibly, dividend, if the firm chooses to pay dividends.
-
+On dividend payment date the cash amount will be transferred to shareholders:
+- decreasing liabilities (dividend payable account)
+- decrease assets (cash account).
+ 
+The dividend announcement and payment dates may happen after the reporting period.  
 
 ## Decision to pay dividend or retain earnings
 
@@ -121,30 +86,13 @@ the proper amount of dividend. The amount of shareholder votes required
 for dividend decision is regulated by firm articles of association and/or bylaws.
 
 
-### 2. Retained earnings.
-
-** Start over here **
-
-The current period profit at period end will be distrubuted to dividends and retained earnings. 
-This is done through closing entries. We will need more detailed accounts to keep track of 
-these closing entries within our accounting equation system:
-
-First, in capital we will distinguish shareholder equity, or paid-in capital,
-and retained earnings.
-
-```
-Capital = Shareholder Equity + Retained Earnings       (6)
-````
-
-
-Third, we add dividends payable account will indicate the amount due to be paid to shareholders 
-after the decision on amount of dividend is announced. 
+## Numeric example
 
 With these changes the trail balance equation will look as following
 
 ```
 Assets + Expenses = Shareholder Equity + Retained Earnings + Liabilities + Income + Income Summary Account + Dividend Payable
-(7)
+(6)
 ```
 
 The closing entries will be the following:
