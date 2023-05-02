@@ -1,16 +1,24 @@
-#%%
+# %%
 """
-Chart -> Ledger -> [RawEntry] -> Ledger -> (BalanceSheet, IncomeStatement)  
+Chart -> Ledger -> [RawEntry] -> (Ledger, [RawEntry]) -> [ClosingEntry] -> (BalanceSheet, IncomeStatement, [ClosingEntry])  
+Ledger -> TrialBalance
 """
 
 # pylint: disable=no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
-from collections import UserDict, UserList
+from collections import UserDict
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
 Amount = int
 AccountName = str
+
+
+@dataclass
+class RawEntry:
+    dr: AccountName
+    cr: AccountName
+    amount: Amount
 
 
 class AccountBalanceDict(UserDict[AccountName, Amount]):
@@ -38,6 +46,9 @@ class Account:
 
     def credit(self, amount: Amount):
         self.credits.append(amount)
+
+    def copy(self):
+        return self.__class__(self.debits.copy(), self.credits.copy())
 
 
 class DebitAccount(Account):
@@ -91,7 +102,7 @@ class Ledger(UserDict[AccountName, Account]):
     """General ledger that holds all accounts."""
 
     def trial_balance(self):
-        return AccountBalanceDict(
+        return TrialBalance(
             (account_name, balance(account)) for account_name, account in self.items()
         )
 
@@ -111,9 +122,13 @@ class Ledger(UserDict[AccountName, Account]):
         )
 
     def close_entries(self, chart: Chart, retained_earnings_account_name: str):
-        inc_st = self.income_statement(chart)
-        ledger = close_entries(self, chart, retained_earnings_account_name)
-        return (inc_st, ledger)
+        return close_entries(self, chart, retained_earnings_account_name)
+
+    def copy(self):
+        return Ledger((k, v.copy()) for k, v in self.items())
+
+    def process(self, raw_entries: List[RawEntry]):
+        return process_raw_entries(self, raw_entries)
 
     # TODO: move to Book class
     def accrue_dividend(
@@ -144,7 +159,7 @@ def make_ledger(chart: Chart) -> Ledger:
     return Ledger(accounts)
 
 
-def closing_entries_income_accounts(ledger, chart):
+def closing_entries_income_accounts(ledger, chart) -> List[RawEntry]:
     return [
         RawEntry(
             amount=balance(ledger[account_name]),
@@ -155,7 +170,7 @@ def closing_entries_income_accounts(ledger, chart):
     ]
 
 
-def closing_entries_expense_accounts(ledger, chart):
+def closing_entries_expense_accounts(ledger, chart) -> List[RawEntry]:
     return [
         RawEntry(
             amount=balance(ledger[account_name]),
@@ -166,15 +181,17 @@ def closing_entries_expense_accounts(ledger, chart):
     ]
 
 
-def closing_entries_to_retained_earnings(ledger, chart, retained_earnings_account_name):
+def closing_entries_to_retained_earnings(
+    ledger, chart, retained_earnings_account_name
+) -> List[RawEntry]:
     entries = closing_entries_income_accounts(
         ledger, chart
     ) + closing_entries_expense_accounts(ledger, chart)
-    _dummy_ledger = make_ledger(chart)
-    _dummy_ledger = process_raw_entries(_dummy_ledger, entries)
+    dummy_ledger = process_raw_entries(ledger, entries)
+    amount = balance(dummy_ledger[chart.income_summary_account])
     return [
         RawEntry(
-            amount=balance(_dummy_ledger[chart.income_summary_account]),
+            amount=amount,
             cr=retained_earnings_account_name,
             dr=chart.income_summary_account,
         )
@@ -196,29 +213,25 @@ def close_entries(ledger, chart, retained_earnings_account_name):
     return process_raw_entries(ledger, entries)
 
 
-def balances(ledger: Ledger) -> AccountBalanceDict:
-    return AccountBalanceDict(
-        (account_name, balance(account)) for account_name, account in ledger.items()
-    )
-
-
-@dataclass
-class RawEntry:
-    dr: AccountName
-    cr: AccountName
-    amount: Amount
-
-
 def process_raw_entry(ledger: Ledger, entry: RawEntry) -> Ledger:
-    ledger[entry.dr].debit(entry.amount)
-    ledger[entry.cr].credit(entry.amount)
-    return ledger
+    _ledger = ledger.copy()
+    _ledger[entry.dr].debit(entry.amount)
+    _ledger[entry.cr].credit(entry.amount)
+    return _ledger
 
 
 def process_raw_entries(ledger, entries: List[RawEntry]) -> Ledger:
+    _ledger = ledger.copy()
+    failed = []
     for entry in entries:
-        ledger = process_raw_entry(ledger, entry)
-    return ledger
+        try:
+            _ledger[entry.dr].debit(entry.amount)
+            _ledger[entry.cr].credit(entry.amount)
+        except KeyError:
+            failed.append(entry)
+    if failed:
+        raise KeyError("Following entries could not be processed:" + str(failed))
+    return _ledger
 
 
 @dataclass
@@ -260,47 +273,19 @@ class EntryFactory:
     def accrue_dividend(self, amount):
         return RawEntry(self.retained_earnings, self.dividend_payable, amount)
 
-    def disburse_dividend_in_cash(self, amount):
+    def disburse_dividend(self, amount):
         return RawEntry(self.dividend_payable, self.cash, amount)
 
 
 # TODO: split to naming part and data part
 # book.is_compatible(ledger)
 
+
 @dataclass
 class Accountant:
     chart: Chart
     namer: EntryFactory
     shortcodes: EntryShortcodes = field(default_factory=EntryShortcodes)
-
-class RawEntryList(UserList[RawEntry]):
-    def get_ledger(self, start_ledger):
-        return process_raw_entries(start_ledger.copy(), self.data)
-
-# TODO: do not change ledger when processing
-#ledger0 = Ledger(cash=DebitAccount([100], []), equity=CreditAccount([], [100]))
-#raw_entries = RawEntryList([RawEntry("cash", "equity", 50)])
-#print(raw_entries.get_ledger(ledger0))
-#print(ledger0)
-#%%
-
-class EntryList:
-    start_ledger: Ledger
-    raw_entries: List[RawEntry] = field(default_factory=list)
-
-    def append(self, entry: RawEntry):
-        self.raw_entries.append(entry)
-        return self
-
-    def extend(self, entries: List[RawEntry]):
-        for entry in entries:
-            self.append(entry)
-        return self
-
-    def get_ledger(self) -> Ledger:
-        ledger = self.start_ledger.copy()
-        return process_raw_entries(ledger, self.raw_entries)
-
 
 
 @dataclass
@@ -335,15 +320,14 @@ class Book:
         return self
 
     def get_ledger(self) -> Ledger:
-        ledger = make_ledger(self.chart)
-        return process_raw_entries(ledger, self.raw_entries)
+        return make_ledger(self.chart).process(self.raw_entries)
 
     def get_trial_balance(self) -> TrialBalance:
         return self.get_ledger().trial_balance()
 
     def get_balance_sheet(self) -> BalanceSheet:
         return self.get_ledger().balance_sheet(self.chart)
-    
+
 
 def make_balance_sheet(ledger, chart):
     tb = ledger.trial_balance()

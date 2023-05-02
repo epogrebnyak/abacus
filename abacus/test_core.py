@@ -12,8 +12,21 @@ from abacus.core import (
     balance,
     make_ledger,
     process_raw_entry,
-    closing_entries
+    closing_entries,
 )
+
+
+def test_account_copy():
+    da = DebitAccount([], [])
+    da.debit(10)
+    da.credit(2)
+    assert da == DebitAccount(debits=[10], credits=[2])
+
+    da2 = da.copy()
+    da2.debit(8)
+    da2.credit(15)
+    assert da2 == DebitAccount(debits=[10, 8], credits=[2, 15])
+    assert da == DebitAccount(debits=[10], credits=[2])
 
 
 def test_balance_on_DebitAccount():
@@ -36,26 +49,27 @@ def test_AccountBalanceDict():
     )
 
 
-
 from abacus import IncomeStatement, BalanceSheet, Book, Chart, EntryShortcodes, RawEntry
+
 
 def chart2():
     return Chart(
-    assets=["cash", "receivables", "goods_for_sale"],
-    expenses=["cogs", "sga"],
-    equity=["equity", "re"],
-    liabilities=["divp", "payables"],
-    income=["sales"],
-)
+        assets=["cash", "receivables", "goods_for_sale"],
+        expenses=["cogs", "sga"],
+        equity=["equity", "re"],
+        liabilities=["divp", "payables"],
+        income=["sales"],
+    )
+
 
 def ledger2():
     chart = Chart(
-    assets=["cash", "receivables", "goods_for_sale"],
-    expenses=["cogs", "sga"],
-    equity=["equity", "re"],
-    liabilities=["divp", "payables"],
-    income=["sales"],
-)
+        assets=["cash", "receivables", "goods_for_sale"],
+        expenses=["cogs", "sga"],
+        equity=["equity", "re"],
+        liabilities=["divp", "payables"],
+        income=["sales"],
+    )
     book = Book(chart)
     e1 = RawEntry(dr="cash", cr="equity", amount=1000)
     e2 = RawEntry(dr="goods_for_sale", cr="cash", amount=250)
@@ -64,6 +78,7 @@ def ledger2():
     e5 = RawEntry(cr="cash", dr="sga", amount=50)
     book.append_raw_entries([e1, e2, e3, e4, e5])
     return book.get_ledger()
+
 
 def test_closing_entries():
     ledger = ledger2()
@@ -76,16 +91,24 @@ def test_closing_entries():
     ]
 
 
-def test_statements():
-# %%
+def test_income_statement():
     ledger = ledger2()
     chart = chart2()
-    income_st, ledger = ledger.close_entries(chart, "re")
+    income_st = ledger.income_statement(chart)
     assert income_st == IncomeStatement(
         income={"sales": 400}, expenses={"cogs": 200, "sga": 50}
     )
-    ledger = ledger.accrue_dividend(75, "re", "divp").disburse_dividend("divp", "cash")
-    balance_st = ledger.balance_sheet(chart)
+
+
+def test_closing_entries2():
+    ledger = ledger2()
+    chart = chart2()
+    closing_ledger = (
+        ledger.close_entries(chart, "re")
+        .accrue_dividend(75, "re", "divp")
+        .disburse_dividend("divp", "cash")
+    )
+    balance_st = closing_ledger.balance_sheet(chart)
     assert balance_st == BalanceSheet(
         assets={"cash": 1025, "receivables": 0, "goods_for_sale": 50},
         capital={"equity": 1000, "re": 75},
@@ -93,11 +116,8 @@ def test_statements():
     )
 
 
-
-
 def test_ledger():
-    ledger = make_ledger(chart_1)
-    ledger = process_raw_entry(ledger, RawEntry("cash", "equity", 1000))
+    ledger = process_raw_entry(make_ledger(chart_1), RawEntry("cash", "equity", 1000))
     assert ledger["cash"] == DebitAccount([1000], [])
     assert ledger["equity"] == CreditAccount([], [1000])
 
@@ -136,14 +156,13 @@ named_entries_1 = [
 
 
 def balance_sheet():
-    inc, ledger = (
+    ledger = (
         Book(chart_1, EntryShortcodes(entry_shortcodes_1))
         .append_named_entries(named_entries_1)
         .get_ledger()
         .close_entries(chart_1, "retained_earnings")
     )
     return ledger.balance_sheet(chart_1)
-
 
 
 def test_balance_sheet():
