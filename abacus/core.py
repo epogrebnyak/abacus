@@ -1,10 +1,11 @@
+#%%
 """
-Chart -> Ledger -> [RawEntry] -> Ledger -> Amount -> Ledger -> (BalanceSheet, IncomeStatement)  
+Chart -> Ledger -> [RawEntry] -> Ledger -> (BalanceSheet, IncomeStatement)  
 """
 
-# pylint: disable=missing-docstring, pointless-string-statement
+# pylint: disable=no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
-from collections import UserDict
+from collections import UserDict, UserList
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
@@ -114,6 +115,7 @@ class Ledger(UserDict[AccountName, Account]):
         ledger = close_entries(self, chart, retained_earnings_account_name)
         return (inc_st, ledger)
 
+    # TODO: move to Book class
     def accrue_dividend(
         self, amount, retained_earnings_account_name, dividend_payable_account_name
     ):
@@ -124,6 +126,7 @@ class Ledger(UserDict[AccountName, Account]):
         )
         return process_raw_entry(self, entry)
 
+    # TODO: move to Book class
     def disburse_dividend(self, dividend_payable_account_name, cash_account_name):
         amount = balance(self[dividend_payable_account_name])
         entry = RawEntry(
@@ -163,32 +166,40 @@ def closing_entries_expense_accounts(ledger, chart):
     ]
 
 
-def close_entries(ledger, chart, retained_earnings_account_name):
-    entries = closing_entries_income_accounts(ledger, chart)
-    ledger = process_raw_entries(ledger, entries)
-    entries = closing_entries_expense_accounts(ledger, chart)
-    ledger = process_raw_entries(ledger, entries)
-    entry = RawEntry(
-        amount=balance(ledger[chart.income_summary_account]),
-        cr=retained_earnings_account_name,
-        dr=chart.income_summary_account,
+def closing_entries_to_retained_earnings(ledger, chart, retained_earnings_account_name):
+    entries = closing_entries_income_accounts(
+        ledger, chart
+    ) + closing_entries_expense_accounts(ledger, chart)
+    _dummy_ledger = make_ledger(chart)
+    _dummy_ledger = process_raw_entries(_dummy_ledger, entries)
+    return [
+        RawEntry(
+            amount=balance(_dummy_ledger[chart.income_summary_account]),
+            cr=retained_earnings_account_name,
+            dr=chart.income_summary_account,
+        )
+    ]
+
+
+def closing_entries(ledger, chart, retained_earnings_account_name):
+    return (
+        closing_entries_income_accounts(ledger, chart)
+        + closing_entries_expense_accounts(ledger, chart)
+        + closing_entries_to_retained_earnings(
+            ledger, chart, retained_earnings_account_name
+        )
     )
-    return process_raw_entry(ledger, entry)
+
+
+def close_entries(ledger, chart, retained_earnings_account_name):
+    entries = closing_entries(ledger, chart, retained_earnings_account_name)
+    return process_raw_entries(ledger, entries)
 
 
 def balances(ledger: Ledger) -> AccountBalanceDict:
     return AccountBalanceDict(
         (account_name, balance(account)) for account_name, account in ledger.items()
     )
-
-
-@dataclass
-class Balances:
-    assets: AccountBalanceDict
-    expenses: AccountBalanceDict
-    equity: AccountBalanceDict
-    liabilities: AccountBalanceDict
-    income: AccountBalanceDict
 
 
 @dataclass
@@ -234,10 +245,62 @@ EntryShortcodeDict = Dict[str, Pair]
 NamedEntry = Tuple[str, Amount]
 
 
-class EntryShortcodes(UserDict):
+class EntryShortcodes(UserDict[str, Tuple[AccountName, AccountName]]):
     def to_raw_entry(self, named_entry: NamedEntry) -> RawEntry:
         dr, cr = self[named_entry[0]]
         return RawEntry(dr, cr, named_entry[1])
+
+
+@dataclass
+class EntryFactory:
+    retained_earnings: str = "re"
+    dividend_payable: str = "divp"
+    cash: str = "cash"
+
+    def accrue_dividend(self, amount):
+        return RawEntry(self.retained_earnings, self.dividend_payable, amount)
+
+    def disburse_dividend_in_cash(self, amount):
+        return RawEntry(self.dividend_payable, self.cash, amount)
+
+
+# TODO: split to naming part and data part
+# book.is_compatible(ledger)
+
+@dataclass
+class Accountant:
+    chart: Chart
+    namer: EntryFactory
+    shortcodes: EntryShortcodes = field(default_factory=EntryShortcodes)
+
+class RawEntryList(UserList[RawEntry]):
+    def get_ledger(self, start_ledger):
+        return process_raw_entries(start_ledger.copy(), self.data)
+
+# TODO: do not change ledger when processing
+#ledger0 = Ledger(cash=DebitAccount([100], []), equity=CreditAccount([], [100]))
+#raw_entries = RawEntryList([RawEntry("cash", "equity", 50)])
+#print(raw_entries.get_ledger(ledger0))
+#print(ledger0)
+#%%
+
+class EntryList:
+    start_ledger: Ledger
+    raw_entries: List[RawEntry] = field(default_factory=list)
+
+    def append(self, entry: RawEntry):
+        self.raw_entries.append(entry)
+        return self
+
+    def extend(self, entries: List[RawEntry]):
+        for entry in entries:
+            self.append(entry)
+        return self
+
+    def get_ledger(self) -> Ledger:
+        ledger = self.start_ledger.copy()
+        return process_raw_entries(ledger, self.raw_entries)
+
 
 
 @dataclass
@@ -275,24 +338,34 @@ class Book:
         ledger = make_ledger(self.chart)
         return process_raw_entries(ledger, self.raw_entries)
 
-    def get_balances(self):
-        return balances(self.get_ledger())
+    def get_trial_balance(self) -> TrialBalance:
+        return self.get_ledger().trial_balance()
 
     def get_balance_sheet(self) -> BalanceSheet:
-        return make_balance_sheet(self.get_balances(), self.chart)
+        return self.get_ledger().balance_sheet(self.chart)
+    
 
-
-def capital(balances_dict, chart):
-    res = balances_dict.subset(chart.equity)
-    res["current_profit"] = make_income_statement(balances_dict, chart).current_profit()
-    return res
-
-
-def make_balance_sheet(balances_dict, chart):
+def make_balance_sheet(ledger, chart):
+    tb = ledger.trial_balance()
     return BalanceSheet(
-        assets=balances_dict.subset(chart.assets),
-        capital=capital(balances_dict, chart),
-        liabilities=balances_dict.subset(chart.liabilities),
+        assets=tb.subset(chart.assets),
+        capital=tb.subset(chart.equity),
+        liabilities=tb.subset(chart.liabilities),
+    )
+
+
+def current_profit(ledger, chart):
+    return make_income_statement(ledger, chart).current_profit()
+
+
+def _make_interim_balance_sheet(ledger, chart):
+    tb = ledger.trial_balance()
+    cap = tb.subset(chart.equity)
+    cap["current_profit"] = current_profit(ledger, chart)
+    return BalanceSheet(
+        assets=tb.subset(chart.assets),
+        capital=cap,
+        liabilities=tb.subset(chart.liabilities),
     )
 
 
