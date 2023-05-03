@@ -1,4 +1,4 @@
-from abacus.nameit import Chart
+from abacus.remove.nameit import Chart
 
 chart = Chart(
     assets=dict(
@@ -27,7 +27,7 @@ def test_chart():
     assert chart == Chart(**chart_dict)
 
 
-from abacus.nameit import (
+from abacus.remove.nameit import (
     Asset,
     Capital,
     Entry,
@@ -70,7 +70,7 @@ def test_profit():
     assert 40 == profit(account_dict2).amount
 
 
-from abacus.nameit import Balance, Line, left, make_balance, right
+from abacus.remove.nameit import Balance, Line, left, make_balance, right
 
 
 def tets_account_dict_to_balance():

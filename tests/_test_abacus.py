@@ -1,6 +1,6 @@
 from abacus import Chart, Ledger
-from abacus.accounting import CreditAccount, DebitAccount, make_ledger
-from abacus.formatting import make_book
+from abacus.remove.accounting import CreditAccount, DebitAccount, make_ledger
+from abacus.remove.formatting import make_book
 
 names = dict(
     inv="Inventory",

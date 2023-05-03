@@ -1,5 +1,5 @@
-from abacus.accounting import Chart, Entry, balances, make_ledger
-from abacus.formatting import Book
+from abacus.remove.accounting import Chart, Entry, balances, make_ledger
+from abacus.remove.formatting import Book
 
 
 def test_end_to_end():

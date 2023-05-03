@@ -23,7 +23,7 @@ st.header("1. Make a chart of accounts")
 Example: `[Eq]uity` will create a shorthand `Eq` for Equity account. 
 """
 
-from abacus.formatting import side_by_side
+from abacus.remove.formatting import side_by_side
 from abacus.naming import variable
 
 
@@ -41,7 +41,7 @@ capital_dict = ask("Capital accounts", "[Eq]uity")
 liabilities_dict = ask("Liabilities accounts", "Debt; Accrued interest [ai]")
 income_dict = ask("Income accounts", "Sales")
 
-from abacus.accounting import Chart, Entry, make_book
+from abacus.remove.accounting import Chart, Entry, make_book
 
 
 def keys(d):

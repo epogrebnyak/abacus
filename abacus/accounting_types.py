@@ -6,7 +6,7 @@ Classes for accounting.
 
 from collections import UserDict
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Tuple
 
 Amount = int
 AccountName = str
@@ -51,7 +51,13 @@ class Account:
 
 
 class DebitAccount(Account):
-    pass
+    def balance(self) -> Amount:
+        return sum(self.debits) - sum(self.credits)
+
+
+class CreditAccount(Account):
+    def balance(self) -> Amount:
+        return sum(self.credits) - sum(self.debits)
 
 
 class Asset(DebitAccount):
@@ -59,10 +65,6 @@ class Asset(DebitAccount):
 
 
 class Expense(DebitAccount):
-    pass
-
-
-class CreditAccount(Account):
     pass
 
 
@@ -94,12 +96,42 @@ class Chart:
     contraccounts: List[str] = field(default_factory=list)
     income_summary_account: str = "profit"
 
+    def make_ledger(self):
+        from .core import make_ledger
+
+        return make_ledger(self)
+
 
 class Ledger(UserDict[AccountName, Account]):
     """General ledger that holds all accounts."""
 
     def safe_copy(self):
         return Ledger((k, account.safe_copy()) for k, account in self.items())
+
+    def process_entries(self, entries):
+        from .core import process_entries
+
+        return process_entries(self, entries)
+
+    def close(self, retained_earnings_account_name: AccountName):
+        from .core import close
+
+        return close(self, retained_earnings_account_name)
+
+    def balances(self):
+        from .core import balances
+
+        return balances(self)
+
+    def balance_sheet(self):
+        from .core import balance_sheet
+
+        return balance_sheet(self)
+
+    def income_statement(self):
+        from .core import income_statement
+
+        return income_statement(self)
 
 
 @dataclass
@@ -119,6 +151,21 @@ class IncomeStatement:
 
     def current_profit(self):
         return self.income.total() - self.expenses.total()
+
+
+@dataclass
+class NamedEntry:
+    opcode: str
+    amount: Amount
+
+
+class Shortcodes(UserDict[str, Tuple[AccountName, AccountName]]):
+    def make_entry(self, named_entry: NamedEntry) -> Entry:
+        dr, cr = self[named_entry.opcode]
+        return Entry(dr, cr, named_entry.amount)
+
+    def make_entries(self, named_entries):
+        return [self.make_entry(ne) for ne in named_entries]
 
 
 TrialBalance = AccountBalancesDict

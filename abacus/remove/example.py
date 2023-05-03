@@ -1,5 +1,5 @@
 #
-from accounting import Chart, Entry, balances, make_ledger
+from abacus.remove.accounting import Chart, Entry, balances, make_ledger
 
 # 1. Lay out a system of accounts, or "chart of accounts", CoA.
 # CoA can be standardised in some countries fully or by type of business (eg in banks).
@@ -54,7 +54,7 @@ assert balances(L, chart) == {
     "profit": -1,
 }
 
-from formatting import Book
+from abacus.remove.formatting import Book
 
 b = Book(chart, L, {})
 assert b.left() == [
