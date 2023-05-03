@@ -140,8 +140,10 @@ class BalanceSheet:
     capital: AccountBalancesDict
     liabilities: AccountBalancesDict
 
-    def is_valid(self):
-        return self.assets.total() == self.capital.total() + self.liabilities.total()
+    def as_string(self, rename_dict=dict()):
+        from .formatting import TextViewer
+
+        return TextViewer(rename_dict).balance_sheet(self)
 
 
 @dataclass
@@ -151,6 +153,11 @@ class IncomeStatement:
 
     def current_profit(self):
         return self.income.total() - self.expenses.total()
+
+    def as_string(self, rename_dict=dict()):
+        from .formatting import TextViewer
+
+        return TextViewer(rename_dict).income_statement(self)
 
 
 @dataclass
@@ -164,7 +171,7 @@ class Shortcodes(UserDict[str, Tuple[AccountName, AccountName]]):
         dr, cr = self[named_entry.opcode]
         return Entry(dr, cr, named_entry.amount)
 
-    def make_entries(self, named_entries):
+    def make_entries(self, named_entries: List[NamedEntry]):
         return [self.make_entry(ne) for ne in named_entries]
 
 

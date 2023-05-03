@@ -1,5 +1,7 @@
-from abacus.core import BalanceSheet, IncomeStatement, AccountBalancesDict
+# pylint: disable=import-error
 from dataclasses import dataclass
+from typing import Dict
+from abacus.core import BalanceSheet, IncomeStatement, AccountBalancesDict
 
 
 @dataclass
@@ -72,40 +74,21 @@ def plain(xs):
     return tabulate(xs, tablefmt="plain").split("\n")
 
 
-def balance_sheet_as_string(bs, alt_diсt={}):
-    right = lineset(bs, ["capital", "liabilities"], alt_diсt)
-    left = lineset(bs, ["assets"], alt_diсt)
+def concat(left, right):
     return "\n".join(side_by_side(plain(left), plain(right)))
 
 
-def income_statement_as_string(inc, alt_diсt={}):
-    right = lineset(inc, ["income", "expenses"], alt_diсt)
-    left = []
-    return "\n".join(side_by_side(plain(left), plain(right)))
+@dataclass
+class TextViewer:
+    rename_dict: Dict
 
+    def balance_sheet(self, bs):
+        right = lineset(bs, ["capital", "liabilities"], self.rename_dict)
+        left = lineset(bs, ["assets"], self.rename_dict)
+        return concat(left, right)
 
-bs = BalanceSheet(
-    assets={"cash": 1130, "receivables": 25, "goods_for_sale": 45},
-    capital={"equity": 1000, "re": 75},
-    liabilities={"payables": 50, "divp": 75},
-)
-alt_dict = dict(
-    re="retained earnings",
-    divp="Dividend due",
-    cogs="Cost of goods sold",
-    sga="Selling, general and adm. expenses",
-)
-bp = balance_sheet_as_string(bs, alt_dict)
-print(bp)
-
-inc = IncomeStatement(income={"sales": 760}, expenses={"cogs": 440, "sga": 400})
-
-
-def income_statement_as_string(inc, alt_diсt={}):
-    left = lineset(inc, ["income", "expenses"], alt_diсt)
-    right = []
-    return "\n".join(side_by_side(plain(left), plain(right)))
-
-
-ip = income_statement_as_string(inc, alt_dict)
-print(ip)
+    def income_statement(self, inc):
+        fin = ("Net profit", inc.current_profit())
+        left = lineset(inc, ["income", "expenses"], self.rename_dict) + [fin]
+        right = []
+        return concat(left, right)

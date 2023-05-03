@@ -1,4 +1,4 @@
-import pytest
+import pytest  # pylint: disable=import-error
 from abacus.accounting_types import (
     Chart,
     Shortcodes,
