@@ -113,9 +113,9 @@ Check out [`readme.py`](readme.py) for a complete code example.
 This code is intended as an educational device that informs
 users about principles of accounting information systems (AIS).
 
-Here are the simplifications made for this code:
+Below are some simplifications made for this code:
 
-1. Account structure is flat, there are not subaccounts.
+1. Account structure is flat, there are no subaccounts.
    (This allows to represent ledger as a dictionary, while 
    in a real system you will need a tree data structure).
 
@@ -135,10 +135,19 @@ Here are the simplifications made for this code:
 
 8. Accounts balances can go to negative, little checks for entry validity. 
 
+9. Practically no information for managment accounting or tax calculations. 
+
 What things are realistic though?
 
 1. Entries are stored in a queue and ledger state is calculated 
-   based on previous state and entries to be proccessed.
+   based on a previous state and a list of entries to be proccessed.
 
 2. The chart of accounts can be fairly complex.
 
+3. Named entries indicate typical accounting transactions. 
+
+4. The code is covered by tests and type annotated.
+
+5. Data structures used are serialisable, data can be stored.
+
+6. Using better Python features, hopefully (eg subclasssing, etc).
