@@ -44,29 +44,24 @@ ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 # Create income statement
 income_statement = ledger.income_statement()
 print(income_statement)
-```
 
-```python
-IncomeStatement(income={'sales': 400},
-                expenses={'cogs': 200, 'sga': 50})
-```
-
-````python
 # Close accounts at period end and create balance sheet
 closed_ledger = ledger.close(retained_earnings_account_name="re")
 balance_sheet = closed_ledger.balance_sheet()
 print(balance_sheet)
+```
 
 ```python
+IncomeStatement(income={'sales': 400}, expenses={'cogs': 200, 'sga': 50})
 BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},
     liabilities={"divp": 0, "payables": 0}
 )
-````
+```
 
-4. We can also print balance sheet and income statement as text
-   using longer account names.
+4. Balance sheet and income statement can be printed 
+   to screen as text using longer account names.
 
 ```python
 rename_dict = {
@@ -96,4 +91,4 @@ Expenses                              250
 Net profit                            150
 ```
 
-Check out [`readme.py`](readme.py) for complete code example.
+Check out [`readme.py`](readme.py) for a complete code example.
