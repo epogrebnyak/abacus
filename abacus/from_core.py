@@ -188,10 +188,14 @@ chart = Chart(
     income=["sales"],
 )
 
+# pay capital
 e1 = Entry(dr="cash", cr="equity", amount=1000)
+# aquire goods
 e2 = Entry(dr="goods_for_sale", cr="cash", amount=250)
+# sell goods
 e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200)
 e4 = Entry(cr="sales", dr="cash", amount=400)
+# selling expenses
 e5 = Entry(cr="cash", dr="sga", amount=50)
 entries = [e1, e2, e3, e4, e5]
 
