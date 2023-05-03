@@ -42,21 +42,27 @@ print(balance_st)
 #    liabilities={"divp": 0, "payables": 0}
 # )
 
-print("Balance sheet", balance_st.as_string(rename_dict), sep="\n")
-print("Income statement", income_st.as_string(rename_dict), sep="\n")
-# %%
+from abacus import ConsoleViewer
 
-# Balance sheet
-# Assets            1150  Capital              1150
-# - Cash            1100  - Equity             1000
-# - Receivables        0  - Retained earnings   150
-# - Goods for sale    50  Liabilities             0
-#                         - Dividend due          0
-#                         - Payables              0
-# Income statement
-# Income                                400
-# - Sales                               400
-# Expenses                              250
-# - Cost of goods sold                  200
-# - Selling, general and adm. expenses   50
-# Net profit                            150
+cv = ConsoleViewer(rename_dict, width=60)
+cv.print(balance_st)
+cv.print(income_st)
+
+# %%
+"""
+                       Balance sheet                        
+ Assets                 1150  Capital                  1150 
+   Cash                 1100    Equity                 1000 
+   Receivables             0    Retained earnings       150 
+   Goods for sale         50  Liabilities                 0 
+                                Dividend due              0 
+                                Payables                  0 
+ Total                  1150  Total                    1150 
+                      Income statement                      
+ Income                                                 400 
+   Sales                                                400 
+ Expenses                                               250 
+   Cost of goods sold                                   200 
+   Selling, general and adm. expenses                    50 
+ Profit                                                 150
+"""

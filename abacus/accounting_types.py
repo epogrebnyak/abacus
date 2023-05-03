@@ -140,11 +140,6 @@ class BalanceSheet:
     capital: AccountBalancesDict
     liabilities: AccountBalancesDict
 
-    def as_string(self, rename_dict=dict()):
-        from .formatting import TextViewer
-
-        return TextViewer(rename_dict).balance_sheet(self)
-
 
 @dataclass
 class IncomeStatement:
@@ -153,11 +148,6 @@ class IncomeStatement:
 
     def current_profit(self):
         return self.income.total() - self.expenses.total()
-
-    def as_string(self, rename_dict=dict()):
-        from .formatting import TextViewer
-
-        return TextViewer(rename_dict).income_statement(self)
 
 
 @dataclass

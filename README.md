@@ -61,34 +61,39 @@ BalanceSheet(
 ```
 
 4. Balance sheet and income statement can be printed 
-   to screen as text using longer account names.
+   to screen as text using longer account names and 
+   pretty formatting.
 
 ```python
+from abacus import ConsoleViewer
+
 rename_dict = {
     "re": "Retained earnings",
     "divp": "Dividend due",
     "cogs": "Cost of goods sold",
     "sga": "Selling, general and adm. expenses",
 }
-print("Balance sheet", balance_st.as_string(rename_dict), sep="\n")
-print("Income statement", income_st.as_string(rename_dict), sep="\n")
+cv = ConsoleViewer(rename_dict, width=60)
+cv.print(balance_st)
+cv.print(income_st)
 ```
 
 ```console
-Balance sheet
-Assets            1150  Capital              1150
-- Cash            1100  - Equity             1000
-- Receivables        0  - Retained earnings   150
-- Goods for sale    50  Liabilities             0
-                        - Dividend due          0
-                        - Payables              0
-Income statement
-Income                                400
-- Sales                               400
-Expenses                              250
-- Cost of goods sold                  200
-- Selling, general and adm. expenses   50
-Net profit                            150
+                       Balance sheet                        
+ Assets                 1150  Capital                  1150 
+   Cash                 1100    Equity                 1000 
+   Receivables             0    Retained earnings       150 
+   Goods for sale         50  Liabilities                 0 
+                                Dividend due              0 
+                                Payables                  0 
+ Total                  1150  Total                    1150 
+                      Income statement                      
+ Income                                                 400 
+   Sales                                                400 
+ Expenses                                               250 
+   Cost of goods sold                                   200 
+   Selling, general and adm. expenses                    50 
+ Profit                                                 150 
 ```
 
 Check out [`readme.py`](readme.py) for a complete code example.

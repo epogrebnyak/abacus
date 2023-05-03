@@ -6,3 +6,6 @@ from .core import (
     make_ledger,
     process_entries,
 )
+from .tables import (
+    ConsoleViewer,
+)
