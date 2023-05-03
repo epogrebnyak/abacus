@@ -139,12 +139,13 @@ def closing_entries(
             + closing_entries_for_expense_accounts(ledger)
     # fmt: on
 
-    # we actually process the closing to find out the profit
-    # alternative is to use amount = current_profit(ledger)
+    # We actually process the closing to find out the profit.
+    # Alternative is to use amount = current_profit(ledger).
     # process_entries() was altering ledger before proper
     # coping was introduced with .safe_copy() methods
-    dummy_ledger = process_entries(ledger, entries)
-    amount = balance(dummy_ledger[isa])
+    # in Legder and Account classes.
+    _dummy_ledger = process_entries(ledger, entries)
+    amount = balance(_dummy_ledger[isa])
 
     return entries + [
         ClosingEntry(
@@ -186,7 +187,6 @@ chart = Chart(
     liabilities=["divp", "payables"],
     income=["sales"],
 )
-ledger = make_ledger(chart)
 
 e1 = Entry(dr="cash", cr="equity", amount=1000)
 e2 = Entry(dr="goods_for_sale", cr="cash", amount=250)
@@ -195,6 +195,7 @@ e4 = Entry(cr="sales", dr="cash", amount=400)
 e5 = Entry(cr="cash", dr="sga", amount=50)
 entries = [e1, e2, e3, e4, e5]
 
+ledger = make_ledger(chart)
 ledger2 = process_entries(ledger, entries)
 ledger3 = close(ledger2, retained_earnings_account_name="re")
 assert balances(ledger3) == {
@@ -214,12 +215,6 @@ assert balances(ledger3) == {
 # make this a test
 print(balance_sheet(ledger3))
 print(income_statement(ledger2))
-BalanceSheet(
-    assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
-    capital={"equity": 1000, "re": 150},
-    liabilities={"divp": 0, "payables": 0},
-)
-IncomeStatement(income={"sales": 0}, expenses={"cogs": 0, "sga": 0})
 
 # make trial balance
 
@@ -228,3 +223,8 @@ IncomeStatement(income={"sales": 0}, expenses={"cogs": 0, "sga": 0})
 # Ledger -> BalanceSheet
 # Ledger -> TrialBalance
 # TrialBalance -> Ledger (for reset of balances)
+
+# NamedEntries
+# Depreciation/Amortisation and accumulation rules
+# Print to screen
+# Idea of app workflow
