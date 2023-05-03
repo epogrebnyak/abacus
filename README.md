@@ -70,7 +70,7 @@ BalanceSheet(
 
 5. Balance sheet and income statement can be printed 
    to screen with longer account names and pretty formatting
-   (with color).
+   (with color in console).
 
 ```python
 from abacus import ConsoleViewer
