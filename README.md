@@ -1,10 +1,8 @@
 # abacus
 
-A small, yet valid double-entry accounting system in Python.
+A small, yet valid double-entry accounting system in Python. Check out [`readme.py`](readme.py) as working example.
 
-Check out [`readme.py`](readme.py) as example:
-
-1. Specify a chart of accounts of five types: assets, equity, liabilities, income and expenses.
+1. We start with a chart of accounts of five types: assets, equity, liabilities, income and expenses.
 
 ```python
 chart = Chart(
@@ -16,7 +14,7 @@ chart = Chart(
 )
 ```
 
-Let us also keep a mapping of longer names for printing:
+We also keep a mapping of longer names for printing:
 
 ```python
 rename_dict = {
@@ -27,7 +25,13 @@ rename_dict = {
 }
 ```
 
-2. Specify several accounting entries using names from the chart of accounts.
+2. Create a ledger based on chart of accounts
+
+```python
+ledger = chart.make_ledger()
+```
+
+4. Add accounting entries using the account names from chart of accounts.
 
 ```python
 e1 = Entry(dr="cash", cr="equity", amount=1000) # pay capital
@@ -35,35 +39,27 @@ e2 = Entry(dr="goods_for_sale", cr="cash", amount=250) # acquire goods
 e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200) # sell goods
 e4 = Entry(cr="sales", dr="cash", amount=400)
 e5 = Entry(cr="cash", dr="sga", amount=50) # adminstrative expenses
-entries = [e1, e2, e3, e4, e5]
+ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 ```
 
-3. Create a ledger, process entries and close the accounts at period end
-   (no dividend no dividend in this case).
+3. Close accounts at period end and produce income statement and balance
+   sheet.
 
 ```python
-# open ledger, process entries
-ledger = chart.make_ledger().process_entries(entries)
-
 # make income statement
 income_st = ledger.income_statement()
 
-# close accounts
+# close accounts and make balance sheet
 closed_ledger = ledger.close("re")
-
-# make balance sheet
 balance_st = closed_ledger.balance_sheet()
 ```
 
-4. One can see the balance sheet and income statement
-   as data structures and as text for terminal output.
+4. Balance sheet and income statement are saved as data structures:
 
 ```python
 print(income_st)
 print(balance_st)
 ```
-
-will show
 
 ```
 IncomeStatement(income={'sales': 400},
@@ -75,14 +71,12 @@ BalanceSheet(
 )
 ```
 
-For text output the following code:
+5. They can also be printed as text in terminal:
 
 ```python
 print("Balance sheet", balance_st.as_string(rename_dict), sep="\n")
 print("Income statement", income_st.as_string(rename_dict), sep="\n")
 ```
-
-will return:
 
 ```
 Balance sheet
