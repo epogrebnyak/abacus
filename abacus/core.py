@@ -1,7 +1,6 @@
 # %%
 """
-Chart -> Ledger -> [RawEntry] -> (Ledger, [RawEntry]) -> [ClosingEntry] -> (BalanceSheet, IncomeStatement, [ClosingEntry])  
-Ledger -> TrialBalance
+Chart -> Ledger -> [RawEntry] -> Ledger, [RawEntry] -> [RawEntry] -> (BalanceSheet, IncomeStatement)  
 """
 
 # pylint: disable=no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
@@ -22,6 +21,8 @@ class RawEntry:
 
 
 class AccountBalanceDict(UserDict[AccountName, Amount]):
+    """Dictionary with account names and balances like {'cash': 100}."""
+
     def total(self) -> Amount:
         return sum(self.values())
 
@@ -55,7 +56,31 @@ class DebitAccount(Account):
     pass
 
 
+class Asset(DebitAccount):
+    pass
+
+
+class Expense(DebitAccount):
+    pass
+
+
 class CreditAccount(Account):
+    pass
+
+
+class Capital(CreditAccount):
+    pass
+
+
+class Liability(CreditAccount):
+    pass
+
+
+class Income(CreditAccount):
+    pass
+
+
+class IncomeSummaryAccount(CreditAccount):
     pass
 
 
