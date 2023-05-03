@@ -1,4 +1,4 @@
-# Accounting equations explained 
+# Accounting equations explained
 
 ## Balance sheet and income statement
 
@@ -9,7 +9,7 @@ Assets = Capital + Liabilities                        (1)
 Profit = Income - Expenses                            (2)
 ```
 
-`(1)` shows the state of balance sheets at reporting period end, after closing entries are completed. 
+`(1)` shows the state of balance sheets at reporting period end, after closing entries are completed.
 It is also known as the [accounting identity][acc_i].
 
 [acc_i]: https://en.wikipedia.org/wiki/Accounting_identity
@@ -22,9 +22,9 @@ Within the reporting period before closing entries the following equation is val
 Assets = Capital + Profit + Liabilities                (3)
 ```
 
-Why is profit recorded on the same side as capital? Here is one possible explaination. 
-Profit is an increment of capital invested into the firm, so it appears next to equity. 
-When no dividends are paid, all of the current profit will add up to retained earnings, 
+Why is profit recorded on the same side as capital? Here is one possible explaination.
+Profit is an increment of capital invested into the firm, so it appears next to equity.
+When no dividends are paid, all of the current profit will add up to retained earnings,
 which is a component of capital.
 
 Substituting `(2)` into `(3)` we get:
@@ -39,52 +39,54 @@ After rearranging we get the trial balance equation:
 Assets + Expenses = Capital + Liabilities + Income     (5)
 ```
 
-On the left we have the sum of so-called 'debit' accounts and on the left the sum of 
+On the left we have the sum of so-called 'debit' accounts and on the left the sum of
 so-called 'credit' accounts. The trial balance equation should hold at any point in time.
 
 ## Closing entries
 
-What happens to the accounts at the end of reporting period? 
+What happens to the accounts at the end of reporting period?
 
 First, we close the temporary accounts and tranfer their balances to permanent accounts.
-This is are similar to rearranging equation `(5)` back into equation 
+This is are similar to rearranging equation `(5)` back into equation
 `(1)`:
+
 - add income account balance to income summary account
 - deduct expense account balance from income summary account
 - the balance of income summary account is the current period profit (or loss, if negative)
 - income and expenses account balances are zero
-- tranfer income summary account balance to increase retained earnings. If there is was a loss, 
-  it will decrease the retained earnings.  
+- tranfer income summary account balance to increase retained earnings. If there is was a loss,
+  it will decrease the retained earnings.
 
-Second, if there was a profit in current period and a decision to pay dividend, 
+Second, if there was a profit in current period and a decision to pay dividend,
 we account for dividend:
+
 - the retained earnings are decreased by the amount of dividend
-- dividend payable account is increased and shown as a liability. 
+- dividend payable account is increased and shown as a liability.
 
 On dividend payment date the cash amount will be transferred to shareholders:
+
 - decreasing liabilities (dividend payable account)
 - decrease assets (cash account).
- 
-The dividend announcement and payment dates may happen after the reporting period.  
+
+The dividend announcement and payment dates may happen after the reporting period.
 
 ## Decision to pay dividend or retain earnings
 
-When an accounting period expires, the firm decides on what to do about profit. 
-The firm has an option to pay the dividends to shareholdersor to keep the profit within the firm. 
+When an accounting period expires, the firm decides on what to do about profit.
+The firm has an option to pay the dividends to shareholdersor to keep the profit within the firm.
 
-If there are opportunities to earn more money by keeping money within the firm, 
-it makes sense to pay no or little dividend and reinvest money 
+If there are opportunities to earn more money by keeping money within the firm,
+it makes sense to pay no or little dividend and reinvest money
 into firm's profitable projects or lines of business.
 
 If the shareholders do not see growth opportunities for the firm,
-they are likely to decide to pay entire or larger amount of the profit 
+they are likely to decide to pay entire or larger amount of the profit
 as divivdends.
 
-The decison to pay dividend is decided by shareholder vote based on 
-management proposal. Differnt shareholders may have conflicting views about 
+The decison to pay dividend is decided by shareholder vote based on
+management proposal. Differnt shareholders may have conflicting views about
 the proper amount of dividend. The amount of shareholder votes required
 for dividend decision is regulated by firm articles of association and/or bylaws.
-
 
 ## Numeric example
 
@@ -97,18 +99,19 @@ Assets + Expenses = Shareholder Equity + Retained Earnings + Liabilities + Incom
 
 The closing entries will be the following:
 
-1. We arrive at end of accounting period with Assets = a, Expenses = e, Shareholder Equity = s, Income = i and  Liabilities = l, and `a + e = s + i + l`. Assume this is the first year of operation and there are no retained earnings from earlier periods.
-2. Move Income and Expenses to Income Summary Account. The accounts change to the following: Expenses = 0, Income = 0, Income Summary Account = i - e.   
+1. We arrive at end of accounting period with Assets = a, Expenses = e, Shareholder Equity = s, Income = i and Liabilities = l, and `a + e = s + i + l`. Assume this is the first year of operation and there are no retained earnings from earlier periods.
+2. Move Income and Expenses to Income Summary Account. The accounts change to the following: Expenses = 0, Income = 0, Income Summary Account = i - e.
 3. Distribute profit from Income Summary Account into Retained Earnings and Dividend Payable accounts given the shareholder decision to pay d as dividend. Income Summary Account becomes 0, dividend payable becomes `d` and retained earning accrue by `r = (i - e) - d` (current profit less dividend). All of current profit is distributed and Income Summary Account becomes 0. Note that (i - e) = (r + d).
-4. Pay the dividend due in cash. Assets decrease by d as cash was transfered to shareholders and dividend payable becomes 0 because the dividend due was actually paid out. This can also happen after closing entries.  
+4. Pay the dividend due in cash. Assets decrease by d as cash was transfered to shareholders and dividend payable becomes 0 because the dividend due was actually paid out. This can also happen after closing entries.
 
-Steps 1-4 are demonstrated below using equation 7. The equation holds true at every step. 
+Steps 1-4 are demonstrated below using equation 7. The equation holds true at every step.
+
 ```
     Assets + Expenses = Shareholder Equity + Retained Earnings + Liabilities + Income + Income Summary Account + Dividend Payable
 1)  a        e          s                    0                   l             i        0                        0
 2)  a        0          s                    0                   l             0        i - e                    0
-3)  a        0          s                    r                   l             0        (i - e) - r - d = 0      d 
-4)  a-d      0          s                    r                   l             0        0                        0      
+3)  a        0          s                    r                   l             0        (i - e) - r - d = 0      d
+4)  a-d      0          s                    r                   l             0        0                        0
 
 Steps:
 1) End of period, before closing entries
@@ -118,7 +121,6 @@ Steps:
 ```
 
 At step 4 the trial balance equation (7) becomes the accounting identity (3), or the balance sheet as presented in a published report.
-
 
 # A quick way to understand accounting for programmers
 
@@ -138,7 +140,7 @@ of accounting and financial reporting systems.
 
 1. A firm keeps records of what the firm owns (assets) and sources of funds - equity (or capital) and liabilities (debt).
 
-2. Equity and liabilities are records of amounts, or claims of shareholders and creditors on the firm. If a firm is instantly liquidated, these are the amounts of money the    shareholders and creditors should get.
+2. Equity and liabilities are records of amounts, or claims of shareholders and creditors on the firm. If a firm is instantly liquidated, these are the amounts of money the shareholders and creditors should get.
 
 3. Assets are records of what the firm owns and what can be converted to cash. There are current and fixed assets.
 
@@ -282,7 +284,7 @@ Traditional way of teaching accounting sometimes goes like this:
 - in a double entry accounting system every entry affects two accounts;
 - accounting software guarantees nothing is lost.
 
-Why not look the accounting identity as `A = C + L + (I - E)` and start applying algebraic rules even before knowing anything in accounting. This should really flatten 
+Why not look the accounting identity as `A = C + L + (I - E)` and start applying algebraic rules even before knowing anything in accounting. This should really flatten
 the accounting learning curve!
 
 ## Making accounting system realistic

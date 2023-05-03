@@ -7,112 +7,98 @@ Check out [`readme.py`](readme.py) as example:
 1. Specify a chart of accounts of five types: assets, equity, liabilities, income and expenses.
 
 ```python
-from abacus import Book, Chart, BalanceSheet, RawEntry
-
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
-    equity=["equity"],
-    liabilities=["payables"],
+    equity=["equity", "re"],
+    liabilities=["divp", "payables"],
     income=["sales"],
 )
 ```
 
-2. Create ledger and specify a couple of accounting entries using account codes from the chart.
+Let us also keep a mapping of longer names for printing:
 
 ```python
-book = Book(chart)
-
-e1 = RawEntry(dr="cash", cr="equity", amount=1000)
-e2 = RawEntry(dr="goods_for_sale", cr="cash", amount=250)
-book.append_raw_entry(e1)
-book.append_raw_entry(e2)
-```
-
-3. After entries are added, let's see the general ledger.
-   It is a dictionary with account names and amounts of debit and credit sides.
-
-```python
-print(book.get_ledger())
-
-{
-    "cash": DebitAccount(debits=[1000], credits=[250]),
-    "receivables": DebitAccount(debits=[], credits=[]),
-    "goods_for_sale": DebitAccount(debits=[250], credits=[]),
-    "cogs": DebitAccount(debits=[], credits=[]),
-    "sga": DebitAccount(debits=[], credits=[]),
-    "equity": CreditAccount(debits=[], credits=[1000]),
-    "payables": CreditAccount(debits=[], credits=[]),
-    "sales": CreditAccount(debits=[], credits=[]),
+rename_dict = {
+    "re": "Retained earnings",
+    "divp": "Dividend due",
+    "cogs": "Cost of goods sold",
+    "sga": "Selling, general and adm. expenses",
 }
 ```
 
-4. One can also see the interim balance sheet:
+2. Specify several accounting entries using account names codes from the chart.
 
 ```python
-print(book.get_balance_sheet())
+# pay capital
+e1 = Entry(dr="cash", cr="equity", amount=1000)
+# acquire goods
+e2 = Entry(dr="goods_for_sale", cr="cash", amount=250)
+# sell goods
+e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200)
+e4 = Entry(cr="sales", dr="cash", amount=400)
+# adminstrative expenses
+e5 = Entry(cr="cash", dr="sga", amount=50)
+entries = [e1, e2, e3, e4, e5]
+```
 
+3. From the chart we next create a ledger. It is a dictionary with account names and amounts on debit and credit sides.
+
+With ledger we process entries and the close the accounts at period end
+(no dividend).
+
+```python
+# open ledger, process entries, make income statement
+ledger = chart.make_ledger().process_entries(entries)
+income_st = ledger.income_statement()
+
+# close accounts, make balance sheet
+closed_ledger = ledger.close("re")
+balance_st = closed_ledger.balance_sheet()
+```
+
+4. One can see the balance sheet and income statement
+   as a data structure and as text for terminal output.
+
+```python
+print(income_st)
+print(balance_st)
+```
+
+will show
+
+```
+IncomeStatement(income={'sales': 400},
+                expenses={'cogs': 200, 'sga': 50})
 BalanceSheet(
-    assets={"cash": 750, "receivables": 0, "goods_for_sale": 250},
-    capital={"equity": 1000, "current_profit": 0},
-    liabilities={"payables": 0},
+    assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
+    capital={"equity": 1000, "re": 150},
+    liabilities={"divp": 0, "payables": 0}
 )
 ```
 
-5. For ease of use we can give distinctive names to entries.
-   For example, `invoice_buyer=("receivables", "sales")` means
-   that we can use named entry `("invoice_buyer", 250)` instead of
-   `RawEntry(dr="receivables", cr="sales", amount=250)`.
+For text output the following code:
 
 ```python
-named_entry_shortcodes = dict(
-    pay_shareholder_capital=("cash", "equity"),
-    buy_goods_for_cash=("goods_for_sale", "cash"),
-    invoice_buyer=("receivables", "sales"),
-    transfer_goods_sold=("cogs", "goods_for_sale"),
-    accept_payment=("cash", "receivables"),
-    accrue_salary=("sga", "payables"),
-    pay_salary=("payables", "cash"),
-)
+print("Balance sheet", balance_st.as_string(rename_dict), sep="\n")
+print("Income statement", income_st.as_string(rename_dict), sep="\n")
 ```
 
-6. Write some more accounting entries using names defined above.
+will return:
 
-```python
-named_entries = [
-    # start a company
-    ("pay_shareholder_capital", 501),
-    ("pay_shareholder_capital", 499),
-    # acquire goods
-    ("buy_goods_for_cash", 820),
-    # one order
-    ("invoice_buyer", 600),
-    ("transfer_goods_sold", 360),
-    ("accept_payment", 549),
-    # pay labor
-    ("accrue_salary", 400),
-    ("pay_salary", 345),
-    # another order
-    ("invoice_buyer", 160),
-    ("transfer_goods_sold", 80),
-    ("accept_payment", 80),
-]
 ```
-
-7. Append all entries to a ledger and get a balance sheet.
-
-```python
-book = Book(chart, named_entry_shortcodes)
-book.append_named_entries(named_entries)
-balance_sheet = book.get_balance_sheet()
-```
-
-The resulting balance sheet looks like this:
-
-```python
-BalanceSheet(
-    assets={"cash": 464, "receivables": 131, "goods_for_sale": 380},
-    capital={"equity": 1000, "retained_earnings": 0, "current_profit": -80},
-    liabilities={"payables": 55}
-)
+Balance sheet
+Assets            1150  Capital              1150
+- Cash            1100  - Equity             1000
+- Receivables        0  - Retained earnings   150
+- Goods for sale    50  Liabilities             0
+                        - Dividend due          0
+                        - Payables              0
+Income statement
+Income                                400
+- Sales                               400
+Expenses                              250
+- Cost of goods sold                  200
+- Selling, general and adm. expenses   50
+Net profit                            150
 ```

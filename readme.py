@@ -8,6 +8,12 @@ chart = Chart(
     liabilities=["divp", "payables"],
     income=["sales"],
 )
+rename_dict = {
+    "re": "Retained earnings",
+    "divp": "Dividend due",
+    "cogs": "Cost of goods sold",
+    "sga": "Selling, general and adm. expenses",
+}
 
 # pay capital
 e1 = Entry(dr="cash", cr="equity", amount=1000)
@@ -21,14 +27,36 @@ e5 = Entry(cr="cash", dr="sga", amount=50)
 entries = [e1, e2, e3, e4, e5]
 
 ledger = chart.make_ledger().process_entries(entries)
-print(ledger.income_statement())
+income_st = ledger.income_statement()
+closed_ledger = ledger.close("re")
+balance_st = closed_ledger.balance_sheet()
+
+print(income_st)
 # IncomeStatement(income={'sales': 400},
 #                 expenses={'cogs': 200, 'sga': 50})
 
-ledger = ledger.close("re")
-print(ledger.balance_sheet())
+print(balance_st)
 # BalanceSheet(
 #    assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
 #    capital={"equity": 1000, "re": 150},
-#    liabilities={"divp": 0, "payables": 0},
+#    liabilities={"divp": 0, "payables": 0}
 # )
+
+print("Balance sheet", balance_st.as_string(rename_dict), sep="\n")
+print("Income statement", income_st.as_string(rename_dict), sep="\n")
+# %%
+
+# Balance sheet
+# Assets            1150  Capital              1150
+# - Cash            1100  - Equity             1000
+# - Receivables        0  - Retained earnings   150
+# - Goods for sale    50  Liabilities             0
+#                         - Dividend due          0
+#                         - Payables              0
+# Income statement
+# Income                                400
+# - Sales                               400
+# Expenses                              250
+# - Cost of goods sold                  200
+# - Selling, general and adm. expenses   50
+# Net profit                            150
