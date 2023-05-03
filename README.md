@@ -4,7 +4,16 @@ A small, yet valid double-entry accounting system in Python.
 
 [![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
 
-Consider the following four steps as a demonstration example.
+## Install 
+
+```
+pip install git+https://github.com/epogrebnyak/abacus.git
+```
+
+## Try it
+
+Consider the following five steps as a demonstration example of an accounting framework
+in action.
 
 1. We start with a chart of accounts of five types: assets, equity, liabilities, income and expenses.
 
@@ -26,7 +35,7 @@ chart = Chart(
 ledger = chart.make_ledger()
 ```
 
-4. Add accounting entries using the account names from the chart of accounts.
+3. Add accounting entries using the account names from the chart of accounts.
 
 ```python
 e1 = Entry(dr="cash", cr="equity", amount=1000)        # pay capital
@@ -37,8 +46,7 @@ e5 = Entry(cr="cash", dr="sga", amount=50)             # adminstrative expenses
 ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 ```
 
-3. Close accounts at period end and produce income statement and balance
-   sheet.
+4. Close accounts at period end and produce income statement and balance sheet.
 
 ```python
 # Create income statement
@@ -60,9 +68,9 @@ BalanceSheet(
 )
 ```
 
-4. Balance sheet and income statement can be printed 
-   to screen as text using longer account names and 
-   pretty formatting.
+5. Balance sheet and income statement can be printed 
+   to screen with longer account names and pretty formatting
+   (with color).
 
 ```python
 from abacus import ConsoleViewer
@@ -87,6 +95,7 @@ cv.print(income_st)
                                 Dividend due              0 
                                 Payables                  0 
  Total                  1150  Total                    1150 
+
                       Income statement                      
  Income                                                 400 
    Sales                                                400 
@@ -97,3 +106,39 @@ cv.print(income_st)
 ```
 
 Check out [`readme.py`](readme.py) for a complete code example.
+
+
+## Simplifications
+
+This code is intended as an educational device that informs
+users about principles of accounting information systems (AIS).
+
+Here are the simplifications made for this code:
+
+1. Account structure is flat, there are not subaccounts.
+   (This allows to represent ledger as a dictionary, while 
+   in a real system you will need a tree data structure).
+
+2. No contraccounts (eg depreciation) and accumulation (netting) rules
+   for contraccounts.
+
+3. Every entry involves exactly two accounts, there are no multiple entries. 
+
+4. No cash flow and changes in capital reports.
+
+5. There are no dividends in examples.
+
+6. No journals - all records go directly to general ledger.
+
+7. Accounting entry has no information other than dr and cr accounts 
+   and amount. 
+
+8. Accounts balances can go to negative, little checks for entry validity. 
+
+What things are realistic though?
+
+1. Entries are stored in a queue and ledger state is calculated 
+   based on previous state and entries to be proccessed.
+
+2. The chart of accounts can be fairly complex.
+
