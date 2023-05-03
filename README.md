@@ -27,38 +27,36 @@ rename_dict = {
 }
 ```
 
-2. Specify several accounting entries using account names codes from the chart.
+2. Specify several accounting entries using names from the chart of accounts.
 
 ```python
-# pay capital
-e1 = Entry(dr="cash", cr="equity", amount=1000)
-# acquire goods
-e2 = Entry(dr="goods_for_sale", cr="cash", amount=250)
-# sell goods
-e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200)
+e1 = Entry(dr="cash", cr="equity", amount=1000) # pay capital
+e2 = Entry(dr="goods_for_sale", cr="cash", amount=250) # acquire goods
+e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200) # sell goods
 e4 = Entry(cr="sales", dr="cash", amount=400)
-# adminstrative expenses
-e5 = Entry(cr="cash", dr="sga", amount=50)
+e5 = Entry(cr="cash", dr="sga", amount=50) # adminstrative expenses
 entries = [e1, e2, e3, e4, e5]
 ```
 
-3. From the chart we next create a ledger. It is a dictionary with account names and amounts on debit and credit sides.
-
-With ledger we process entries and the close the accounts at period end
-(no dividend).
+3. Create a ledger, process entries and close the accounts at period end
+   (no dividend no dividend in this case).
 
 ```python
-# open ledger, process entries, make income statement
+# open ledger, process entries
 ledger = chart.make_ledger().process_entries(entries)
+
+# make income statement
 income_st = ledger.income_statement()
 
-# close accounts, make balance sheet
+# close accounts
 closed_ledger = ledger.close("re")
+
+# make balance sheet
 balance_st = closed_ledger.balance_sheet()
 ```
 
 4. One can see the balance sheet and income statement
-   as a data structure and as text for terminal output.
+   as data structures and as text for terminal output.
 
 ```python
 print(income_st)
