@@ -7,7 +7,7 @@ Chart -> Ledger -> [RawEntry] -> Ledger, [RawEntry] -> [RawEntry] -> (BalanceShe
 
 from collections import UserDict
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Bool
 
 Amount = int
 AccountName = str
@@ -294,6 +294,9 @@ class EntryFactory:
     retained_earnings: str = "re"
     dividend_payable: str = "divp"
     cash: str = "cash"
+
+    def is_compatible(self, chart: Chart) -> Bool:
+        return False
 
     def accrue_dividend(self, amount):
         return RawEntry(self.retained_earnings, self.dividend_payable, amount)
