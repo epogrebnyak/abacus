@@ -12,8 +12,7 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Try it
 
-Consider the following five steps as a demonstration example of an accounting framework
-in action.
+Consider an example below that demonstrates key parts of the accounting workflow.
 
 1. We start with a chart of accounts of five types: assets, equity, liabilities, income and expenses.
 
@@ -46,7 +45,7 @@ e5 = Entry(cr="cash", dr="sga", amount=50)             # adminstrative expenses
 ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 ```
 
-4. Close accounts at period end and produce income statement and balance sheet.
+4. Close accounts at period end, produce income statement and balance sheet.
 
 ```python
 # Create income statement
@@ -69,8 +68,8 @@ BalanceSheet(
 ```
 
 5. Balance sheet and income statement can be printed 
-   to screen with longer account names and pretty formatting
-   (with color in console).
+   to screen with more verbose account names and formatting
+   (prints with color in console).
 
 ```python
 from abacus import ConsoleViewer
@@ -135,7 +134,9 @@ Below are some simplifications made for this code:
 
 8. Accounts balances can go to negative, little checks for entry validity. 
 
-9. Practically no information for managment accounting or tax calculations. 
+9. Practically no information for managment accounting or tax calculations.
+
+10. XML likely to be a format for accounting data interchange.
 
 What things are realistic though?
 
@@ -146,8 +147,10 @@ What things are realistic though?
 
 3. Named entries indicate typical accounting transactions. 
 
-4. The code is covered by tests and type annotated.
+Implementation:
 
-5. Data structures used are serialisable, data can be stored.
+1. The code is covered by tests and type annotated.
 
-6. Using better Python features, hopefully (eg subclasssing, etc).
+2. Data structures used are serialisable, data can be stored and retrieved.
+
+3. Using better Python features (eg subclasssing, etc) for cleaner, understandable code.
