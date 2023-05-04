@@ -81,8 +81,8 @@ rename_dict = {
     "sga": "Selling, general and adm. expenses",
 }
 cv = ConsoleViewer(rename_dict, width=60)
-cv.print(balance_st)
-cv.print(income_st)
+cv.print(balance_sheet)
+cv.print(income_statement)
 ```
 
 ```console
