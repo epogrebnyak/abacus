@@ -11,8 +11,8 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 ## Accounting equations
 
-Accounting known to be difficult and[can take a while to grasp. 
-Perhaps this equation can [make learning a bit shorter](https://www.reddit.com/r/Accounting/comments/137e3lz/i_plan_on_pursuing_a_bachelors_in_accounting_soon/jitcu6g/?context=3):
+Accounting known to be difficult and can take a little while to grasp. 
+Perhaps this equation can [make learning a bit smoother](https://www.reddit.com/r/Accounting/comments/137e3lz/i_plan_on_pursuing_a_bachelors_in_accounting_soon/jitcu6g/?context=3):
 
 ```
 Assets + Expenses = Capital + Liabilites + Income   (1)
