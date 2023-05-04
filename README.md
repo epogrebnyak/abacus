@@ -167,6 +167,9 @@ Below are some simplifications made for this code:
 
 10. XML likely to be a format for accounting data interchange (JSON intended for `abacus`).
 
+11. AIS should work on business event level, and know to translate business event
+    to accoutnign transactions and transactions to entries. We work just on entries level. 
+
 What things are realistic it this code?
 
 1. Entries are stored in a queue and ledger state is calculated 
