@@ -11,14 +11,14 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 ## Accounting equations
 
-Accounting known to be difficult to grasp and can take a while before the big picture clicks on you. 
-Perhaps this equation can make learning a bit shorter:
+Accounting known to be difficult and[can take a while to grasp. 
+Perhaps this equation can [make learning a bit shorter](https://www.reddit.com/r/Accounting/comments/137e3lz/i_plan_on_pursuing_a_bachelors_in_accounting_soon/jitcu6g/?context=3):
 
 ```
 Assets + Expenses = Capital + Liabilites + Income   (1)
 ```
 
-This is [expanded accounting equation][eq], which is slightly less advertised
+This is an [expanded accounting equation][eq], which is slightly less advertised
 than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity):
 
 ```
@@ -32,10 +32,10 @@ Profit =  Income - Expenses                        (3)
 ```
 and that [the profit earned by the business increases capital](https://www.open.edu/openlearn/mod/oucontent/view.php?id=31735&printable=1).
 
-In short an accounting system keeps track of the equation `(1)` during accounting period  
-and produces `(2)` and `(3)` at accounting period end. 
+In short an accounting system keeps track of the equation `(1)` whithin the accounting period 
+and produces equations `(2)` and `(3)` at accounting period end. 
 
-I'm writing `abacus` code with this concept in mind until I hit some block that makes me revise this view. 
+I'm writing `abacus` code with this rather simple concept in mind until I hit some block that makes me revise it. 
 
 ## Try it
 
@@ -95,8 +95,8 @@ BalanceSheet(
 ```
 
 5. Balance sheet and income statement can be printed 
-   to screen with more verbose account names and formatting
-   (prints with color in console).
+   to screen with more verbose account names and 
+   color formatting.
 
 ```python
 from abacus import ConsoleViewer
@@ -132,7 +132,6 @@ cv.print(income_statement)
 ```
 
 Check out [`readme.py`](readme.py) for a complete code example.
-
 
 ## Simplifications
 
