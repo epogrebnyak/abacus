@@ -21,6 +21,8 @@ Assets + Expenses = Capital + Liabilites + Income   (1)
 This is an [expanded accounting equation][eq], which is slightly less advertised
 than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity):
 
+[eq]: https://www.accaglobal.com/gb/en/student/exam-support-resources/foundation-level-study-resources/fa1/technical-articles/accounting-equation.html
+
 ```
 Assets = Capital + Liabilites                      (2)
 ```
@@ -183,5 +185,5 @@ Implementation detail:
 3. Using better Python features (eg subclasssing, pattern matching) for cleaner, understandable code.
 
 4. There is no production load - this is experimental software. Good side: can make big changes fast.  
-   So-so side: we do not learn (or earn) from users, and at point of writing there are no users.
+   So-so side: we do not learn (or earn) from users, and at point of writing there are no users at all.
 
