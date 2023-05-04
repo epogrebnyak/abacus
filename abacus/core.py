@@ -7,13 +7,11 @@
 # Ledger -> TrialBalance
 # TrialBalance -> Ledger (for reset of balances)
 
-# NamedEntries
 # Depreciation/Amortisation and accumulation rules
-# Print to screen
 # Idea of app workflow
 
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from abacus.accounting_types import (
     Amount,
     AccountName,
@@ -180,3 +178,9 @@ def income_statement(ledger: Ledger) -> IncomeStatement:
 
 def current_profit(ledger: Ledger) -> Amount:
     return income_statement(ledger).current_profit()
+
+
+def rename_keys(balances_dict: AccountBalancesDict, rename_dict: Dict) -> AccountBalancesDict:
+    def mut(s):
+        return rename_dict.get(s, s).capitalize().replace("_", " ")
+    return AccountBalancesDict((mut(k), v) for k, v in balances_dict.items())

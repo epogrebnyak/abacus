@@ -148,6 +148,11 @@ class IncomeStatement:
 
     def current_profit(self):
         return self.income.total() - self.expenses.total()
+    
+    def _rename(self, rename_dict):
+        from .core import rename_keys 
+        return IncomeStatement(rename_keys(rename_dict, self.income),
+                               rename_keys(rename_dict, self.expenses))
 
 
 @dataclass
