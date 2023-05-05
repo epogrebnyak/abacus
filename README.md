@@ -37,7 +37,6 @@ and that [the profit earned by the business increases capital](https://www.open.
 In short an accounting system keeps track of the equation `(1)` whithin the accounting period 
 and produces equations `(2)` and `(3)` at accounting period end. 
 
-I'm writing `abacus` code with this rather simple concept in mind until I hit some block that makes me revise it. 
 
 ## Try it
 
