@@ -8,6 +8,8 @@ A minimal, yet valid double-entry accounting system in Python.
 
 > I teach accounting information systems... I'd be tempted to use abacus as a way of simply showing the structure of a simple AIS.
 
+> Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
+
 ## Install
 
 ```
