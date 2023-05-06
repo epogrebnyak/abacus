@@ -25,8 +25,7 @@ as mentioned by [@mafm, author of ledger.py](https://github.com/mafm/ledger.py/b
 Assets + Expenses = Capital + Liabilites + Income   (1)
 ```
 
-[Expanded accounting equation][eq] is slightly less advertised
-than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity):
+Expanded accounting equation is slightly less advertised than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity), which is valid at accounting period end:
 
 [eq]: https://www.accaglobal.com/gb/en/student/exam-support-resources/foundation-level-study-resources/fa1/technical-articles/accounting-equation.html
 
