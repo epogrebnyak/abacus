@@ -1,8 +1,13 @@
 package := "abacus"
 
-# pytest
+# run pytest
 test:
   poetry run pytest
+
+# run readme.py
+readme:
+  poetry run python readme.py
+
 
 # black and isort
 lint:  
@@ -27,4 +32,4 @@ apidoc:
 
 # launch streamlit app
 app:
-  poetry run streamlit run streamlit_app.py
+  poetry run streamlit run app.py

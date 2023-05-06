@@ -88,6 +88,9 @@ print(balance_sheet)
 
 ```python
 IncomeStatement(income={'sales': 400}, expenses={'cogs': 200, 'sga': 50})
+```
+
+```python
 BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},
@@ -96,11 +99,11 @@ BalanceSheet(
 ```
 
 5. Balance sheet and income statement can be printed 
-   to screen with more verbose account names and 
+   to screen with verbose account names and 
    color formatting.
 
 ```python
-from abacus import ConsoleViewer
+from abacus import RichViewer
 
 rename_dict = {
     "re": "Retained earnings",
@@ -108,28 +111,9 @@ rename_dict = {
     "cogs": "Cost of goods sold",
     "sga": "Selling, general and adm. expenses",
 }
-cv = ConsoleViewer(rename_dict, width=60)
+cv = RichViewer(rename_dict, width=60)
 cv.print(balance_sheet)
 cv.print(income_statement)
-```
-
-```console
-                       Balance sheet                        
- Assets                 1150  Capital                  1150 
-   Cash                 1100    Equity                 1000 
-   Receivables             0    Retained earnings       150 
-   Goods for sale         50  Liabilities                 0 
-                                Dividend due              0 
-                                Payables                  0 
- Total                  1150  Total                    1150 
-
-                      Income statement                      
- Income                                                 400 
-   Sales                                                400 
- Expenses                                               250 
-   Cost of goods sold                                   200 
-   Selling, general and adm. expenses                    50 
- Profit                                                 150 
 ```
 
 Check out [`readme.py`](readme.py) for a complete code example.
@@ -169,6 +153,8 @@ Below are some simplifications made for this code:
 11. AIS should work on business event level, and know to translate business event
     to accoutnign transactions and transactions to entries. We work just on entries level. 
 
+12. Only one currency is used.
+
 What things are realistic it this code?
 
 1. Entries are stored in a queue and ledger state is calculated 
@@ -186,6 +172,5 @@ Implementation detail:
 
 3. Using better Python features (eg subclasssing, pattern matching) for cleaner, understandable code.
 
-4. There is no production load - this is experimental software. Good side: can make big changes fast.  
-   So-so side: we do not learn (or earn) from users, and at point of writing there are no users at all.
+4. There is no production load - this is experimental software. Good side: can make big changes fast. So-so side: we do not learn (or earn) from users.
 

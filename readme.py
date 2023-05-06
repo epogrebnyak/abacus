@@ -46,9 +46,13 @@ balance_sheet = closed_ledger.balance_sheet()
 print(income_statement)
 print(balance_sheet)
 # %%
-# Show reports in color
-from abacus import ConsoleViewer
+# Show reports in plain text or rich formatting
+from abacus import PlainTextViewer, RichViewer
 
-cv = ConsoleViewer(rename_dict, width=60)
+cv2 = PlainTextViewer(rename_dict)
+cv2.print(balance_sheet)
+cv2.print(income_statement)
+
+cv = RichViewer(rename_dict, width=60)
 cv.print(balance_sheet)
 cv.print(income_statement)

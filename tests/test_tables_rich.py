@@ -1,5 +1,5 @@
 from abacus.core import AccountBalancesDict, BalanceSheet, IncomeStatement
-from abacus.tables import ConsoleViewer
+from abacus.tables import RichViewer
 
 
 def test_cv():
@@ -21,6 +21,6 @@ def test_cv():
         "cogs": "Cost of goods sold",
         "sga": "Selling, general and adm. expenses",
     }
-    cv = ConsoleViewer(rename_dict, width=60)
+    cv = RichViewer(rename_dict, width=60)
     cv.print(bs)
     cv.print(inc)

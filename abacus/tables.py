@@ -1,3 +1,5 @@
+"""Display financial reports as tables (rich.text.Table) on console."""
+
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
@@ -5,7 +7,13 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from abacus.accounting_types import Amount, BalanceSheet, IncomeStatement, Report
+from abacus.accounting_types import (
+    Amount,
+    BalanceSheet,
+    IncomeStatement,
+    Report,
+    AccountBalancesDict,
+)
 
 
 @dataclass
@@ -31,7 +39,7 @@ def yield_lines(report: Report, parts: List[str]):
             yield AccountLine(name, value)
 
 
-def lines(report: Report, parts: List[str]) -> List[Line]:
+def get_lines(report: Report, parts: List[str]) -> List[Line]:
     return list(yield_lines(report, parts))
 
 
@@ -44,6 +52,10 @@ def unpack(line: Line) -> Tuple[Text, Text]:
             return ("  " + a, red(b))
         case _:
             raise ValueError(line)
+
+
+def unpack_many(lines: List[Line]) -> List[Tuple[Text, Text]]:
+    return [unpack(line) for line in lines]
 
 
 def red(b: Amount) -> Text:
@@ -72,13 +84,31 @@ def rename_factory(rename_dict={}):
     return f
 
 
-def unline(rename_dict, lines: List[Line]) -> List[Tuple[Text, Text]]:
-    lines = map(rename_factory(rename_dict), lines)
-    return list(map(unpack, lines))
+def rename_lines(rename_dict: Dict[str, str], lines: List[Line]):
+    f = rename_factory(rename_dict)
+    return [f(line) for line in lines]
 
 
 def empty_line() -> AccountLine:
     return AccountLine("", "")
+
+
+def balance_sheet_lines(
+    bs: BalanceSheet,
+    rename_dict: Dict[str, str] = dict(),
+    end_line: str = "Total",
+) -> Tuple[List[Line], List[Line]]:
+    left = get_lines(bs, ["assets"])
+    right = get_lines(bs, ["capital", "liabilities"])
+    # make left and right same number of lines
+    n = max(len(left), len(right))
+    left += [empty_line()] * (n - len(left))
+    right += [empty_line()] * (n - len(right))
+    # Add end line
+    left.append(HeaderLine(end_line, bs.assets.total()))
+    right.append(HeaderLine(end_line, bs.capital.total() + bs.liabilities.total()))
+    # Rename using rename_dict
+    return rename_lines(rename_dict, left), rename_lines(rename_dict, right)
 
 
 def balance_sheet_table(
@@ -88,18 +118,10 @@ def balance_sheet_table(
     table_header: str = "Balance sheet",
     end_line: str = "Total",
 ) -> Table:
-    left = lines(bs, ["assets"])
-    right = lines(bs, ["capital", "liabilities"])
-    # make left and right same number of lines
-    n = max(len(left), len(right))
-    left += [empty_line()] * (n - len(left))
-    right += [empty_line()] * (n - len(right))
-    # Add total
-    left.append(HeaderLine(end_line, bs.assets.total()))
-    right.append(HeaderLine(end_line, bs.capital.total() + bs.liabilities.total()))
+    left, right = balance_sheet_lines(bs, rename_dict, end_line)
     # convert to rich.Text
-    left = unline(rename_dict, left)
-    right = unline(rename_dict, right)
+    left = unpack_many(left)
+    right = unpack_many(right)
     # make table
     table = Table(title=table_header, box=None, width=width, show_header=False)
     table.add_column("")
@@ -111,6 +133,16 @@ def balance_sheet_table(
     return table
 
 
+def income_statement_lines(
+    inc: IncomeStatement,
+    rename_dict: Dict[str, str] = dict(),
+    end_line: str = "Profit",
+) -> List[Line]:
+    lines = get_lines(inc, ["income", "expenses"])
+    lines.append(HeaderLine(end_line, inc.current_profit()))
+    return rename_lines(rename_dict, lines)
+
+
 def income_statement_table(
     inc: IncomeStatement,
     rename_dict: Dict[str, str] = dict(),
@@ -118,20 +150,17 @@ def income_statement_table(
     table_header: str = "Income statement",
     end_line: str = "Profit",
 ) -> Table:
-    inc_lines = lines(inc, ["income", "expenses"]) + [
-        HeaderLine(end_line, inc.current_profit())
-    ]
-    inc_lines = unline(rename_dict, inc_lines)
+    lines = unpack_many(income_statement_lines(inc, rename_dict, end_line))
     table = Table(title=table_header, box=None, width=width, show_header=False)
     table.add_column("")
     table.add_column("", justify="right", style="green")
-    for a, b in inc_lines:
+    for a, b in lines:
         table.add_row(a, b)
     return table
 
 
 @dataclass
-class ConsoleViewer:
+class RichViewer:
     rename_dict: Dict
     width: Optional[int] = None
 
@@ -142,3 +171,63 @@ class ConsoleViewer:
             table = income_statement_table(report, self.rename_dict, self.width)
         console = Console()
         console.print(table)
+
+
+def offset(line: Line) -> Tuple[str, str]:
+    match line:
+        case HeaderLine(a, b):
+            return (a, str(b))
+        case AccountLine(a, b):
+            if a:
+                return ("- " + a, str(b))
+            else:
+                return ("", "")
+        case _:
+            raise ValueError
+
+
+def plain(lines: List[Line]) -> List[str]:
+    from tabulate import tabulate
+
+    xs = map(offset, lines)
+    return tabulate(xs, tablefmt="plain").split("\n")
+
+
+def concat(left, right):
+    return "\n".join(side_by_side(plain(left), plain(right)))
+
+
+def side_by_side(left, right, space="  "):
+    from itertools import zip_longest
+
+    def longest(xs):
+        return max(len(x) for x in xs)
+
+    width = longest(left)
+    gen = zip_longest(left, right, fillvalue="")
+    gen = [(x.ljust(width, " "), y) for x, y in gen]
+    return [f"{x}{space}{y}" for x, y in gen]
+
+
+def balance_sheet_table_plain(bs, rename_dict):
+    left, right = balance_sheet_lines(bs, rename_dict)
+    return concat(left, right)
+
+
+def income_statement_table_plain(inc, rename_dict):
+    left = income_statement_lines(inc, rename_dict)
+    return "\n".join(plain(left))
+
+
+@dataclass
+class PlainTextViewer:
+    rename_dict: Dict
+
+    def show(self, report):
+        if isinstance(report, BalanceSheet):
+            return balance_sheet_table_plain(report, self.rename_dict)
+        elif isinstance(report, IncomeStatement):
+            return income_statement_table_plain(report, self.rename_dict)
+
+    def print(self, report):
+        return print(self.show(report))
