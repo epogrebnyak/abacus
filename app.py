@@ -25,8 +25,8 @@ st.header("1. Make a chart of accounts")
 Example: `[Eq]uity` will create a shorthand `Eq` for Equity account. 
 """
 
-from abacus.remove.formatting import side_by_side
 from abacus.naming import variable
+from abacus.remove.formatting import side_by_side
 
 
 def as_dict(varline: str):
