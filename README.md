@@ -27,7 +27,7 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 Assets + Expenses = Capital + Liabilites + Income   (1)
 ```
 
-Expanded accounting equation is slightly less advertised than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity) shown below:
+Expanded accounting equation is slightly less advertised than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity):
 
 [eq]: https://www.accaglobal.com/gb/en/student/exam-support-resources/foundation-level-study-resources/fa1/technical-articles/accounting-equation.html
 
@@ -35,7 +35,7 @@ Expanded accounting equation is slightly less advertised than its reduced form, 
 Assets = Capital + Liabilites                       (2)
 ```
 
-Also note an equation for profit below[^3]:
+Also note an equation for profit[^3]:
 
 ```
 Profit = Income - Expenses                          (3)
