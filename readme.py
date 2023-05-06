@@ -1,5 +1,5 @@
 # %%
-from abacus import Chart, Entry
+from abacus import Chart, Entry, ClosingEntry
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
@@ -26,16 +26,25 @@ e4 = Entry(cr="sales", dr="cash", amount=400)
 e5 = Entry(cr="cash", dr="sga", amount=50)
 entries = [e1, e2, e3, e4, e5]
 
+# %%
+# create ledger
 ledger = chart.make_ledger().process_entries(entries)
-income_st = ledger.income_statement()
-closed_ledger = ledger.close("re")
-balance_st = closed_ledger.balance_sheet()
 
-print(income_st)
+# %%
+# create income statement
+income_statement = ledger.income_statement()
+
+# %%
+# close ledger at period end and accrure dividend
+closed_ledger = ledger.close("re", closing_entries=[ClosingEntry(cr="divp", dr="re", 75)])
+balance_sheet = closed_ledger.balance_sheet()
+
+
+print(income_statement)
 # IncomeStatement(income={'sales': 400},
 #                 expenses={'cogs': 200, 'sga': 50})
 
-print(balance_st)
+print(balance_sheet)
 # BalanceSheet(
 #    assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
 #    capital={"equity": 1000, "re": 150},

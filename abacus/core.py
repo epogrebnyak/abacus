@@ -1,34 +1,18 @@
 # pylint: disable=import-error, no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
-
-# Chart -> Ledger -> [Entry] -> Ledger -> [ClosingEntry] -> Ledger
-# Ledger -> IncomeStatement
-# Ledger -> BalanceSheet
+# Signatures:
+# Chart -> Ledger -> [Entry] -> Ledger -> [ClosingEntry] -> Ledger 
+# Ledger -> (BalanceSheet, IncomeStatement) -> (Table, Table)
 # Ledger -> TrialBalance
-# TrialBalance -> Ledger (for reset of balances)
+# TrialBalance -> Ledger # for reset of balances
 
-# Depreciation/Amortisation and accumulation rules
-# Idea of app workflow
+from typing import Dict, List, Tuple
 
-
-from typing import List, Tuple, Dict
-from abacus.accounting_types import (
-    Amount,
-    AccountName,
-    Chart,
-    Asset,
-    Expense,
-    Capital,
-    Liability,
-    Income,
-    IncomeSummaryAccount,
-    Ledger,
-    AccountBalancesDict,
-    Entry,
-    BalanceSheet,
-    IncomeStatement,
-    ClosingEntry,
-)
+from abacus.accounting_types import (AccountBalancesDict, AccountName, Amount,
+                                     Asset, BalanceSheet, Capital, Chart,
+                                     ClosingEntry, Entry, Expense, Income,
+                                     IncomeStatement, IncomeSummaryAccount,
+                                     Ledger, Liability)
 
 
 def make_ledger(chart: Chart) -> Ledger:
@@ -46,9 +30,15 @@ def make_ledger(chart: Chart) -> Ledger:
     ledger[chart.income_summary_account] = IncomeSummaryAccount()
     return ledger
 
-
-def income_summary_account_name(ledger: Ledger) -> AccountName:
-    return list(subset_by_class(ledger, IncomeSummaryAccount).keys())[0]
+def find_account_name(ledger: Ledger, cls) -> AccountName:
+    """In ledger there should be just one of IncomeSummaryAccount,
+       this is a helper funciton to find it.
+    """
+    cs = list(subset_by_class(ledger, cls).keys())
+    if len(cs) ==  1:
+        return cs[0]
+    else: 
+        raise ValueError(cls)
 
 
 def subset_by_class(ledger, cls):
@@ -107,7 +97,7 @@ def balances(ledger: Ledger) -> AccountBalancesDict:
 
 
 def closing_entries_for_income_accounts(ledger) -> List[ClosingEntry]:
-    isa = income_summary_account_name(ledger)
+    isa = find_account_name(ledger, IncomeSummaryAccount)
     return [
         ClosingEntry(
             amount=amount,
@@ -119,7 +109,7 @@ def closing_entries_for_income_accounts(ledger) -> List[ClosingEntry]:
 
 
 def closing_entries_for_expense_accounts(ledger) -> List[ClosingEntry]:
-    isa = income_summary_account_name(ledger)
+    isa = find_account_name(ledger, IncomeSummaryAccount)
     return [
         ClosingEntry(
             amount=amount,
@@ -144,7 +134,7 @@ def closing_entries(
     # coping was introduced with .safe_copy() methods
     # in Legder and Account classes.
     _dummy_ledger = process_entries(ledger, entries)
-    isa = income_summary_account_name(_dummy_ledger)
+    isa = find_account_name(ledger, IncomeSummaryAccount)
     amount = _dummy_ledger[isa].balance()
 
     return entries + [
@@ -180,7 +170,10 @@ def current_profit(ledger: Ledger) -> Amount:
     return income_statement(ledger).current_profit()
 
 
-def rename_keys(balances_dict: AccountBalancesDict, rename_dict: Dict) -> AccountBalancesDict:
+def rename_keys(
+    balances_dict: AccountBalancesDict, rename_dict: Dict
+) -> AccountBalancesDict:
     def mut(s):
         return rename_dict.get(s, s).capitalize().replace("_", " ")
+
     return AccountBalancesDict((mut(k), v) for k, v in balances_dict.items())

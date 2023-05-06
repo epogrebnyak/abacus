@@ -1,17 +1,21 @@
 from dataclasses import dataclass
-from abacus.core import BalanceSheet, IncomeStatement, AccountBalancesDict
-from typing import Dict, Optional
-from rich.text import Text
+from typing import Dict, List, Optional, Tuple
+
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
+
+from abacus.accounting_types import (Amount, BalanceSheet, IncomeStatement,
+                                     Report)
 
 
-def yield_lines(report, parts):
+def yield_lines(report: Report, parts: List[str]):
     for part in parts:
         items = getattr(report, part)
-        yield Header(part, items.total())
+        # The header line shows sum of the items
+        yield HeaderLine(part, items.total())
         for name, value in items.items():
-            yield Line(name, value)
+            yield AccountLine(name, value)
 
 
 def lines(report, parts):
@@ -19,35 +23,39 @@ def lines(report, parts):
 
 
 @dataclass
-class LineBase:
+class Line:
     text: str
     value: str
 
 
-class Header(LineBase):
+class HeaderLine(Line):
     pass
 
 
-class Line(LineBase):
+class AccountLine(Line):
     pass
 
 
-def unpack(line):
+def unpack(line: Line) -> Tuple[Text, Text]:
+    """Convert Line to rich.Text tuple"""
     match line:
-        case Header(a, b):
+        case HeaderLine(a, b):
             return bold(a), bold(red(b))
-        case Line(a, b):
+        case AccountLine(a, b):
             return ("  " + a, red(b))
+        case _:
+            raise ValueError(line)
 
 
-def red(b):
+def red(b: Amount) -> Text:
+    """Make digit red if negative."""
     if b and b < 0:
         return Text(str(b), style="red")
     else:
         return Text(str(b))
 
 
-def bold(s):
+def bold(s) -> Text:
     if isinstance(s, Text):
         s.stylize("bold")
         return s
@@ -60,28 +68,36 @@ def rename_factory(rename_dict={}):
         return rename_dict.get(s, s).capitalize().replace("_", " ")
 
     def f(line):
-        line.text = mut(line.text)
-        return line
+        return line.__class__(mut(line.text), line.value)
 
     return f
 
 
-def unline(rename_dict, lines):
+def unline(rename_dict, lines: List[Line]) -> List[Tuple[Text, Text]]:
     lines = map(rename_factory(rename_dict), lines)
     return list(map(unpack, lines))
 
-
-def balance_sheet_table(bs, rename_dict=dict(), width=None):
+def empty_line() -> AccountLine:
+    return AccountLine("", "")
+    
+def balance_sheet_table(
+    bs: BalanceSheet, rename_dict: Dict[str,str]=dict(), width: Optional[int] =None,
+    table_header: str="Balance sheet", end_line: str = "Total"
+) -> Table:
     left = lines(bs, ["assets"])
     right = lines(bs, ["capital", "liabilities"])
+    # make left and right same number of lines
     n = max(len(left), len(right))
-    left += [Line("", "")] * (n - len(left))
-    right += [Line("", "")] * (n - len(right))
-    left += [Header("Total", bs.assets.total())]
-    right += [Header("Total", bs.capital.total() + bs.liabilities.total())]
+    left += [empty_line()] * (n - len(left))
+    right += [empty_line()] * (n - len(right))
+    # Add total
+    left.append(HeaderLine(end_line, bs.assets.total()))
+    right.append(HeaderLine(end_line, bs.capital.total() + bs.liabilities.total()))
+    # convert to rich.Text
     left = unline(rename_dict, left)
     right = unline(rename_dict, right)
-    table = Table(title="Balance sheet", box=None, width=width, show_header=False)
+    # make table
+    table = Table(title=table_header, box=None, width=width, show_header=False)
     table.add_column("")
     table.add_column("", justify="right", style="green")
     table.add_column("")
@@ -91,13 +107,21 @@ def balance_sheet_table(bs, rename_dict=dict(), width=None):
     return table
 
 
-def income_statement_table(inc, rename_dict=dict(), width=None):
-    inc_ = lines(inc, ["income", "expenses"]) + [Header("Profit", inc.current_profit())]
-    inc_ = unline(rename_dict, inc_)
-    table = Table(title="Income statement", box=None, width=width, show_header=False)
+def income_statement_table(
+    inc: IncomeStatement,
+    rename_dict: Dict[str,str] = dict(),
+    width: Optional[int] =None,
+    table_header: str ="Income statement",
+    end_line: str ="Profit",
+) -> Table:
+    inc_lines = lines(inc, ["income", "expenses"]) + [
+        HeaderLine(end_line, inc.current_profit())
+    ]
+    inc_lines = unline(rename_dict, inc_lines)
+    table = Table(title=table_header, box=None, width=width, show_header=False)
     table.add_column("")
     table.add_column("", justify="right", style="green")
-    for a, b in inc_:
+    for a, b in inc_lines:
         table.add_row(a, b)
     return table
 

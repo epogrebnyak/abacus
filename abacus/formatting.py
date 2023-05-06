@@ -1,6 +1,7 @@
 # pylint: disable=import-error
 from dataclasses import dataclass
 from typing import Dict
+
 from abacus.core import AccountBalancesDict
 
 # can use
