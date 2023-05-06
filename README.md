@@ -16,31 +16,31 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Accounting equations
 
-[Expanded accounting equation][eq] `(1)` is a good reference for an accounting system,
-as mentioned by [@mafm, author of ledger.py](https://github.com/mafm/ledger.py/blob/master/doc/Ledger.md#debits-and-credits-etc)[^1]:
+[Expanded accounting equation][eq] is a good basis for an accounting system[^1][^2], as it always holds:
 
-[^1]: Some students indicate expanded accounting equation [makes learning a bit smoother](https://www.reddit.com/r/Accounting/comments/137e3lz/i_plan_on_pursuing_a_bachelors_in_accounting_soon/jitcu6g/?context=3).
+[^1]: As mentioned by [@mafm, author of ledger.py](https://github.com/mafm/ledger.py/blob/master/doc/Ledger.md#debits-and-credits-etc)[^1]:
+[^2]: Also some students indicate expanded accounting equation [makes learning a bit smoother](https://www.reddit.com/r/Accounting/comments/137e3lz/i_plan_on_pursuing_a_bachelors_in_accounting_soon/jitcu6g/?context=3).
 
 ```
 Assets + Expenses = Capital + Liabilites + Income   (1)
 ```
 
-Expanded accounting equation is slightly less advertised than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity)
-`(2)`, which is valid at accounting period end:
+Expanded accounting equation is slightly less advertised than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity) shown below.
+Accounting identity is valid at accounting period end:
 
 [eq]: https://www.accaglobal.com/gb/en/student/exam-support-resources/foundation-level-study-resources/fa1/technical-articles/accounting-equation.html
 
 ```
-Assets = Capital + Liabilites                      (2)
+Assets = Capital + Liabilites                       (2)
 ```
 
-Also note that profit [follows][^2]:
+Also note an equation for profit below[^3]:
 
 ```
-Profit = Income - Expenses                        (3)
+Profit = Income - Expenses                          (3)
 ```
 
-[^2] [The profit earned by the business increases capital](https://www.open.edu/openlearn/mod/oucontent/view.php?id=31735&printable=1).
+[^3]: [The profit earned by the business increases capital](https://www.open.edu/openlearn/mod/oucontent/view.php?id=31735&printable=1).
 
 In short an accounting system:
 
