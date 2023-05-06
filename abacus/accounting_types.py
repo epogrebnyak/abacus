@@ -115,7 +115,8 @@ class Chart:
     equity: List[str]
     liabilities: List[str]
     income: List[str]
-    contraccounts: List[str] = field(default_factory=list)
+    debit_contra_accounts: List[str] = field(default_factory=list)
+    credit_contra_accounts: List[str] = field(default_factory=list)
     income_summary_account: str = "profit"
 
     def make_ledger(self):

@@ -75,7 +75,10 @@ def test_named_entries_income_statement(chart, shortcodes, named_entries):
 def test_named_entries_balance_sheet(chart, shortcodes, named_entries):
     entries = shortcodes.make_entries(named_entries)
     balance_st = (
-        chart.make_ledger().process_entries(entries).close_retained_earnings("re").balance_sheet()
+        chart.make_ledger()
+        .process_entries(entries)
+        .close_retained_earnings("re")
+        .balance_sheet()
     )
     assert balance_st == BalanceSheet(
         assets={"cash": 464, "receivables": 131, "goods_for_sale": 380},
