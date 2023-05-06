@@ -1,6 +1,6 @@
 # abacus
 
-A small, yet valid double-entry accounting system in Python. 
+A minimal, yet valid double-entry accounting system in Python. 
 
 [![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
 
