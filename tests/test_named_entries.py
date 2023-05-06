@@ -1,12 +1,7 @@
 import pytest  # pylint: disable=import-error
-from abacus.accounting_types import (
-    Chart,
-    Shortcodes,
-    NamedEntry,
-    Entry,
-    IncomeStatement,
-    BalanceSheet,
-)
+
+from abacus.accounting_types import (BalanceSheet, Chart, Entry,
+                                     IncomeStatement, NamedEntry, Shortcodes)
 
 
 @pytest.fixture

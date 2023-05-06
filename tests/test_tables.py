@@ -1,4 +1,4 @@
-from abacus.core import BalanceSheet, AccountBalancesDict, IncomeStatement
+from abacus.core import AccountBalancesDict, BalanceSheet, IncomeStatement
 from abacus.tables import ConsoleViewer
 
 

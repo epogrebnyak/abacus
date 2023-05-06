@@ -1,18 +1,8 @@
 import pytest  # pylint: disable=import-error
-from abacus.core import (
-    Chart,
-    Entry,
-    Ledger,
-    make_ledger,
-    safe_process_entries,
-)
-from abacus.accounting_types import (
-    Asset,
-    Capital,
-    IncomeSummaryAccount,
-    IncomeStatement,
-    BalanceSheet,
-)
+
+from abacus.accounting_types import (Asset, BalanceSheet, Capital,
+                                     IncomeStatement, IncomeSummaryAccount)
+from abacus.core import Chart, Entry, Ledger, make_ledger, safe_process_entries
 
 
 @pytest.fixture

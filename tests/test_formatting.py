@@ -1,4 +1,4 @@
-from abacus.core import BalanceSheet, IncomeStatement, AccountBalancesDict
+from abacus.core import AccountBalancesDict, BalanceSheet, IncomeStatement
 from abacus.formatting import TextViewer
 
 bs = BalanceSheet(
