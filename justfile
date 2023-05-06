@@ -1,8 +1,8 @@
 package := "abacus"
 
-# launch streamlit app
-app:
-  poetry run streamlit run streamlit_app.py
+# pytest
+test:
+  poetry run pytest
 
 # black and isort
 lint:  
@@ -24,3 +24,7 @@ pages:
 # create rst source for API documentation
 apidoc:
   sphinx-apidoc -o docs src/{{package}}
+
+# launch streamlit app
+app:
+  poetry run streamlit run streamlit_app.py
