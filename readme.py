@@ -36,7 +36,9 @@ income_statement = ledger.income_statement()
 
 # %%
 # close ledger at period end and accrure dividend
-closed_ledger = ledger.close("re", closing_entries=[ClosingEntry(cr="divp", dr="re", amount=75)])
+closed_ledger = ledger.close(
+    "re", closing_entries=[ClosingEntry(cr="divp", dr="re", amount=75)]
+)
 balance_sheet = closed_ledger.balance_sheet()
 
 # %%

@@ -1,18 +1,30 @@
 # pylint: disable=import-error, no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
 # Signatures:
-# Chart -> Ledger -> [Entry] -> Ledger -> [ClosingEntry] -> Ledger 
+# Chart -> Ledger -> [Entry] -> Ledger -> [ClosingEntry] -> Ledger
 # Ledger -> (BalanceSheet, IncomeStatement) -> (Table, Table)
 # Ledger -> TrialBalance
 # TrialBalance -> Ledger # for reset of balances
 
 from typing import Dict, List, Tuple
 
-from abacus.accounting_types import (AccountBalancesDict, AccountName, Amount,
-                                     Asset, BalanceSheet, Capital, Chart,
-                                     ClosingEntry, Entry, Expense, Income,
-                                     IncomeStatement, IncomeSummaryAccount,
-                                     Ledger, Liability)
+from abacus.accounting_types import (
+    AccountBalancesDict,
+    AccountName,
+    Amount,
+    Asset,
+    BalanceSheet,
+    Capital,
+    Chart,
+    ClosingEntry,
+    Entry,
+    Expense,
+    Income,
+    IncomeStatement,
+    IncomeSummaryAccount,
+    Ledger,
+    Liability,
+)
 
 
 def make_ledger(chart: Chart) -> Ledger:
@@ -30,14 +42,15 @@ def make_ledger(chart: Chart) -> Ledger:
     ledger[chart.income_summary_account] = IncomeSummaryAccount()
     return ledger
 
+
 def find_account_name(ledger: Ledger, cls) -> AccountName:
     """In ledger there should be just one of IncomeSummaryAccount,
-       this is a helper funciton to find it.
+    this is a helper funciton to find it.
     """
     cs = list(subset_by_class(ledger, cls).keys())
-    if len(cs) ==  1:
+    if len(cs) == 1:
         return cs[0]
-    else: 
+    else:
         raise ValueError(cls)
 
 

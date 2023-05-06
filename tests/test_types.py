@@ -1,5 +1,4 @@
-from abacus.accounting_types import (AccountBalancesDict, CreditAccount,
-                                     DebitAccount)
+from abacus.accounting_types import AccountBalancesDict, CreditAccount, DebitAccount
 
 
 def test_debit_credit():

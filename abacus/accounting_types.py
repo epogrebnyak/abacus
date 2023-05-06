@@ -133,14 +133,17 @@ class Ledger(UserDict[AccountName, Account]):
 
         return process_entries(self, entries)
 
-    def close(self, retained_earnings_account_name: AccountName,
-              closing_entries: Optional[List[ClosingEntry]] = None):
+    def close(
+        self,
+        retained_earnings_account_name: AccountName,
+        closing_entries: Optional[List[ClosingEntry]] = None,
+    ):
         from .core import close
 
         ledger = close(self, retained_earnings_account_name)
-        if closing_entries: 
-            return ledger.process_entries(closing_entries) 
-        else: 
+        if closing_entries:
+            return ledger.process_entries(closing_entries)
+        else:
             return ledger
 
     def balances(self):

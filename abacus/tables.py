@@ -5,21 +5,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from abacus.accounting_types import (Amount, BalanceSheet, IncomeStatement,
-                                     Report)
-
-
-def yield_lines(report: Report, parts: List[str]):
-    for part in parts:
-        items = getattr(report, part)
-        # The header line shows sum of the items
-        yield HeaderLine(part, items.total())
-        for name, value in items.items():
-            yield AccountLine(name, value)
-
-
-def lines(report, parts):
-    return list(yield_lines(report, parts))
+from abacus.accounting_types import Amount, BalanceSheet, IncomeStatement, Report
 
 
 @dataclass
@@ -34,6 +20,19 @@ class HeaderLine(Line):
 
 class AccountLine(Line):
     pass
+
+
+def yield_lines(report: Report, parts: List[str]):
+    for part in parts:
+        items = getattr(report, part)
+        # The header line shows sum of the items
+        yield HeaderLine(part, items.total())
+        for name, value in items.items():
+            yield AccountLine(name, value)
+
+
+def lines(report: Report, parts: List[str]) -> List[Line]:
+    return list(yield_lines(report, parts))
 
 
 def unpack(line: Line) -> Tuple[Text, Text]:
@@ -77,12 +76,17 @@ def unline(rename_dict, lines: List[Line]) -> List[Tuple[Text, Text]]:
     lines = map(rename_factory(rename_dict), lines)
     return list(map(unpack, lines))
 
+
 def empty_line() -> AccountLine:
     return AccountLine("", "")
-    
+
+
 def balance_sheet_table(
-    bs: BalanceSheet, rename_dict: Dict[str,str]=dict(), width: Optional[int] =None,
-    table_header: str="Balance sheet", end_line: str = "Total"
+    bs: BalanceSheet,
+    rename_dict: Dict[str, str] = dict(),
+    width: Optional[int] = None,
+    table_header: str = "Balance sheet",
+    end_line: str = "Total",
 ) -> Table:
     left = lines(bs, ["assets"])
     right = lines(bs, ["capital", "liabilities"])
@@ -109,10 +113,10 @@ def balance_sheet_table(
 
 def income_statement_table(
     inc: IncomeStatement,
-    rename_dict: Dict[str,str] = dict(),
-    width: Optional[int] =None,
-    table_header: str ="Income statement",
-    end_line: str ="Profit",
+    rename_dict: Dict[str, str] = dict(),
+    width: Optional[int] = None,
+    table_header: str = "Income statement",
+    end_line: str = "Profit",
 ) -> Table:
     inc_lines = lines(inc, ["income", "expenses"]) + [
         HeaderLine(end_line, inc.current_profit())
