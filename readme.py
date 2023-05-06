@@ -35,10 +35,16 @@ ledger = chart.make_ledger().process_entries(entries)
 income_statement = ledger.income_statement()
 
 # %%
-# close ledger at period end and accrure dividend
-closed_ledger = ledger.close(
-    "re", closing_entries=[ClosingEntry(cr="divp", dr="re", amount=75)]
-)
+# close ledger at period end
+# (a) move income and expenses to retained earnings
+closed_ledger = ledger.close_retained_earnings("re")
+# (b) accure dividend and pay out dividend in cash
+post_entries = [
+    Entry(cr="divp", dr="re", amount=75),
+    Entry(dr="divp", cr="cash", amount=75),
+]
+closed_ledger = closed_ledger.process_entries(post_entries)
+# produce balance sheet
 balance_sheet = closed_ledger.balance_sheet()
 
 # %%

@@ -88,11 +88,10 @@ ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 income_statement = ledger.income_statement()
 print(income_statement)
 
-# Close accounts
-closed_ledger = ledger.close(
-    retained_earnings_account_name="re",
-    closing_entries=[ClosingEntry(cr="divp", dr="re", amount=75)]
-)
+# Close ledger (more comments in readme.py)
+closed_ledger = ledger.close_retained_earnings("re")
+entries = [Entry(cr="divp", dr="re", amount=75), Entry(dr="divp", cr="cash", amount=75)]
+closed_ledger = closed_ledger.process_entries(entries)                  
 
 # Publish balance sheet
 balance_sheet = closed_ledger.balance_sheet()
@@ -165,7 +164,7 @@ Below are some simplifications made for this code:
 
 11. We use just one currency.
 
-What things are realistic it this code?
+What things are realistic in this code?
 
 1. Entries are stored in a queue and ledger state is calculated
    based on a previous state and a list of entries to be proccessed.
@@ -174,7 +173,7 @@ What things are realistic it this code?
 
 3. Named entries indicate typical accounting transactions.
 
-4. Contra accounts is progress.
+4. Contra accounts is a work in progress.
 
 Implementation detail:
 

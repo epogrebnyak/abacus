@@ -39,7 +39,9 @@ class Entry:
 
 
 class ClosingEntry(Entry):
-    """Same as entry, used at accounting period end."""
+    """Same as Entry, used at accounting period end for
+    retained earning and dividend.
+    """
 
     pass
 
@@ -125,26 +127,22 @@ class Chart:
 class Ledger(UserDict[AccountName, Account]):
     """General ledger that holds all accounts."""
 
-    def safe_copy(self):
+    def safe_copy(self) -> "Ledger":
         return Ledger((k, account.safe_copy()) for k, account in self.items())
 
-    def process_entries(self, entries):
+    def process_entries(self, entries) -> "Ledger":
         from .core import process_entries
 
         return process_entries(self, entries)
 
-    def close(
-        self,
-        retained_earnings_account_name: AccountName,
-        closing_entries: Optional[List[ClosingEntry]] = None,
-    ):
+    def close_retained_earnings(
+        self, retained_earnings_account_name: AccountName
+    ) -> "Ledger":
+        """Close income and expense accounts and move to
+        profit or loss to retained earnigns"""
         from .core import close
 
-        ledger = close(self, retained_earnings_account_name)
-        if closing_entries:
-            return ledger.process_entries(closing_entries)
-        else:
-            return ledger
+        return close(self, retained_earnings_account_name)
 
     def balances(self):
         from .core import balances
@@ -195,7 +193,7 @@ Pair = Tuple[AccountName, AccountName]
 class Shortcodes(UserDict[str, Pair]):
     """A dictionary that holds names of typical entry templates (pairs).
     Methods allow to convert NamedEntry("pay_capital", 1000) to
-    Entry("cash", "capital", 1000) for a single entry or a list of entries
+    Entry("cash", "capital", 1000) for a single entry or a list of entries.
     """
 
     def make_entry(self, named_entry: NamedEntry) -> Entry:
