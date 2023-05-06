@@ -16,7 +16,7 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Accounting equations
 
-[Expanded accounting equation][eq] is a good basis for an accounting system[^1][^2], as it always holds:
+[Expanded accounting equation][eq] is a good basis for an accounting system[^1][^2]:
 
 [^1]: As mentioned by [@mafm, author of ledger.py](https://github.com/mafm/ledger.py/blob/master/doc/Ledger.md#debits-and-credits-etc)[^1]:
 [^2]: Also some students indicate expanded accounting equation [makes learning a bit smoother](https://www.reddit.com/r/Accounting/comments/137e3lz/i_plan_on_pursuing_a_bachelors_in_accounting_soon/jitcu6g/?context=3).
@@ -25,8 +25,7 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 Assets + Expenses = Capital + Liabilites + Income   (1)
 ```
 
-Expanded accounting equation is slightly less advertised than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity) shown below.
-Accounting identity is valid at accounting period end:
+Expanded accounting equation is slightly less advertised than its reduced form, [an accounting identity](https://en.wikipedia.org/wiki/Accounting_identity) shown below:
 
 [eq]: https://www.accaglobal.com/gb/en/student/exam-support-resources/foundation-level-study-resources/fa1/technical-articles/accounting-equation.html
 
