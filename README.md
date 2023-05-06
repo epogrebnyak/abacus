@@ -34,8 +34,9 @@ Profit =  Income - Expenses                        (3)
 ```
 and that [the profit earned by the business increases capital](https://www.open.edu/openlearn/mod/oucontent/view.php?id=31735&printable=1).
 
-In short an accounting system keeps track of the equation `(1)` whithin the accounting period 
-and produces equations `(2)` and `(3)` at accounting period end. 
+In short an accounting system:
+- keeps track of the equation `(1)` within the accounting period, and
+- produces equations `(2)` and `(3)` at accounting period end. 
 
 
 ## Try it
