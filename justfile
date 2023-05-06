@@ -8,6 +8,10 @@ test:
 readme:
   poetry run python readme.py
 
+# run readme.py
+md:
+  npx prettier . --write
+
 
 # black and isort
 lint:  
