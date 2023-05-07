@@ -3,7 +3,7 @@ from abacus import Chart
 from abacus.core import Amount, AccountName
 from abacus.accounting_types import Account, AccountBalancesDict
 from dataclasses import dataclass
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 
 
 chart = Chart(

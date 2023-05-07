@@ -2,7 +2,6 @@
 
 from typing import List
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -67,7 +66,7 @@ names_dict = {
 fullbook = make_book(chart, names_dict)
 st.write(fullbook)
 
-f"""
+"""
 Balance sheet equation:
 """
 st.write(chart.equation)
