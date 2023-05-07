@@ -1,5 +1,5 @@
 # %%
-from abacus import Chart, Entry, Entry
+from abacus import Chart, Entry
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],

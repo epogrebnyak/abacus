@@ -22,7 +22,7 @@ Simplifying assumptions:
 
 from collections import UserDict
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 Amount = int
 AccountName = str
@@ -40,9 +40,7 @@ class Entry:
 
 class AccountBalancesDict(UserDict[AccountName, Amount]):
     """Dictionary with account names and balances, example:
-
-    AccountBalancesDict({'cash': 100}).
-
+    AccountBalancesDict({'cash': 100})
     """
 
     def total(self) -> Amount:
@@ -53,6 +51,10 @@ class AccountBalancesDict(UserDict[AccountName, Amount]):
 class Account:
     debits: List[Amount] = field(default_factory=list)
     credits: List[Amount] = field(default_factory=list)
+    nets_with: str = ""  # used only with contraccounts
+
+    def balance(self) -> Amount:
+        raise NotImplementedError
 
     def debit(self, amount: Amount):
         self.debits.append(amount)
@@ -98,18 +100,15 @@ class IncomeSummaryAccount(CreditAccount):
     pass
 
 
-@dataclass
 class ContraAccount(Account):
-    nets_with: str
-    debits: List[Amount] = field(default_factory=list)
-    credits: List[Amount] = field(default_factory=list)
-
-
-class DebitContraAccount(ContraAccount):
     pass
 
 
-class CreditContraAccount(ContraAccount):
+class DebitContraAccount(DebitAccount, ContraAccount):
+    pass
+
+
+class CreditContraAccount(CreditAccount, ContraAccount):
     pass
 
 
