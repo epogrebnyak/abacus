@@ -158,6 +158,21 @@ python-dateutil = ">=2.8.1"
 dev = ["flake8", "markdown", "twine", "wheel"]
 
 [[package]]
+name = "griffe"
+version = "0.27.3"
+description = "Signatures for entire Python programs. Extract the structure, the frame, the skeleton of your project, to generate API documentation or find breaking changes in your API."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "griffe-0.27.3-py3-none-any.whl", hash = "sha256:094513b209d4acd4b2680c2415d3af5f8ed925714795380c2a7d070e222e0b27"},
+    {file = "griffe-0.27.3.tar.gz", hash = "sha256:a3d0f75aa76b80f181f818cf605f658a69fccf287aaeeeafc7a6cf4e6a2ca27e"},
+]
+
+[package.dependencies]
+colorama = ">=0.4"
+
+[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -394,6 +409,22 @@ i18n = ["babel (>=2.9.0)"]
 min-versions = ["babel (==2.9.0)", "click (==7.0)", "colorama (==0.4)", "ghp-import (==1.0)", "importlib-metadata (==4.3)", "jinja2 (==2.11.1)", "markdown (==3.2.1)", "markupsafe (==2.0.1)", "mergedeep (==1.3.4)", "packaging (==20.5)", "pyyaml (==5.1)", "pyyaml-env-tag (==0.1)", "typing-extensions (==3.10)", "watchdog (==2.0)"]
 
 [[package]]
+name = "mkdocs-autorefs"
+version = "0.4.1"
+description = "Automatically link across pages in MkDocs."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "mkdocs-autorefs-0.4.1.tar.gz", hash = "sha256:70748a7bd025f9ecd6d6feeba8ba63f8e891a1af55f48e366d6d6e78493aba84"},
+    {file = "mkdocs_autorefs-0.4.1-py3-none-any.whl", hash = "sha256:a2248a9501b29dc0cc8ba4c09f4f47ff121945f6ce33d760f145d6f89d313f5b"},
+]
+
+[package.dependencies]
+Markdown = ">=3.3"
+mkdocs = ">=1.1"
+
+[[package]]
 name = "mkdocs-material"
 version = "9.1.9"
 description = "Documentation that simply works"
@@ -427,6 +458,49 @@ files = [
     {file = "mkdocs_material_extensions-1.1.1-py3-none-any.whl", hash = "sha256:e41d9f38e4798b6617ad98ca8f7f1157b1e4385ac1459ca1e4ea219b556df945"},
     {file = "mkdocs_material_extensions-1.1.1.tar.gz", hash = "sha256:9c003da71e2cc2493d910237448c672e00cefc800d3d6ae93d2fc69979e3bd93"},
 ]
+
+[[package]]
+name = "mkdocstrings"
+version = "0.21.2"
+description = "Automatic documentation from sources, for MkDocs."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "mkdocstrings-0.21.2-py3-none-any.whl", hash = "sha256:949ef8da92df9d692ca07be50616459a6b536083a25520fd54b00e8814ce019b"},
+    {file = "mkdocstrings-0.21.2.tar.gz", hash = "sha256:304e56a2e90595708a38a13a278e538a67ad82052dd5c8b71f77a604a4f3d911"},
+]
+
+[package.dependencies]
+Jinja2 = ">=2.11.1"
+Markdown = ">=3.3"
+MarkupSafe = ">=1.1"
+mkdocs = ">=1.2"
+mkdocs-autorefs = ">=0.3.1"
+mkdocstrings-python = {version = ">=0.5.2", optional = true, markers = "extra == \"python\""}
+pymdown-extensions = ">=6.3"
+typing-extensions = {version = ">=4.1", markers = "python_version < \"3.10\""}
+
+[package.extras]
+crystal = ["mkdocstrings-crystal (>=0.3.4)"]
+python = ["mkdocstrings-python (>=0.5.2)"]
+python-legacy = ["mkdocstrings-python-legacy (>=0.2.1)"]
+
+[[package]]
+name = "mkdocstrings-python"
+version = "0.10.1"
+description = "A Python handler for mkdocstrings."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "mkdocstrings_python-0.10.1-py3-none-any.whl", hash = "sha256:ef239cee2c688e2b949a0a47e42a141d744dd12b7007311b3309dc70e3bafc5c"},
+    {file = "mkdocstrings_python-0.10.1.tar.gz", hash = "sha256:b72301fff739070ec517b5b36bf2f7c49d1360a275896a64efb97fc17d3f3968"},
+]
+
+[package.dependencies]
+griffe = ">=0.24"
+mkdocstrings = ">=0.20"
 
 [[package]]
 name = "nodeenv"
@@ -953,4 +1027,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "1dbc277bbd77a1068c9f5bb79f613fd1e8dcd0435e3ff14632f32d6d1d89ec9c"
+content-hash = "357f31c78d35b9bc0ba2ce8dc323f3caa3d2bf8d74740c762856e0689c31e0c8"

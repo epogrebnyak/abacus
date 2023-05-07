@@ -1,6 +1,14 @@
-site_name: abacus (accounting framework) 
+site_name: "abacus (accounting framework)" 
 repo_url: "https://github.com/epogrebnyak/abacus"
+site_url: "https://epogrebnyak.github.io/abacus/"
+copyright: "&copy; 2023 Evgeny Pogrebnyak"
 nav:
-    - Home: index.md
+    - About: index.md
+    - API: abacus.md
+    - "Accounting equations": accounting.md 
 theme:
   name: material
+
+plugins:
+- search
+- mkdocstrings
