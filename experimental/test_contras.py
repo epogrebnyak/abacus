@@ -5,9 +5,6 @@ from dataclasses import dataclass
 from typing import Optional, Dict, List
 
 
-# It should be an error if both account and contraccount are on debit or credit-side.
-# It should be an error if nets_with not found in Chart
-
 chart = Chart(
     assets=["ppe"],
     expenses=[],
@@ -19,7 +16,7 @@ chart = Chart(
 )
 
 
-def test_invalid_account():
+def test_invalid_contra_account():
     import pytest
 
     with pytest.raises(ValueError):
@@ -54,20 +51,10 @@ class CreditSaldo(Saldo):
 
 
 TrialBalance = Dict[AccountName, Saldo]
-
-TAccount = Account
-
-
-@dataclass
-class Nettable:
-    account: TAccount
-    nets_with: Optional[AccountName] = None
+Ledger = Dict[AccountName, Account]
 
 
-Ledger = Dict[AccountName, TAccount]
-
-
-# Chart -> Dict[str, TAccount] -> Dict[str, Balance]
+# Chart -> Dict[str, Account] -> Dict[str, Saldo]
 
 tb = dict(
     ppe=DebitSaldo(1000),
@@ -79,12 +66,12 @@ tb = dict(
 
 def netting(tb: TrialBalance) -> TrialBalance:
     res = {}
-    # create keys without nets_with - target accounts (like 'ppe')
+    # create target accounts (like 'ppe')
     for account_name, saldo in tb.items():
         if not saldo.nets_with:
             res[account_name] = saldo
-    # work with keys with nets_with - accounts netted to zero  (like 'depr')
-    # we do not include zero accounts in netting() output
+    # work with accounts netted to zero (like 'depr')
+    # we do not include these zero accounts in netting() output
     for account_name, saldo in tb.items():
         if saldo.nets_with:
             match saldo, res[saldo.nets_with]:
@@ -98,7 +85,7 @@ def netting(tb: TrialBalance) -> TrialBalance:
 
 
 def flush(tb: TrialBalance) -> AccountBalancesDict:
-    """Discard  credit or debit side inofrmation."""
+    """Discard credit or debit side inofrmation."""
     return AccountBalancesDict((name, saldo.amount) for name, saldo in tb.items())
 
 
@@ -106,6 +93,6 @@ print(flush(netting(tb)))
 
 
 def test_tb_twice():
-    # must test twice - dictionaries may fail
+    # must test twice - dictionaries may fail deep copying
     assert flush(netting(tb)) == AccountBalancesDict({"ppe": 400, "sales": 275})
     assert flush(netting(tb)) == AccountBalancesDict({"ppe": 400, "sales": 275})

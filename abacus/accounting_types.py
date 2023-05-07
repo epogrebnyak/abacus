@@ -133,6 +133,8 @@ class Chart:
     credit_contra_accounts: List[Tuple[str, str]] = field(default_factory=list)
     income_summary_account: str = "profit"
 
+    # TODO: must check for duplicatre account keys
+
     def _is_debit_account(self, account_name):
         return account_name in self.assets + self.expenses
 
