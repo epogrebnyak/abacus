@@ -1,4 +1,5 @@
 site_name: abacus (accounting framework)
+repo_url: "https://github.com/epogrebnyak/abacus"
 nav:
     - Home: index.md
 theme:
