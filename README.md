@@ -93,7 +93,7 @@ print(income_statement)
 # Close ledger (more comments in readme.py)
 closed_ledger = ledger.close_retained_earnings("re")
 entries = [Entry(cr="divp", dr="re", amount=75), Entry(dr="divp", cr="cash", amount=75)]
-closed_ledger = closed_ledger.process_entries(entries)                  
+closed_ledger = closed_ledger.process_entries(entries)
 
 # Publish balance sheet
 balance_sheet = closed_ledger.balance_sheet()

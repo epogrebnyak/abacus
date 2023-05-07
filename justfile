@@ -16,6 +16,9 @@ md:
 ruff:
   poetry run ruff check .
 
+# type check
+mypy:
+  poetry run mypy abacus
 
 # black and isort
 lint:  
