@@ -106,6 +106,20 @@ class IncomeSummaryAccount(CreditAccount):
     pass
 
 
+class ContraAccount(Account):
+    debits: List[Amount] = field(default_factory=list)
+    credits: List[Amount] = field(default_factory=list)
+    nets_with: str
+
+
+class DebitContraAccount(ContraAccount, DebitAccount):
+    pass
+
+
+class CreditContraAccount(CreditAccount):
+    pass
+
+
 @dataclass
 class Chart:
     """Chart of accounts."""
@@ -115,9 +129,29 @@ class Chart:
     equity: List[str]
     liabilities: List[str]
     income: List[str]
-    debit_contra_accounts: List[str] = field(default_factory=list)
-    credit_contra_accounts: List[str] = field(default_factory=list)
+    debit_contra_accounts: List[Tuple[str, str]] = field(default_factory=list)
+    credit_contra_accounts: List[Tuple[str, str]] = field(default_factory=list)
     income_summary_account: str = "profit"
+
+    def _is_debit_account(self, account_name):
+        return account_name in self.assets + self.expenses
+
+    def _is_credit_account(self, account_name):
+        return account_name in self.equity + self.liabilities + self.income
+
+    def __post_init__(self):
+        for account_name, nets_with in self.debit_contra_accounts:
+            if not self._is_credit_account(nets_with):
+                raise ValueError(
+                    f"contra account {account_name} must match credit account,"
+                    f"{nets_with} is not credit account"
+                )
+        for account_name, nets_with in self.credit_contra_accounts:
+            if not self._is_debit_account(nets_with):
+                raise ValueError(
+                    f"contra account {account_name} must match debit account,"
+                    f"{nets_with} is not debit account"
+                )
 
     def make_ledger(self):
         from .core import make_ledger

@@ -24,6 +24,8 @@ from abacus.accounting_types import (
     IncomeSummaryAccount,
     Ledger,
     Liability,
+    DebitContraAccount,
+    CreditContraAccount,
 )
 
 
@@ -39,6 +41,10 @@ def make_ledger(chart: Chart) -> Ledger:
     for attr, _cls in attributes:
         for account_name in getattr(chart, attr):
             ledger[account_name] = _cls()
+    for account_name, nets_with in chart.debit_contra_accounts:
+        ledger[account_name] = DebitContraAccount([], [], nets_with=nets_with)
+    for account_name, nets_with in chart.credit_contra_accounts:
+        ledger[account_name] = CreditContraAccount([], [], nets_with=nets_with)
     ledger[chart.income_summary_account] = IncomeSummaryAccount()
     return ledger
 

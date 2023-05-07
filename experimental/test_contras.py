@@ -5,12 +5,6 @@ from dataclasses import dataclass
 from typing import Optional, Dict, List
 
 
-@dataclass
-class ContraAccount:
-    name: AccountName
-    nets_with: AccountName
-
-
 # It should be an error if both account and contraccount are on debit or credit-side.
 # It should be an error if nets_with not found in Chart
 
@@ -20,22 +14,24 @@ chart = Chart(
     equity=[],
     liabilities=[],
     income=["sales"],
-    debit_contra_accounts=[ContraAccount("discounts", "sales")],
-    credit_contra_accounts=[ContraAccount("depr", "ppe")],
+    debit_contra_accounts=[("discounts", "sales")],
+    credit_contra_accounts=[("depr", "ppe")],
 )
 
 
-invalid_chart_1 = Chart(
-    assets=["ppe"],
-    expenses=[],
-    equity=[],
-    liabilities=[],
-    income=["sales"],
-    debit_contra_accounts=[ContraAccount("discounts", "sales")],
-    credit_contra_accounts=[ContraAccount("depr", "ppe"), ContraAccount("abc", "zzz")],
-)
+def test_invalid_account():
+    import pytest
 
-# We may need to change AccountBalancesDict
+    with pytest.raises(ValueError):
+        Chart(
+            assets=["ppe"],
+            expenses=[],
+            equity=[],
+            liabilities=[],
+            income=["sales"],
+            debit_contra_accounts=[],
+            credit_contra_accounts=[("abc", "zzz")],
+        )
 
 
 @dataclass
@@ -83,22 +79,21 @@ tb = dict(
 
 def netting(tb: TrialBalance) -> TrialBalance:
     res = {}
-    # create keys without nets_with
+    # create keys without nets_with - target accounts (like 'ppe')
     for account_name, saldo in tb.items():
         if not saldo.nets_with:
             res[account_name] = saldo
-    # work with keys with nets_with
+    # work with keys with nets_with - accounts netted to zero  (like 'depr')
+    # we do not include zero accounts in netting() output
     for account_name, saldo in tb.items():
         if saldo.nets_with:
-            match saldo:
-                case DebitSaldo(amount, nets_with):
-                    if not isinstance(res[nets_with], CreditSaldo):
-                        raise ValueError([res[nets_with], saldo])
+            match saldo, res[saldo.nets_with]:
+                case DebitSaldo(amount, nets_with), CreditSaldo(_, _):
                     res[nets_with] -= amount
-                case CreditSaldo(amount, nets_with):
-                    if not isinstance(res[nets_with], DebitSaldo):
-                        raise ValueError([res[nets_with], saldo])
+                case CreditSaldo(amount, nets_with), DebitSaldo(_, _):
                     res[nets_with] -= amount
+                case (_, _):
+                    raise ValueError([saldo, res[saldo.nets_with]])
     return res
 
 
