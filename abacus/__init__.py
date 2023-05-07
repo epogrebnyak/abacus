@@ -1,2 +1,2 @@
-from .core import Chart, Entry, ClosingEntry
+from .core import Chart, Entry, Entry
 from .tables import RichViewer, PlainTextViewer

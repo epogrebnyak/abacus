@@ -1,7 +1,7 @@
 # pylint: disable=import-error, no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
 # Signatures:
-# Chart -> Ledger -> [Entry] -> Ledger -> [ClosingEntry] -> Ledger
+# Chart -> Ledger -> [Entry] -> Ledger -> [Entry] -> Ledger
 # Ledger -> (BalanceSheet, IncomeStatement) -> (Table, Table)
 # Ledger -> TrialBalance
 # TrialBalance -> Ledger # for reset of balances
@@ -16,7 +16,7 @@ from abacus.accounting_types import (
     BalanceSheet,
     Capital,
     Chart,
-    ClosingEntry,
+    Entry,
     Entry,
     Expense,
     Income,
@@ -42,9 +42,9 @@ def make_ledger(chart: Chart) -> Ledger:
         for account_name in getattr(chart, attr):
             ledger[account_name] = _cls()
     for account_name, nets_with in chart.debit_contra_accounts:
-        ledger[account_name] = DebitContraAccount([], [], nets_with=nets_with)
+        ledger[account_name] = DebitContraAccount(nets_with, [], [])
     for account_name, nets_with in chart.credit_contra_accounts:
-        ledger[account_name] = CreditContraAccount([], [], nets_with=nets_with)
+        ledger[account_name] = CreditContraAccount(nets_with, [], [])
     ledger[chart.income_summary_account] = IncomeSummaryAccount()
     return ledger
 
@@ -115,10 +115,10 @@ def balances(ledger: Ledger) -> AccountBalancesDict:
     )
 
 
-def closing_entries_for_income_accounts(ledger) -> List[ClosingEntry]:
+def closing_entries_for_income_accounts(ledger) -> List[Entry]:
     isa = find_account_name(ledger, IncomeSummaryAccount)
     return [
-        ClosingEntry(
+        Entry(
             amount=amount,
             dr=account_name,
             cr=isa,
@@ -127,10 +127,10 @@ def closing_entries_for_income_accounts(ledger) -> List[ClosingEntry]:
     ]
 
 
-def closing_entries_for_expense_accounts(ledger) -> List[ClosingEntry]:
+def closing_entries_for_expense_accounts(ledger) -> List[Entry]:
     isa = find_account_name(ledger, IncomeSummaryAccount)
     return [
-        ClosingEntry(
+        Entry(
             amount=amount,
             dr=isa,
             cr=account_name,
@@ -141,7 +141,7 @@ def closing_entries_for_expense_accounts(ledger) -> List[ClosingEntry]:
 
 def closing_entries(
     ledger: Ledger, retained_earnings_account_name: AccountName
-) -> List[ClosingEntry]:
+) -> List[Entry]:
     # fmt: off
     entries = closing_entries_for_income_accounts(ledger) \
             + closing_entries_for_expense_accounts(ledger)
@@ -157,7 +157,7 @@ def closing_entries(
     amount = _dummy_ledger[isa].balance()
 
     return entries + [
-        ClosingEntry(
+        Entry(
             amount=amount,
             cr=retained_earnings_account_name,
             dr=isa,

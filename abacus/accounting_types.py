@@ -38,14 +38,6 @@ class Entry:
     amount: Amount
 
 
-class ClosingEntry(Entry):
-    """Same as Entry, used at accounting period end for
-    retained earning and dividend.
-    """
-
-    pass
-
-
 class AccountBalancesDict(UserDict[AccountName, Amount]):
     """Dictionary with account names and balances, example:
 
@@ -106,17 +98,18 @@ class IncomeSummaryAccount(CreditAccount):
     pass
 
 
+@dataclass
 class ContraAccount(Account):
+    nets_with: str
     debits: List[Amount] = field(default_factory=list)
     credits: List[Amount] = field(default_factory=list)
-    nets_with: str
 
 
-class DebitContraAccount(ContraAccount, DebitAccount):
+class DebitContraAccount(ContraAccount):
     pass
 
 
-class CreditContraAccount(CreditAccount):
+class CreditContraAccount(ContraAccount):
     pass
 
 

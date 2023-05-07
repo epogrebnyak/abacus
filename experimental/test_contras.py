@@ -1,3 +1,4 @@
+# %%
 from abacus import Chart
 from abacus.core import Amount, AccountName
 from abacus.accounting_types import Account, AccountBalancesDict
@@ -14,6 +15,11 @@ chart = Chart(
     debit_contra_accounts=[("discounts", "sales")],
     credit_contra_accounts=[("depr", "ppe")],
 )
+
+ledger = chart.make_ledger()
+print(ledger)
+
+# %%
 
 
 def test_invalid_contra_account():
