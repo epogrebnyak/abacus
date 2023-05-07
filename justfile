@@ -12,6 +12,10 @@ readme:
 md:
   npx prettier . --write
 
+# apply ruff linter
+ruff:
+  poetry run ruff check .
+
 
 # black and isort
 lint:  

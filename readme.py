@@ -53,7 +53,7 @@ print(income_statement)
 print(balance_sheet)
 # %%
 # Show reports in plain text or rich formatting
-from abacus import PlainTextViewer, RichViewer
+from abacus import PlainTextViewer, RichViewer  # noqa: E402
 
 cv2 = PlainTextViewer(rename_dict)
 cv2.print(balance_sheet)

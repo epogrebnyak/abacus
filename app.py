@@ -24,8 +24,8 @@ st.header("1. Make a chart of accounts")
 Example: `[Eq]uity` will create a shorthand `Eq` for Equity account. 
 """
 
-from abacus.naming import variable
-from abacus.remove.formatting import side_by_side
+from abacus.naming import variable  # noqa: E402
+from abacus.remove.formatting import side_by_side  # noqa: E402
 
 
 def as_dict(varline: str):
@@ -42,7 +42,7 @@ capital_dict = ask("Capital accounts", "[Eq]uity")
 liabilities_dict = ask("Liabilities accounts", "Debt; Accrued interest [ai]")
 income_dict = ask("Income accounts", "Sales")
 
-from abacus.remove.accounting import Chart, Entry, make_book
+from abacus.remove.accounting import Chart, Entry, make_book  # noqa: E402
 
 
 def keys(d):
@@ -84,7 +84,7 @@ entries_text = """300 Cash Eq "Add shareholder capital"
 750 Cash Sales "Sold goods (income)" """
 
 entries_text = st.text_area(
-    'Specify a list of entries below in a format <amount> <debit account> <credit account> "<comment>".',
+    'Specify a list of entries below in a format <amount> <debit account> <credit account> "<comment>".',  # noqa: E501
     entries_text,
 )
 
@@ -138,7 +138,7 @@ st.header("4. Try one transaction")
 """
 
 one_entry_text = st.text_input(
-    'Enter transaction in a format <amount> <debit account> <credit account> "<comment>".',
+    'Enter transaction in a format <amount> <debit account> <credit account> "<comment>".',  # noqa: E501
     '0 Cash Eq "add more shareholder capital"',
 )
 

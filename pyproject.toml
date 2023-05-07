@@ -1,3 +1,6 @@
+[tool.ruff]
+ignore=['E501']
+
 [tool.poetry]
 name = "abacus"
 version = "0.1.3"

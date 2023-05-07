@@ -1,2 +1,2 @@
-from .core import Chart, Entry, Entry
-from .tables import RichViewer, PlainTextViewer
+from .core import Chart, Entry  # noqa: F401
+from .tables import RichViewer, PlainTextViewer  # noqa: F401
