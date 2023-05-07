@@ -1,0 +1,5 @@
+site_name: abacus (accounting framework)
+nav:
+    - Home: index.md
+theme:
+  name: material
