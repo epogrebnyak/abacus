@@ -42,8 +42,8 @@ def make_ledger(chart: Chart) -> Ledger:
         for account_name in getattr(chart, attr):
             ledger[account_name] = _cls()
     attributes = [
-        ("debit_contra_accounts", DebitContraAccount),
-        ("credit_contra_accounts", CreditContraAccount),
+        ("debit_contra_accounts", DebitContraAccount),  # type: ignore
+        ("credit_contra_accounts", CreditContraAccount),  # type: ignore
     ]
     # create and link contraaccounts
     for attr, _cls in attributes:
@@ -51,23 +51,22 @@ def make_ledger(chart: Chart) -> Ledger:
             # create
             ledger[account_name] = _cls()
             # link 'account_name' to 'nets_with'
-            if ledger[nets_with].netting:
-                ledger[nets_with].netting.contra_accounts.append(account_name)
+            if ledger[nets_with].netting:  # type: ignore
+                ledger[nets_with].netting.contra_accounts.append(account_name)  # type: ignore
             else:
-                ledger[nets_with].netting = Netting([account_name], "net_" + nets_with)
+                ledger[nets_with].netting = Netting([account_name], "net_" + nets_with)  # type: ignore
     ledger[chart.income_summary_account] = IncomeSummaryAccount()
     return ledger
 
 
 def find_account_name(ledger: Ledger, cls) -> AccountName:
     """In ledger there should be just one of IncomeSummaryAccount,
-    this is a helper funciton to find it.
+    this is a helper function to find it.
     """
     cs = list(subset_by_class(ledger, cls).keys())
     if len(cs) == 1:
         return cs[0]
-    else:
-        raise ValueError(cls)
+    raise ValueError(cls)
 
 
 def subset_by_class(ledger, cls):
