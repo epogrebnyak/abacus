@@ -135,6 +135,20 @@ class Chart:
     credit_contra_accounts: List[Tuple[str, str]] = field(default_factory=list)
     income_summary_account: str = "profit"
 
+    def account_types(self):
+        attribute_mapping = [
+            ("assets", Asset),
+            ("expenses", Expense),
+            ("equity", Capital),
+            ("liabilities", Liability),
+            ("income", Income),
+        ]
+        res = {}
+        for attr, _cls in attribute_mapping:
+            for account_name in getattr(self, attr):
+                res[account_name] = _cls
+        return res
+
     # TODO: must check for duplicatre account keys
 
     def _is_debit_account(self, account_name):
