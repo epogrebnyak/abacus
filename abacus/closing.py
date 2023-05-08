@@ -1,7 +1,6 @@
 """Closing accounts at period end"""
 
 from typing import List
-from dataclasses import dataclass
 
 from .accounting_types import AccountName, Posting, RenameAccount, Entry
 from .accounts import IncomeSummaryAccount
@@ -50,13 +49,16 @@ def find_account_name(ledger: Ledger, cls) -> AccountName:
     raise ValueError(cls)
 
 
-def closing_entries_income_and_expense_to_isa(ledger) -> Ledger:
+def closing_entries_income_and_expense_to_isa(ledger) -> List[Entry]:
     isa = find_account_name(ledger, IncomeSummaryAccount)
     es1 = [
-        account.transfer_balance_entry(name, isa) for name, account in income(ledger).items()
+        account.transfer_balance_entry(name, isa)
+        for name, account in income(ledger).items()
     ]
+
     es2 = [
-        account.transfer_balance_entry(name, isa) for name, account in expenses(ledger).items()
+        account.transfer_balance_entry(name, isa)
+        for name, account in expenses(ledger).items()
     ]
     return es1 + es2
 
@@ -70,8 +72,20 @@ def closing_entries(
     ledger: Ledger, retained_earnings_account_name: AccountName
 ) -> List[Posting]:
     es1 = closing_entries_for_temporary_contra_acounts(ledger)
-    es2 = closing_entries_income_and_expense_to_isa(ledger)
+    _dummy_ledger = ledger.process_entries(es1)
+    # at this point "sales" can be renamed tp "net_sales"
+    es2 = closing_entries_income_and_expense_to_isa(_dummy_ledger)
+    _dummy_ledger = _dummy_ledger.process_entries(es2)
+    # at this pont we have realprofit value at isa
     es3 = [
-        closing_entry_isa_to_retained_earnings(ledger, retained_earnings_account_name)
+        closing_entry_isa_to_retained_earnings(
+            _dummy_ledger, retained_earnings_account_name
+        )
     ]
-    return es1+es2+es3
+    return es1 + es2 + es3  # type: ignore
+
+
+def close(ledger: Ledger, retained_earnings_account_name: AccountName) -> Ledger:
+    return ledger.process_entries(
+        closing_entries(ledger, retained_earnings_account_name)
+    )

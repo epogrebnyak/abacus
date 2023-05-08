@@ -3,7 +3,7 @@
 from collections import UserDict
 from typing import List, Tuple
 
-from .accounting_types import AccountName, Entry
+from .accounting_types import AccountName, Posting, Entry, RenameAccount
 from .accounts import Account, Asset, Capital, Expense, Income, Liability
 
 
@@ -14,13 +14,12 @@ class Ledger(UserDict[AccountName, Account]):
         return Ledger((k, account.safe_copy()) for k, account in self.items())
 
     def process_entries(self, entries) -> "Ledger":
-        return process_entries(self, entries)
+        return process_postings(self, entries)
 
-    def close_retained_earnings(
-        self, retained_earnings_account_name: AccountName
-    ) -> "Ledger":
-        """Close income and expense accounts and move to
-        profit or loss to retained earnigns"""
+    def close(self, retained_earnings_account_name: AccountName) -> "Ledger":
+        """Close contraaccounts, associated with income and expense accounts,
+        aggregate profit or loss at income summary account
+        and move balance of income summary account to retained earnings."""
         from .closing import close
 
         return close(self, retained_earnings_account_name)
@@ -49,42 +48,52 @@ def subset_by_class(ledger, cls):
     )
 
 
-def assets(ledger):
+def assets(ledger: Ledger) -> Ledger:
     return subset_by_class(ledger, Asset)
 
 
-def expenses(ledger):
+def expenses(ledger: Ledger) -> Ledger:
     return subset_by_class(ledger, Expense)
 
 
-def capital(ledger):
+def capital(ledger: Ledger) -> Ledger:
     return subset_by_class(ledger, Capital)
 
 
-def liabilities(ledger):
+def liabilities(ledger: Ledger) -> Ledger:
     return subset_by_class(ledger, Liability)
 
 
-def income(ledger):
+def income(ledger: Ledger) -> Ledger:
     return subset_by_class(ledger, Income)
 
 
-def process_entries(ledger: Ledger, entries: List[Entry]) -> Ledger:
-    ledger, _failed_entries = safe_process_entries(ledger, entries)
+def process_postings(ledger: Ledger, postings: List[Posting]) -> Ledger:
+    ledger, _failed_entries = safe_process_postings(ledger, postings)
     if _failed_entries:
         raise KeyError(_failed_entries)
     return ledger
 
 
-def safe_process_entries(
-    ledger: Ledger, entries: List[Entry]
-) -> Tuple[Ledger, List[Entry]]:
+def _process(ledger: Ledger, posting: Posting) -> Ledger:
+    match posting:
+        case Entry(dr, cr, amount):
+            ledger[dr].debits.append(amount)
+            ledger[cr].credits.append(amount)
+        case RenameAccount(existing_name, new_name):
+            ledger[new_name] = ledger[existing_name].safe_copy()
+            del ledger[existing_name]
+    return ledger
+
+
+def safe_process_postings(
+    ledger: Ledger, postings: List[Posting]
+) -> Tuple[Ledger, List[Posting]]:
     _ledger = ledger.safe_copy()
     _failed = []
-    for entry in entries:
+    for posting in postings:
         try:
-            _ledger[entry.dr].debit(entry.amount)
-            _ledger[entry.cr].credit(entry.amount)
+            _ledger = _process(_ledger, posting)
         except KeyError:
-            _failed.append(entry)
+            _failed.append(posting)
     return _ledger, _failed

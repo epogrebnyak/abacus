@@ -1,9 +1,20 @@
-import pytest  # pylint: disable=import-error
+from abacus.reports import AccountBalancesDict
 
-from abacus.accounting_types import Entry
+
+def test_AccountBalanceDict():
+    assert (
+        AccountBalancesDict(
+            [
+                ("a", 3),
+                ("b", -1),
+            ]
+        ).total()
+        == 2
+    )
+
+
 from abacus.accounts import Asset, Capital, IncomeSummaryAccount
 from abacus.chart import Chart, make_ledger
-from abacus.ledger import Ledger, safe_process_entries
 from abacus.reports import BalanceSheet, IncomeStatement
 
 
@@ -16,10 +27,7 @@ def test_income_statement(chart0, entries0):
 
 def test_balance_sheet_with_close(chart0, entries0):
     balance_st = (
-        chart0.make_ledger()
-        .process_entries(entries0)
-        .close_retained_earnings("re")
-        .balance_sheet()
+        chart0.make_ledger().process_entries(entries0).close("re").balance_sheet()
     )
     assert balance_st == BalanceSheet(
         assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
@@ -29,12 +37,7 @@ def test_balance_sheet_with_close(chart0, entries0):
 
 
 def test_balances(chart0, entries0):
-    b = (
-        chart0.make_ledger()
-        .process_entries(entries0)
-        .close_retained_earnings("re")
-        .balances()
-    )
+    b = chart0.make_ledger().process_entries(entries0).close("re").balances()
     assert b == {
         "cash": 1100,
         "receivables": 0,

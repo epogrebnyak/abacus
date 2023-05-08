@@ -1,7 +1,21 @@
 from abacus.ledger import Ledger
-from abacus.accounts import *
-from abacus.closing import closing_entries
-
+from abacus.accounts import (
+    Asset,
+    Netting,
+    Expense,
+    Capital,
+    Liability,
+    Income,
+    CreditContraAccount,
+    DebitContraAccount,
+    IncomeSummaryAccount,
+)
+from abacus.closing import (
+    closing_entries,
+    closing_entries_for_temporary_contra_acounts,
+    closing_entries_income_and_expense_to_isa,
+)
+from abacus.accounting_types import RenameAccount, Entry
 
 ledger = Ledger(
     {
@@ -34,5 +48,15 @@ ledger = Ledger(
     }
 )
 
-test_closing_entries():
-assert closing_entries(ledger, "re") == [Entry(dr='sales', cr='discount', amount=65), Entry(dr='sales', cr='returns', amount=0), RenameAccount(existing_name='sales', new_name='net_sales'), Entry(dr='sales', cr='profit', amount=620), Entry(dr='profit', cr='cogs', amount=180), Entry(dr='profit', cr='sga', amount=50), Entry(dr='profit', cr='depreciation_expense', amount=250), Entry(dr='profit', cr='re', amount=0)]
+
+def test_closing_entries():
+    assert closing_entries(ledger, "re") == [
+        Entry(dr="sales", cr="discount", amount=65),
+        Entry(dr="sales", cr="returns", amount=0),
+        RenameAccount(existing_name="sales", new_name="net_sales"),
+        Entry(dr="net_sales", cr="profit", amount=555),
+        Entry(dr="profit", cr="cogs", amount=180),
+        Entry(dr="profit", cr="sga", amount=50),
+        Entry(dr="profit", cr="depreciation_expense", amount=250),
+        Entry(dr="profit", cr="re", amount=75),
+    ]

@@ -1,7 +1,7 @@
+"""Display financial reports as tables (rich.text.Table) on console."""
+
 # mypy: ignore-errors
 # pyright: ignore
-
-"""Display financial reports as tables (rich.text.Table) on console."""
 
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
@@ -10,7 +10,8 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from abacus.accounting_types import Amount, BalanceSheet, IncomeStatement, Report
+from abacus.accounting_types import Amount
+from abacus.reports import BalanceSheet, IncomeStatement, Report
 
 
 @dataclass

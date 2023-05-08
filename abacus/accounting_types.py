@@ -33,11 +33,6 @@ class Posting:
 
 
 @dataclass
-class CreateAccount(Posting):
-    pass
-
-
-@dataclass
 class Entry(Posting):
     """Accounting entry with amount and account names to be debited (dr)
     and credited (cr)."""
@@ -46,48 +41,11 @@ class Entry(Posting):
     cr: AccountName
     amount: Amount
 
-    def process(self, ledger) -> "Ledger":
-        return ledger.process_entries([self])
-
 
 @dataclass
 class RenameAccount(Posting):
     existing_name: AccountName
     new_name: AccountName
-
-    def process(self, ledger) -> "Ledger":
-        ledger[self.new_name] = ledger[self.existing_name].safe_copy()
-        del ledger[self.existing_name]
-        return ledger
-
-
-class AccountBalancesDict(UserDict[AccountName, Amount]):
-    """Dictionary with account names and balances, example:
-    AccountBalancesDict({'cash': 100})
-    """
-
-    def total(self) -> Amount:
-        return sum(self.values())
-
-
-class Report:
-    pass
-
-
-@dataclass
-class BalanceSheet(Report):
-    assets: AccountBalancesDict
-    capital: AccountBalancesDict
-    liabilities: AccountBalancesDict
-
-
-@dataclass
-class IncomeStatement(Report):
-    income: AccountBalancesDict
-    expenses: AccountBalancesDict
-
-    def current_profit(self):
-        return self.income.total() - self.expenses.total()
 
 
 @dataclass
@@ -114,14 +72,11 @@ class Shortcodes(UserDict[str, Pair]):
         return [self.make_entry(ne) for ne in named_entries]
 
 
-TrialBalance = AccountBalancesDict
-
-
 @dataclass
 class Saldo:
     """Account name and balance.
 
-    Note: 'saldo' in balance in Italian."""
+    Note: 'saldo' is balance in Italian."""
 
     account_name: AccountName
-    amount: Amount
+    balance: Amount
