@@ -52,7 +52,7 @@ assert balance_sheet == BalanceSheet(
 )
 ```
 
-This code is save in [minimal.py](minimal.py)
+This code is saved in [minimal.py](minimal.py)
 
 ## Step by step example
 
@@ -135,16 +135,16 @@ featuring contraccounts (eg depreciation) and dividend payout.
 ## Intent
 
 This code is intended as an educational device that informs
-users about principles of accounting information systems (AIS)
+users about principles of double-entry accounting, 
+accounting information systems (AIS)
 and good coding practices in Python.
 
-`abacus` should also be usable as 'headless' general ledger
-that accepts a chart of accounts, accounting entries
-and produces balance sheet and income statement.
+`abacus` should be usable as 'headless' general ledger
+engine that accepts a chart of accounts, accounting entries
+and produces a balance sheet and an income statement.
 
-`abacus` should be fit for simulations, where
-you generate a stream of entries corresponding to business events
-and evaluate the resulting financial reports.
+`abacus` may also enable simulations where you generate a stream 
+of business events and condense it to a financial report.
 
 ## Assumptions
 
