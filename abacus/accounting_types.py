@@ -28,14 +28,37 @@ Amount = int
 AccountName = str
 
 
+class Posting:
+    pass
+
+
 @dataclass
-class Entry:
+class CreateAccount(Posting):
+    pass
+
+
+@dataclass
+class Entry(Posting):
     """Accounting entry with amount and account names to be debited (dr)
     and credited (cr)."""
 
     dr: AccountName
     cr: AccountName
     amount: Amount
+
+    def process(self, ledger) -> "Ledger":
+        return ledger.process_entries([self])
+
+
+@dataclass
+class RenameAccount(Posting):
+    existing_name: AccountName
+    new_name: AccountName
+
+    def process(self, ledger) -> "Ledger":
+        ledger[self.new_name] = ledger[self.existing_name].safe_copy()
+        del ledger[self.existing_name]
+        return ledger
 
 
 class AccountBalancesDict(UserDict[AccountName, Amount]):

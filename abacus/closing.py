@@ -1,18 +1,43 @@
-# Next:
-# close_contra_accounts(ledger, cls) - closes all contraccounts related to cls
-# close_income(ledger) nets income-related contraccounts
-# close_expense(ledger) nets expense-related contraccounts (maybe there are none)
-# close_isa(ledger, retained_earnings_account_name) moves income and expense to isa
-# and closes isa to retained earnings (this keeps track of entries in isa)
-# income statement (net values) produced here
-# close all other contra_accounts (depreciation)
+"""Closing accounts at period end"""
 
 from typing import List
+from dataclasses import dataclass
 
-from .accounting_types import AccountName, Entry
+from .accounting_types import AccountName, Posting, RenameAccount, Entry
 from .accounts import IncomeSummaryAccount
-from .ledger import Ledger, expenses, income, process_entries, subset_by_class
-from .reports import balances
+from .ledger import Ledger, expenses, income, subset_by_class
+from .accounts import Income, Expense, Asset, Liability, Capital
+
+
+def closing_entries_for_contra_accounts(ledger: Ledger, peer_class):
+    # find all contra accounts to close
+    for peer_account_name, account in subset_by_class(ledger, peer_class).items():
+        if n := account.netting:
+            for contra_account_name in n.contra_accounts:
+                entry = ledger[contra_account_name].transfer_balance_entry(
+                    contra_account_name, peer_account_name
+                )
+                yield entry
+    # rename accounts
+    for peer_account_name, account in subset_by_class(ledger, peer_class).items():
+        if account.netting:
+            yield RenameAccount(peer_account_name, account.netting.target_name)
+
+
+def closing_entries_for_temporary_contra_acounts(ledger) -> List[Posting]:
+    return [
+        p
+        for cls in (Income, Expense)
+        for p in closing_entries_for_contra_accounts(ledger, cls)
+    ]
+
+
+def closing_entries_for_permanent_contra_acounts(ledger) -> List[Posting]:
+    return [
+        p
+        for cls in (Asset, Capital, Liability)
+        for p in closing_entries_for_contra_accounts(ledger, cls)
+    ]
 
 
 def find_account_name(ledger: Ledger, cls) -> AccountName:
@@ -25,56 +50,28 @@ def find_account_name(ledger: Ledger, cls) -> AccountName:
     raise ValueError(cls)
 
 
-def closing_entries_for_income_accounts(ledger) -> List[Entry]:
+def closing_entries_income_and_expense_to_isa(ledger) -> Ledger:
     isa = find_account_name(ledger, IncomeSummaryAccount)
-    return [
-        Entry(
-            amount=amount,
-            dr=account_name,
-            cr=isa,
-        )
-        for account_name, amount in balances(income(ledger)).items()
+    es1 = [
+        account.transfer_balance_entry(name, isa) for name, account in income(ledger).items()
     ]
+    es2 = [
+        account.transfer_balance_entry(name, isa) for name, account in expenses(ledger).items()
+    ]
+    return es1 + es2
 
 
-def closing_entries_for_expense_accounts(ledger) -> List[Entry]:
+def closing_entry_isa_to_retained_earnings(ledger, re) -> Entry:
     isa = find_account_name(ledger, IncomeSummaryAccount)
-    return [
-        Entry(
-            amount=amount,
-            dr=isa,
-            cr=account_name,
-        )
-        for account_name, amount in balances(expenses(ledger)).items()
-    ]
+    return ledger[isa].transfer_balance_entry(isa, re)
 
 
 def closing_entries(
     ledger: Ledger, retained_earnings_account_name: AccountName
-) -> List[Entry]:
-    # fmt: off
-    entries = closing_entries_for_income_accounts(ledger) \
-            + closing_entries_for_expense_accounts(ledger)
-    # fmt: on
-
-    # We actually process the closing to find out the profit.
-    # Alternative is to use amount = current_profit(ledger).
-    # process_entries() was altering ledger before proper
-    # coping was introduced with .safe_copy() methods
-    # in Legder and Account classes.
-    _dummy_ledger = process_entries(ledger, entries)
-    isa = find_account_name(ledger, IncomeSummaryAccount)
-    amount = _dummy_ledger[isa].balance()
-
-    return entries + [
-        Entry(
-            amount=amount,
-            cr=retained_earnings_account_name,
-            dr=isa,
-        )
+) -> List[Posting]:
+    es1 = closing_entries_for_temporary_contra_acounts(ledger)
+    es2 = closing_entries_income_and_expense_to_isa(ledger)
+    es3 = [
+        closing_entry_isa_to_retained_earnings(ledger, retained_earnings_account_name)
     ]
-
-
-def close(ledger: Ledger, retained_earnings_account_name: AccountName) -> Ledger:
-    entries = closing_entries(ledger, retained_earnings_account_name)
-    return process_entries(ledger, entries)
+    return es1+es2+es3

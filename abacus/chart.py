@@ -53,12 +53,6 @@ class Chart:
 
     # TODO: must check for duplicatre account keys
 
-    def is_debit_account(self, account_name):
-        return account_name in self.assets + self.expenses
-
-    def is_credit_account(self, account_name):
-        return account_name in self.equity + self.liabilities + self.income
-
     def make_ledger(self):
         return make_ledger(self)
 

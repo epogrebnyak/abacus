@@ -7,7 +7,10 @@ chart = Chart(
     equity=["equity", "re"],
     liabilities=["divp", "payables"],
     income=["sales"],
-    contra_accounts={"ppe": (["depreciation"], "net_ppe")},
+    contra_accounts={
+        "ppe": (["depreciation"], "net_ppe"),
+        "sales": (["discount", "returns"], "net_sales"),
+    },
 )
 rename_dict = {
     "re": "Retained earnings",
@@ -15,23 +18,26 @@ rename_dict = {
     "cogs": "Cost of goods sold",
     "sga": "Selling, general and adm. expenses",
     "ppe": "Property, plant, equipment",
-    "net_ppe": "Property, plant, equipment (net)"
+    "net_ppe": "Property, plant, equipment (net)",
+    "net_sales": "Sales (net)",
 }
 
 entries = [
-# pay company capital in cash
-Entry(dr="cash", cr="equity", amount=4000),
-# acquire storage equipment
-Entry(dr="ppe", cr="cash", amount=3000),
-# acquire goods
-Entry(dr="goods_for_sale", cr="cash", amount=250),
-# sell goods worth 180 for 420
-Entry(cr="goods_for_sale", dr="cogs", amount=180),
-Entry(cr="sales", dr="cash", amount=420),
-# pay adminstrative expenses
-Entry(cr="cash", dr="sga", amount=50),
-# accrue depreciation
-Entry(cr="depreciation", dr="depreciation_expense", amount=250),
+    # pay company capital in cash
+    Entry(dr="cash", cr="equity", amount=4000),
+    # acquire storage equipment
+    Entry(dr="ppe", cr="cash", amount=3000),
+    # acquire goods
+    Entry(dr="goods_for_sale", cr="cash", amount=250),
+    # sell goods worth 180 for 620 with 40 and 25 rebates
+    Entry(cr="goods_for_sale", dr="cogs", amount=180),
+    Entry(cr="sales", dr="cash", amount=620),
+    Entry(cr="cash", dr="discount", amount=40),
+    Entry(cr="cash", dr="discount", amount=25),
+    # pay adminstrative expenses
+    Entry(cr="cash", dr="sga", amount=50),
+    # accrue depreciation
+    Entry(cr="depreciation", dr="depreciation_expense", amount=250),
 ]
 
 # %%
@@ -42,35 +48,36 @@ ledger = chart.make_ledger().process_entries(entries)
 # %%
 print(ledger)
 
-# %%
-# create income statement
-income_statement = ledger.income_statement()
 
-# %%
-# close ledger at period end
-# (a) move income and expenses to retained earnings
-closed_ledger = ledger.close_retained_earnings("re")
-# (b) accure dividend and pay out dividend in cash
-post_entries = [
-    Entry(cr="divp", dr="re", amount=75),
-    Entry(dr="divp", cr="cash", amount=75),
-]
-closed_ledger = closed_ledger.process_entries(post_entries)
-# produce balance sheet
-balance_sheet = closed_ledger.balance_sheet()
+# # %%
+# # create income statement
+# income_statement = ledger.income_statement()
 
-# %%
-# print reports
-print(income_statement)
-print(balance_sheet)
-# %%
-# Show reports in plain text or rich formatting
-from abacus import PlainTextViewer, RichViewer  # noqa: E402
+# # %%
+# # close ledger at period end
+# # (a) move income and expenses to retained earnings
+# closed_ledger = ledger.close_retained_earnings("re")
+# # (b) accure dividend and pay out dividend in cash
+# post_entries = [
+#     Entry(cr="divp", dr="re", amount=75),
+#     Entry(dr="divp", cr="cash", amount=75),
+# ]
+# closed_ledger = closed_ledger.process_entries(post_entries)
+# # produce balance sheet
+# balance_sheet = closed_ledger.balance_sheet()
 
-cv2 = PlainTextViewer(rename_dict)
-cv2.print(balance_sheet)
-cv2.print(income_statement)
+# # %%
+# # print reports
+# print(income_statement)
+# print(balance_sheet)
+# # %%
+# # Show reports in plain text or rich formatting
+# from abacus import PlainTextViewer, RichViewer  # noqa: E402
 
-cv = RichViewer(rename_dict, width=60)
-cv.print(balance_sheet)
-cv.print(income_statement)
+# cv2 = PlainTextViewer(rename_dict)
+# cv2.print(balance_sheet)
+# cv2.print(income_statement)
+
+# cv = RichViewer(rename_dict, width=60)
+# cv.print(balance_sheet)
+# cv.print(income_statement)

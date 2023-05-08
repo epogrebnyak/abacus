@@ -1,15 +1,10 @@
 # pylint: disable=import-error, no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
-# Signatures:
-# Chart -> Ledger -> [Entry] -> Ledger -> [Entry] -> Ledger
-# Ledger -> (BalanceSheet, IncomeStatement) -> (Table, Table)
-# Ledger -> TrialBalance
-# TrialBalance -> Ledger # for reset of balances
-
 from typing import Dict
 
 from .accounting_types import AccountBalancesDict, Amount, BalanceSheet, IncomeStatement
 from .ledger import Ledger, assets, capital, expenses, income, liabilities
+from .closing import close_permanent_contra_acounts
 
 
 def balances(ledger: Ledger) -> AccountBalancesDict:
@@ -19,6 +14,7 @@ def balances(ledger: Ledger) -> AccountBalancesDict:
 
 
 def balance_sheet(ledger: Ledger) -> BalanceSheet:
+    ledger = close_permanent_contra_acounts(ledger)
     return BalanceSheet(
         assets=balances(assets(ledger)),
         capital=balances(capital(ledger)),
@@ -41,6 +37,6 @@ def rename_keys(
     balances_dict: AccountBalancesDict, rename_dict: Dict
 ) -> AccountBalancesDict:
     def mut(s):
-        return rename_dict.get(s, s).capitalize().replace("_", " ")
+        return rename_dict.get(s, s).replace("_", " ").strip().capitalize()
 
     return AccountBalancesDict((mut(k), v) for k, v in balances_dict.items())
