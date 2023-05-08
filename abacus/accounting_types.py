@@ -22,9 +22,7 @@ Simplifying assumptions:
 
 from collections import UserDict
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional
-
-
+from typing import List, Optional, Tuple
 
 Amount = int
 AccountName = str

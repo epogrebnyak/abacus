@@ -1,11 +1,10 @@
 # %%
-from abacus import Chart
-from abacus.core import Amount, AccountName
-from abacus.accounting_types import Account, AccountBalancesDict
 from dataclasses import dataclass
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
 
+from abacus import Chart
 from abacus.accounting_types import (
+    Account,
     AccountBalancesDict,
     AccountName,
     Amount,
@@ -13,6 +12,8 @@ from abacus.accounting_types import (
     BalanceSheet,
     Capital,
     Chart,
+    CreditContraAccount,
+    DebitContraAccount,
     Entry,
     Expense,
     Income,
@@ -21,9 +22,9 @@ from abacus.accounting_types import (
     Ledger,
     Liability,
     Netting,
-    DebitContraAccount,
-    CreditContraAccount,
 )
+from abacus.core import AccountName, Amount
+
 
 def test_make_ledger_with_netting():
     chart = Chart(
@@ -83,6 +84,7 @@ def test_invalid_contra_account_name_not_found():
             credit_contra_accounts=[("abc", "zzz")],
         )
 
+
 def test_invalid_contra_account_wrong_side():
     import pytest
 
@@ -93,14 +95,14 @@ def test_invalid_contra_account_wrong_side():
             equity=[],
             liabilities=[],
             income=["sales"],
-            debit_contra_accounts=[("depr", "ppe")], # should be credit_contra_accounts   
+            debit_contra_accounts=[("depr", "ppe")],  # should be credit_contra_accounts
             credit_contra_accounts=[],
         )
-
 
 
 @dataclass
 class Saldo:
     """Account name and balance (in Italian and some other languages)."""
+
     account_name: AccountName
     amount: Amount

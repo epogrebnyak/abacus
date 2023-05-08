@@ -16,6 +16,8 @@ from abacus.accounting_types import (
     BalanceSheet,
     Capital,
     Chart,
+    CreditContraAccount,
+    DebitContraAccount,
     Entry,
     Expense,
     Income,
@@ -24,8 +26,6 @@ from abacus.accounting_types import (
     Ledger,
     Liability,
     Netting,
-    DebitContraAccount,
-    CreditContraAccount,
 )
 
 
