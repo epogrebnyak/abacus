@@ -12,7 +12,7 @@ from abacus.accounts import (
 )
 from abacus.closing import (
     closing_entries,
-    closing_entries_for_temporary_contra_acounts,
+    closing_entries_for_temporary_contra_accounts,
     closing_entries_income_and_expense_to_isa,
 )
 from abacus.accounting_types import RenameAccount, Entry

@@ -29,7 +29,7 @@ entries = [
     Entry(dr="ppe", cr="cash", amount=3000),
     # acquire goods
     Entry(dr="goods_for_sale", cr="cash", amount=250),
-    # sell goods worth 180 for 620 with 40 and 25 rebates
+    # sell goods worth 180 for 620 with 40 and 25 discounts
     Entry(cr="goods_for_sale", dr="cogs", amount=180),
     Entry(cr="sales", dr="cash", amount=620),
     Entry(cr="cash", dr="discount", amount=40),

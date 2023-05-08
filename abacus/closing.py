@@ -23,7 +23,7 @@ def closing_entries_for_contra_accounts(ledger: Ledger, peer_class):
             yield RenameAccount(peer_account_name, account.netting.target_name)
 
 
-def closing_entries_for_temporary_contra_acounts(ledger) -> List[Posting]:
+def closing_entries_for_temporary_contra_accounts(ledger) -> List[Posting]:
     return [
         p
         for cls in (Income, Expense)
@@ -31,7 +31,7 @@ def closing_entries_for_temporary_contra_acounts(ledger) -> List[Posting]:
     ]
 
 
-def closing_entries_for_permanent_contra_acounts(ledger) -> List[Posting]:
+def closing_entries_for_permanent_contra_accounts(ledger) -> List[Posting]:
     return [
         p
         for cls in (Asset, Capital, Liability)
@@ -71,7 +71,7 @@ def closing_entry_isa_to_retained_earnings(ledger, re) -> Entry:
 def closing_entries(
     ledger: Ledger, retained_earnings_account_name: AccountName
 ) -> List[Posting]:
-    es1 = closing_entries_for_temporary_contra_acounts(ledger)
+    es1 = closing_entries_for_temporary_contra_accounts(ledger)
     _dummy_ledger = ledger.process_entries(es1)
     # at this point "sales" can be renamed tp "net_sales"
     es2 = closing_entries_income_and_expense_to_isa(_dummy_ledger)
@@ -89,3 +89,7 @@ def close(ledger: Ledger, retained_earnings_account_name: AccountName) -> Ledger
     return ledger.process_entries(
         closing_entries(ledger, retained_earnings_account_name)
     )
+
+
+def reports(ledger: Ledger, retained_earnings_account_name: AccountName):
+    pass
