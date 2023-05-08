@@ -22,7 +22,9 @@ Simplifying assumptions:
 
 from collections import UserDict
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+
+
 
 Amount = int
 AccountName = str
@@ -48,10 +50,15 @@ class AccountBalancesDict(UserDict[AccountName, Amount]):
 
 
 @dataclass
+class Netting:
+    contra_accounts: List[AccountName]
+    target_name: AccountName
+
+
+@dataclass
 class Account:
     debits: List[Amount] = field(default_factory=list)
     credits: List[Amount] = field(default_factory=list)
-    nets_with: str = ""  # used only with contraccounts
 
     def balance(self) -> Amount:
         raise NotImplementedError
@@ -66,6 +73,11 @@ class Account:
         return self.__class__(self.debits.copy(), self.credits.copy())
 
 
+@dataclass
+class RegularAccount(Account):
+    netting: Optional[Netting] = None
+
+
 class DebitAccount(Account):
     def balance(self) -> Amount:
         return sum(self.debits) - sum(self.credits)
@@ -76,23 +88,23 @@ class CreditAccount(Account):
         return sum(self.credits) - sum(self.debits)
 
 
-class Asset(DebitAccount):
+class Asset(DebitAccount, RegularAccount):
     pass
 
 
-class Expense(DebitAccount):
+class Expense(DebitAccount, RegularAccount):
     pass
 
 
-class Capital(CreditAccount):
+class Capital(CreditAccount, RegularAccount):
     pass
 
 
-class Liability(CreditAccount):
+class Liability(CreditAccount, RegularAccount):
     pass
 
 
-class Income(CreditAccount):
+class Income(CreditAccount, RegularAccount):
     pass
 
 
@@ -100,7 +112,7 @@ class IncomeSummaryAccount(CreditAccount):
     pass
 
 
-class ContraAccount(Account):
+class ContraAccount:
     pass
 
 
