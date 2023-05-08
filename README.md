@@ -25,17 +25,17 @@ from abacus import Chart, Entry, BalanceSheet
 
 chart = Chart(
     assets=["cash"],
-    expenses=["oh"],
+    expenses=["overhead"],
     equity=["equity", "retained_earnings"],
     liabilities=["dividend_payable"],
     income=["sales"],
     contra_accounts={"sales": (["discounts"], "net_sales")},
 )
 entries = [
-    Entry("cash", "equity", 500),  #   started a company...
-    Entry("cash", "sales", 150),  #    selling thin air
-    Entry("discounts", "cash", 30),  # with a discount
-    Entry("oh", "cash", 50),  #        and overhead expense
+    Entry("cash", "equity", 500),   # started a company...
+    Entry("cash", "sales", 150),    # selling thin air
+    Entry("discounts", "cash", 30), # with a discount
+    Entry("overhead", "cash", 50),  # and overhead expense
 ]
 balance_sheet = (
     chart.make_ledger()
