@@ -52,7 +52,7 @@ assert balance_sheet == BalanceSheet(
 )
 ```
 
-This code is save in [minimal.py](minimal.py)
+This code is saved in [minimal.py](minimal.py)
 
 ## Step by step example
 
