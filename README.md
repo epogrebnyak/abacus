@@ -2,21 +2,6 @@
 
 A minimal, yet valid double-entry accounting system in Python.
 
-## Intended usage
-
-```python
-from abacus import Chart, Entry
-# See actual code below in README
-# chart = ...
-# entries = ...
-balance_sheet = (chart.make_ledger()
-                      .process_entries(entries)
-                      .close("retained_earnings")
-                      .process_entry(dr="retained_earnings", cr="dividend_payable", amount=700)
-                      .balance_sheet()
-                      .to_dict())
-```
-
 ## Quotes about `abacus`
 
 [![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
@@ -33,12 +18,45 @@ balance_sheet = (chart.make_ledger()
 pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 
-## Try it
+## Minimal working example
 
-Consider an example below. We have an workflow that starts with a chart of accounts
-and results in two financial reports - balance sheet and income statement.
+```python
+from abacus import Chart, Entry, BalanceSheet
 
-1. We start with a chart of accounts of five types: assets, equity, liabilities, income and expenses (there can also be contra accounts).
+chart = Chart(
+    assets=["cash"],
+    expenses=["oh"],
+    equity=["equity", "retained_earnings"],
+    liabilities=["dividend_payable"],
+    income=["sales"],
+    contra_accounts={"sales": (["discounts"], "net_sales")},
+)
+entries = [
+    Entry("cash", "equity", 500),  #   started a company...
+    Entry("cash", "sales", 150),  #    selling thin air
+    Entry("discounts", "cash", 30),  # with a discount
+    Entry("oh", "cash", 50),  #        and overhead expense
+]
+balance_sheet = (
+    chart.make_ledger()
+    .process_entries(entries)
+    .close("retained_earnings")
+    .process_entry(dr="retained_earnings", cr="dividend_payable", amount=35)
+    .balance_sheet()
+)
+# check what we've got
+assert balance_sheet == BalanceSheet(
+    assets={"cash": 570},
+    capital={"equity": 500, "retained_earnings": 35},
+    liabilities={"dividend_payable": 35},
+)
+```
+
+This code is save in [minimal.py](minimal.py)
+
+## Step by step example
+
+1. We start with a chart of accounts of five types: assets, equity, liabilities, income and expenses.
 
 ```python
 from abacus import Chart, Entry
@@ -111,13 +129,22 @@ cv.print(balance_sheet)
 cv.print(income_statement)
 ```
 
-Check out [`readme.py`](readme.py) for a complete code example with
-featuring contraccounts (eg depreciation) and dividends.
+Check out [`readme.py`](readme.py) for a complete code example
+featuring contraccounts (eg depreciation) and dividend payout.
 
 ## Intent
 
 This code is intended as an educational device that informs
-users about principles of accounting information systems (AIS).
+users about principles of accounting information systems (AIS)
+and good coding practices in Python.
+
+`abacus` should also be usable as 'headless' general ledger
+that accepts a chart of accounts, accounting entries
+and produces balance sheet and income statement.
+
+`abacus` should be fit for simulations, where
+you generate a stream of entries corresponding to business events
+and evaluate the resulting financial reports.
 
 ## Assumptions
 
@@ -138,9 +165,11 @@ Below are some simplifying assumptions made for this code:
    and entry amount. Thus we have no extra information for managment accounting or
    detailed tax calculations.
 
-6. Accounts balances can go to negative where they should not and there are little checks for entry validity.
+6. Accounts balances can go to negative where they should not
+   and there are little checks for entry validity.
 
-7. XML likely to be a format for accounting reports interchange, while JSON intended for `abacus`.
+7. XML likely to be a format for accounting reports interchange,
+   while JSON is intended for `abacus`.
 
 8. We use just one currency.
 
@@ -149,35 +178,43 @@ Below are some simplifying assumptions made for this code:
 
 10. Account balances stay on one side, and do not migrate from one side to another.
     Credit accounts have credit balance, debit accounts have debit balance,
-    and income summary account is credit account.
+    and income summary account is a credit account.
 
 ## What things are realistic in this code?
 
 1. Entries are stored in a queue and ledger state is calculated
    based on a previous state and a list of entries to be proccessed.
 
-2. The chart of accounts can be fairly complex, up to level of GAAP/IAS compliant.
+2. The chart of accounts can be fairly complex, up to level of being GAAP/IAS compliant.
 
-3. Named entries can code typical transactions.
+3. Chart of accounts may include contra accounts. Temporary contra accounts
+   for income (eg discounts) and expense (can't think of an example)
+   are cleared at period end and permanent contra accounts
+   (eg accumulated depreciation) are carried forward.
 
-4. There are contra accounts in chart of accounts.
+4. You can give a name to typical dr/cr account pairs
+   and use this name to record transactions.
 
 ## Implementation details
 
-1. The code is covered by tests and type annotated.
+1. The code is covered by some tests, linted and type annotated.
 
-2. Data structures used are serialisable, so data can be stored and retrieved.
+2. Data structures used are serialisable, so imputs and outputs can be stored and retrieved.
 
-3. We used modern Python features such as subclasssing and pattern matching to make code cleaner.
+3. Modern Python features such as subclasssing and pattern matching aim to make code cleaner.
+   For example I used classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income`
+   to pass information about account types.
 
-4. This is experimental software. The upside is that we can make big changes fast. On a downside we do not learn (or earn) from users. We do not compete with SAP, Oralce, Intuit,
-   `hledger`, or `gnucash`.
+4. This is experimental software. The upside is that we can make big changes fast.
+   On a downside we do not learn (or earn) from users. Aslo we do not compete
+   with SAP, Oralce, Intuit, `hledger`, or `gnucash` in making a complete software
+   product.
 
 ## Feedback
 
 ... is much appreciated. I like the idea that compact code for accounting
-ledger is possible, but working on it sometimes drains your energy.
-Does anyone really need this code? Is this really good code? What useful things
+ledger is possible, but working on it sometimes feels like being alone in the dark.
+Does anyone really need this code? Is this quality code? What useful things
 can one do with this code? I like getting feedback and comments,
-in [issues](https://github.com/epogrebnyak/abacus/issues)
-or otherwise (reddit, Telegram, etc).
+either in [issues](https://github.com/epogrebnyak/abacus/issues)
+or reddit, Telegram, etc.

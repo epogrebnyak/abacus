@@ -16,6 +16,9 @@ class Ledger(UserDict[AccountName, Account]):
     def process_entries(self, entries) -> "Ledger":
         return process_postings(self, entries)
 
+    def process_entry(self, dr, cr, amount) -> "Ledger":
+        return process_postings(self, [Entry(dr, cr, amount)])
+
     def close(self, retained_earnings_account_name: AccountName) -> "Ledger":
         """Close contraaccounts, associated with income and expense accounts,
         aggregate profit or loss at income summary account
