@@ -22,7 +22,7 @@ Simplifying assumptions:
 
 from collections import UserDict
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 Amount = int
 AccountName = str
@@ -131,6 +131,7 @@ class Chart:
     equity: List[str]
     liabilities: List[str]
     income: List[str]
+    contra_accounts: Dict[str, Tuple[List[str], str]] = field(default_factory=dict)
     debit_contra_accounts: List[Tuple[str, str]] = field(default_factory=list)
     credit_contra_accounts: List[Tuple[str, str]] = field(default_factory=list)
     income_summary_account: str = "profit"
