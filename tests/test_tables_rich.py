@@ -1,4 +1,4 @@
-from abacus.core import AccountBalancesDict, BalanceSheet, IncomeStatement
+from abacus.reports import AccountBalancesDict, BalanceSheet, IncomeStatement
 from abacus.tables import RichViewer
 
 

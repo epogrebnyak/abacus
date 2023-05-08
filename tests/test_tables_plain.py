@@ -1,5 +1,5 @@
 from abacus import PlainTextViewer
-from abacus.core import AccountBalancesDict, BalanceSheet, IncomeStatement
+from abacus.reports import AccountBalancesDict, BalanceSheet, IncomeStatement
 
 r2 = IncomeStatement(
     income=AccountBalancesDict({"sales": 400}),
