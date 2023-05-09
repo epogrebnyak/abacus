@@ -201,20 +201,21 @@ Below are some simplifying assumptions made for this code:
 
 2. Data structures used are serialisable, so imputs and outputs can be stored and retrieved.
 
-3. Modern Python features such as subclasssing and pattern matching aim to make code cleaner.
-   For example I used classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income`
-   to pass information about account types.
+3. Modern Python features such as subclasssing and pattern matching help to make code cleaner.
+   For example, classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income`
+   to pass information about account types and hold debits and credits.
 
 4. This is experimental software. The upside is that we can make big changes fast.
-   On a downside we do not learn (or earn) from users. Aslo we do not compete
+   On a downside we do not learn (or earn) from users. Also we do not compete
    with SAP, Oralce, Intuit, `hledger`, or `gnucash` in making a complete software
    product.
 
 ## Feedback
 
-... is much appreciated. I like the idea that compact code for accounting
-ledger is possible, but working on it sometimes feels like being alone in the dark.
-Does anyone really need this code? Is this quality code? What useful things
-can one do with this code? I like getting feedback and comments,
-either in [issues](https://github.com/epogrebnyak/abacus/issues)
-or reddit, Telegram, etc.
+... is much appreciated. I like the idea that compact code for an accounting
+ledger is possible, but
+there is so much other people might know or contribute to this idea.
+
+Please comnent 
+in [issues](https://github.com/epogrebnyak/abacus/issues),
+ reddit or Telegram.
