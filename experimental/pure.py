@@ -1,4 +1,4 @@
-def account():
+def empty_account():
     return ([], [])
 
 
@@ -14,15 +14,6 @@ def process_entry(ledger, entry):
     dr, cr, amount = entry
     ledger[dr] = debit(ledger[dr], amount)
     ledger[cr] = credit(ledger[cr], amount)
-
-
-chart = dict(
-    assets=["cash"],
-    capital=["equity", "retained_earnings"],
-    income=["services"],
-    expenses=["payroll", "rent", "interest"],
-    liabilities=["loan"],
-)
 
 
 def subset(chart, account_types):
@@ -48,45 +39,65 @@ def is_credit_account(chart, account_name):
 def balance(chart, account_name, account):
     if is_debit_account(chart, account_name):
         return sum(account[0]) - sum(account[1])
-    elif is_credit_account(chart, account_name):
+    if is_credit_account(chart, account_name):
         return sum(account[1]) - sum(account[0])
 
 
 def make_ledger(chart):
     return {
-        account_name: account()
+        account_name: empty_account()
         for account_type in chart.keys()
         for account_name in chart[account_type]
     }
 
 
-def debit_account_balances(chart, ledger):
+def trim_ledger(chart, ledger, filter_func):
     return {
         account_name: balance(chart, account_name, account)
         for account_name, account in ledger.items()
-        if is_debit_account(chart, account_name)
+        if filter_func(chart, account_name)
     }
+
+
+def debit_account_balances(chart, ledger):
+    return trim_ledger(chart, ledger, is_debit_account)
 
 
 def credit_account_balances(chart, ledger):
-    return {
-        account_name: balance(chart, account_name, account)
-        for account_name, account in ledger.items()
-        if is_credit_account(chart, account_name)
-    }
+    return trim_ledger(chart, ledger, is_credit_account)
 
 
 def trial_balance(chart, ledger):
     return debit_account_balances(chart, ledger), credit_account_balances(chart, ledger)
 
 
-def sum_values(d):
+def sum_dict(d):
     return sum(d.values())
 
 
-ledger = make_ledger(chart)
-entries = [("cash", "equity", 500)]
+chart_ = {
+    "assets": ["cash"],
+    "capital": ["equity", "retained_earnings"],
+    "income": ["services"],
+    "expenses": ["payroll", "rent", "interest"],
+    "liabilities": ["loan"],
+}
+
+ledger_ = make_ledger(chart_)
+entries = [
+    ("cash", "equity", 299),
+    ("cash", "equity", 301),
+    ("cash", "services", 1500),
+    ("payroll", "cash", 355),
+    ("rent", "cash", 200),
+]
 for entry in entries:
-    process_entry(ledger, entry)
-print(ledger)
-print(trial_balance(chart, ledger))
+    process_entry(ledger_, entry)
+print(ledger_)
+a, b = trial_balance(chart_, ledger_)
+print(a)
+print(sum_dict(a))
+print(b)
+print(sum_dict(b))
+assert sum_dict(a) == sum_dict(b)
+# balance, pl
