@@ -20,6 +20,30 @@ from .ledger import Ledger
 
 
 @dataclass
+class Chart2:
+    """Chart of accounts."""
+
+    assets: List[str]
+    expenses: List[str]
+    capital: List[str]
+    liabilities: List[str]
+    income: List[str]
+    income_summary_account: str = "profit"
+
+    def flat(self):
+        for attr, cls in [
+            ("assets", Asset),
+            ("expenses", Expense),
+            ("equity", Capital),
+            ("liabilities", Liability),
+            ("income", Income),
+        ]:
+            for account_name in getattr(self, attr):
+                yield cls, account_name
+        yield IncomeSummaryAccount, self.income_summary_account
+
+
+@dataclass
 class Chart:
     """Chart of accounts."""
 
@@ -31,25 +55,22 @@ class Chart:
     contra_accounts: Dict[str, Tuple[List[str], str]] = field(default_factory=dict)
     income_summary_account: str = "profit"
 
-    def regular_attributes(self):
-        return [p[0] for p in self.attribute_mapping]
-
-    @property
-    def attribute_mapping(self):
+    def flat(self):
         return [
-            ("assets", Asset),
-            ("expenses", Expense),
-            ("equity", Capital),
-            ("liabilities", Liability),
-            ("income", Income),
+            (Asset, self.assets),
+            (Expense, self.expenses),
+            (Capital, self.equity),
+            (Liability, self.liabilities),
+            (Income, self.income),
+            (IncomeSummaryAccount, [self.income_summary_account]),
         ]
 
-    def account_types(self):
-        res = {}
-        for attr, _cls in self.attribute_mapping:
-            for account_name in getattr(self, attr):
-                res[account_name] = _cls
-        return res
+    def which(self, account_name):
+        return [
+            Class
+            for Class, account_names in self.flat()
+            if account_name in account_names
+        ][0]
 
     # TODO: must check for duplicatre account keys
 
@@ -58,20 +79,18 @@ class Chart:
 
 
 def make_regular_accounts(chart: Chart):
-    ledger = Ledger()
-    account_types = chart.account_types()
-    for attr in chart.regular_attributes():
-        for account_name in getattr(chart, attr):
-            ledger[account_name] = account_types[account_name]()
-    return ledger
+    return Ledger(
+        (account_name, C())
+        for C, account_names in chart.flat()
+        for account_name in account_names
+    )
 
 
 def make_ledger(chart: Chart) -> Ledger:
-    account_types = chart.account_types()
     ledger = make_regular_accounts(chart)
     for nets_with, (contra_accounts, target_account) in chart.contra_accounts.items():
         for contra_account_name in contra_accounts:
-            match account_types[nets_with]():
+            match chart.which(nets_with)():
                 case DebitAccount():
                     ledger[contra_account_name] = CreditContraAccount()
                     ledger[nets_with].netting = Netting(contra_accounts, target_account)

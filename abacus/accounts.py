@@ -16,8 +16,8 @@ from .accounting_types import AccountName, Amount
 
 @dataclass
 class Netting:
-    contra_accounts: List[AccountName]
-    target_name: AccountName
+    contra_accounts: List[str]
+    target_name: str
 
     def safe_copy(self):
         return self
@@ -37,7 +37,7 @@ class Account(ABC):
         pass
 
     @abstractmethod
-    def transfer_balance_entry(
+    def transfer_balance(
         self, this_account: AccountName, other_account: AccountName
     ) -> Entry:
         raise NotImplementedError
@@ -65,7 +65,7 @@ class DebitAccount(Account):
     def balance(self) -> Amount:
         return sum(self.debits) - sum(self.credits)
 
-    def transfer_balance_entry(
+    def transfer_balance(
         self, this_account: AccountName, other_account: AccountName
     ) -> Entry:
         return Entry(cr=this_account, dr=other_account, amount=self.balance())
@@ -75,7 +75,7 @@ class CreditAccount(Account):
     def balance(self) -> Amount:
         return sum(self.credits) - sum(self.debits)
 
-    def transfer_balance_entry(
+    def transfer_balance(
         self, this_account: AccountName, other_account: AccountName
     ) -> Entry:
         return Entry(dr=this_account, cr=other_account, amount=self.balance())

@@ -13,7 +13,7 @@ def closing_entries_for_contra_accounts(ledger: Ledger, peer_class):
     for peer_account_name, account in subset_by_class(ledger, peer_class).items():
         if n := account.netting:
             for contra_account_name in n.contra_accounts:
-                entry = ledger[contra_account_name].transfer_balance_entry(
+                entry = ledger[contra_account_name].transfer_balance(
                     contra_account_name, peer_account_name
                 )
                 yield entry
@@ -52,12 +52,11 @@ def find_account_name(ledger: Ledger, cls) -> AccountName:
 def closing_entries_income_and_expense_to_isa(ledger) -> List[Entry]:
     isa = find_account_name(ledger, IncomeSummaryAccount)
     es1 = [
-        account.transfer_balance_entry(name, isa)
-        for name, account in income(ledger).items()
+        account.transfer_balance(name, isa) for name, account in income(ledger).items()
     ]
 
     es2 = [
-        account.transfer_balance_entry(name, isa)
+        account.transfer_balance(name, isa)
         for name, account in expenses(ledger).items()
     ]
     return es1 + es2
@@ -65,7 +64,7 @@ def closing_entries_income_and_expense_to_isa(ledger) -> List[Entry]:
 
 def closing_entry_isa_to_retained_earnings(ledger, re) -> Entry:
     isa = find_account_name(ledger, IncomeSummaryAccount)
-    return ledger[isa].transfer_balance_entry(isa, re)
+    return ledger[isa].transfer_balance(isa, re)
 
 
 def closing_entries(
