@@ -101,3 +101,33 @@ print(b)
 print(sum_dict(b))
 assert sum_dict(a) == sum_dict(b)
 # balance, pl
+
+def pick(chart, ledger, keys):
+    res = {}
+    tb1, tb2 = trial_balance(chart, ledger)
+    tb = {**tb1, **tb2}
+    for key in keys:
+        res[key] = {}
+        for account_name in chart[key]:
+            res[key][account_name] = tb[account_name]
+    return res
+
+def income_statement(chart, ledger):
+    res = pick(chart, ledger, "income expenses".split())
+    res["profit"] = sum_dict(res["income"]) - sum_dict(res["expenses"])
+    return res
+
+def current_profit(chart, ledger):
+    return income_statement(chart, ledger)["profit"]
+
+def close(chart, ledger, re):
+    ledger[re] = current_profit(chart, ledger)
+    return ledger
+
+def balance_sheet(chart, ledger):
+    close(chart, ledger, "retained_earnings")
+    return pick(chart, ledger, "assets capital liabilities".split())
+
+# Does not work
+#print(income_statement(chart_, ledger_))
+#print(balance_sheet(chart_, ledger_))
