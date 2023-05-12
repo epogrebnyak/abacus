@@ -8,6 +8,7 @@
 """
 from dataclasses import dataclass, field
 from typing import List, Optional
+from abc import ABC, abstractmethod
 
 from abacus import Entry
 from .accounting_types import AccountName, Amount
@@ -22,14 +23,20 @@ class Netting:
         return self
 
 
+# > Using ABCs states the programmer’s intent clearly
+# > and thus makes the code more communicative.
+# https://dbader.org/blog/abstract-base-classes-in-python
+# https://docs.python.org/3/library/abc.html
 @dataclass
-class Account:
+class Account(ABC):
     debits: List[Amount] = field(default_factory=list)
     credits: List[Amount] = field(default_factory=list)
 
+    @abstractmethod
     def balance(self) -> Amount:
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def transfer_balance_entry(
         self, this_account: AccountName, other_account: AccountName
     ) -> Entry:
