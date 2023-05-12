@@ -1,10 +1,10 @@
 """T-account classes:
 
-1. "regular" accounts:
-   - permanent accounts - `Asset`, `Capital`, and `Liability` 
-   - temporary (closed at period end) - `Income` and `Expense`
-2. contra accounts
-3. income summary account (`IncomeSummaryAccount`)
+- permanent accounts: `Asset`, `Capital`, and `Liability` 
+- temporary accounts that are closed at period end: `Income` and `Expense`
+- contra accounts: `ContraAsset`, `ContraExpense`, `ContraCapital`, 
+  `ContraLiability`, and `ContraIncome` 
+- income summary account: `IncomeSummaryAccount`
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -35,18 +35,22 @@ class Account(ABC):
 
     @abstractmethod
     def balance(self) -> Amount:
-        pass
+        """Return account balance."""
 
     @abstractmethod
     def transfer_balance(
         self, this_account: AccountName, other_account: AccountName
     ) -> Entry:
-        raise NotImplementedError
+        """Create an entry that will move balance of *this_account*
+        to *other_account*. Used when closing accounts. The resulting entry
+        differs by debit and credit accounts."""
 
     def debit(self, amount: Amount):
+        """Append *amount* to debit side of account."""
         self.debits.append(amount)
 
     def credit(self, amount: Amount):
+        """Append *amount* to credit side of account."""
         self.credits.append(amount)
 
     def safe_copy(self):
@@ -55,6 +59,7 @@ class Account(ABC):
 
 @dataclass
 class RegularAccount(Account):
+    # Netting indicates which contra accounts must net out with this account.
     netting: Optional[Netting] = None
 
     def safe_copy(self):
