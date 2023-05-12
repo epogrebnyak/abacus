@@ -1,15 +1,13 @@
 # pylint: disable=import-error, no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
+from collections import UserDict
 from dataclasses import dataclass
 from typing import Dict
-from collections import UserDict
 
 from .accounting_types import AccountName, Amount
+from .closing import (closing_entries_for_permanent_contra_accounts,
+                      closing_entries_for_temporary_contra_accounts)
 from .ledger import Ledger, assets, capital, expenses, income, liabilities
-from .closing import (
-    closing_entries_for_temporary_contra_accounts,
-    closing_entries_for_permanent_contra_accounts,
-)
 
 
 class AccountBalancesDict(UserDict[AccountName, Amount]):

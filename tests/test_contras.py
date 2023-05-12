@@ -1,14 +1,8 @@
 # %%
 
-from abacus.accounts import (
-    Asset,
-    Capital,
-    CreditContraAccount,
-    DebitContraAccount,
-    Income,
-    IncomeSummaryAccount,
-    Netting,
-)
+from abacus.accounts import (Asset, Capital, ContraAsset, ContraCapital,
+                             ContraIncome, Income, IncomeSummaryAccount,
+                             Netting)
 from abacus.chart import Chart, make_ledger
 
 chart = Chart(
@@ -60,9 +54,9 @@ def test_make_ledger_with_netting():
                 contra_accounts=["discounts", "returns"], target_name="net_sales"
             ),
         ),
-        "discounts": DebitContraAccount(debits=[], credits=[]),
-        "returns": DebitContraAccount(debits=[], credits=[]),
-        "treasury_shares": DebitContraAccount(debits=[], credits=[]),
-        "depr": CreditContraAccount(debits=[], credits=[]),
+        "discounts": ContraIncome(debits=[], credits=[]),
+        "returns": ContraIncome(debits=[], credits=[]),
+        "treasury_shares": ContraCapital(debits=[], credits=[]),
+        "depr": ContraAsset(debits=[], credits=[]),
         "profit": IncomeSummaryAccount(debits=[], credits=[]),
     }

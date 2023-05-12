@@ -3,19 +3,8 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
-from .accounts import (
-    Asset,
-    Capital,
-    CreditAccount,
-    CreditContraAccount,
-    DebitAccount,
-    DebitContraAccount,
-    Expense,
-    Income,
-    IncomeSummaryAccount,
-    Liability,
-    Netting,
-)
+from .accounts import (Asset, Capital, Expense, Income, IncomeSummaryAccount,
+                       Liability, Netting, get_contra_account_type)
 from .ledger import Ledger
 
 
@@ -86,18 +75,15 @@ def make_regular_accounts(chart: Chart):
     )
 
 
+def add_contra_accounts(chart: Chart, ledger: Ledger) -> Ledger:
+    for nets_with, (contra_accounts, target_account) in chart.contra_accounts.items():
+        cls = get_contra_account_type(chart.which(nets_with))
+        for contra_account_name in contra_accounts:
+            ledger[contra_account_name] = cls()
+            ledger[nets_with].netting = Netting(contra_accounts, target_account) #type: ignore
+    return ledger
+
+
 def make_ledger(chart: Chart) -> Ledger:
     ledger = make_regular_accounts(chart)
-    for nets_with, (contra_accounts, target_account) in chart.contra_accounts.items():
-        for contra_account_name in contra_accounts:
-            match chart.which(nets_with)():
-                case DebitAccount():
-                    ledger[contra_account_name] = CreditContraAccount()
-                    ledger[nets_with].netting = Netting(contra_accounts, target_account)
-                case CreditAccount():
-                    ledger[contra_account_name] = DebitContraAccount()
-                    ledger[nets_with].netting = Netting(contra_accounts, target_account)
-                case _:
-                    raise TypeError
-    ledger[chart.income_summary_account] = IncomeSummaryAccount()
-    return ledger
+    return add_contra_accounts(chart, ledger)

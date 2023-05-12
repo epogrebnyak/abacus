@@ -3,7 +3,7 @@
 from collections import UserDict
 from typing import List, Tuple
 
-from .accounting_types import AccountName, Posting, Entry, RenameAccount
+from .accounting_types import AccountName, Entry, Posting, RenameAccount
 from .accounts import Account, Asset, Capital, Expense, Income, Liability
 
 

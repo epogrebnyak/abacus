@@ -1,4 +1,4 @@
-from abacus.reports import AccountBalancesDict
+from abacus.reports import AccountBalancesDict, BalanceSheet, IncomeStatement
 
 
 def test_AccountBalanceDict():
@@ -12,10 +12,6 @@ def test_AccountBalanceDict():
         == 2
     )
 
-
-from abacus.accounts import Asset, Capital, IncomeSummaryAccount
-from abacus.chart import Chart, make_ledger
-from abacus.reports import BalanceSheet, IncomeStatement
 
 
 def test_income_statement(chart0, entries0):

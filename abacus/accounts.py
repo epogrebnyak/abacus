@@ -6,11 +6,12 @@
 2. contra accounts
 3. income summary account (`IncomeSummaryAccount`)
 """
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Optional
-from abc import ABC, abstractmethod
 
 from abacus import Entry
+
 from .accounting_types import AccountName, Amount
 
 
@@ -109,9 +110,34 @@ class ContraAccount:
     pass
 
 
-class DebitContraAccount(DebitAccount, ContraAccount):
+class ContraAsset(CreditAccount, ContraAccount):
     pass
 
 
-class CreditContraAccount(CreditAccount, ContraAccount):
+class ContraExpense(CreditAccount, ContraAccount):
     pass
+
+
+class ContraCapital(DebitAccount, ContraAccount):
+    pass
+
+
+class ContraLiability(DebitAccount, ContraAccount):
+    pass
+
+
+class ContraIncome(DebitAccount, ContraAccount):
+    pass
+
+
+def get_contra_account_type(cls):
+    return dict(
+        [
+            (Asset, ContraAsset),
+            (Expense, ContraExpense),
+            (Capital, ContraCapital),
+            (Liability, ContraLiability),
+            (Income, ContraIncome),
+        ]
+    )[cls]
+

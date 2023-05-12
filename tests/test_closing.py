@@ -1,21 +1,9 @@
+from abacus.accounting_types import Entry, RenameAccount
+from abacus.accounts import (Asset, Capital, ContraAsset, ContraIncome,
+                             Expense, Income, IncomeSummaryAccount, Liability,
+                             Netting)
+from abacus.closing import closing_entries
 from abacus.ledger import Ledger
-from abacus.accounts import (
-    Asset,
-    Netting,
-    Expense,
-    Capital,
-    Liability,
-    Income,
-    CreditContraAccount,
-    DebitContraAccount,
-    IncomeSummaryAccount,
-)
-from abacus.closing import (
-    closing_entries,
-    closing_entries_for_temporary_contra_accounts,
-    closing_entries_income_and_expense_to_isa,
-)
-from abacus.accounting_types import RenameAccount, Entry
 
 ledger = Ledger(
     {
@@ -41,9 +29,9 @@ ledger = Ledger(
                 contra_accounts=["discount", "returns"], target_name="net_sales"
             ),
         ),
-        "depreciation": CreditContraAccount(debits=[], credits=[250]),
-        "discount": DebitContraAccount(debits=[40, 25], credits=[]),
-        "returns": DebitContraAccount(debits=[], credits=[]),
+        "depreciation": ContraAsset(debits=[], credits=[250]),
+        "discount": ContraIncome(debits=[40, 25], credits=[]),
+        "returns": ContraIncome(debits=[], credits=[]),
         "profit": IncomeSummaryAccount(debits=[], credits=[]),
     }
 )
