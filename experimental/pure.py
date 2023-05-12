@@ -100,6 +100,7 @@ print(sum_dict(a))
 print(b)
 print(sum_dict(b))
 assert sum_dict(a) == sum_dict(b)
+print({**a, **b})
 # balance, pl
 
 def pick(chart, ledger, keys):
@@ -121,13 +122,12 @@ def current_profit(chart, ledger):
     return income_statement(chart, ledger)["profit"]
 
 def close(chart, ledger, re):
-    ledger[re] = current_profit(chart, ledger)
+    ledger[re] = credit(ledger[re], current_profit(chart, ledger))
     return ledger
 
 def balance_sheet(chart, ledger):
     close(chart, ledger, "retained_earnings")
     return pick(chart, ledger, "assets capital liabilities".split())
 
-# Does not work
-#print(income_statement(chart_, ledger_))
-#print(balance_sheet(chart_, ledger_))
+print(income_statement(chart_, ledger_))
+print(balance_sheet(chart_, ledger_))
