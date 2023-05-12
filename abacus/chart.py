@@ -3,33 +3,17 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
-from .accounts import (Asset, Capital, Expense, Income, IncomeSummaryAccount,
-                       Liability, Netting, get_contra_account_type)
+from .accounts import (
+    Asset,
+    Capital,
+    Expense,
+    Income,
+    IncomeSummaryAccount,
+    Liability,
+    Netting,
+    get_contra_account_type,
+)
 from .ledger import Ledger
-
-
-@dataclass
-class Chart2:
-    """Chart of accounts."""
-
-    assets: List[str]
-    expenses: List[str]
-    capital: List[str]
-    liabilities: List[str]
-    income: List[str]
-    income_summary_account: str = "profit"
-
-    def flat(self):
-        for attr, cls in [
-            ("assets", Asset),
-            ("expenses", Expense),
-            ("equity", Capital),
-            ("liabilities", Liability),
-            ("income", Income),
-        ]:
-            for account_name in getattr(self, attr):
-                yield cls, account_name
-        yield IncomeSummaryAccount, self.income_summary_account
 
 
 @dataclass
@@ -80,7 +64,7 @@ def add_contra_accounts(chart: Chart, ledger: Ledger) -> Ledger:
         cls = get_contra_account_type(chart.which(nets_with))
         for contra_account_name in contra_accounts:
             ledger[contra_account_name] = cls()
-            ledger[nets_with].netting = Netting(contra_accounts, target_account) #type: ignore
+            ledger[nets_with].netting = Netting(contra_accounts, target_account)  # type: ignore
     return ledger
 
 

@@ -140,4 +140,3 @@ def get_contra_account_type(cls):
             (Income, ContraIncome),
         ]
     )[cls]
-

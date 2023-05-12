@@ -1,8 +1,15 @@
 # %%
 
-from abacus.accounts import (Asset, Capital, ContraAsset, ContraCapital,
-                             ContraIncome, Income, IncomeSummaryAccount,
-                             Netting)
+from abacus.accounts import (
+    Asset,
+    Capital,
+    ContraAsset,
+    ContraCapital,
+    ContraIncome,
+    Income,
+    IncomeSummaryAccount,
+    Netting,
+)
 from abacus.chart import Chart, make_ledger
 
 chart = Chart(

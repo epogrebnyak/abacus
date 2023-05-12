@@ -13,7 +13,6 @@ def test_AccountBalanceDict():
     )
 
 
-
 def test_income_statement(chart0, entries0):
     income_st = chart0.make_ledger().process_entries(entries0).income_statement()
     assert income_st == IncomeStatement(
