@@ -1,5 +1,7 @@
 # abacus
 
+[![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
+
 A minimal, yet valid double-entry accounting system in Python.
 
 ## Quotes about `abacus`
