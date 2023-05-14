@@ -100,7 +100,7 @@ assert income_statement == IncomeStatement(
 )
 ```
 
-5. Close ledger and publsh balance sheet
+5. Close ledger and make balance sheet.
 
 ```python
 closed_ledger = ledger.close("re")
@@ -126,13 +126,13 @@ rename_dict = {
     "cogs": "Cost of goods sold",
     "sga": "Selling, general and adm. expenses",
 }
-cv = RichViewer(rename_dict, width=60)
-cv.print(balance_sheet)
-cv.print(income_statement)
+rv = RichViewer(rename_dict, width=60)
+rv.print(balance_sheet)
+rv.print(income_statement)
 ```
 
 Check out [`readme.py`](readme.py) for a complete code example
-featuring contraccounts (eg depreciation) and dividend payout.
+with contraccounts (eg depreciation) and dividend payout.
 
 ## Intent
 
