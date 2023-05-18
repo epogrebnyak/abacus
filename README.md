@@ -2,15 +2,9 @@
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
-A minimal, yet valid double-entry accounting system in Python.
-
-## What can `abacus` do?
-
-- Define a chart of accounts and create a general ledger.
-- Populate ledger with accounting entries.
-- Close accounts properly at accounting period end.
-- Produce trial balance, add adjustment entries.
-- Produce income statement and balance sheet.
+A minimal, yet valid double-entry accounting system in Python that works with user-defined chart of accounts,
+can post accounting entries to general ledger and close accounts properly at period end.
+`abacus` produces trial balance, income statement and balance sheet reports.
 
 ## Quotes about `abacus`
 
@@ -172,17 +166,18 @@ with several contraccounts (depreciation, discounts) and dividend payout.
 
 ## Intent
 
-`abacus` originally started as an educational device to inform users about principles of double-entry accounting
+`abacus` started as an educational device to inform users about principles of double-entry accounting
 and accounting information systems (AIS) through a simple Python program,
 in spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) projects.
 
 Usage ideas:
 
-- Teach accounting/AIS with it.
+- Teach accounting or AIS with it.
+- Build a `streamlit` app as a ledger demo.
 - Use with other accounting software as a component.
-- Build business simulations (e.g. generate a stream of business events to study interaction of operational, financing and investment decisions by a firm.)
-- Enhance some large language model with structured outputs.
-- Reclass of ledger and conversion between accounting standards (e.g. national vs IFRS).
+- Build business simulations (e.g. generate a stream of business events and make operational, financing and investment decisions based on financial reports)
+- Enhance a large language model with structured outputs in accounting.
+- Convert a ledger or reports between accounting standards (e.g. national vs IFRS).
 
 ## Assumptions
 
