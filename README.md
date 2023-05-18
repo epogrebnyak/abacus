@@ -111,15 +111,15 @@ ledger = chart.make_ledger()
 3. Add accounting entries using account names from the chart of accounts.
 
 ```python
-e1 = Entry(dr="cash", cr="equity", amount=1000)        # pay capital
-e2 = Entry(dr="goods_for_sale", cr="cash", amount=250) # acquire goods
-e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200) # sell goods
-e4 = Entry(cr="sales", dr="cash", amount=400)
+e1 = Entry(dr="cash", cr="equity", amount=1000)        # pay in capital
+e2 = Entry(dr="goods_for_sale", cr="cash", amount=250) # acquire goods worth 250 
+e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200) # sell goods worth 200
+e4 = Entry(cr="sales", dr="cash", amount=400)          # for 400 in cash
 e5 = Entry(cr="cash", dr="sga", amount=50)             # administrative expenses
 ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 ```
 
-4. At accounting period end make income statement.
+4. Make income statement at accounting period end.
 
 ```python
 from abacus import IncomeStatement
@@ -168,7 +168,7 @@ rv.print(income_statement)
 ```
 
 Check out [`readme.py`](readme.py) for a complete code example
-with contraccounts (eg depreciation) and dividend payout.
+with several contraccounts (depreciation, discounts) and dividend payout.
 
 ## Intent
 
