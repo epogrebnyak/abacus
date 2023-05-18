@@ -4,8 +4,8 @@ site_url: "https://epogrebnyak.github.io/abacus/"
 copyright: "&copy; 2023 Evgeny Pogrebnyak"
 nav:
   - About: index.md
-  - API: reference.md
-  - "Accounting equations": accounting.md
+  - "API Reference": reference.md
+  - Equations: accounting.md
 theme:
   name: material
 

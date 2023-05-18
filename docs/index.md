@@ -10,8 +10,6 @@ A minimal, yet valid double-entry accounting system in Python.
 
 > Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
 
-## Install
+## Repo 
 
-```
-pip install git+https://github.com/epogrebnyak/abacus.git
-```
+<https://github.com/epogrebnyak/abacus>

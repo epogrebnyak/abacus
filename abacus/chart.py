@@ -15,6 +15,8 @@ from .accounts import (
 )
 from .ledger import Ledger
 
+__all__ = ["Chart"]
+
 
 @dataclass
 class Chart:
@@ -53,18 +55,18 @@ class Chart:
 
 def make_regular_accounts(chart: Chart):
     return Ledger(
-        (account_name, C())
-        for C, account_names in chart.flat()
+        (account_name, cls())
+        for cls, account_names in chart.flat()
         for account_name in account_names
     )
 
 
 def add_contra_accounts(chart: Chart, ledger: Ledger) -> Ledger:
-    for nets_with, (contra_accounts, target_account) in chart.contra_accounts.items():
-        cls = get_contra_account_type(chart.which(nets_with))
+    for refers_to, (contra_accounts, target_account) in chart.contra_accounts.items():
+        ledger[refers_to].netting = Netting(contra_accounts, target_account)  # type: ignore
+        cls = get_contra_account_type(chart.which(refers_to))
         for contra_account_name in contra_accounts:
             ledger[contra_account_name] = cls()
-            ledger[nets_with].netting = Netting(contra_accounts, target_account)  # type: ignore
     return ledger
 
 

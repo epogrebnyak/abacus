@@ -13,7 +13,7 @@ grill:
   just mypy
   just md
 
-# run code from readme
+# run code from README.md
 readme:
   cat README.md | npx codedown python | poetry run python 
 
@@ -22,7 +22,6 @@ examples:
   just readme
   poetry run python readme.py
   poetry run python minimal.py
-
 
 # run readme.py
 md:
@@ -41,22 +40,14 @@ lint:
   poetry run isort .
   poetry run black .
 
-# build documentation (must change to mkdocstrings)
+# build and serve docs
 docs:
-  poetry run sphinx-build -a docs docs/site
+  poetry run mkdocs serve 
 
-# show documentation in browser
-show:
-  start docs/site/index.html
-
-# publish documentation to Github Pages
-pages:
-  poetry run ghp-import docs/site 
-
-# create rst source for API documentation (must change to mkdocstrings)
-apidoc:
-  sphinx-apidoc -o docs src/{{package}}
+# publish docs
+docs-push:
+  poetry run mkdocs gh-deploy 
 
 # launch streamlit app (depreciated)
 app:
-  poetry run streamlit run app.py
+  poetry run streamlit run app/app.py

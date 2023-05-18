@@ -2,8 +2,8 @@
 
 ::: abacus
     options:
-       show_root_heading: true
-       show_source: true
+      show_root_heading: true
+      show_source: true
 
 ::: abacus.accounts.Account
     options:
