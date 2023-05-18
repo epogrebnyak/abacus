@@ -3,16 +3,8 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
-from .accounts import (
-    Asset,
-    Capital,
-    Expense,
-    Income,
-    IncomeSummaryAccount,
-    Liability,
-    Netting,
-    get_contra_account_type,
-)
+from .accounts import (Asset, Capital, Expense, Income, IncomeSummaryAccount,
+                       Liability, Netting, get_contra_account_type)
 from .ledger import Ledger
 
 

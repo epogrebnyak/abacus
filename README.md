@@ -115,7 +115,7 @@ ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 income_statement = ledger.income_statement()
 print(income_statement)
 assert income_statement == IncomeStatement(
-    income={'sales': 400}, 
+    income={'sales': 400},
     expenses={'cogs': 200, 'sga': 50}
 )
 ```

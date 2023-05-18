@@ -5,10 +5,8 @@ from dataclasses import dataclass
 from typing import Dict
 
 from .accounting_types import AccountName, Amount
-from .closing import (
-    closing_entries_for_permanent_contra_accounts,
-    closing_entries_for_temporary_contra_accounts,
-)
+from .closing import (closing_entries_for_permanent_contra_accounts,
+                      closing_entries_for_temporary_contra_accounts)
 from .ledger import Ledger, assets, capital, expenses, income, liabilities
 
 

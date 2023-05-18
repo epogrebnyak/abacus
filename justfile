@@ -4,6 +4,15 @@ package := "abacus"
 test:
   poetry run pytest
 
+# run all tests and checks
+grill:
+  just test
+  just readme
+  just ruff
+  just mypy
+  just md
+  just lint 
+
 # run readme.py
 readme:
   poetry run python readme.py
@@ -22,10 +31,10 @@ mypy:
 
 # black and isort
 lint:  
-   black .
-   isort .
+  poetry run black .
+  poetry run isort .
 
-# build documentation 
+# build documentation (must change to mkdocstrings)
 docs:
   poetry run sphinx-build -a docs docs/site
 
@@ -37,10 +46,10 @@ show:
 pages:
   poetry run ghp-import docs/site 
 
-# create rst source for API documentation
+# create rst source for API documentation (must change to mkdocstrings)
 apidoc:
   sphinx-apidoc -o docs src/{{package}}
 
-# launch streamlit app
+# launch streamlit app (depreciated)
 app:
   poetry run streamlit run app.py

@@ -1,4 +1,5 @@
 from copy import deepcopy
+from pprint import pprint
 
 
 def empty_account():
@@ -153,7 +154,6 @@ def balance_sheet(chart, ledger):
 inc = income_statement(chart_, ledger_)
 bal = balance_sheet(chart_, ledger_)
 
-from pprint import pprint
 
 pprint(inc)
 pprint(bal)
