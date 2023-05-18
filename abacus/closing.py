@@ -91,5 +91,4 @@ def close(ledger: Ledger, retained_earnings_account_name: AccountName) -> Ledger
     )
 
 
-def reports(ledger: Ledger, retained_earnings_account_name: AccountName):
-    pass
+

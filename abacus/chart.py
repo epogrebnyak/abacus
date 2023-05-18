@@ -41,7 +41,7 @@ class Chart:
     income_summary_account: str = "_profit"
 
     def __post_init__(self):
-        _, _ = split_equity(self.equity)
+        split_equity(self.equity)
 
     def flat(self):
         capital, retained_earnings_account_name = split_equity(self.equity)
@@ -55,7 +55,7 @@ class Chart:
             (IncomeSummaryAccount, [self.income_summary_account]),
         ]
 
-    def which(self, account_name):
+    def get_type(self, account_name):
         return [
             Class
             for Class, account_names in self.flat()
@@ -80,7 +80,7 @@ def make_regular_accounts(chart: Chart):
 def add_contra_accounts(chart: Chart, ledger: Ledger) -> Ledger:
     for refers_to, (contra_accounts, target_account) in chart.contra_accounts.items():
         ledger[refers_to].netting = Netting(contra_accounts, target_account)  # type: ignore
-        cls = get_contra_account_type(chart.which(refers_to))
+        cls = get_contra_account_type(chart.get_type(refers_to))
         for contra_account_name in contra_accounts:
             ledger[contra_account_name] = cls()
     return ledger
