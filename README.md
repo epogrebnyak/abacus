@@ -45,6 +45,7 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 ```python
 from abacus import Chart, Entry, BalanceSheet
 
+
 chart = Chart(
     assets=["cash"],
     expenses=["overhead"],
@@ -82,6 +83,7 @@ This code is saved in [minimal.py](minimal.py)
 
 ```python
 from abacus import Chart, Entry
+
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
@@ -127,6 +129,7 @@ closed_ledger = ledger.close("re")
 balance_sheet = closed_ledger.balance_sheet()
 print(balance_sheet)
 
+
 assert balance_sheet == BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},
@@ -139,6 +142,7 @@ assert balance_sheet == BalanceSheet(
 
 ```python
 from abacus import RichViewer
+
 
 rename_dict = {
     "re": "Retained earnings",
@@ -156,17 +160,17 @@ with contraccounts (eg depreciation) and dividend payout.
 
 ## Intent
 
-This code is intended as an educational device that informs
-users about principles of double-entry accounting,
-accounting information systems (AIS)
-and good coding practices in Python.
+In spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) this code is intended as an educational device that informs
+users about principles of double-entry accounting and
+accounting information systems (AIS) through a Python program.
 
-`abacus` should be usable as 'headless' general ledger
-engine that accepts a chart of accounts, accounting entries
-and produces a balance sheet and an income statement.
+`abacus` should be usable as an engine that accepts a chart of accounts or a starting ledger, posts accounting entries for the reporting period and produces a new ledger, as well as trial balance, balance sheet and income statement.
 
-`abacus` may also enable simulations where you generate a stream
-of business events and condense it to a financial report.
+### Other ideas
+
+With `abacus` you can generate a stream of business events and condense it to a financial report as part of a business simulation (e.g. for interaction of operational, financing and investment decisions).
+Maybe `abacus` can enhance some large language model with structured outputs.
+Reclass of ledger and conversion between accounting standards (eg national vs IFRS) is also a possibility.
 
 ## Assumptions
 
@@ -184,7 +188,7 @@ Below are some simplifying assumptions made for this code:
 4. There are no journals - all records go directly to general ledger.
 
 5. Accounting entry is slim - it has no information other than debit and credit accounts
-   and entry amount. Thus we have no extra information for managment accounting or
+   and entry amount. Thus we have no extra information for management accounting or
    detailed tax calculations.
 
 6. Accounts balances can go to negative where they should not
@@ -202,17 +206,19 @@ Below are some simplifying assumptions made for this code:
     Credit accounts have credit balance, debit accounts have debit balance,
     and income summary account is a credit account.
 
+11. Money amounts are integers, will move to `Decimal`.
+
 ## What things are realistic in this code?
 
 1. Entries are stored in a queue and ledger state is calculated
-   based on a previous state and a list of entries to be proccessed.
+   based on a previous state and a list of entries to be processed.
 
-2. The chart of accounts can be fairly complex, up to level of being GAAP/IAS compliant.
+2. The chart of accounts can be fairly complex, up to a level of being GAAP/IAS compliant.
 
 3. Chart of accounts may include contra accounts. Temporary contra accounts
    for income (eg discounts) and expense (can't think of an example)
    are cleared at period end and permanent contra accounts
-   (eg accumulated depreciation) are carried forward.
+   (e.g. accumulated depreciation) are carried forward.
 
 4. You can give a name to typical dr/cr account pairs
    and use this name to record transactions.
@@ -221,23 +227,29 @@ Below are some simplifying assumptions made for this code:
 
 1. The code is covered by some tests, linted and type annotated.
 
-2. Data structures used are serialisable, so imputs and outputs can be stored and retrieved.
+2. Data structures used are serialisable, so inputs and outputs can be stored and retrieved.
 
-3. Modern Python features such as subclasssing and pattern matching help to make code cleaner.
-   For example, classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income`
+3. Modern Python features such as subclasssing and pattern matching help to make code cleaner. For example, classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income`
    to pass information about account types and hold debits and credits.
 
 4. This is experimental software. The upside is that we can make big changes fast.
    On a downside we do not learn (or earn) from users. Also we do not compete
-   with SAP, Oralce, Intuit, `hledger`, or `gnucash` in making a complete software
-   product.
+   with big names like SAP, Oralce, Intuit or plain text accounting tools like
+   `hledger` or `gnucash` in making a complete software product.
+
+## Similar projects
+
+- [medici](https://github.com/flash-oss/medici) (JavaScript) is a ledger store, it allows compound entries and very optimized for high loads, but does not enforce any chart of accounts conventions.
+- [pyluca](https://github.com/datasignstech/pyluca) is actively developed and has practical use in mind, coined a term 'headless ledger', has somewhat different interface and data structures than `abacus`.
+- [ledger.py](https://github.com/mafm/ledger.py) started about 10 years ago with Python 2, once a [hledger](https://hledger.org/) rival, has good documentation, but last commit in 2018.
+- There are few open source ERPs with accounting functionality under [`double-entry-accounting`](https://github.com/topics/double-entry-accounting) tag on Github.
+- `Ledger`, `hledger` and `beancount` are leaders in [plain text accounting](https://plaintextaccounting.org/#tools), `gnucash` is also quite notable.
 
 ## Feedback
 
-... is much appreciated. I like the idea that compact code for an accounting
-ledger is possible, but
-there is so much other people might know or contribute to this idea.
+... is much appreciated. There is so much other people might know
+or contribute to making a simple accounting ledger (no joke).
 
-Please comnent
-in [issues](https://github.com/epogrebnyak/abacus/issues),
-reddit or Telegram.
+Please reach out in [issues](https://github.com/epogrebnyak/abacus/issues),
+on [reddit](https://www.reddit.com/user/iamevpo)
+or [Telegram](https://t.me/epoepo).
