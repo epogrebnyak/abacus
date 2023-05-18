@@ -13,6 +13,8 @@ from rich.text import Text
 from abacus.accounting_types import Amount
 from abacus.reports import BalanceSheet, IncomeStatement, Report
 
+__all__ = ["PlainTextViewer", "RichViewer"]
+
 
 @dataclass
 class Line:

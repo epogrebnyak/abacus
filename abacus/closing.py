@@ -6,6 +6,8 @@ from .accounting_types import AccountName, Entry, Posting, RenameAccount
 from .accounts import Asset, Capital, Expense, Income, IncomeSummaryAccount, Liability
 from .ledger import Ledger, expenses, income, subset_by_class
 
+__all__ = []
+
 
 def closing_entries_for_contra_accounts(ledger: Ledger, peer_class):
     # find all contra accounts to close
@@ -74,7 +76,7 @@ def closing_entries(
     # at this point "sales" can be renamed tp "net_sales"
     es2 = closing_entries_income_and_expense_to_isa(_dummy_ledger)
     _dummy_ledger = _dummy_ledger.process_entries(es2)
-    # at this pont we have realprofit value at isa
+    # at this pont we have profit value at isa
     es3 = [
         closing_entry_isa_to_retained_earnings(
             _dummy_ledger, retained_earnings_account_name

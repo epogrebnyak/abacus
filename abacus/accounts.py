@@ -14,6 +14,8 @@ from abacus import Entry
 
 from .accounting_types import AccountName, Amount
 
+__all__ = ["Account"]
+
 
 @dataclass
 class Netting:

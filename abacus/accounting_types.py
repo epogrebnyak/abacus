@@ -4,17 +4,14 @@ Classes for a minimal accounting framework.
 Simplifying assumptions:
 
 - flat ledger, no subaccounts
-- no contraccounts (eg depreciation)
 - one currency
 - no journals, entries posted directly to ledger
-- entry holds amount, dr and cr account, no title or date
+- entry holds amount, dr and cr accounts, no title or date
 - no compound entries, entry affects exacly two accounts
 - only balance sheet and income statement reports 
-- flat income statement (just income and expenses)
-- little checks (eg can distribute dividend greater than profit)
-- account has either debit side balance or credit side balance, 
-  balances do not migrate
-- all accounts permanent, no temporary accounts 
+- flat structure of income statement
+- no non-negtivity checks (eg can distribute dividend greater than profit)
+- account has either debit side balance or credit side balance, balances do not migrate
 
 """
 
@@ -26,6 +23,9 @@ from typing import List, Tuple
 
 Amount = int
 AccountName = str
+
+
+__all__ = ["Entry", "RenameAccount", "Shortcodes"]
 
 
 class Posting:
@@ -44,6 +44,10 @@ class Entry(Posting):
 
 @dataclass
 class RenameAccount(Posting):
+    """Command to rename an account in ledger. `existing_name` will be dropped from a ledger,
+    `new_name` will be present in ledger.
+    """
+
     existing_name: AccountName
     new_name: AccountName
 
@@ -60,8 +64,8 @@ Pair = Tuple[AccountName, AccountName]
 
 class Shortcodes(UserDict[str, Pair]):
     """A dictionary that holds names of typical entry templates (pairs).
-    Methods allow to convert NamedEntry("pay_capital", 1000) to
-    Entry("cash", "capital", 1000) for a single entry or a list of entries.
+    Methods allow to convert `NamedEntry("pay_capital", 1000)` to
+    `Entry("cash", "capital", 1000)` for a single entry or a list of entries.
     """
 
     def make_entry(self, named_entry: NamedEntry) -> Entry:
@@ -73,7 +77,7 @@ class Shortcodes(UserDict[str, Pair]):
 
 
 @dataclass
-class Saldo:
+class _Saldo:
     """Account name and balance.
 
     Note: 'saldo' is balance in Italian."""
