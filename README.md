@@ -262,9 +262,6 @@ Below are some simplifying assumptions made for this code:
 
 ## Feedback
 
-... is much appreciated. There is so much other people might know
-or contribute to making a simple accounting ledger (no joke).
-
-Please reach out in [issues](https://github.com/epogrebnyak/abacus/issues),
+... is much appreciated. Please reach out in [issues](https://github.com/epogrebnyak/abacus/issues),
 on [reddit](https://www.reddit.com/user/iamevpo)
 or [Telegram](https://t.me/epoepo).
