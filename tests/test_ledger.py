@@ -20,7 +20,6 @@ def test_safe_process_entries():
         {
             "cash": Asset(debits=[], credits=[]),
             "equity": Capital(debits=[], credits=[]),
-            "profit": IncomeSummaryAccount(debits=[], credits=[]),
         }
     )
     _, _failed = safe_process_postings(_ledger, [Entry("", "", 0)])
