@@ -56,7 +56,7 @@ chart = Chart(
 )
 entries = [
     Entry("cash", "equity", 500),   # started a company...
-    Entry("cash", "sales", 150),    # selling thin air
+    Entry("cash", "sales", 150),    # selling thin air (zero cost of sales)
     Entry("discounts", "cash", 30), # with a discount
     Entry("overhead", "cash", 50),  # and overhead expense
 ]
