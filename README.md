@@ -236,8 +236,8 @@ Below are some simplifying assumptions made for this code:
 
 3. Modern Python features such as subclasssing and pattern matching help to make code cleaner (hopefully). For example, classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income` pass useful information about account types.
 
-4. This is experimental software. The upside is that we can make big changes fast.
-   On a downside we do not learn (or earn) from users, at least yet.
+4. This is experimental software. The upside is that we can make big changes fast. On a downside we do not learn (or earn) from users, at least yet.
+
 5. We do not compete with big names like SAP, Oralce, Intuit, smaller open source ERPs
    (Odoo, ERPNext, etc) or plain text accounting tools like `hledger` or `gnucash` in making a complete software product with journalling and document management.
 
