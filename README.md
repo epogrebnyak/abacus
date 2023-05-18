@@ -109,32 +109,32 @@ e5 = Entry(cr="cash", dr="sga", amount=50)             # administrative expenses
 ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 ```
 
-4. Close accounts at period end, produce income statement and balance sheet.
+4. At accounting period end make income statement.
 
 ```python
-# Create income statement
 income_statement = ledger.income_statement()
 print(income_statement)
+assert income_statement == IncomeStatement(
+    income={'sales': 400}, 
+    expenses={'cogs': 200, 'sga': 50}
+)
+```
 
-# Close ledger and publsh balance sheet
+5. Close ledger and make balance sheet.
+
+```python
 closed_ledger = ledger.close("re")
 balance_sheet = closed_ledger.balance_sheet()
 print(balance_sheet)
-```
 
-```python
-IncomeStatement(income={'sales': 400}, expenses={'cogs': 200, 'sga': 50})
-```
-
-```python
-BalanceSheet(
+assert balance_sheet == BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},
     liabilities={"divp": 0, "payables": 0}
 )
 ```
 
-5. Print balance sheet and income statement to screen with verbose account names and
+6. Print balance sheet and income statement to screen with verbose account names and
    rich formatting.
 
 ```python
@@ -146,13 +146,13 @@ rename_dict = {
     "cogs": "Cost of goods sold",
     "sga": "Selling, general and adm. expenses",
 }
-cv = RichViewer(rename_dict, width=60)
-cv.print(balance_sheet)
-cv.print(income_statement)
+rv = RichViewer(rename_dict, width=60)
+rv.print(balance_sheet)
+rv.print(income_statement)
 ```
 
 Check out [`readme.py`](readme.py) for a complete code example
-featuring contraccounts (eg depreciation) and dividend payout.
+with contraccounts (eg depreciation) and dividend payout.
 
 ## Intent
 
