@@ -1,6 +1,6 @@
 import pytest  # pylint: disable=import-error
 
-from abacus import Chart, Entry
+from abacus import Chart, Entry, RE
 from abacus.accounting_types import NamedEntry, Shortcodes
 from abacus.reports import BalanceSheet, IncomeStatement
 
@@ -48,7 +48,7 @@ def named_entries():
 _chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
-    equity=["equity", "re"],
+    equity=["equity", RE("re")],
     liabilities=["divp", "payables"],
     income=["sales"],
 )

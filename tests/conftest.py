@@ -2,6 +2,7 @@ import pytest  # pylint: disable=import-error
 
 from abacus.accounting_types import Entry
 from abacus.chart import Chart
+from abacus import RE
 
 
 @pytest.fixture
@@ -9,7 +10,7 @@ def chart0():
     return Chart(
         assets=["cash", "receivables", "goods_for_sale"],
         expenses=["cogs", "sga"],
-        equity=["equity", "re"],
+        equity=["equity", RE("re")],
         liabilities=["divp", "payables"],
         income=["sales"],
     )

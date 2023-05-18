@@ -1,17 +1,21 @@
-from abacus import Chart, Entry
-from abacus.accounts import Asset, Capital, IncomeSummaryAccount
-from abacus.chart import make_ledger
+from abacus import Chart, Entry, RE
+from abacus.accounts import Asset, Capital, IncomeSummaryAccount, RetainedEarnings
 from abacus.ledger import Ledger, safe_process_postings
 
 
 def test_make_ledger():
     _chart = Chart(
-        assets=["cash"], equity=["equity"], income=[], expenses=[], liabilities=[]
+        assets=["cash"],
+        equity=["equity", RE("re")],
+        income=[],
+        expenses=[],
+        liabilities=[],
     )
-    assert make_ledger(_chart) == {
+    assert _chart.make_ledger() == {
         "cash": Asset(debits=[], credits=[]),
         "equity": Capital(debits=[], credits=[]),
-        "profit": IncomeSummaryAccount(debits=[], credits=[]),
+        "_profit": IncomeSummaryAccount(debits=[], credits=[]),
+        "re": RetainedEarnings(debits=[], credits=[], netting=None),
     }
 
 

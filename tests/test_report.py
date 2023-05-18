@@ -44,5 +44,5 @@ def test_balances(chart0, entries0):
         "divp": 0,
         "payables": 0,
         "sales": 0,
-        "profit": 0,
+        "_profit": 0,
     }

@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 from .accounts import (
     Asset,
     Capital,
+    RetainedEarnings,
     Expense,
     Income,
     IncomeSummaryAccount,
@@ -14,8 +15,17 @@ from .accounts import (
     get_contra_account_type,
 )
 from .ledger import Ledger
+from .accounting_types import RetainedEarningsAccount
 
 __all__ = ["Chart"]
+
+
+def split_equity(xs):
+    strings = [x for x in xs if isinstance(x, str)]
+    re_many = [x for x in xs if isinstance(x, RetainedEarningsAccount)]
+    if len(re_many) != 1:
+        raise TypeError("There must be exactly one RetainedEarningsAccount")
+    return strings, re_many[0].retained_earnings_account_name
 
 
 @dataclass
@@ -24,17 +34,22 @@ class Chart:
 
     assets: List[str]
     expenses: List[str]
-    equity: List[str]
+    equity: List[str | RetainedEarningsAccount]
     liabilities: List[str]
     income: List[str]
     contra_accounts: Dict[str, Tuple[List[str], str]] = field(default_factory=dict)
-    income_summary_account: str = "profit"
+    income_summary_account: str = "_profit"
+
+    def __post_init__(self):
+        _, _ = split_equity(self.equity)
 
     def flat(self):
+        capital, retained_earnings_account_name = split_equity(self.equity)
         return [
             (Asset, self.assets),
             (Expense, self.expenses),
-            (Capital, self.equity),
+            (Capital, capital),
+            (RetainedEarnings, [retained_earnings_account_name]),
             (Liability, self.liabilities),
             (Income, self.income),
             (IncomeSummaryAccount, [self.income_summary_account]),
@@ -49,8 +64,9 @@ class Chart:
 
     # TODO: must check for duplicatre account keys
 
-    def make_ledger(self):
-        return make_ledger(self)
+    def make_ledger(self) -> Ledger:
+        ledger = make_regular_accounts(self)
+        return add_contra_accounts(self, ledger)
 
 
 def make_regular_accounts(chart: Chart):
@@ -68,8 +84,3 @@ def add_contra_accounts(chart: Chart, ledger: Ledger) -> Ledger:
         for contra_account_name in contra_accounts:
             ledger[contra_account_name] = cls()
     return ledger
-
-
-def make_ledger(chart: Chart) -> Ledger:
-    ledger = make_regular_accounts(chart)
-    return add_contra_accounts(chart, ledger)
