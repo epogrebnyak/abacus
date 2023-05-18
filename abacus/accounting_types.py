@@ -1,18 +1,5 @@
 """
 Classes for a minimal accounting framework.
-
-Simplifying assumptions:
-
-- flat ledger, no subaccounts
-- one currency
-- no journals, entries posted directly to ledger
-- entry holds amount, dr and cr accounts, no title or date
-- no compound entries, entry affects exacly two accounts
-- only balance sheet and income statement reports 
-- flat structure of income statement
-- no non-negtivity checks (eg can distribute dividend greater than profit)
-- account has either debit side balance or credit side balance, balances do not migrate
-
 """
 
 # pylint: disable=no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name

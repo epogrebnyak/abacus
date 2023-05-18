@@ -9,7 +9,7 @@ A minimal, yet valid double-entry accounting system in Python.
 - Define a chart of accounts and create a general ledger.
 - Populate ledger with accounting entries.
 - Close accounts properly at accounting period end.
-- Produce trial balance, add adjustment and post-close entries.
+- Produce trial balance, add adjustment entries.
 - Produce income statement and balance sheet.
 
 ## Quotes about `abacus`
@@ -112,7 +112,7 @@ ledger = chart.make_ledger()
 
 ```python
 e1 = Entry(dr="cash", cr="equity", amount=1000)        # pay in capital
-e2 = Entry(dr="goods_for_sale", cr="cash", amount=250) # acquire goods worth 250 
+e2 = Entry(dr="goods_for_sale", cr="cash", amount=250) # acquire goods worth 250
 e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200) # sell goods worth 200
 e4 = Entry(cr="sales", dr="cash", amount=400)          # for 400 in cash
 e5 = Entry(cr="cash", dr="sga", amount=50)             # administrative expenses
@@ -258,10 +258,11 @@ Below are some simplifying assumptions made for this code:
 - [pyluca](https://github.com/datasignstech/pyluca) is actively developed and has practical use in mind, coined a term 'headless ledger', has somewhat different interface and data structures than `abacus`.
 - [ledger.py](https://github.com/mafm/ledger.py) started about 10 years ago with Python 2, once a [hledger](https://hledger.org/) rival, has good documentation, but last commit in 2018.
 - There are few open source ERPs with accounting functionality under [`double-entry-accounting`](https://github.com/topics/double-entry-accounting) tag on Github.
-- `Ledger`, `hledger` and `beancount` are leaders in [plain text accounting](https://plaintextaccounting.org/#tools), `gnucash` is also quite notable.
+- `Ledger`, `hledger` and `beancount` are leaders in [plain text accounting](https://plaintextaccounting.org/#tools)
+- [gnucash](https://www.gnucash.org/)
 
 ## Feedback
 
 ... is much appreciated. Please reach out in [issues](https://github.com/epogrebnyak/abacus/issues),
 on [reddit](https://www.reddit.com/user/iamevpo)
-or [Telegram](https://t.me/epoepo).
+or via [Telegram](https://t.me/epoepo).
