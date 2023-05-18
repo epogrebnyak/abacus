@@ -160,17 +160,18 @@ with contraccounts (eg depreciation) and dividend payout.
 
 ## Intent
 
-In spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) this code is intended as an educational device that informs
-users about principles of double-entry accounting and
+In spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x)
+this code is intended as an educational device
+that informs users about principles of double-entry accounting and
 accounting information systems (AIS) through a Python program.
 
-`abacus` should be usable as an engine that accepts a chart of accounts or a starting ledger, posts accounting entries for the reporting period and produces a new ledger, as well as trial balance, balance sheet and income statement.
+`abacus` should also be usable as an engine that accepts a chart of accounts or a starting ledger, posts accounting entries for the reporting period and produces a new ledger, as well as trial balance, balance sheet and income statement.
 
 ### Other ideas
 
-With `abacus` you can generate a stream of business events and condense it to a financial report as part of a business simulation (e.g. for interaction of operational, financing and investment decisions).
-Maybe `abacus` can enhance some large language model with structured outputs.
-Reclass of ledger and conversion between accounting standards (eg national vs IFRS) is also a possibility.
+- With `abacus` you can generate a stream of business events and condense it to a financial report as part of a business simulation (e.g. for interaction of operational, financing and investment decisions).
+- Maybe `abacus` can enhance some large language model with structured outputs.
+- Reclass of ledger and conversion between accounting standards (eg national vs IFRS) is also a possibility.
 
 ## Assumptions
 
@@ -200,7 +201,7 @@ Below are some simplifying assumptions made for this code:
 8. We use just one currency.
 
 9. Closing contra accounts and closing income summary account is stateful and needs careful
-   reasoning and implementation. More safeguards can be implemented.
+   reasoning and implementation.
 
 10. Account balances stay on one side, and do not migrate from one side to another.
     Credit accounts have credit balance, debit accounts have debit balance,
@@ -208,20 +209,24 @@ Below are some simplifying assumptions made for this code:
 
 11. Money amounts are integers, will move to `Decimal`.
 
+12. Renamed account are dropped from the ledger. When `sales` becomes `net_sales` after a contra account `discount` is netted, `sales` leave the ledger, and `net_sales` remain.
+
 ## What things are realistic in this code?
 
 1. Entries are stored in a queue and ledger state is calculated
    based on a previous state and a list of entries to be processed.
 
-2. The chart of accounts can be fairly complex, up to a level of being GAAP/IAS compliant.
+2. The chart of accounts can be fairly complex, up to a level of being GAAP/IAS 'compliant'.
 
 3. Chart of accounts may include contra accounts. Temporary contra accounts
-   for income (eg discounts) and expense (can't think of an example)
-   are cleared at period end and permanent contra accounts
+   for income (eg discounts given) and expense (discounts or cashbacks received)
+   are cleared at period end, permanent contra accounts
    (e.g. accumulated depreciation) are carried forward.
 
-4. You can give a name to typical dr/cr account pairs
-   and use this name to record transactions.
+4. You can give a name to typical dr/cr account pairs and use this name to record transactions.
+
+5. Accounts can be renamed for reports, thus opening a way to internationalisation.
+   Keep a short name like `cash` or account code in ledger and rename `cash` to `नकद` for a report.
 
 ## Implementation details
 
@@ -229,13 +234,12 @@ Below are some simplifying assumptions made for this code:
 
 2. Data structures used are serialisable, so inputs and outputs can be stored and retrieved.
 
-3. Modern Python features such as subclasssing and pattern matching help to make code cleaner. For example, classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income`
-   to pass information about account types and hold debits and credits.
+3. Modern Python features such as subclasssing and pattern matching help to make code cleaner (hopefully). For example, classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income` pass useful information about account types.
 
 4. This is experimental software. The upside is that we can make big changes fast.
-   On a downside we do not learn (or earn) from users. Also we do not compete
-   with big names like SAP, Oralce, Intuit or plain text accounting tools like
-   `hledger` or `gnucash` in making a complete software product.
+   On a downside we do not learn (or earn) from users, at least yet.
+5. We do not compete with big names like SAP, Oralce, Intuit, smaller open source ERPs
+   (Odoo, ERPNext, etc) or plain text accounting tools like `hledger` or `gnucash` in making a complete software product with journalling and document management.
 
 ## Similar projects
 
