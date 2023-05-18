@@ -109,7 +109,17 @@ class Income(CreditAccount, RegularAccount):
     pass
 
 
-class IncomeSummaryAccount(CreditAccount):
+class Unique:
+    """There sould be just one account of this class in any ledger."""
+
+    pass
+
+
+class IncomeSummaryAccount(CreditAccount, Unique):
+    pass
+
+
+class RetainedEarnings(Capital, Unique):
     pass
 
 
