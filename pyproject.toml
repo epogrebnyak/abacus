@@ -4,7 +4,7 @@ ignore=['E501']
 [tool.poetry]
 name = "abacus"
 version = "0.2.2"
-description = ""
+description = "A minimal, yet valid double-entry accounting system in Python."
 authors = ["Evgeniy Pogrebnyak <e.pogrebnyak@gmail.com>"]
 readme = "README.md"
 

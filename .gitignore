@@ -1,4 +1,5 @@
 docs/site/
+site/
 
 # more hidden folders
 .venv/

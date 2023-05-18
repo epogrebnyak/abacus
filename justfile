@@ -45,7 +45,7 @@ docs:
   poetry run mkdocs serve 
 
 # publish docs
-docs-push:
+docs-publish:
   poetry run mkdocs gh-deploy 
 
 # launch streamlit app (depreciated)
