@@ -4,7 +4,7 @@
 
 A minimal, yet valid double-entry accounting system in Python.
 
-# What can `abacus` do?
+## What can `abacus` do?
 
 - Define a chart of accounts and create a general ledger.
 - Populate ledger with accounting entries.
