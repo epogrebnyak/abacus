@@ -4,6 +4,15 @@
 
 A minimal, yet valid double-entry accounting system in Python.
 
+# What can `abacus` do?
+
+- Define a chart of accounts and create a general ledger.
+- Populate ledger with accounting entries.
+- Close accounts properly at accounting period end.
+- Produce trial balance.
+- Add adjustment and post-close entries.
+- Produce income statement and balance sheet.
+
 ## Quotes about `abacus`
 
 [![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
@@ -164,18 +173,17 @@ with contraccounts (eg depreciation) and dividend payout.
 
 ## Intent
 
-In spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x)
-this code is intended as an educational device
-that informs users about principles of double-entry accounting and
-accounting information systems (AIS) through a Python program.
+`abacus` originally started as an educational device to inform users about principles of double-entry accounting
+and accounting information systems (AIS) through a simple Python program,
+in spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) projects.
 
-`abacus` should also be usable as an engine that accepts a chart of accounts or a starting ledger, posts accounting entries for the reporting period and produces a new ledger, as well as trial balance, balance sheet and income statement.
+Usage ideas:
 
-### Other ideas
-
-- With `abacus` you can generate a stream of business events and condense it to a financial report as part of a business simulation (e.g. for interaction of operational, financing and investment decisions).
-- Maybe `abacus` can enhance some large language model with structured outputs.
-- Reclass of ledger and conversion between accounting standards (eg national vs IFRS) is also a possibility.
+- Teach accounting/AIS with it.
+- Use with other accounting software as a component.
+- Build business simulations (e.g. generate a stream of business events to study interaction of operational, financing and investment decisions by a firm.)
+- Enhance some large language model with structured outputs.
+- Reclass of ledger and conversion between accounting standards (e.g. national vs IFRS).
 
 ## Assumptions
 
@@ -202,10 +210,10 @@ Below are some simplifying assumptions made for this code:
 7. XML likely to be a format for accounting reports interchange,
    while JSON is intended for `abacus`.
 
-8. We use just one currency.
+8. We use [just one currency](https://www.mscs.dal.ca/~selinger/accounting/).
 
 9. Closing contra accounts and closing income summary account is stateful and needs careful
-   reasoning and implementation.
+   implementation.
 
 10. Account balances stay on one side, and do not migrate from one side to another.
     Credit accounts have credit balance, debit accounts have debit balance,
@@ -213,7 +221,7 @@ Below are some simplifying assumptions made for this code:
 
 11. Money amounts are integers, will move to `Decimal`.
 
-12. Renamed account are dropped from the ledger. When `sales` becomes `net_sales` after a contra account `discount` is netted, `sales` leave the ledger, and `net_sales` remain.
+12. Renamed account are dropped from the ledger. When `sales` becomes `net_sales` after a contra account `discount` is netted, `sales` leave the ledger, and `net_sales` remains.
 
 ## What things are realistic in this code?
 
