@@ -9,8 +9,7 @@ A minimal, yet valid double-entry accounting system in Python.
 - Define a chart of accounts and create a general ledger.
 - Populate ledger with accounting entries.
 - Close accounts properly at accounting period end.
-- Produce trial balance.
-- Add adjustment and post-close entries.
+- Produce trial balance, add adjustment and post-close entries.
 - Produce income statement and balance sheet.
 
 ## Quotes about `abacus`
