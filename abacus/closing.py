@@ -3,8 +3,7 @@
 from typing import List
 
 from .accounting_types import AccountName, Entry, Posting, RenameAccount
-from .accounts import (Asset, Capital, Expense, Income, IncomeSummaryAccount,
-                       Liability)
+from .accounts import Asset, Capital, Expense, Income, IncomeSummaryAccount, Liability
 from .ledger import Ledger, expenses, income, subset_by_class
 
 

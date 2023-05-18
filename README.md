@@ -114,6 +114,8 @@ ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 4. At accounting period end make income statement.
 
 ```python
+from abacus import IncomeStatement
+
 income_statement = ledger.income_statement()
 print(income_statement)
 assert income_statement == IncomeStatement(
@@ -125,6 +127,8 @@ assert income_statement == IncomeStatement(
 5. Close ledger and make balance sheet.
 
 ```python
+from abacus import BalanceSheet
+
 closed_ledger = ledger.close("re")
 balance_sheet = closed_ledger.balance_sheet()
 print(balance_sheet)

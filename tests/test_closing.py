@@ -1,7 +1,15 @@
 from abacus.accounting_types import Entry, RenameAccount
-from abacus.accounts import (Asset, Capital, ContraAsset, ContraIncome,
-                             Expense, Income, IncomeSummaryAccount, Liability,
-                             Netting)
+from abacus.accounts import (
+    Asset,
+    Capital,
+    ContraAsset,
+    ContraIncome,
+    Expense,
+    Income,
+    IncomeSummaryAccount,
+    Liability,
+    Netting,
+)
 from abacus.closing import closing_entries
 from abacus.ledger import Ledger
 

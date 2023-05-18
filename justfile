@@ -7,15 +7,22 @@ test:
 # run all tests and checks
 grill:
   just test
-  just readme
+  just examples
+  just lint 
   just ruff
   just mypy
   just md
-  just lint 
 
-# run readme.py
+# run code from readme
 readme:
+  cat README.md | npx codedown python | poetry run python 
+
+# run all code examples
+examples:
+  just readme
   poetry run python readme.py
+  poetry run python minimal.py
+
 
 # run readme.py
 md:
@@ -23,16 +30,16 @@ md:
 
 # apply ruff linter
 ruff:
-  poetry run ruff check .
+  poetry run ruff check . --fix
 
 # type check
 mypy:
   poetry run mypy abacus
 
-# black and isort
+# use black and isort
 lint:  
-  poetry run black .
   poetry run isort .
+  poetry run black .
 
 # build documentation (must change to mkdocstrings)
 docs:
