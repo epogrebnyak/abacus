@@ -89,6 +89,3 @@ def close(ledger: Ledger, retained_earnings_account_name: AccountName) -> Ledger
     return ledger.process_entries(
         closing_entries(ledger, retained_earnings_account_name)
     )
-
-
-

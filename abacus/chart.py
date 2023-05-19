@@ -1,7 +1,7 @@
 """Chart of accounts."""
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 from .accounts import (
     Asset,
@@ -15,17 +15,8 @@ from .accounts import (
     get_contra_account_type,
 )
 from .ledger import Ledger
-from .accounting_types import RetainedEarningsAccount
 
 __all__ = ["Chart"]
-
-
-def split_equity(xs):
-    strings = [x for x in xs if isinstance(x, str)]
-    re_many = [x for x in xs if isinstance(x, RetainedEarningsAccount)]
-    if len(re_many) != 1:
-        raise TypeError("There must be exactly one RetainedEarningsAccount")
-    return strings, re_many[0].retained_earnings_account_name
 
 
 @dataclass
@@ -34,26 +25,40 @@ class Chart:
 
     assets: List[str]
     expenses: List[str]
-    equity: List[str | RetainedEarningsAccount]
+    equity: List[str]
     liabilities: List[str]
     income: List[str]
     contra_accounts: Dict[str, Tuple[List[str], str]] = field(default_factory=dict)
     income_summary_account: str = "_profit"
+    retained_earnings_account: Optional[str] = None
 
     def __post_init__(self):
-        split_equity(self.equity)
+        if (
+            self.retained_earnings_account
+            and self.retained_earnings_account not in self.equity
+        ):
+            raise ValueError("Wrong name for retained earnings account")
+
+    def set_retained_earnings_account(self, account_name: str):
+        if account_name in self.equity:
+            self.retained_earnings_account = account_name
+            return self
+        else:
+            raise ValueError(f"{account_name} must be in {self.equity}")
 
     def flat(self):
-        capital, retained_earnings_account_name = split_equity(self.equity)
+        if self.retained_earnings_account:
+            addon = [(RetainedEarnings, [self.retained_earnings_account])]
+        else:
+            addon = []    
         return [
             (Asset, self.assets),
             (Expense, self.expenses),
-            (Capital, capital),
-            (RetainedEarnings, [retained_earnings_account_name]),
+            (Capital, self.equity),
             (Liability, self.liabilities),
             (Income, self.income),
             (IncomeSummaryAccount, [self.income_summary_account]),
-        ]
+        ] + addon
 
     def get_type(self, account_name):
         return [

@@ -48,7 +48,7 @@ def named_entries():
 _chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
-    equity=["equity", RE("re")],
+    equity=["equity", "re"],
     liabilities=["divp", "payables"],
     income=["sales"],
 )
