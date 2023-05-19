@@ -15,11 +15,6 @@ AccountName = str
 __all__ = ["Entry", "RenameAccount", "Shortcodes"]
 
 
-@dataclass
-class RetainedEarningsAccount:
-    retained_earnings_account_name: str
-
-
 class Posting:
     pass
 

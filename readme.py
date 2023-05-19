@@ -1,10 +1,10 @@
 # %%
-from abacus import Chart, Entry, RE
+from abacus import Chart, Entry
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale", "ppe"],
     expenses=["cogs", "sga", "dexp"],
-    equity=["equity", RE("re")],
+    equity=["equity", "re"],
     liabilities=["divp", "payables"],
     income=["sales"],
     contra_accounts={

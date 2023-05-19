@@ -1,23 +1,22 @@
 # %%
 
-from abacus import RE
 from abacus.accounts import (
     Asset,
     Capital,
-    RetainedEarnings,
     ContraAsset,
     ContraCapital,
     ContraIncome,
     Income,
     IncomeSummaryAccount,
     Netting,
+    RetainedEarnings,
 )
 from abacus.chart import Chart
 
 chart = Chart(
     assets=["cash", "ppe"],
     expenses=[],
-    equity=["shares", RE("re")],
+    equity=["shares", "re"],
     liabilities=[],
     income=["sales"],
     contra_accounts={
@@ -32,7 +31,7 @@ def test_make_ledger_with_netting():
     chart = Chart(
         assets=["cash", "ppe"],
         expenses=[],
-        equity=["shares", RE("re")],
+        equity=["shares", "re"],
         liabilities=[],
         income=["sales"],
         contra_accounts={
@@ -41,7 +40,7 @@ def test_make_ledger_with_netting():
             "ppe": (["depr"], "net_ppe"),
         },
     )
-    ledger = chart.make_ledger()
+    ledger = chart.set_retained_earnings_account("re").make_ledger()
     assert ledger == {
         "cash": Asset(debits=[], credits=[], netting=None),
         "ppe": Asset(

@@ -2,11 +2,11 @@ from abacus import Chart
 from abacus.accounts import (
     Asset,
     Capital,
-    RetainedEarnings,
     Expense,
     Income,
     IncomeSummaryAccount,
     Liability,
+    RetainedEarnings,
 )
 
 chart = Chart(
@@ -23,7 +23,7 @@ chart = Chart(
 
 
 def test_chart_flat():
-    assert chart.set_retained_earnings_account("retained_earnings").flat() == [
+    assert chart.set_retained_earnings_account("retained_earnings")._flat() == [
         (Asset, ["cash", "receivables", "goods_for_sale", "ppe"]),
         (Expense, ["cogs", "sga", "depreciation_expense"]),
         (Capital, ["equity", "retained_earnings"]),
@@ -32,5 +32,3 @@ def test_chart_flat():
         (IncomeSummaryAccount, ["_profit"]),
         (RetainedEarnings, ["retained_earnings"]),
     ]
-
-print(chart.set_retained_earnings_account("retained_earnings").flat())

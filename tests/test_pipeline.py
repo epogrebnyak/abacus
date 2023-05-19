@@ -1,4 +1,4 @@
-from abacus import Ledger, Entry, Pipeline
+from abacus import Entry, Ledger, Pipeline
 from abacus.accounts import (
     Asset,
     Capital,

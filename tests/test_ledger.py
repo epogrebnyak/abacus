@@ -1,4 +1,4 @@
-from abacus import Chart, Entry, RE
+from abacus import Chart, Entry
 from abacus.accounts import Asset, Capital, IncomeSummaryAccount, RetainedEarnings
 from abacus.ledger import Ledger, safe_process_postings
 
@@ -6,12 +6,12 @@ from abacus.ledger import Ledger, safe_process_postings
 def test_make_ledger():
     _chart = Chart(
         assets=["cash"],
-        equity=["equity", RE("re")],
+        equity=["equity", "re"],
         income=[],
         expenses=[],
         liabilities=[],
     )
-    assert _chart.make_ledger() == {
+    assert _chart.set_retained_earnings_account("re").make_ledger() == {
         "cash": Asset(debits=[], credits=[]),
         "equity": Capital(debits=[], credits=[]),
         "_profit": IncomeSummaryAccount(debits=[], credits=[]),

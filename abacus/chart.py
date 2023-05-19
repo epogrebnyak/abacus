@@ -1,17 +1,17 @@
 """Chart of accounts."""
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 from .accounts import (
     Asset,
     Capital,
-    RetainedEarnings,
     Expense,
     Income,
     IncomeSummaryAccount,
     Liability,
     Netting,
+    RetainedEarnings,
     get_contra_account_type,
 )
 from .ledger import Ledger
@@ -46,11 +46,13 @@ class Chart:
         else:
             raise ValueError(f"{account_name} must be in {self.equity}")
 
-    def flat(self):
+    def _flat(self):
+        """Stream regular account names (without contraccounts)"""
         if self.retained_earnings_account:
             addon = [(RetainedEarnings, [self.retained_earnings_account])]
         else:
-            addon = []    
+            addon = []
+        # FIXME: addon repeats from self.equity
         return [
             (Asset, self.assets),
             (Expense, self.expenses),
@@ -63,11 +65,12 @@ class Chart:
     def get_type(self, account_name):
         return [
             Class
-            for Class, account_names in self.flat()
+            for Class, account_names in self._flat()
             if account_name in account_names
         ][0]
 
     # TODO: must check for duplicatre account keys
+    # list all accounts
 
     def make_ledger(self) -> Ledger:
         ledger = make_regular_accounts(self)
@@ -77,7 +80,7 @@ class Chart:
 def make_regular_accounts(chart: Chart):
     return Ledger(
         (account_name, cls())
-        for cls, account_names in chart.flat()
+        for cls, account_names in chart._flat()
         for account_name in account_names
     )
 

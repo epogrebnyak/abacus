@@ -12,7 +12,7 @@ def chart0():
         equity=["equity", "re"],
         liabilities=["divp", "payables"],
         income=["sales"],
-        retained_earnings_account="re"
+        retained_earnings_account="re",
     )
 
 

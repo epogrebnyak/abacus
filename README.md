@@ -45,13 +45,13 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 ## Minimal working example
 
 ```python
-from abacus import Chart, Entry, BalanceSheet, RetainedEarningsAccount
+from abacus import Chart, Entry, BalanceSheet
 
 
 chart = Chart(
     assets=["cash"],
     expenses=["overhead"],
-    equity=["equity", RetainedEarningsAccount("retained_earnings")],
+    equity=["equity", "retained_earnings"],
     liabilities=["dividend_payable"],
     income=["sales"],
     contra_accounts={"sales": (["discounts"], "net_sales")},
@@ -82,13 +82,13 @@ assert balance_sheet == BalanceSheet(
 1. We start with a chart of accounts of five types: assets, equity, liabilities, income and expenses.
 
 ```python
-from abacus import Chart, Entry, RetainedEarningsAccount
+from abacus import Chart, Entry
 
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
-    equity=["equity", RetainedEarningsAccount("re")],
+    equity=["equity", "re"],
     liabilities=["divp", "payables"],
     income=["sales"],
 

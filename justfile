@@ -21,7 +21,6 @@ readme:
 examples:
   just readme
   poetry run python readme.py
-  poetry run python minimal.py
 
 # run readme.py
 md:
