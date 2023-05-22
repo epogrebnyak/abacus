@@ -8,7 +8,7 @@
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Type
 
 from abacus import Entry
 
@@ -147,7 +147,7 @@ class ContraIncome(DebitAccount, ContraAccount):
     pass
 
 
-def get_contra_account_type(cls):
+def get_contra_account_type(cls):  #(cls: Type[RegularAccount]) -> Type[ContraAccount]: # typing: ignore
     return dict(
         [
             (Asset, ContraAsset),
