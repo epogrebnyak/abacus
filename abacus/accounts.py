@@ -8,7 +8,7 @@
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional, Type
+from typing import Dict, List, Optional, Type
 
 from abacus import Entry
 
@@ -123,7 +123,7 @@ class RetainedEarnings(Capital, Unique):
     pass
 
 
-class ContraAccount:
+class ContraAccount(Account):
     pass
 
 
@@ -147,8 +147,9 @@ class ContraIncome(DebitAccount, ContraAccount):
     pass
 
 
-def get_contra_account_type(cls):  #(cls: Type[RegularAccount]) -> Type[ContraAccount]: # typing: ignore
-    return dict(
+def get_contra_account_type(cls: Type[RegularAccount]) -> Type[ContraAccount]:
+    # without this long signature we get typing error for get_contra_account_type() 
+    mapping: Dict[Type[Account], Type[ContraAccount]] = dict(
         [
             (Asset, ContraAsset),
             (Expense, ContraExpense),
@@ -156,4 +157,5 @@ def get_contra_account_type(cls):  #(cls: Type[RegularAccount]) -> Type[ContraAc
             (Liability, ContraLiability),
             (Income, ContraIncome),
         ]
-    )[cls]
+    )
+    return mapping[cls]

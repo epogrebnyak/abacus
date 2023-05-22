@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 from .accounts import (
+    Account,
     Asset,
     Capital,
     Expense,
@@ -90,5 +91,6 @@ def add_contra_accounts(chart: Chart, ledger: Ledger) -> Ledger:
         ledger[refers_to].netting = Netting(contra_accounts, target_account)  # type: ignore
         cls = get_contra_account_type(chart.get_type(refers_to))
         for contra_account_name in contra_accounts:
-            ledger[contra_account_name] = cls()
+            account: Account = cls()
+            ledger[contra_account_name] = account
     return ledger

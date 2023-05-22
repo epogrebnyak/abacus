@@ -1,10 +1,10 @@
 """General ledger."""
 
 from collections import UserDict
-from typing import List, Tuple, Union 
+from typing import List, Tuple
 
 from .accounting_types import AccountName, Entry, Posting, RenameAccount
-from .accounts import Account, Asset, Capital, Expense, Income, Liability, ContraAccount
+from .accounts import Account, Asset, Capital, Expense, Income, Liability
 
 
 class Ledger(UserDict[AccountName, Account]):
