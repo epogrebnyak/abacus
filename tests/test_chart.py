@@ -22,11 +22,33 @@ chart = Chart(
 )
 
 
+def test_invalid_chart():
+    pass
+
+
+def test_account_names_method():
+    assert chart.account_names == [
+        "cash",
+        "receivables",
+        "goods_for_sale",
+        "ppe",
+        "cogs",
+        "sga",
+        "depreciation_expense",
+        "equity",
+        "retained_earnings",
+        "dividend_due",
+        "payables",
+        "sales",
+        "_profit",
+    ]
+
+
 def test_chart_flat():
     assert chart.set_retained_earnings_account("retained_earnings")._flat() == [
         (Asset, ["cash", "receivables", "goods_for_sale", "ppe"]),
         (Expense, ["cogs", "sga", "depreciation_expense"]),
-        (Capital, ["equity", "retained_earnings"]),
+        (Capital, ["equity"]),
         (Liability, ["dividend_due", "payables"]),
         (Income, ["sales"]),
         (IncomeSummaryAccount, ["_profit"]),

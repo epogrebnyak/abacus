@@ -1,8 +1,9 @@
 """Chart of accounts."""
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Type
 
+from .accounting_types import AccountName
 from .accounts import (
     Account,
     Asset,
@@ -13,6 +14,7 @@ from .accounts import (
     Liability,
     Netting,
     RetainedEarnings,
+    RegularAccount,
     get_contra_account_type,
 )
 from .ledger import Ledger
@@ -48,30 +50,39 @@ class Chart:
             raise ValueError(f"{account_name} must be in {self.equity}")
 
     def _flat(self):
-        """Stream regular account names (without contraccounts)"""
+        """Stream regular account names (without contra accounts)."""
+        equity_accounts = self.equity.copy()
         if self.retained_earnings_account:
             addon = [(RetainedEarnings, [self.retained_earnings_account])]
+            equity_accounts.remove(self.retained_earnings_account)
         else:
             addon = []
-        # FIXME: addon repeats from self.equity
         return [
             (Asset, self.assets),
             (Expense, self.expenses),
-            (Capital, self.equity),
+            (Capital, equity_accounts),
             (Liability, self.liabilities),
             (Income, self.income),
             (IncomeSummaryAccount, [self.income_summary_account]),
         ] + addon
 
-    def get_type(self, account_name):
+    def get_type(self, account_name: AccountName) -> Type[RegularAccount]:
         return [
             Class
             for Class, account_names in self._flat()
             if account_name in account_names
         ][0]
 
-    # TODO: must check for duplicatre account keys
-    # list all accounts
+    @property
+    def account_names(self):
+        return [
+            account_name
+            for _, account_names in self._flat()
+            for account_name in account_names
+        ]
+
+        # TODO: must check for duplicatre account keys
+        # list all accounts
 
     def make_ledger(self) -> Ledger:
         ledger = make_regular_accounts(self)
@@ -87,10 +98,13 @@ def make_regular_accounts(chart: Chart):
 
 
 def add_contra_accounts(chart: Chart, ledger: Ledger) -> Ledger:
-    for refers_to, (contra_accounts, target_account) in chart.contra_accounts.items():
-        ledger[refers_to].netting = Netting(contra_accounts, target_account)  # type: ignore
+    for refers_to, (
+        contra_account_names,
+        target_account,
+    ) in chart.contra_accounts.items():
+        ledger[refers_to].netting = Netting(contra_account_names, target_account)  # type: ignore
         cls = get_contra_account_type(chart.get_type(refers_to))
-        for contra_account_name in contra_accounts:
+        for contra_account_name in contra_account_names:
             account: Account = cls()
             ledger[contra_account_name] = account
     return ledger
