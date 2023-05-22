@@ -9,6 +9,7 @@ from abacus.accounts import (
     IncomeSummaryAccount,
     Liability,
     Netting,
+    RetainedEarnings,
 )
 from abacus.closing import closing_entries
 from abacus.ledger import Ledger
@@ -28,7 +29,7 @@ ledger = Ledger(
         "sga": Expense(debits=[50], credits=[], netting=None),
         "depreciation_expense": Expense(debits=[250], credits=[], netting=None),
         "equity": Capital(debits=[], credits=[4000], netting=None),
-        "re": Capital(debits=[], credits=[], netting=None),
+        "re": RetainedEarnings(debits=[], credits=[], netting=None),
         "divp": Liability(debits=[], credits=[], netting=None),
         "sales": Income(
             debits=[],
@@ -46,7 +47,7 @@ ledger = Ledger(
 
 
 def test_closing_entries():
-    assert closing_entries(ledger, "re") == [
+    assert closing_entries(ledger) == [
         Entry(dr="sales", cr="discount", amount=65),
         Entry(dr="sales", cr="returns", amount=0),
         RenameAccount(existing_name="sales", new_name="net_sales"),

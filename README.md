@@ -63,9 +63,11 @@ entries = [
     Entry("overhead", "cash", 50),  # and overhead expense
 ]
 balance_sheet = (
-    chart.make_ledger()
+    chart
+    .set_retained_earnings_account("retained_earnings")
+    .make_ledger()
     .process_entries(entries)
-    .close("retained_earnings")
+    .close()
     .process_entry(dr="retained_earnings", cr="dividend_payable", amount=35)
     .balance_sheet()
 )
@@ -92,7 +94,7 @@ chart = Chart(
     liabilities=["divp", "payables"],
     income=["sales"],
 
-)
+).set_retained_earnings_account("re")
 ```
 
 2. Next, create a general ledger based on chart of accounts.
@@ -130,7 +132,7 @@ assert income_statement == IncomeStatement(
 ```python
 from abacus import BalanceSheet
 
-closed_ledger = ledger.close("re")
+closed_ledger = ledger.close()
 balance_sheet = closed_ledger.balance_sheet()
 print(balance_sheet)
 

@@ -11,7 +11,8 @@ chart = Chart(
         "ppe": (["depr"], "net_ppe"),
         "sales": (["discount", "returns"], "net_sales"),
     },
-)
+).set_retained_earnings_account("re")
+
 rename_dict = {
     "re": "Retained earnings",
     "divp": "Dividend due",
@@ -56,7 +57,7 @@ print(income_statement.current_profit())
 # %%
 # close ledger at period end
 # (a) move income and expenses to retained earnings
-closed_ledger = ledger.close("re")
+closed_ledger = ledger.close()
 # (b) accure dividend
 post_entries = [
     Entry(cr="divp", dr="re", amount=45),

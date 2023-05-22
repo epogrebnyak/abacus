@@ -51,7 +51,7 @@ _chart = Chart(
     equity=["equity", "re"],
     liabilities=["divp", "payables"],
     income=["sales"],
-)
+).set_retained_earnings_account("re")
 
 
 @pytest.fixture
@@ -76,14 +76,12 @@ def test_named_entries_income_statement(chart, shortcodes, named_entries):
 
 
 _entries = _shortcodes.make_entries(_named_entries)
-b = _chart.make_ledger().process_entries(_entries).close("re").balances()
+b = _chart.make_ledger().process_entries(_entries).close().balances()
 
 
 def test_named_entries_balance_sheet(chart, shortcodes, named_entries):
     entries = shortcodes.make_entries(named_entries)
-    balance_st = (
-        chart.make_ledger().process_entries(entries).close("re").balance_sheet()
-    )
+    balance_st = chart.make_ledger().process_entries(entries).close().balance_sheet()
     assert balance_st == BalanceSheet(
         assets={"cash": 464, "receivables": 131, "goods_for_sale": 380},
         capital={"equity": 1000, "re": -80},

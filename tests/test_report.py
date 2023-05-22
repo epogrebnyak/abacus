@@ -21,9 +21,7 @@ def test_income_statement(chart0, entries0):
 
 
 def test_balance_sheet_with_close(chart0, entries0):
-    balance_st = (
-        chart0.make_ledger().process_entries(entries0).close("re").balance_sheet()
-    )
+    balance_st = chart0.make_ledger().process_entries(entries0).close().balance_sheet()
     assert balance_st == BalanceSheet(
         assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
         capital={"equity": 1000, "re": 150},
@@ -32,7 +30,7 @@ def test_balance_sheet_with_close(chart0, entries0):
 
 
 def test_balances(chart0, entries0):
-    b = chart0.make_ledger().process_entries(entries0).close("re").balances()
+    b = chart0.make_ledger().process_entries(entries0).close().balances()
     assert b == {
         "cash": 1100,
         "receivables": 0,

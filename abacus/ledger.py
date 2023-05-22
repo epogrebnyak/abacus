@@ -19,13 +19,13 @@ class Ledger(UserDict[AccountName, Account]):
     def process_entry(self, dr, cr, amount) -> "Ledger":
         return process_postings(self, [Entry(dr, cr, amount)])
 
-    def close(self, retained_earnings_account_name: AccountName) -> "Ledger":
+    def close(self) -> "Ledger":
         """Close contraaccounts, associated with income and expense accounts,
         aggregate profit or loss at income summary account
         and move balance of income summary account to retained earnings."""
         from .closing import close
 
-        return close(self, retained_earnings_account_name)
+        return close(self)
 
     def balances(self):
         from .reports import balances
