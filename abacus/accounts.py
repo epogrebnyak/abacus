@@ -61,7 +61,7 @@ class Account(ABC):
 
 @dataclass
 class RegularAccount(Account):
-    # Netting indicates which contra accounts must net out with this account.
+    # Netting object carries information which contra accounts must be netted with this account.
     netting: Optional[Netting] = None
 
     def safe_copy(self):

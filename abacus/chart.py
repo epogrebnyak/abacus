@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Type
 
-from .accounting_types import AccountName
+from .accounting_types import AccountName, AbacusError
 from .accounts import (
     Account,
     Asset,
@@ -40,14 +40,18 @@ class Chart:
             self.retained_earnings_account
             and self.retained_earnings_account not in self.equity
         ):
-            raise ValueError("Wrong name for retained earnings account")
+            raise AbacusError(
+                f"{self.retained_earnings_account} must be in {self.equity}"
+            )
+        if not is_unique(self.account_names):
+            raise AbacusError("Account names may not contain duplicates.")
 
     def set_retained_earnings_account(self, account_name: str):
         if account_name in self.equity:
             self.retained_earnings_account = account_name
             return self
         else:
-            raise ValueError(f"{account_name} must be in {self.equity}")
+            raise AbacusError(f"{account_name} must be in {self.equity}")
 
     def _flat(self):
         """Stream regular account names (without contra accounts)."""
@@ -81,12 +85,13 @@ class Chart:
             for account_name in account_names
         ]
 
-        # TODO: must check for duplicatre account keys
-        # list all accounts
-
     def make_ledger(self) -> Ledger:
         ledger = make_regular_accounts(self)
         return add_contra_accounts(self, ledger)
+
+
+def is_unique(xs):
+    return len(set(xs)) == len(xs)
 
 
 def make_regular_accounts(chart: Chart):

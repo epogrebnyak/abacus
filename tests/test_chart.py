@@ -1,4 +1,7 @@
+import pytest
+
 from abacus import Chart
+from abacus.accounting_types import AbacusError
 from abacus.accounts import (
     Asset,
     Capital,
@@ -23,7 +26,14 @@ chart = Chart(
 
 
 def test_invalid_chart():
-    pass
+    with pytest.raises(AbacusError):
+        Chart(
+            assets=["cash"],
+            expenses=[],
+            equity=["cash"],
+            liabilities=[],
+            income=[],
+        )
 
 
 def test_account_names_method():

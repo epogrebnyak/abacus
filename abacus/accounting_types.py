@@ -15,6 +15,10 @@ AccountName = str
 __all__ = ["Entry", "RenameAccount", "Shortcodes"]
 
 
+class AbacusError(Exception):
+    pass
+
+
 class Posting:
     pass
 
