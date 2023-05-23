@@ -1,10 +1,12 @@
-"""T-account classes:
+"""Account classes.
 
-- permanent accounts: `Asset`, `Capital`, and `Liability` 
-- temporary accounts that are closed at period end: `Income` and `Expense`
-- contra accounts: `ContraAsset`, `ContraExpense`, `ContraCapital`, 
-  `ContraLiability`, and `ContraIncome` 
-- income summary account: `IncomeSummaryAccount`
+- Permanent accounts: `Asset`, `Capital` and `Liability`.
+- `RetainedEarnings` is a subclass of `Capital` account. 
+- Temporary accounts that are closed at period end: `Income` and `Expense`.
+- Contra accounts: `ContraAsset`, `ContraExpense`, `ContraCapital`, 
+  `ContraLiability`, and `ContraIncome`. 
+- Income summary account: `IncomeSummaryAccount`.
+- There must be exactly one `RetainedEarnings` and one `IncomeSummaryAccount` account in a ledger.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -14,7 +16,7 @@ from abacus import Entry
 
 from .accounting_types import AccountName, Amount
 
-__all__ = ["Account"]
+__all__ = ["Account", "RegularAccount"]
 
 
 # Experimental, cannot blend to Account, may remove
@@ -26,8 +28,9 @@ class SafeCopy(ABC):
 
 @dataclass
 class Netting(SafeCopy):
-    contra_accounts: List[str]
-    target_name: str
+    """Netting information - *contra_accounts* and *target_name*."""
+    contra_accounts: List[AccountName]
+    target_name: AccountName
 
     def safe_copy(self):
         return self
@@ -68,7 +71,7 @@ class Account(ABC):
 
 @dataclass
 class RegularAccount(Account):
-    # Netting object carries information which contra accounts must be netted with this account.
+    """Account with information which contra accounts must be netted with this account."""
     netting: Optional[Netting] = None
 
     def safe_copy(self):
