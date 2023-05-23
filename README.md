@@ -92,17 +92,23 @@ chart = Chart(
     equity=["equity", "re"],
     liabilities=["divp", "payables"],
     income=["sales"],
-
-).set_retained_earnings_account("re")
+)
 ```
 
-2. Next, create a general ledger based on chart of accounts.
+2. Set retained earnings account, you will need it to close
+   accoutns at period end.
+
+```python
+chart = chart.set_retained_earnings_account("re")
+```
+
+3. Next, create a general ledger based on chart of accounts.
 
 ```python
 ledger = chart.make_ledger()
 ```
 
-3. Add accounting entries using account names from the chart of accounts.
+4. Add accounting entries using account names from the chart of accounts.
 
 ```python
 e1 = Entry(dr="cash", cr="equity", amount=1000)        # pay in capital
@@ -113,29 +119,25 @@ e5 = Entry(cr="cash", dr="sga", amount=50)             # administrative expenses
 ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 ```
 
-4. Make income statement at accounting period end.
+5. Make income statement at accounting period end.
 
 ```python
 from abacus import IncomeStatement
 
 income_statement = ledger.income_statement()
-print(income_statement)
 assert income_statement == IncomeStatement(
     income={'sales': 400},
     expenses={'cogs': 200, 'sga': 50}
 )
 ```
 
-5. Close ledger and make balance sheet.
+6. Close ledger and make balance sheet.
 
 ```python
 from abacus import BalanceSheet
 
 closed_ledger = ledger.close()
 balance_sheet = closed_ledger.balance_sheet()
-print(balance_sheet)
-
-
 assert balance_sheet == BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},
@@ -143,7 +145,7 @@ assert balance_sheet == BalanceSheet(
 )
 ```
 
-6. Print balance sheet and income statement to screen with verbose account names and
+7. Print balance sheet and income statement to screen with verbose account names and
    rich formatting.
 
 ```python
@@ -166,18 +168,19 @@ with several contraccounts (depreciation, discounts) and dividend payout.
 
 ## Intent
 
-`abacus` started as an educational device to inform users about principles of double-entry accounting
+`abacus` started as an educational device
+to inform users about principles of double-entry accounting
 and accounting information systems (AIS) through a simple Python program,
 in spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) projects.
+You can teach accounting or AIS with it.
 
-Usage ideas:
+Other usage ideas for `abacus`:
 
-- Teach accounting or AIS with it.
-- Build a `streamlit` app as a ledger demo.
 - Use with other accounting software as a component.
+- Add storage and interface (CLI or web).
 - Build business simulations (e.g. generate a stream of business events and make operational, financing and investment decisions based on financial reports)
 - Enhance a large language model with structured outputs in accounting.
-- Convert a ledger or reports between accounting standards (e.g. national vs IFRS).
+- Convert ledgers between accounting standards (e.g. national vs IFRS).
 
 ## Assumptions
 
@@ -199,23 +202,20 @@ Below are some simplifying assumptions made for this code:
    detailed tax calculations.
 
 6. Accounts balances can go to negative where they should not
-   and there are little checks for entry validity.
+   and there are no checks for entry validity.
 
 7. XML likely to be a format for accounting reports interchange,
    while JSON is intended for `abacus`.
 
 8. We use [just one currency](https://www.mscs.dal.ca/~selinger/accounting/).
 
-9. Closing contra accounts and closing income summary account is stateful and needs careful
-   implementation.
+9. Account balances stay on one side, and do not migrate from one side to another.
+   Credit accounts have credit balance, debit accounts have debit balance,
+   and income summary account is a credit account.
 
-10. Account balances stay on one side, and do not migrate from one side to another.
-    Credit accounts have credit balance, debit accounts have debit balance,
-    and income summary account is a credit account.
+10. Money amounts are integers, will move to `Decimal`.
 
-11. Money amounts are integers, will move to `Decimal`.
-
-12. Renamed account are dropped from the ledger. When `sales` becomes `net_sales` after a contra account `discount` is netted, `sales` leave the ledger, and `net_sales` remains.
+11. Renamed account are dropped from the ledger. When `sales` becomes `net_sales` after a contra account `discount` is netted, `sales` leave the ledger, and `net_sales` remains.
 
 ## What things are realistic in this code?
 
@@ -240,11 +240,11 @@ Below are some simplifying assumptions made for this code:
 
 2. Data structures used are serialisable, so inputs and outputs can be stored and retrieved.
 
-3. Modern Python features such as subclasssing and pattern matching help to make code cleaner (hopefully). For example, classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income` pass useful information about account types.
+3. Modern Python features such as subclasssing and pattern matching help to make code cleaner. Also classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income` pass forward useful information about account types.
 
 4. This is experimental software. The upside is that we can make big changes fast. On a downside we do not learn (or earn) from users, at least yet.
 
-5. We do not compete with big names like SAP, Oralce, Intuit, smaller open source ERPs
+5. We do not compete with big names like SAP, Oralce, Intuit, open source ERPs
    (Odoo, ERPNext, etc) or plain text accounting tools like `hledger` or `gnucash` in making a complete software product with journalling and document management.
 
 ## Similar projects

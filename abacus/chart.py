@@ -1,7 +1,8 @@
 """Chart of accounts."""
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Tuple, Type, Union
+from abc import ABCMeta 
 
 from .accounting_types import AccountName, AbacusError
 from .accounts import (
@@ -52,19 +53,21 @@ class Chart:
             return self
         else:
             raise AbacusError(f"{account_name} must be in {self.equity}")
-
+        
+    # FIXME: no good signature 
+    # -> List[Union[Tuple[Type[RetainedEarnings], List[str]], Tuple[ABCMeta, List[str]]]]
     def _flat(self):
-        """Stream regular account names (without contra accounts)."""
-        equity_accounts = self.equity.copy()
+        """Return regular account names by grouped by account class (without contra accounts)."""
+        equity_account_names = self.equity.copy()
         if self.retained_earnings_account:
             addon = [(RetainedEarnings, [self.retained_earnings_account])]
-            equity_accounts.remove(self.retained_earnings_account)
+            equity_account_names.remove(self.retained_earnings_account)
         else:
             addon = []
         return [
             (Asset, self.assets),
             (Expense, self.expenses),
-            (Capital, equity_accounts),
+            (Capital, equity_account_names),
             (Liability, self.liabilities),
             (Income, self.income),
             (IncomeSummaryAccount, [self.income_summary_account]),
