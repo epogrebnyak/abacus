@@ -17,8 +17,15 @@ from .accounting_types import AccountName, Amount
 __all__ = ["Account"]
 
 
+# Experimental, cannot blend to Account, may remove
+class SafeCopy(ABC):
+    @abstractmethod
+    def safe_copy(self):
+        pass
+
+
 @dataclass
-class Netting:
+class Netting(SafeCopy):
     contra_accounts: List[str]
     target_name: str
 
@@ -41,11 +48,11 @@ class Account(ABC):
 
     @abstractmethod
     def transfer_balance(
-        self, this_account: AccountName, other_account: AccountName
+        self, this_account: AccountName, to_account: AccountName
     ) -> Entry:
         """Create an entry that will move balance of *this_account*
-        to *other_account*. Used when closing accounts. The resulting entry
-        differs by debit and credit accounts."""
+        to *to_account*. Used when closing accounts. The resulting entry
+        differs for debit and credit accounts."""
 
     def debit(self, amount: Amount):
         """Append *amount* to debit side of account."""
@@ -74,9 +81,9 @@ class DebitAccount(Account):
         return sum(self.debits) - sum(self.credits)
 
     def transfer_balance(
-        self, this_account: AccountName, other_account: AccountName
+        self, this_account: AccountName, to_account: AccountName
     ) -> Entry:
-        return Entry(cr=this_account, dr=other_account, amount=self.balance())
+        return Entry(cr=this_account, dr=to_account, amount=self.balance())
 
 
 class CreditAccount(Account):
@@ -84,9 +91,9 @@ class CreditAccount(Account):
         return sum(self.credits) - sum(self.debits)
 
     def transfer_balance(
-        self, this_account: AccountName, other_account: AccountName
+        self, this_account: AccountName, to_account: AccountName
     ) -> Entry:
-        return Entry(dr=this_account, cr=other_account, amount=self.balance())
+        return Entry(dr=this_account, cr=to_account, amount=self.balance())
 
 
 class Asset(DebitAccount, RegularAccount):
@@ -110,9 +117,9 @@ class Income(CreditAccount, RegularAccount):
 
 
 class Unique:
-    """There sould be just one account of this class in any ledger."""
-
-    pass
+    """There sould be just one account of this class in any ledger.
+    IncomeSummaryAccount and RetainedEarnings are unique.
+    """
 
 
 class IncomeSummaryAccount(CreditAccount, Unique):
@@ -148,7 +155,7 @@ class ContraIncome(DebitAccount, ContraAccount):
 
 
 def get_contra_account_type(cls: Type[RegularAccount]) -> Type[ContraAccount]:
-    # without this long signature we get typing error for get_contra_account_type()
+    # Without this long signature below we get typing error for get_contra_account_type()
     mapping: Dict[Type[Account], Type[ContraAccount]] = dict(
         [
             (Asset, ContraAsset),

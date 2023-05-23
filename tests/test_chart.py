@@ -25,7 +25,7 @@ chart = Chart(
 )
 
 
-def test_invalid_chart():
+def test_invalid_chart_with_duplicate_key():
     with pytest.raises(AbacusError):
         Chart(
             assets=["cash"],
@@ -33,6 +33,18 @@ def test_invalid_chart():
             equity=["cash"],
             liabilities=[],
             income=[],
+        )
+
+
+def test_invalid_chart_with_non_existent_contra_account_name():
+    with pytest.raises(AbacusError):
+        Chart(
+            assets=["cash", "goods"],
+            expenses=["cogs"],
+            equity=["capital", "re"],
+            liabilities=["loan"],
+            income=["sales"],
+            contra_accounts={"sssalessssss": ([], "net_sales")},
         )
 
 

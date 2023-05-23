@@ -1,10 +1,10 @@
 """Chart of accounts."""
 
+from abc import ABCMeta
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Type, Union
-from abc import ABCMeta 
 
-from .accounting_types import AccountName, AbacusError
+from .accounting_types import AbacusError, AccountName
 from .accounts import (
     Account,
     Asset,
@@ -14,8 +14,8 @@ from .accounts import (
     IncomeSummaryAccount,
     Liability,
     Netting,
-    RetainedEarnings,
     RegularAccount,
+    RetainedEarnings,
     get_contra_account_type,
 )
 from .ledger import Ledger
@@ -25,7 +25,10 @@ __all__ = ["Chart"]
 
 @dataclass
 class Chart:
-    """Chart of accounts."""
+    """Chart of accounts.
+
+    May include contra accounts.
+    Must set *retained_earnings_account* to be able to use Ledger.close()."""
 
     assets: List[str]
     expenses: List[str]
@@ -46,15 +49,22 @@ class Chart:
             )
         if not is_unique(self.account_names):
             raise AbacusError("Account names may not contain duplicates.")
+        for account_name in self.contra_accounts.keys():
+            if account_name not in self.account_names:
+                raise AbacusError(
+                    f"{account_name} must be specified in chart before using in contra accounts"
+                )
+                # FIXME: more subtle case is to check resulting account names after netting are unique.
 
     def set_retained_earnings_account(self, account_name: str):
+        """Set which account from equity is retained earnings account."""
         if account_name in self.equity:
             self.retained_earnings_account = account_name
             return self
         else:
             raise AbacusError(f"{account_name} must be in {self.equity}")
-        
-    # FIXME: no good signature 
+
+    # FIXME: no good signature
     # -> List[Union[Tuple[Type[RetainedEarnings], List[str]], Tuple[ABCMeta, List[str]]]]
     def _flat(self):
         """Return regular account names by grouped by account class (without contra accounts)."""
@@ -74,6 +84,7 @@ class Chart:
         ] + addon
 
     def get_type(self, account_name: AccountName) -> Type[RegularAccount]:
+        """Return account class by *account_name*."""
         return [
             Class
             for Class, account_names in self._flat()
@@ -81,7 +92,8 @@ class Chart:
         ][0]
 
     @property
-    def account_names(self):
+    def account_names(self) -> List[AccountName]:
+        """List all account names in chart."""
         return [
             account_name
             for _, account_names in self._flat()
@@ -89,6 +101,7 @@ class Chart:
         ]
 
     def make_ledger(self) -> Ledger:
+        """Create empty ledger based on this chart."""
         ledger = make_regular_accounts(self)
         return add_contra_accounts(self, ledger)
 
