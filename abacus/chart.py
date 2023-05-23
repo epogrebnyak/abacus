@@ -1,8 +1,7 @@
 """Chart of accounts."""
 
-from abc import ABCMeta
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type
 
 from .accounting_types import AbacusError, AccountName
 from .accounts import (

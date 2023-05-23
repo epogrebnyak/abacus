@@ -29,6 +29,7 @@ class SafeCopy(ABC):
 @dataclass
 class Netting(SafeCopy):
     """Netting information - *contra_accounts* and *target_name*."""
+
     contra_accounts: List[AccountName]
     target_name: AccountName
 
@@ -72,6 +73,7 @@ class Account(ABC):
 @dataclass
 class RegularAccount(Account):
     """Account with information which contra accounts must be netted with this account."""
+
     netting: Optional[Netting] = None
 
     def safe_copy(self):
