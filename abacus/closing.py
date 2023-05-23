@@ -2,7 +2,7 @@
 
 from typing import List, Type
 
-from .accounting_types import AccountName, Entry, Posting, RenameAccount
+from .accounting_types import AbacusError, AccountName, Entry, Posting, RenameAccount
 from .accounts import (
     Asset,
     Capital,
@@ -52,7 +52,7 @@ def closing_entries_for_permanent_contra_accounts(ledger) -> List[Posting]:
 
 
 def find_account_name(ledger: Ledger, cls: Type[Unique]) -> AccountName:
-    """In ledger there should be just one of IncomeSummaryAccount and and one of RetainedEarnings,
+    """In ledger there should be just one of IncomeSummaryAccount and one of RetainedEarnings,
     this is a helper function to these account names.
     """
     account_names = list(subset_by_class(ledger, cls).keys())

@@ -5,6 +5,8 @@ from abacus.accounting_types import Entry, Posting
 from abacus.closing import (
     closing_entries_for_permanent_contra_accounts,
     closing_entries_for_temporary_contra_accounts,
+    closing_entries_income_and_expense_to_isa,
+    closing_entry_isa_to_retained_earnings,
 )
 from abacus.ledger import Ledger, process_postings
 
@@ -14,6 +16,9 @@ class Pipeline:
     """Construct a list of postings to a ledger using add_entries() method
     and methods for closing accounts, run a pipeline to process all postings
     from a list.
+
+    Note: one may create a Pipeline before period end and add a ledger with regular
+    entries to keep down the load of re-computing the pipeline.
     """
 
     start_ledger: Ledger
@@ -24,37 +29,46 @@ class Pipeline:
         self.postings.append(entry)
         return self
 
+    def extend(self, postings):
+        self.postings.extend(postings)
+        return self
+
     def add_entries(self, entries: List[Entry]):
-        self.postings.extend(entries)
-        return self
+        return self.extend(entries)
 
-    # not tested
+    # FIXME: not tested
     def close_income_and_expense_contra_accounts(self):
-        self.postings.extend(closing_entries_for_temporary_contra_accounts(self.run()))
-        return self
+        more_postings = closing_entries_for_temporary_contra_accounts(ledger=self.run())
+        return self.extend(more_postings)
 
+    # FIXME: not tested
     def close_income_and_expense(self):
-        pass
-        return self
+        more_postings = closing_entries_income_and_expense_to_isa(ledger=self.run())
+        return self.extend(more_postings)
 
+    # FIXME: not tested
     def close_retained_earnings_account(self):
-        pass
-        return self
+        more_postings = closing_entry_isa_to_retained_earnings(ledger=self.run())
+        return self.extend(more_postings)
 
+    # FIXME: not tested
     def close(self):
-        pass
+        self.close_income_and_expense_contra_accounts()
+        self.close_income_and_expense()
+        self.close_retained_earnings_account()
         return self
 
-    # not tested
+    # FIXME: not tested
     def close_permanent_contra_accounts(self):
-        self.postings.extend(closing_entries_for_permanent_contra_accounts(self.run()))
-        return self
+        more_postings = closing_entries_for_permanent_contra_accounts(ledger=self.run())
+        return self.extend(more_postings)
 
-    def create_ledger_for_balance_sheet(self):
+    # WONTFIX
+    def get_ledger_for_balance_sheet(self):
         pass
-        return self
 
-    def create_ledger_for_income_statement(self):
+    # WONTFIX
+    def get_ledger_for_income_statement(self):
         pass
         return self
 
