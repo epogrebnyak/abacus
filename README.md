@@ -3,7 +3,7 @@
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
 A minimal, yet valid double-entry accounting system in Python where you can define a chart of accounts, post entries to a general ledger and close accounts properly at period end.
-`abacus` shows a trial balance and produces income statement and balance sheet reports. Currently a Python library (see [usage examples][mwe]), soon to be a CLI app (with [Click](https://click.palletsprojects.com/en/8.0.x/) and [pydantic](https://docs.pydantic.dev/latest/)). 
+`abacus` shows a trial balance and produces income statement and balance sheet reports. Currently a Python library (see [usage examples][mwe]), soon to be a CLI app (with [Click](https://click.palletsprojects.com/en/8.0.x/) and [pydantic](https://docs.pydantic.dev/latest/)).
 
 [mwe]: https://github.com/epogrebnyak/abacus#minimal-working-example
 
@@ -43,23 +43,23 @@ Affected issues are [#11](https://github.com/epogrebnyak/abacus/issues/11), [#10
 # start project in current directory
 abacus init .
 
-# create ledger from chart 
+# create ledger from chart
 abacus ledger --chart chart.json > ledger.json
 
 # create data store
 abacus store --chart chart.json --ledger ledger.json > store.json
 
-# add regular business entries 
+# add regular business entries
 abacus entry --dr cash --cr equity --amount 1500 --title "Pay in shareholder capital" --push store.json
 abacus entry --dr cash --cr sales --amount 160 --title "Accept payment for services" --push store.json
 abacus entry --dr discounts --cr cash --amount 10 --title "Cashback on services" --push store.json
 abacus entry --dr sga --cr cash --amount 25 --title "Incur selling expenses" --push store.json
 
-# short hand entry (arguments, not options for dr, cr and amount) 
+# short hand entry (arguments, not options for dr, cr and amount)
 abacus entry sga cash 5 --title "Adm. expenses" --push store.json
 
 # get trial balance
-abacus tb --store store.json > trial_balance.json 
+abacus tb --store store.json > trial_balance.json
 
 # net and purge contra accounts
 abacus net --all --store store.json [--push | --show]
@@ -70,7 +70,7 @@ abacus close --all --store store.json | abacus post --store.json
 # process post-close entry
 abacus entry --cr dividend_due --dr retained_earings --amount 60 --title "Accrue dividend" --post-close --push store.json
 
-# produce income statement and balance sheet 
+# produce income statement and balance sheet
 abacus report --income-statement --store store.json > income_statement.json
 abacus report --balance-sheet --store store.json --show
 
@@ -81,13 +81,13 @@ abacus read --from-excel-file store_fix.xlsx > store_fix.json
 # condense accounts to balances (similar to trail balance)
 abacus balances --store store_fix.json > balances_fix.json
 
-# create data store for next period 
+# create data store for next period
 abacus store --chart chart.json --balances balances_fix.json > store2.json
 
 # configuration: write to abacus.toml
-abacus config set --store store.json --push store.json 
+abacus config set --store store.json --push store.json
 abacus config remove --push
-abacus config 
+abacus config
 ```
 
 ## Install
