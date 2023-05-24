@@ -20,12 +20,18 @@ class Ledger(UserDict[AccountName, Account]):
         return process_postings(self, [Entry(dr, cr, amount)])
 
     def close(self) -> "Ledger":
-        """Close contraaccounts, associated with income and expense accounts,
+        """Close contraaccounts associated with income and expense accounts,
         aggregate profit or loss at income summary account
         and move balance of income summary account to retained earnings."""
         from .closing import close
 
         return close(self)
+
+    def is_closed(self) -> bool:
+        # - income and expense contra accounts are zero
+        # - income and expense accounts are zero
+        # - isa is zero
+        return False
 
     def balances(self):
         from .reports import balances

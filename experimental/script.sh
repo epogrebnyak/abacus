@@ -1,0 +1,2 @@
+python cli.py add accounts --asset=cash,goods_for_sale 
+python cli.py add account sales --income --title="Sales" --contra-accounts=discounts,cashback --resulting-name=net_sales --resulting-title="Sales (net)"
