@@ -40,16 +40,16 @@ Affected issues are [#11](https://github.com/epogrebnyak/abacus/issues/11), [#10
 ```console
 abacus ledger --chart chart.json > ledger.json
 abacus store --chart chart.json --ledger ledger.json > store.json
-abacus entry --dr cash -cr equity --amount 1500 --title "Pay in shareholder capital" --push store.json
-abacus entry --dr cash -cr sales --amount 160 --title "Accept payment for services" --push store.json
-abacus entry --dr discounts -cr cash --amount 10 --title "Cashback on services" --push store.json
-abacus entry --dr sga -cr cash --amount 30 --title "Incur selling expenses" --push store.json
+abacus entry --dr cash --cr equity --amount 1500 --title "Pay in shareholder capital" --push store.json
+abacus entry --dr cash --cr sales --amount 160 --title "Accept payment for services" --push store.json
+abacus entry --dr discounts --cr cash --amount 10 --title "Cashback on services" --push store.json
+abacus entry --dr sga --cr cash --amount 30 --title "Incur selling expenses" --push store.json
 abacus tb --store store.json > trial_balance.json 
 abacus net --all --store store.json --push
 abacus close --all --store store.json --push
-abacus entry --cr dividend_due -dr retained_earings --amount 60 --title "Accrue dividend" --post-close --push store.json
-abacus report --income-statement --json --store store.json > income_statement.json
-abacus report --balance-sheet --json --store store.json > balance_sheet.json
+abacus entry --cr dividend_due --dr retained_earings --amount 60 --title "Accrue dividend" --post-close --push store.json
+abacus report --income-statement --store store.json > income_statement.json
+abacus report --balance-sheet --store store.json --show
 abacus dump --store store.json --to-excel-file store.xlsx
 abacus read --from-excel-file store.xlsx > store2.json
 abacus balances --store store2.json > balances2.json
