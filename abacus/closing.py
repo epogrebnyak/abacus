@@ -2,7 +2,7 @@
 
 from typing import List, Type
 
-from .accounting_types import AbacusError, AccountName, Entry, Posting, RenameAccount
+from .accounting_types import AccountName, Entry, Posting, RenameAccount
 from .accounts import (
     Asset,
     Capital,
