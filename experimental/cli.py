@@ -26,7 +26,7 @@ Usage:
   cli.py show chart --store=<filename> [--console]
   cli.py show entries --store=<filename> [--console]
   cli.py show ledger --store=<filename> [--console]
-  cli.py show balances --store=<filename> [--console]
+  cli.py show balances (--start | --end) --store=<filename> [--console] 
   cli.py freeze --store=<filename1> [--output=<filename2>]
   cli.py save --store=<filename1> --to-excel=<filename2> [--overwrite]
   cli.py load --store=<filename1> --from-excel=<filename2> [--overwrite]
