@@ -3,7 +3,7 @@
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
 A minimal, yet valid double-entry accounting system in Python that provides a general ledger and can close accounts properly at period end.
-`abacus` knows to handle contra accounts (eg depreciation), makes trial balance and financial reports.
+`abacus` knows to handle contra accounts (eg depreciation), make a trial balance and produce financial reports.
 
 Currently a Python library (see [usage examples][mwe]), soon to be a CLI app (with [Click](https://click.palletsprojects.com/en/8.0.x/) and [pydantic](https://docs.pydantic.dev/latest/)).
 
