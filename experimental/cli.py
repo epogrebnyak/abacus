@@ -17,9 +17,9 @@ Usage:
   cli.py add entry <dr_account> <cr_account> <amount> [--title=<title>] --store=<filename> [--adjustment | --post-close]
   cli.py add entry --dr=<dr_account> --cr=<cr_account> --amount=<amount> [--date=<date>] [--title=<title>] --store=<filename> [--adjustment | --post-close]
   cli.py mark --business-end --store=<filename>
-  cli.py tb [--credit | --debit] [--sum] --store=<filename>
+  cli.py trial-balance [--credit | --debit] [--sum] --store=<filename>
   cli.py net --all --store=<filename>
-  cli.py net contra-accounts (--asset | --expense | --capital | --liability | --income | --permanent | --temporary | --all) --store=<filename>
+  cli.py close contra (--asset | --expense | --capital | --liability | --income | --permanent | --temporary | --all) --store=<filename>
   cli.py close (--all | --income | --expense | --isa) --store=<filename>
   cli.py report --income-balance --store=<filename> [--console]
   cli.py report --balance-sheet --store=<filename> [--console]
