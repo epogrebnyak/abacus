@@ -33,7 +33,8 @@ def ship_move(ship, x, y, speed):
     """Moves SHIP to the new location X,Y."""
     click.echo(f"Moving ship {ship} to {x},{y} with speed {speed}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     cli()
 
 # python abacus.py touch chart --output=chart.json
@@ -47,9 +48,9 @@ if __name__ == '__main__':
 # python abacus.py config --postings postings.json
 # python abacus.py entry --dr cash --cr equity --amount 1500
 # python abacus.py mark --business-period-end
-# python abacus.py entry --dr rent --cr prepaid_rent --amount 30 --adjust 
+# python abacus.py entry --dr rent --cr prepaid_rent --amount 30 --adjust
 # python abacus.py close --all
-# python abacus.py entry --dr retained_earning --cr dividend_due --amount 10 --post-close 
+# python abacus.py entry --dr retained_earning --cr dividend_due --amount 10 --post-close
 # python abacus.py report --income-statement --console
 # python abacus.py report --balance-sheet --console
 # python abacus.py balances --output end_balances.json
