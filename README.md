@@ -2,12 +2,25 @@
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
-A minimal, yet valid double-entry accounting system in Python that provides a general ledger and can close accounts properly at period end.
-`abacus` knows to handle contra accounts (eg depreciation), make a trial balance and produce financial reports.
+A minimal, yet valid double-entry accounting system in Python.
 
-Currently a Python library (see [usage examples][mwe]), soon to be a CLI app (with [Click](https://click.palletsprojects.com/en/8.0.x/) and [pydantic](https://docs.pydantic.dev/latest/)). Check [release goal write-ups](release_goals.md) and [milestones]https://github.com/epogrebnyak/abacus/milestones for more detail.
+Provided as Python library (see [usage examples][mwe]), soon to be a CLI app (with [Click](https://click.palletsprojects.com/en/8.0.x/) and [pydantic](https://docs.pydantic.dev/latest/)). Check [release goal notes](release_goals.md) and [milestones]https://github.com/epogrebnyak/abacus/milestones for more detail.
 
 [mwe]: https://github.com/epogrebnyak/abacus#minimal-working-example
+
+## What `abacus` can do
+
+`abacus` enables you to complete a full accounting cycle:
+
+- Define a chart of accounts with five types of accounts (assets, expenses, capital, liabilities and income) and contra accounts (eg depreciation).
+- Create a blank general ledger for a new company or a general ledger with starting balances from previous period for existing company.
+- Post entries to a general ledger individually or in bulk.
+- View trial balance.
+- Make adjustment entries.
+- Close income and expenses accounts and transfer current period profit (loss) to retained earnings.
+- Make post-close entries (eg accrue dividend due to shareholders).
+- View and save income statement and balance sheet reports.
+- Save period end account balances and use them to initialize a general ledger at the start of a next accounting period.
 
 ## Quotes about `abacus`
 
