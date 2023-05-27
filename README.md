@@ -2,12 +2,27 @@
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
-A minimal, yet valid double-entry accounting system in Python that provides a general ledger and can close accounts properly at period end.
-`abacus` knows to handle contra accounts (eg depreciation), make a trial balance and produce financial reports.
+A minimal, yet valid double-entry accounting system in Python. 
 
-Currently a Python library (see [usage examples][mwe]), soon to be a CLI app (with [Click](https://click.palletsprojects.com/en/8.0.x/) and [pydantic](https://docs.pydantic.dev/latest/)).
+Provided as a Python library (see [usage examples][mwe]), soon to be a CLI app (with [Click](https://click.palletsprojects.com/en/8.0.x/) and [pydantic](https://docs.pydantic.dev/latest/)).
 
 [mwe]: https://github.com/epogrebnyak/abacus#minimal-working-example
+
+
+## What `abacus` can do 
+
+
+With `abacus` you can:
+- define a chart of accounts with five types of accounts (assets, expenses, capital, liabilities and income) and contra accounts (eg depreciation);
+- create a blank ledger or a ledger with starting balances from previous period;
+- post entries to a ledger individually or in bulk;
+- view trial balance;
+- make adjustment entries;
+- close income and expenses accounts and transfer current period profit (loss) to retained earnings;
+- make post-close entries (eg accrue dividend due to shareholders);
+- view and save income statement and balance sheet reports;
+- save period end account balances and use them  to start a ledger in the accounting next period.
+
 
 ## Quotes about `abacus`
 
