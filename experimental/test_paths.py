@@ -1,20 +1,22 @@
 from pathlib import Path
 from click.testing import CliRunner
-from paths import cli
+from paths import entry_point
 
 
-def test_options_command():
+def test_options_command(tmpdir):
     runner = CliRunner()
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(tmpdir):
         toml_content = """
 [abacus.options]
 chart = "chart.json"
 start_balances = "start_balances.json" 
 entries = "entries.json"
 """
-        Path("abc.toml").write_text(toml_content)
-        result = runner.invoke(cli, "options", "--config-filename abc.toml")
-        # assert result.exit_code == 0
+        (Path(tmpdir) / "abc.toml").write_text(toml_content)
+        result = runner.invoke(
+            entry_point, f"--folder {tmpdir} --config-filename abc.toml config"
+        )
+        assert result.exit_code == 0
         assert (
             result.output
             == "{'chart': 'chart.json', 'start_balances': 'start_balances.json', 'entries': 'entries.json'}\n"

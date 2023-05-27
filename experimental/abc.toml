@@ -1,4 +1,0 @@
-[abacus.options]
-chart = "chart.json"
-start_balances = "start_balances.json" 
-entries = "entries.json"

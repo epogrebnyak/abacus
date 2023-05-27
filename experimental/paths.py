@@ -10,33 +10,33 @@ from tomli_w import dump
 from pathlib import Path
 from dataclasses import dataclass
 from collections import UserDict
+from typing import Dict
 
 import click
 
-default_folder = Path(os.getcwd())  # or Path(os.path.abspath('.')
 default_config_filename = "abacus.toml"
 
 
 @dataclass
 class Location:
-    folder: str = default_folder
+    """Working directory and configuration file name (like 'abacus.toml')."""
+
+    folder: Path
     config_filename: str = default_config_filename
 
     @property
-    def folder_path(self) -> Path:
-        return Path(self.folder)
-
-    @property
     def config_path(self) -> Path:
-        return self.folder_path / self.config_filename
+        return self.folder / self.config_filename
 
 
-def get_cli_options(location: Location):
+def get_cli_options(location: Location) -> Dict:
     return TOML(path=location.config_path).load()["abacus"]["options"]
 
 
 @dataclass
 class TOML(UserDict):
+    """TOML as dictionary with save() and load() methods."""
+
     path: Path
 
     def load(self):
@@ -49,32 +49,41 @@ class TOML(UserDict):
 
 option_folder = click.option(
     "--folder",
-    default=str(default_folder),
+    type=click.Path(
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=False,
+        readable=True,
+        resolve_path=True,
+        allow_dash=False,
+        path_type=Path,
+        executable=False,
+    ),
+    default=os.getcwd(),  # or os.path.abspath('.')
     help=f"Project folder with {default_config_filename} and data files [default: ./]",
 )
 option_config_filename = click.option(
     "--config-filename",
     default=default_config_filename,
-    help="Path to configuration file [default: ./abacus.toml]",
+    help=f"Configuration file name  [default: {default_config_filename}]",
 )
 
 
 @click.group()
 @option_folder
 @option_config_filename
-def cli(folder, config_filename):
-    # click.echo("Hello!")
-    pass
+@click.pass_context
+def entry_point(ctx, folder, config_filename):
+    # pass next further with click.pass_obj decorator
+    ctx.obj = Location(folder, config_filename)
 
 
-@cli.command(help="Show options from configuration file.")
-@option_folder
-@option_config_filename
-def options(folder, config_filename):
-    location = Location(folder, config_filename)
-    from_config_file_options = get_cli_options(location)
-    click.echo(str(from_config_file_options))
+@entry_point.command(help="Show options from configuration file.")
+@click.pass_obj
+def config(location):
+    click.echo(get_cli_options(location))
 
 
 if __name__ == "__main__":
-    cli()
+    entry_point()
