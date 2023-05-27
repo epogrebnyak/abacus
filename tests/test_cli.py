@@ -16,7 +16,8 @@ entries = "entries.json"
 """
         (Path(tmpdir) / "abc.toml").write_text(toml_content)
         result = runner.invoke(
-            entry_point, f"--folder {tmpdir} --config-filename abc.toml config"
+            entry_point,
+            f"--folder {tmpdir} --config-filename abc.toml show-config-file-options",
         )
         assert result.exit_code == 0
         assert (

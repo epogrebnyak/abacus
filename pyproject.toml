@@ -9,7 +9,7 @@ authors = ["Evgeniy Pogrebnyak <e.pogrebnyak@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.scripts]
-abacus = 'abacus:entry_point'
+abacus = 'abacus.cli:entry_point'
 
 [tool.poetry.dependencies]
 python = "^3.8"

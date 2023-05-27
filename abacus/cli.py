@@ -13,7 +13,7 @@ default_config_filename = "abacus.toml"
 
 @dataclass
 class Location:
-    """Working directory and configuration file name (like 'abacus.toml')."""
+    """Working directory and configuration file name ('abacus.toml' by default)."""
 
     folder: Path
     config_filename: str = default_config_filename
@@ -55,7 +55,7 @@ option_folder = click.option(
         executable=False,
     ),
     default=os.getcwd(),
-    help=f"Project folder with {default_config_filename} and data files [default: ./]",
+    help=f"Project folder with {default_config_filename} and data files [default: .]",
 )
 option_config_filename = click.option(
     "--config-filename",
@@ -73,9 +73,11 @@ def entry_point(ctx, folder, config_filename):
     ctx.obj = Location(folder, config_filename)
 
 
-@entry_point.command(help="Show options from configuration file.")
+@entry_point.command(
+    name="show-config-file-options", help="Show options from configuration file."
+)
 @click.pass_obj
-def config(location):
+def config_file(location):
     click.echo(get_cli_options(location))
 
 
