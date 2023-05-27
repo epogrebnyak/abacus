@@ -12,16 +12,16 @@ Provided as a Python library (see [usage examples][mwe]), soon to be a CLI app (
 ## What `abacus` can do 
 
 
-With `abacus` you can:
+With `abacus` you can accomplish all tasks within an accounting cycle:
 - define a chart of accounts with five types of accounts (assets, expenses, capital, liabilities and income) and contra accounts (eg depreciation);
-- create a blank ledger or a ledger with starting balances from previous period;
-- post entries to a ledger individually or in bulk;
+- create a blank general ledger for a new company or a general ledger with starting balances from previous period for existing company;
+- post entries to a general ledger individually or in bulk;
 - view trial balance;
 - make adjustment entries;
 - close income and expenses accounts and transfer current period profit (loss) to retained earnings;
 - make post-close entries (eg accrue dividend due to shareholders);
 - view and save income statement and balance sheet reports;
-- save period end account balances and use them  to start a ledger in the accounting next period.
+- save period end account balances and use them to initialize a general ledger at the start of a next accounting period.
 
 
 ## Quotes about `abacus`
