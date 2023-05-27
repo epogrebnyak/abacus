@@ -3,13 +3,13 @@ ignore=['E501', 'E741']
 
 [tool.poetry]
 name = "abacus"
-version = "0.2.2"
+version = "0.3.0"
 description = "A minimal, yet valid double-entry accounting system in Python."
 authors = ["Evgeniy Pogrebnyak <e.pogrebnyak@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.scripts]
-abacus_cli = 'abacus:entry_point'
+abacus = 'abacus:entry_point'
 
 [tool.poetry.dependencies]
 python = "^3.8"
