@@ -74,6 +74,43 @@ def entry_point(ctx, folder, config_filename):
 
 
 @entry_point.command(
+    name="add-accounts",
+    help="Add accounts to chart.",
+)
+@click.option("--chart")
+@click.option("--assets")
+def add_accounts(chart, assets):
+    click.echo(chart, assets)
+
+
+@entry_point.command(
+    name="chart",
+    help="Create chart of accounts.",
+)
+@click.option("-a", "--assets", required=True)
+@click.option("-e", "--expenses", required=True)
+@click.option("-cap", "--capital", required=True)
+@click.option("-re", "--retained_earnings", required=True)
+@click.option("-l", "--liabilities", required=True)
+@click.option("-i", "--income", required=True)
+@click.option("-ca", "--contra-account", nargs=3, multiple=True)
+def chart(
+    assets, expenses, capital, retained_earnings, liabilities, income, contra_account
+):
+    click.echo(
+        [
+            assets,
+            expenses,
+            capital,
+            retained_earnings,
+            liabilities,
+            income,
+            contra_account,
+        ]
+    )
+
+
+@entry_point.command(
     name="show-config-file-options", help="Show options from configuration file."
 )
 @click.pass_obj
