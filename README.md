@@ -4,7 +4,7 @@
 
 A minimal, yet valid double-entry accounting system in Python.
 
-Provided as Python library (see [usage examples][mwe]), soon to be a CLI app (with [Click](https://click.palletsprojects.com/en/8.0.x/) and [pydantic](https://docs.pydantic.dev/latest/)). Check [release goal notes](release_goals.md) and [milestones]https://github.com/epogrebnyak/abacus/milestones for more detail.
+Provided as Python library (see [usage examples][mwe]), soon to be a CLI app (with [Click](https://click.palletsprojects.com/en/8.0.x/) and [pydantic](https://docs.pydantic.dev/latest/)). Check [release goal notes](release_goals.md) and [milestones](https://github.com/epogrebnyak/abacus/milestones0 for more detail.
 
 [mwe]: https://github.com/epogrebnyak/abacus#minimal-working-example
 
