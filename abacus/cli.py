@@ -1,18 +1,12 @@
-# print(sys.path)
-# print(os.path.realpath(__file__))
-# print(os.path.realpath("./"))
-# print(os.getcwd())
-# also: https://github.com/gitpython-developers/GitPython/blob/6fc11e6e36e524a6749e15046eca3a8601745822/git/cmd.py#L714C49-L725
-
 import os
-from tomli import loads
-from tomli_w import dump
-from pathlib import Path
-from dataclasses import dataclass
 from collections import UserDict
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict
 
 import click
+from tomli import loads
+from tomli_w import dump  # type: ignore
 
 default_config_filename = "abacus.toml"
 
@@ -60,7 +54,7 @@ option_folder = click.option(
         path_type=Path,
         executable=False,
     ),
-    default=os.getcwd(),  # or os.path.abspath('.')
+    default=os.getcwd(),
     help=f"Project folder with {default_config_filename} and data files [default: ./]",
 )
 option_config_filename = click.option(
@@ -75,7 +69,7 @@ option_config_filename = click.option(
 @option_config_filename
 @click.pass_context
 def entry_point(ctx, folder, config_filename):
-    # pass next further with click.pass_obj decorator
+    # pass next further with @click.pass_obj decorator
     ctx.obj = Location(folder, config_filename)
 
 

@@ -1,6 +1,8 @@
 from pathlib import Path
+
 from click.testing import CliRunner
-from paths import entry_point
+
+from abacus.cli import entry_point
 
 
 def test_options_command(tmpdir):
