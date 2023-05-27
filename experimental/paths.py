@@ -1,41 +1,80 @@
-import os
-import sys
+# print(sys.path)
+# print(os.path.realpath(__file__))
+# print(os.path.realpath("./"))
+# print(os.getcwd())
+# also: https://github.com/gitpython-developers/GitPython/blob/6fc11e6e36e524a6749e15046eca3a8601745822/git/cmd.py#L714C49-L725
 
-# --project-folder and --config options
+import os
+from tomli import loads
+from tomli_w import dump
+from pathlib import Path
+from dataclasses import dataclass
+from collections import UserDict
 
 import click
-from pathlib import Path
+
+default_folder = Path(os.getcwd())  # or Path(os.path.abspath('.')
+default_config_filename = "abacus.toml"
 
 
-default_project_folder = Path(os.getcwd())
-default_config_file = default_project_folder / "abacus.toml"
+@dataclass
+class Location:
+    folder: str = default_folder
+    config_filename: str = default_config_filename
 
-print("sys.path:", sys.path)
-print("__file__:", os.path.realpath(__file__))
-print("./", os.path.realpath("./"))
-print("os.getcwd():", os.getcwd())
+    @property
+    def folder_path(self) -> Path:
+        return Path(self.folder)
+
+    @property
+    def config_path(self) -> Path:
+        return self.folder_path / self.config_filename
 
 
-@click.command()
-@click.option(
-    "--project-folder",
-    default=default_project_folder,
-    help="Project folder with configuration and data files (default is ./)",
+def get_cli_options(location: Location):
+    return TOML(path=location.config_path).load()["abacus"]["options"]
+
+
+@dataclass
+class TOML(UserDict):
+    path: Path
+
+    def load(self):
+        self.data = loads(self.path.read_text(encoding="utf-8"))
+        return self.data
+
+    def save(self):
+        self.path.write_text(dump(self.data), encoding="utf-8")
+
+
+option_folder = click.option(
+    "--folder",
+    default=str(default_folder),
+    help=f"Project folder with {default_config_filename} and data files [default: ./]",
 )
-@click.option(
-    "--config",
-    default=default_config_file,
-    help="Path to configuration file (default is ./abacus.toml)",
+option_config_filename = click.option(
+    "--config-filename",
+    default=default_config_filename,
+    help="Path to configuration file [default: ./abacus.toml]",
 )
-def hello(project_folder, config):
-    click.echo(f"--project-folder default: {default_project_folder}")
-    click.echo(f"--project-folder:         {project_folder}")
-    click.echo(f"--config default:         {default_config_file}")
-    click.echo(f"        --config:         {config}")
 
 
-# todo: if project folder is specified and config is a file and not a Path with directory, concat project folder
-# https://github.com/gitpython-developers/GitPython/blob/6fc11e6e36e524a6749e15046eca3a8601745822/git/cmd.py#L714C49-L725
+@click.group()
+@option_folder
+@option_config_filename
+def cli(folder, config_filename):
+    # click.echo("Hello!")
+    pass
+
+
+@cli.command(help="Show options from configuration file.")
+@option_folder
+@option_config_filename
+def options(folder, config_filename):
+    location = Location(folder, config_filename)
+    from_config_file_options = get_cli_options(location)
+    click.echo(str(from_config_file_options))
+
 
 if __name__ == "__main__":
-    hello()
+    cli()
