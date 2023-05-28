@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
 
-import click
+import click  # type: ignore
 from tomli import loads
 from tomli_w import dump  # type: ignore
 
@@ -96,7 +96,14 @@ def add_accounts(chart, assets):
 @click.option("-s", "--income-summary-account", "isa", default="_profit")
 @click.option("-n", "--contra-account", nargs=3, multiple=True)
 def chart(
-    assets, expenses, capital, retained_earnings, liabilities, income, isa, contra_account
+    assets,
+    expenses,
+    capital,
+    retained_earnings,
+    liabilities,
+    income,
+    isa,
+    contra_account,
 ):
     click.echo(
         [

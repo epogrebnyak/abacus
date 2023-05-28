@@ -7,10 +7,10 @@ test:
 # run all tests and checks
 grill:
   just test
+  just mypy
+  just ruff
   just examples
   just lint 
-  just ruff
-  just mypy
   just md
 
 # run code from README.md

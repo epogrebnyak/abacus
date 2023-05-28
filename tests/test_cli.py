@@ -4,14 +4,17 @@ from click.testing import CliRunner
 
 from abacus.cli import entry_point
 
+
 def write_toml(folder):
     path = Path(folder) / "abacus.toml"
-    path.write_text("""
+    path.write_text(
+        """
 [abacus.options]
 chart = "chart.json"
 start_balances = "start_balances.json" 
 entries = "entries.json"
-""")
+"""
+    )
     return str(path)
 
 
@@ -29,6 +32,7 @@ def test_options_command(tmpdir):
             == "{'chart': 'chart.json', 'start_balances': 'start_balances.json', 'entries': 'entries.json'}\n"
         )
 
+
 def test_cli(tmpdir):
     runner = CliRunner()
     with runner.isolated_filesystem(tmpdir):
@@ -45,8 +49,6 @@ abacus close --all
 abacus report --income-statement --console
 abacus report --balance-sheet --json"""
         for command in commands.split("\n"):
-           command = command.replace("abacus ", f"--folder {tmpdir} ")
-           result = runner.invoke(entry_point, command)
-           assert result.exit_code == 0
-
-        
+            command = command.replace("abacus ", f"--folder {tmpdir} ")
+            result = runner.invoke(entry_point, command)
+            assert result.exit_code == 0
