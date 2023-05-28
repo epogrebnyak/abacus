@@ -1,7 +1,7 @@
 """Chart of accounts."""
 
-from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Type
+from pydantic import BaseModel, root_validator  # type: ignore
 
 from .accounting_types import AbacusError, AccountName
 from .accounts import (
@@ -22,8 +22,19 @@ from .ledger import Ledger
 __all__ = ["Chart"]
 
 
-@dataclass
-class Chart:
+def all_args(values):
+    _isa = values["income_summary_account"]
+    return (
+        ([_isa] if _isa else [])
+        + values["assets"]
+        + values["expenses"]
+        + values["equity"]
+        + values["liabilities"]
+        + values["income"]
+    )
+
+
+class Chart(BaseModel):
     """Chart of accounts.
 
     May include contra accounts.
@@ -34,26 +45,55 @@ class Chart:
     equity: List[str]
     liabilities: List[str]
     income: List[str]
-    contra_accounts: Dict[str, Tuple[List[str], str]] = field(default_factory=dict)
+    contra_accounts: Dict[str, Tuple[List[str], str]] = {}
     income_summary_account: str = "_profit"
     retained_earnings_account: Optional[str] = None
 
-    def __post_init__(self):
-        if (
-            self.retained_earnings_account
-            and self.retained_earnings_account not in self.equity
-        ):
-            raise AbacusError(
-                f"{self.retained_earnings_account} must be in {self.equity}"
-            )
-        if not is_unique(self.account_names):
-            raise AbacusError("Account names may not contain duplicates.")
-        for account_name in self.contra_accounts.keys():
-            if account_name not in self.account_names:
+    @root_validator
+    def account_names_should_be_unique(cls, values):
+        if not is_unique(all_args(values)):
+            raise AbacusError("Account names must be unique")
+        return values
+
+    @root_validator
+    def contra_accounts_should_match_chart_of_accounts(cls, values):
+        if values.get("contra_accounts"):
+            account_names = all_args(values)
+            for account_name in values["contra_accounts"].keys():
+                if account_name not in account_names:
+                    raise AbacusError(
+                        [
+                            account_names,
+                            f"{account_name} must be specified in chart before using as contra account name",
+                        ]
+                    )
+        return values
+
+    @root_validator
+    def account_names_should_be_unique_after_contra_account_netting(cls, values):
+        if values.get("contra_accounts"):
+            resulting_accounts = [rn for (_, rn) in values["contra_accounts"].values()]
+            if not is_unique(all_args(values) + resulting_accounts):
                 raise AbacusError(
-                    f"{account_name} must be specified in chart before using in contra accounts"
+                    "Account names must be unique after contra account netting"
                 )
-                # FIXME: more subtle case is to check resulting account names after netting are unique.
+        return values
+
+    # def __post_init__(self):
+    #     if (
+    #         self.retained_earnings_account
+    #         and self.retained_earnings_account not in self.equity
+    #     ):
+    #         raise AbacusError(
+    #             f"{self.retained_earnings_account} must be in {self.equity}"
+    #         )
+    #     if not is_unique(self.account_names):
+    #         raise AbacusError("Account names may not contain duplicates.")
+    #     for account_name in self.contra_accounts.keys():
+    #         if account_name not in self.account_names:
+    #             raise AbacusError(
+    #                 f"{account_name} must be specified in chart before using in contra accounts"
+    #             )
 
     def set_retained_earnings_account(self, account_name: str):
         """Set which account from equity is retained earnings account."""

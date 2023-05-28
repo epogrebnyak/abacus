@@ -3,6 +3,8 @@ from collections import UserDict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
+from abacus import Chart
+
 
 import click  # type: ignore
 from tomli import loads
@@ -93,29 +95,39 @@ def add_accounts(chart, assets):
 @click.option("-r", "--retained_earnings", required=True)
 @click.option("-l", "--liabilities", required=True)
 @click.option("-i", "--income", required=True)
-@click.option("-s", "--income-summary-account", "isa", default="_profit")
-@click.option("-n", "--contra-account", nargs=3, multiple=True)
+@click.option("-s", "--income-summary-account", default="_profit")
+@click.option("-n", "--contra-accounts", nargs=3, multiple=True)
 def chart(
-    assets,
-    expenses,
-    capital,
-    retained_earnings,
-    liabilities,
-    income,
-    isa,
-    contra_account,
+    **kwargs,
+    #     assets,
+    #     expenses,
+    #     capital,
+    #     retained_earnings,
+    #     liabilities,
+    #     income,
+    #     isa,
+    #     contra_accounts,
 ):
-    click.echo(
-        [
-            assets,
-            expenses,
-            capital,
-            retained_earnings,
-            liabilities,
-            income,
-            isa,
-            contra_account,
-        ]
+    click.echo(make_chart(**kwargs).json())
+
+def to_dict(tuples):
+    return {
+            name: (contra_accounts.split(","), resulting_name) 
+            for (name, contra_accounts, resulting_name) in tuples
+            
+        }
+
+    
+def make_chart(**kwargs):
+    return Chart(
+        assets=kwargs["assets"].split(","),
+        expenses=kwargs["expenses"].split(","),
+        equity=kwargs["capital"].split(","),
+        liabilities=kwargs["liabilities"].split(","),
+        income=kwargs["income"].split(","),
+        retained_earnings_account=kwargs["retained_earnings"],
+        income_summary_account=kwargs["income_summary_account"],
+        contra_accounts=to_dict(kwargs["contra_accounts"])
     )
 
 
