@@ -1,5 +1,6 @@
 docs/site/
 site/
+.env-cli/
 
 # more hidden folders
 .venv/

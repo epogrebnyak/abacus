@@ -93,9 +93,10 @@ def add_accounts(chart, assets):
 @click.option("-r", "--retained_earnings", required=True)
 @click.option("-l", "--liabilities", required=True)
 @click.option("-i", "--income", required=True)
+@click.option("-s", "--income-summary-account", "isa", default="_profit")
 @click.option("-n", "--contra-account", nargs=3, multiple=True)
 def chart(
-    assets, expenses, capital, retained_earnings, liabilities, income, contra_account
+    assets, expenses, capital, retained_earnings, liabilities, income, isa, contra_account
 ):
     click.echo(
         [
@@ -105,6 +106,7 @@ def chart(
             retained_earnings,
             liabilities,
             income,
+            isa,
             contra_account,
         ]
     )
@@ -116,11 +118,11 @@ def chart(
 @click.option("--amount", required=True)
 @click.pass_obj
 def post_entry(location, dr, cr, amount):
-    click.echo([location, dr, cr, amount])
+    click.echo((dr, cr, amount))
 
 
 @entry_point.command(name="close", help="Close accounts at period end.")
-@click.option("--all", "all_")
+@click.option("--all", "all_", is_flag=True)
 @click.pass_obj
 def close(location, all_):
     click.echo([location, all_])
