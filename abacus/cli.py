@@ -89,11 +89,11 @@ def add_accounts(chart, assets):
 )
 @click.option("-a", "--assets", required=True)
 @click.option("-e", "--expenses", required=True)
-@click.option("-cap", "--capital", required=True)
-@click.option("-re", "--retained_earnings", required=True)
+@click.option("-c", "--capital", required=True)
+@click.option("-r", "--retained_earnings", required=True)
 @click.option("-l", "--liabilities", required=True)
 @click.option("-i", "--income", required=True)
-@click.option("-ca", "--contra-account", nargs=3, multiple=True)
+@click.option("-n", "--contra-account", nargs=3, multiple=True)
 def chart(
     assets, expenses, capital, retained_earnings, liabilities, income, contra_account
 ):
@@ -108,6 +108,48 @@ def chart(
             contra_account,
         ]
     )
+
+
+@entry_point.command(name="post", help="Post entry to general ledger.")
+@click.option("--dr", required=True)
+@click.option("--cr", required=True)
+@click.option("--amount", required=True)
+@click.pass_obj
+def post_entry(location, dr, cr, amount):
+    click.echo([location, dr, cr, amount])
+
+
+@entry_point.command(name="close", help="Close accounts at period end.")
+@click.option("--all", "all_")
+@click.pass_obj
+def close(location, all_):
+    click.echo([location, all_])
+
+
+@entry_point.command(name="report", help="Create financial report.")
+@click.option(
+    "--income-statement",
+    "-i",
+    "report",
+    flag_value="income_statement",
+    help="Create income statement.",
+)
+@click.option(
+    "--balance-sheet",
+    "-b",
+    "report",
+    flag_value="balance_sheet",
+    help="Create balance sheet.",
+)
+@click.option("--console", "output", flag_value="console", default=True)
+@click.option("--json", "output", flag_value="json")
+@click.pass_obj
+def report(ctx, report, output):
+    match report:
+        case "income_statement":
+            click.echo([report, output])
+        case "balance_sheet":
+            click.echo([report, output])
 
 
 @entry_point.command(
