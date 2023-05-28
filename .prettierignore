@@ -1,3 +1,8 @@
-.mypy_cache
 reference.md
 site/
+.env-cli/
+.github/
+.pytest/
+.env/
+.pytest_cache/
+.mypy_cache/
