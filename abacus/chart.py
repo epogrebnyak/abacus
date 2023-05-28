@@ -1,6 +1,7 @@
 """Chart of accounts."""
 
 from typing import Dict, List, Optional, Tuple, Type
+
 from pydantic import BaseModel, root_validator  # type: ignore
 
 from .accounting_types import AbacusError, AccountName

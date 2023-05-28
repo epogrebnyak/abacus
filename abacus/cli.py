@@ -3,12 +3,12 @@ from collections import UserDict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
-from abacus import Chart
-
 
 import click  # type: ignore
 from tomli import loads
 from tomli_w import dump  # type: ignore
+
+from abacus import Chart
 
 default_config_filename = "abacus.toml"
 
@@ -110,14 +110,14 @@ def chart(
 ):
     click.echo(make_chart(**kwargs).json())
 
+
 def to_dict(tuples):
     return {
-            name: (contra_accounts.split(","), resulting_name) 
-            for (name, contra_accounts, resulting_name) in tuples
-            
-        }
+        name: (contra_accounts.split(","), resulting_name)
+        for (name, contra_accounts, resulting_name) in tuples
+    }
 
-    
+
 def make_chart(**kwargs):
     return Chart(
         assets=kwargs["assets"].split(","),
@@ -127,7 +127,7 @@ def make_chart(**kwargs):
         income=kwargs["income"].split(","),
         retained_earnings_account=kwargs["retained_earnings"],
         income_summary_account=kwargs["income_summary_account"],
-        contra_accounts=to_dict(kwargs["contra_accounts"])
+        contra_accounts=to_dict(kwargs["contra_accounts"]),
     )
 
 
