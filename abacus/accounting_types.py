@@ -5,7 +5,7 @@ Classes for a minimal accounting framework.
 # pylint: disable=no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
 from collections import UserDict
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 from typing import List, Tuple
 
 Amount = int
@@ -19,14 +19,9 @@ class AbacusError(Exception):
     pass
 
 
-class Posting:
-    pass
-
-
 @dataclass
-class Entry(Posting):
-    """Accounting entry with amount and account names to be debited (dr)
-    and credited (cr)."""
+class Entry:
+    """Double entry with amount and account names to be debited (dr) and credited (cr)."""
 
     dr: AccountName
     cr: AccountName
@@ -34,14 +29,15 @@ class Entry(Posting):
 
 
 @dataclass
-class RenameAccount(Posting):
-    """Command to rename an account in ledger. `existing_name` will be dropped from a ledger,
-    `new_name` will be present in ledger.
+class RenameAccount:
+    """Command to rename an account in ledger. 
+    `existing_name` will be dropped from a ledger, `new_name` will be present in ledger.
     """
 
     existing_name: AccountName
     new_name: AccountName
 
+Posting = Entry | RenameAccount
 
 @dataclass
 class NamedEntry:

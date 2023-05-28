@@ -9,6 +9,7 @@ from tomli import loads
 from tomli_w import dump  # type: ignore
 
 from abacus import Chart
+from abacus.store import Entries 
 
 default_config_filename = "abacus.toml"
 
@@ -81,7 +82,7 @@ def entry_point(ctx, folder, config_filename):
 )
 @click.option("--chart")
 @click.option("--assets")
-def add_accounts(chart, assets):
+def _add_accounts(chart, assets):
     click.echo(chart, assets)
 
 
@@ -97,17 +98,7 @@ def add_accounts(chart, assets):
 @click.option("-i", "--income", required=True)
 @click.option("-s", "--income-summary-account", default="_profit")
 @click.option("-n", "--contra-accounts", nargs=3, multiple=True)
-def chart(
-    **kwargs,
-    #     assets,
-    #     expenses,
-    #     capital,
-    #     retained_earnings,
-    #     liabilities,
-    #     income,
-    #     isa,
-    #     contra_accounts,
-):
+def chart(**kwargs):
     click.echo(make_chart(**kwargs).json())
 
 
@@ -131,13 +122,34 @@ def make_chart(**kwargs):
     )
 
 
+@entry_point.command(name="empty-store", help="Empty entries store.")
+def empty_store():
+    click.echo(Entries(postings=[]).json())
+
+store_option = click.option("--store", type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        writable=True,
+        readable=True,
+        resolve_path=True,
+        allow_dash=False,
+        path_type=Path,
+        executable=False,
+    ), required=True)
+
+
 @entry_point.command(name="post", help="Post entry to general ledger.")
 @click.option("--dr", required=True)
 @click.option("--cr", required=True)
 @click.option("--amount", required=True)
+@store_option
 @click.pass_obj
-def post_entry(location, dr, cr, amount):
-    click.echo((dr, cr, amount))
+def post_entry(location, dr, cr, amount, store):
+    entries = Entries.parse_file(store)
+    entries.add_entry(dr, cr, amount)
+    entries.save(store)
+    click.echo(entries.postings)
 
 
 @entry_point.command(name="close", help="Close accounts at period end.")
