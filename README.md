@@ -64,6 +64,7 @@ abacus show report --balance-sheet
 # Start project
 mkdir books_2023 & cd books_2023  
 abacus init . 
+
 # Create chart of accounts
 abacus set chart --assets cash,prepaid_rent,goods_for_sale,ppe \
                  --expenses overhead,cogs,sga,rent,interest \
@@ -75,6 +76,7 @@ abacus add contra-accounts discount cashback \
            --affect sales \ 
            --create net_sales 
 abacus add contra-account depreciation --affects ppe --creates net_ppe 
+
 # Add entries
 abacus post cash shareholder_equity 2000 "Pay in shareholder capital"
 abacus post prepaid_rent cash 240 "Prepay property rent (1 year)"
@@ -82,11 +84,13 @@ abacus post cash sales 880 "Service revenue (contract #306-2)"
 abacus post sales discount 30 "Client discount (contract #306-2)"
 abacus post sales cashback 50 "Client cashback (contract #306-2)"
 abacus post sga cash 250 "Selling expenses"
+
 # Close accounting period
 abacus show trial-balance
 abacus post --adjust prepaid_rent rent 60 "Accrue expenses (3 months)" 
 abacus close --all
 abacus post --after-close retained_earnings dividend_due 200 "Announced dividend" 
+
 # Show reports
 abacus name sga "Selling, general and adm.expenses"
 abacus name cogs "Cost of goods sold"
