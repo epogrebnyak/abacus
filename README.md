@@ -88,9 +88,9 @@ abacus post sga cash 250 "Selling expenses"
 
 # Close accounting period
 abacus show trial-balance
-abacus post --adjust prepaid_rent rent 60 "Accrue expenses (3 months)" 
+abacus adjust prepaid_rent rent 60 "Accrue expenses (3 months)" 
 abacus close --all
-abacus post --after-close retained_earnings dividend_due 200 "Announced dividend" 
+abacus post-close retained_earnings dividend_due 200 "Announced dividend" 
 
 # Show reports
 abacus name sga "Selling, general and adm.expenses"
