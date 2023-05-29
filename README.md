@@ -45,7 +45,7 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 ```bash
 mkdir demo & cd demo
 abacus init .
-abacus set chart --assets cash,goods --expenses cogs,sga \
+abacus chart set --assets cash,goods --expenses cogs,sga \
                  --capital equity --retained_earnings re \
                  --income sales
 abacus post cash equity 5000
@@ -66,16 +66,17 @@ mkdir books_2023 & cd books_2023
 abacus init . 
 
 # Create chart of accounts
-abacus set chart --assets cash,prepaid_rent,goods_for_sale,ppe \
-                 --expenses overhead,cogs,sga,rent,interest \
+abacus chart set --assets cash,prepaid_rent,goods_for_sale,ppe \
+                 --expenses overhead,cogs,sga,rent \
                  --capital shareholder_equity \
                  --retained_earnings retained_earnings \
                  --income sales
-abacus add accounts --liabilities loans dividend_due
-abacus add contra-accounts discount cashback \
-           --affect sales \ 
-           --create net_sales 
-abacus add contra-account depreciation --affects ppe --creates net_ppe 
+abacus chart add --liabilities loans dividend_due
+abacus chart add --expenses interest 
+abacus chart add --contra-accounts discount cashback \
+                 --affect sales \ 
+                 --create net_sales 
+abacus chart add --contra-account depreciation --affects ppe --creates net_ppe 
 
 # Add entries
 abacus post cash shareholder_equity 2000 "Pay in shareholder capital"
