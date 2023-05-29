@@ -5,8 +5,9 @@ Classes for a minimal accounting framework.
 # pylint: disable=no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
 from collections import UserDict
+from typing import List, Tuple, Union
+
 from pydantic.dataclasses import dataclass
-from typing import List, Tuple
 
 Amount = int
 AccountName = str
@@ -30,14 +31,22 @@ class Entry:
 
 @dataclass
 class RenameAccount:
-    """Command to rename an account in ledger. 
+    """Command to rename an account in ledger.
     `existing_name` will be dropped from a ledger, `new_name` will be present in ledger.
     """
 
     existing_name: AccountName
     new_name: AccountName
 
-Posting = Entry | RenameAccount
+
+@dataclass
+class IssueIncomeStatement:
+    pass
+
+
+Event = Union[RenameAccount, IssueIncomeStatement]
+Posting = Union[Entry, Event]
+
 
 @dataclass
 class NamedEntry:

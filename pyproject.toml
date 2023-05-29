@@ -31,6 +31,7 @@ mkdocs-material = "^9.1.9"
 mkdocstrings = {extras = ["python"], version = "^0.21.2"}
 isort = "^5.12.0"
 black = "^23.3.0"
+pytest-console-scripts = "^1.4.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

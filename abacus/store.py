@@ -1,7 +1,10 @@
-from pydantic import BaseModel
-from abacus.accounting_types import Posting, Entry
 from pathlib import Path
 from typing import List
+
+from pydantic import BaseModel
+
+from abacus.accounting_types import Entry, Posting
+
 
 class Entries(BaseModel):
     postings: List[Posting] = []
@@ -12,9 +15,8 @@ class Entries(BaseModel):
         return self
 
     def add_entries(self, entries):
-        self.postings.extend(entries)    
+        self.postings.extend(entries)
         return self
 
     def save(self, path):
         Path(path).write_text(self.json())
-    

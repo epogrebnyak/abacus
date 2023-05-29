@@ -9,25 +9,33 @@ from tomli import loads
 from tomli_w import dump  # type: ignore
 
 from abacus import Chart
-from abacus.store import Entries 
+from abacus.store import Entries
 
 default_config_filename = "abacus.toml"
+
+
+def config_path(directory: str, filename: str) -> Path:
+    return Path(directory) / filename
 
 
 @dataclass
 class Location:
     """Working directory and configuration file name ('abacus.toml' by default)."""
 
-    folder: Path
+    folder: str
     config_filename: str = default_config_filename
 
     @property
     def config_path(self) -> Path:
-        return self.folder / self.config_filename
+        return Path(self.folder) / self.config_filename
 
 
-def get_cli_options(location: Location) -> Dict:
-    return TOML(path=location.config_path).load()["abacus"]["options"]
+def get_cli_options(config: Dict) -> Dict:
+    return config["abacus"]["options"]
+
+
+def load_toml(path: Path):
+    return loads(path.read_text(encoding="utf-8"))
 
 
 @dataclass
@@ -44,46 +52,28 @@ class TOML(UserDict):
         self.path.write_text(dump(self.data), encoding="utf-8")
 
 
-option_folder = click.option(
-    "--folder",
-    type=click.Path(
-        exists=True,
-        file_okay=False,
-        dir_okay=True,
-        writable=False,
-        readable=True,
-        resolve_path=True,
-        allow_dash=False,
-        path_type=Path,
-        executable=False,
-    ),
+@click.group()
+@click.option(
+    "--project-folder",
     default=os.getcwd(),
     help=f"Project folder with {default_config_filename} and data files [default: .]",
 )
-option_config_filename = click.option(
+@click.option(
     "--config-filename",
     default=default_config_filename,
     help=f"Configuration file name  [default: {default_config_filename}]",
 )
-
-
-@click.group()
-@option_folder
-@option_config_filename
 @click.pass_context
-def entry_point(ctx, folder, config_filename):
+def entry_point(ctx, project_folder, config_filename):
     # pass next further with @click.pass_obj decorator
-    ctx.obj = Location(folder, config_filename)
+    path = config_path(project_folder, config_filename)
+    ctx.obj = load_toml(path)
 
 
-@entry_point.command(
-    name="add-accounts",
-    help="Add accounts to chart.",
-)
-@click.option("--chart")
-@click.option("--assets")
-def _add_accounts(chart, assets):
-    click.echo(chart, assets)
+@entry_point.command(name="fire", help="Show options from configuration file.")
+@click.pass_obj
+def config_file(config):
+    click.echo(config["abacus"]["options"])
 
 
 @entry_point.command(
@@ -122,21 +112,20 @@ def make_chart(**kwargs):
     )
 
 
-@entry_point.command(name="empty-store", help="Empty entries store.")
+@entry_point.group()
+def empty():
+    pass
+
+
+@empty.command(name="store", help="Create empty store for posting entries.")
 def empty_store():
     click.echo(Entries(postings=[]).json())
 
-store_option = click.option("--store", type=click.Path(
-        exists=True,
-        file_okay=True,
-        dir_okay=False,
-        writable=True,
-        readable=True,
-        resolve_path=True,
-        allow_dash=False,
-        path_type=Path,
-        executable=False,
-    ), required=True)
+
+store_option = click.option(
+    "--store",
+    required=True,
+)
 
 
 @entry_point.command(name="post", help="Post entry to general ledger.")
@@ -183,14 +172,6 @@ def report(ctx, report, output):
             click.echo([report, output])
         case "balance_sheet":
             click.echo([report, output])
-
-
-@entry_point.command(
-    name="show-config-file-options", help="Show options from configuration file."
-)
-@click.pass_obj
-def config_file(location):
-    click.echo(get_cli_options(location))
 
 
 if __name__ == "__main__":
