@@ -10,7 +10,7 @@ Provided as Python library (see [usage examples][mwe]), soon to be a CLI app (wi
 
 ## What `abacus` can do
 
-`abacus` enables you to complete a full accounting cycle:
+`abacus` enables you to complete a full accounting cycle through following steps.
 
 - Define a chart of accounts with five types of accounts (assets, expenses, capital, liabilities and income) and contra accounts (eg depreciation).
 - Create a blank general ledger for a new company or a general ledger with starting balances from previous period for existing company.
@@ -18,7 +18,7 @@ Provided as Python library (see [usage examples][mwe]), soon to be a CLI app (wi
 - View trial balance.
 - Make adjustment entries.
 - Close income and expenses accounts and transfer current period profit (loss) to retained earnings.
-- Make post-close entries (eg accrue dividend due to shareholders).
+- Make post-close entries (eg accrue dividend due to shareholders upon dividend announcement).
 - View and save income statement and balance sheet reports.
 - Save period end account balances and use them to initialize a general ledger at the start of a next accounting period.
 
@@ -163,21 +163,22 @@ rv.print(income_statement)
 Check out [`readme.py`](readme.py) for a complete code example
 with several contraccounts (depreciation, discounts) and dividend payout.
 
-## Intent
+## Motivation
 
-`abacus` started as an educational device
-to inform users about principles of double-entry accounting
-and accounting information systems (AIS) through a simple Python program,
-in spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) projects.
-You can teach accounting or AIS with it.
+### Original intent
 
-Other usage ideas for `abacus`:
+`abacus` started as a project
+to demonstrate principles of double-entry accounting
+through a Python program,
+in spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x).
+You can use `abacus` to teach accounting and basics of
+accounting information systems (AIS).
 
-- Use with other accounting software as a component.
-- Add storage and interface (CLI or web).
+### Other usage ideas
+
+- Use with other accounting software as a component, for example add medici storage or convert between ledgers.
 - Build business simulations (e.g. generate a stream of business events and make operational, financing and investment decisions based on financial reports)
 - Enhance a large language model with structured outputs in accounting.
-- Convert ledgers between accounting standards (e.g. national vs IFRS).
 
 ## Assumptions
 
