@@ -6,9 +6,22 @@ A minimal, yet valid double-entry accounting system in Python.
 
 Check [release goals](release_goals.md) and [milestones](https://github.com/epogrebnyak/abacus/milestones) for upcoming features.
 
+Anything missing in package? Perhaps a gap in accounting logic or lousy variable name? 
+Feel free to [write to `abacus` author](#feedback).
+
 [mwe]: https://github.com/epogrebnyak/abacus#minimal-working-example
 
-## What `abacus` should do
+## Quotes about `abacus`
+
+[![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
+
+> I think it's a great idea to mock-up a mini GL ERP to really get a foundational understanding of how the accounting in ERP works!
+
+> I teach accounting information systems... I'd be tempted to use abacus as a way of simply showing the structure of a simple AIS.
+
+> Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
+
+## What `abacus` is for?
 
 `abacus` aims to complete an accounting cycle in following steps.
 
@@ -22,15 +35,9 @@ Check [release goals](release_goals.md) and [milestones](https://github.com/epog
 8. View and save income statement and balance sheet reports.
 9. Save period end account balances and use them to initialize a general ledger at the start of a next accounting period.
 
-## Quotes about `abacus`
-
-[![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
-
-> I think it's a great idea to mock-up a mini GL ERP to really get a foundational understanding of how the accounting in ERP works!
-
-> I teach accounting information systems... I'd be tempted to use abacus as a way of simply showing the structure of a simple AIS.
-
-> Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
+`abacus` can be used together with a fast open source `medici` accounting ledger 
+to verify transactions and produce accounting reports. More usage ideas in 
+[Motivation](#motivation) section.
 
 ## Install
 
@@ -45,62 +52,70 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 ```bash
 mkdir demo & cd demo
 abacus init .
-abacus chart set --assets cash,goods --expenses cogs,sga \
-                 --capital equity --retained_earnings re \
+abacus chart set --assets cash,goods \
+                 --expenses cogs,sga \
+                 --capital equity \
+                 --retained_earnings re \
                  --income sales
 abacus post cash equity 5000
 abacus post goods cash 1000
-abacus post cash sales 350
-abacus post goods cogs 250
+abacus post --entry cash sales 350 --entry goods cogs 250
 abacus post sga cash 40
 abacus close --all
 abacus show report --income-statement
 abacus show report --balance-sheet
 ```
 
-### Extended
+### 
 
+<details>
+  <summary>Click to reveal extended script</summary>
+  
 ```bash
 # Start project
 mkdir books_2023 & cd books_2023  
 abacus init . 
 
 # Create chart of accounts
-abacus chart set --assets cash,prepaid_rent,goods_for_sale,ppe \
+abacus chart set --assets cash,prepaid_rent,goods_for_sale \
                  --expenses overhead,cogs,sga,rent \
                  --capital shareholder_equity \
                  --retained_earnings retained_earnings \
                  --income sales
+# two ways to add a contra accounts
+abacus chart add --assets ppe --contra-accounts depreciation --create net_ppe
+abacus chart add --contra-accounts depreciation --link ppe --create net_ppe 
+abacus chart add --contra-accounts discount,cashback --link sales --create net_sales 
 abacus chart add --liabilities loans dividend_due
 abacus chart add --expenses interest 
-abacus chart add --contra-accounts discount cashback \
-                 --affect sales \ 
-                 --create net_sales 
-abacus chart add --contra-account depreciation --affects ppe --creates net_ppe 
 
 # Add entries
-abacus post cash shareholder_equity 2000 "Pay in shareholder capital"
-abacus post prepaid_rent cash 240 "Prepay property rent (1 year)"
-abacus post cash sales 880 "Service revenue (contract #306-2)"
-abacus post sales discount 30 "Client discount (contract #306-2)"
-abacus post sales cashback 50 "Client cashback (contract #306-2)"
-abacus post sga cash 250 "Selling expenses"
+abacus post cash shareholder_equity 2000 -t "Pay in shareholder capital"
+abacus post prepaid_rent cash 240 -t "Prepay property rent (1 year)"
+abacus post cash sales 880 -t "Service revenue (contract #306-2)"
+abacus post sales discount 30 -t "Client discount (contract #306-2)"
+abacus post sales cashback 50 -t "Client cashback (contract #306-2)"
+abacus post sga cash 250 -t "Selling expenses"
 
 # Close accounting period
 abacus show trial-balance
-abacus adjust prepaid_rent rent 60 "Accrue expenses (3 months)" 
+abacus adjust prepaid_rent rent 60 -t "Accrue expenses (3 months)" 
 abacus close --all
-abacus post-close retained_earnings dividend_due 200 "Announced dividend" 
+abacus post-close retained_earnings dividend_due 200 -t "Announced dividend" 
 
 # Show reports
-abacus name sga "Selling, general and adm.expenses"
+abacus name sga -t "Selling, general and adm.expenses"
 abacus name cogs "Cost of goods sold"
-abacus show report --income-statement
+abacus report --income-statement
 abacus show report --balance-sheet
 abacus status
 ```
 
-Anything missing? A gap in accounting logic? Louzy vairable name? Please [write to `abacus` author.](#feedback)
+
+</details>
+
+
+
 
 ## Minimal working example (Python code)
 
@@ -233,21 +248,21 @@ with several contraccounts (depreciation, discounts) and dividend payout.
 
 `abacus` started as a project to demonstrate principles of double-entry accounting
 through Python code, in spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x).
-You can use `abacus` to teach accounting and basics of accounting information systems (AIS).
+You can use `abacus` to teach basics of accounting and accounting information systems (AIS).
 
-### Other usage ideas
+### Other usage
 
-- Use with other software as a component, for example, add `medici` storage for entries (see below).
-- Build business simulations - e.g. generate a stream of business events and make operational, financing and investment decisions based on financial report evaluation.
-- Enhance a large language model with structured outputs in accounting.
+- Use with other software as a component (for example, with `medici`).
+- Convert accounting reports between ledgers (for example, national accounting standards to IFRS).
+- Process streams of business events to financial reports in business simulations.
+- Generate prompts and enhance a large language model with structured outputs in accounting.
 
 ## Assumptions
 
 Below are some simplifying assumptions and behaviors made for this code.
 Some points may be relaxes, some will remain a feature.
 
-1. Account structure is flat, there are no subaccounts. (Can use `cash:petty` and `cash:bank_account`
-   to mimic subaccounts.)
+1. Account structure is flat, there are no subaccounts. (One can use `cash:petty` and `cash:bank_account` to mimic subaccounts.)
 
 2. Every entry involves exactly two accounts, there are no compound entries.
 
@@ -301,6 +316,9 @@ Some points may be relaxes, some will remain a feature.
    Classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income` pass forward useful information about account types and behaviors.
 
 5. This is experimental software. The upside is that we can make big changes fast. On a downside we do not learn (or earn) from users, at least yet.
+
+6. `abacus` is not optimised for performance and likely to be slow under high load.  
+
 
 ## Similar projects
 
