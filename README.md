@@ -6,8 +6,9 @@ A minimal, yet valid double-entry accounting system in Python.
 
 Check [release goals](release_goals.md) and [milestones](https://github.com/epogrebnyak/abacus/milestones) for upcoming features.
 
-Anything missing? A gap in accounting logic or a lousy variable name? 
-Feel free to [write to `abacus` author](#feedback).
+Anything missing in `abacus`? Noticed a gap in accounting logic or a lousy variable name? 
+Got a cool application or usecase for `abacus`? Shown package to your students in classroom?
+Feel free to [contact to `abacus` author](#feedback).
 
 [mwe]: https://github.com/epogrebnyak/abacus#minimal-working-example
 
@@ -35,8 +36,7 @@ Feel free to [write to `abacus` author](#feedback).
 8. View and save income statement and balance sheet reports.
 9. Save period end account balances and use them to initialize a general ledger at the start of a next accounting period.
 
-
-More usage ideas in [Motivation](#motivation) section.
+More usage ideas in [Motivation](#motivation) section below.
 
 ## Install
 
@@ -115,7 +115,7 @@ abacus --help
 abacus --dir . --filename abacus.toml show config
 ```
 
-### init command
+### `init` command
 
 `abacus init .` is equivalent to the following:
 
