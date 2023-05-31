@@ -307,9 +307,9 @@ Some assumptions may be relaxed, some will remain a feature.
 2. The chart of accounts can be fairly complex.
 
 3. Chart of accounts may include contra accounts. Temporary contra accounts
-   for income (eg discounts given) and expense (discounts or cashbacks received)
+   for income (eg discounts given) and expense (eg discounts or cashbacks received)
    are cleared at period end, permanent contra accounts
-   (e.g. accumulated depreciation) are carried forward.
+   (eg accumulated depreciation) are carried forward.
 
 4. You can give a name to typical dr/cr account pairs and use this name to record transactions.
 
@@ -358,6 +358,5 @@ More:
 
 ... is much appreciated. Please reach out in [issues](https://github.com/epogrebnyak/abacus/issues),
 on [reddit](https://www.reddit.com/user/iamevpo)
-or via [Telegram](https://t.me/epoepo). Would love to hear about accounting use cases for `abacus` 
-(eg account inspection, reclassifications, etc). 
+or via [Telegram](https://t.me/epoepo).
 
