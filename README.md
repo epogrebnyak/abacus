@@ -6,7 +6,7 @@ A minimal, yet valid double-entry accounting system in Python.
 
 Check [release goals](release_goals.md) and [milestones](https://github.com/epogrebnyak/abacus/milestones) for upcoming features.
 
-Anything missing in package? Perhaps a gap in accounting logic or lousy variable name? 
+Anything missing? A gap in accounting logic or a lousy variable name? 
 Feel free to [write to `abacus` author](#feedback).
 
 [mwe]: https://github.com/epogrebnyak/abacus#minimal-working-example
