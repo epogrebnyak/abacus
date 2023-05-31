@@ -35,9 +35,8 @@ Feel free to [write to `abacus` author](#feedback).
 8. View and save income statement and balance sheet reports.
 9. Save period end account balances and use them to initialize a general ledger at the start of a next accounting period.
 
-`abacus` can be used together with a fast open source `medici` accounting ledger 
-to verify transactions and produce accounting reports. More usage ideas in 
-[Motivation](#motivation) section.
+
+More usage ideas in [Motivation](#motivation) section.
 
 ## Install
 
@@ -59,14 +58,14 @@ abacus chart set --assets cash,goods \
                  --income sales
 abacus post cash equity 5000
 abacus post goods cash 1000
-abacus post --entry cash sales 350 --entry goods cogs 250
+abacus post --entry cash sales 350 \
+            --entry goods cogs 250
 abacus post sga cash 40
 abacus close --all
 abacus show report --income-statement
 abacus show report --balance-sheet
 ```
 
-### 
 
 <details>
   <summary>Click to reveal extended script</summary>
@@ -82,10 +81,12 @@ abacus chart set --assets cash,prepaid_rent,goods_for_sale \
                  --capital shareholder_equity \
                  --retained_earnings retained_earnings \
                  --income sales
-# two ways to add a contra accounts
+# two ways to add contra account
+# 1. creates ppe account
 abacus chart add --assets ppe --contra-accounts depreciation --create net_ppe
+# 2. ppe account must already exist in chart
 abacus chart add --contra-accounts depreciation --link ppe --create net_ppe 
-abacus chart add --contra-accounts discount,cashback --link sales --create net_sales 
+abacus chart add --contra-accounts discount cashback --link sales --create net_sales 
 abacus chart add --liabilities loans dividend_due
 abacus chart add --expenses interest 
 
@@ -104,20 +105,31 @@ abacus close --all
 abacus post-close retained_earnings dividend_due 200 -t "Announced dividend" 
 
 # Show reports
-abacus name sga -t "Selling, general and adm.expenses"
+abacus name sga "Selling, general and adm.expenses"
 abacus name cogs "Cost of goods sold"
 abacus report --income-statement
 abacus show report --balance-sheet
 abacus status
+abacus --version
+abacus --help
+abacus --dir . --filename abacus.toml show config
 ```
 
+### init command
+
+`abacus init .` is equivalent to the following:
+
+```bash
+touch ./abacus.toml 
+abacus --dir . create chart --output chart.json
+abacus --dir . create store --output entries.json
+abacus --dir . create names --output names.json
+```
 
 </details>
 
 
-
-
-## Minimal working example (Python code)
+## Minimal working example (Python)
 
 ```python
 from abacus import Chart, Entry, BalanceSheet
@@ -240,7 +252,7 @@ rv.print(income_statement)
 ```
 
 Check out [`readme.py`](readme.py) for a complete code example
-with several contraccounts (depreciation, discounts) and dividend payout.
+with several contraccounts and dividend payout.
 
 ## Motivation
 
@@ -250,19 +262,19 @@ with several contraccounts (depreciation, discounts) and dividend payout.
 through Python code, in spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x).
 You can use `abacus` to teach basics of accounting and accounting information systems (AIS).
 
-### Other usage
+### Other uses
 
-- Use with other software as a component (for example, with `medici`).
-- Convert accounting reports between ledgers (for example, national accounting standards to IFRS).
-- Process streams of business events to financial reports in business simulations.
+- Use as a software component with other open source tools (such as fast `medici` ledger).
+- Convert reports between charts of accounts (eg local accounting standasrds to IFRS).
+- Process streams of business events in business simulations.
 - Generate prompts and enhance a large language model with structured outputs in accounting.
 
 ## Assumptions
 
 Below are some simplifying assumptions and behaviors made for this code.
-Some points may be relaxes, some will remain a feature.
+Some assumptions may be relaxed, some will remain a feature.
 
-1. Account structure is flat, there are no subaccounts. (One can use `cash:petty` and `cash:bank_account` to mimic subaccounts.)
+1. Account structure is flat, there are no subaccounts. To override one can use `cash:petty` and `cash:bank_account` to mimic subaccounts.
 
 2. Every entry involves exactly two accounts, there are no compound entries.
 
@@ -271,9 +283,9 @@ Some points may be relaxes, some will remain a feature.
 4. There are no journals - all records go directly to general ledger.
 
 5. Accounting entry is slim and has no information other than debit and credit accounts
-   and entry amount. 
+   and entry amount. In future may add title, timestamp, hash and meta information.
 
-6. Accounts balances can go to negative where they should not and there are few checks for entry validity.
+6. Accounts balances can go to negative where they should not and there are no checks for entry validity.
 
 7. We use [just one currency](https://www.mscs.dal.ca/~selinger/accounting/).
 
@@ -306,14 +318,14 @@ Some points may be relaxes, some will remain a feature.
 
 ## Implementation details
 
-1. The code is covered by some tests, linted and type annotated.
+1. The code is covered by tests, linted and type annotated.
 
 2. Data structures used are serialisable, so inputs and outputs can be stored and retrieved.
 
 3. XML likely to be a format for accounting reports interchange,  while JSON and YAML are intended for `abacus`.
 
 4. Modern Python features such as subclasssing and pattern matching help to make code cleaner. 
-   Classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income` pass forward useful information about account types and behaviors.
+   Classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income` pass forward useful information about account types and their behaviors.
 
 5. This is experimental software. The upside is that we can make big changes fast. On a downside we do not learn (or earn) from users, at least yet.
 
