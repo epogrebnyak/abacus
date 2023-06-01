@@ -68,11 +68,11 @@ abacus post --entry cash sales 350 \
             --entry goods cogs 250
 abacus post sga cash 40
 abacus close --all
-abacus add name sga "Selling, general and adm.expenses"
-abacus add name cogs "Cost of goods sold"
-abacus add name re "Retained earnings"
-abacus show report --income-statement
-abacus show report --balance-sheet
+abacus name sga "Selling, general and adm.expenses"
+abacus name cogs "Cost of goods sold"
+abacus name re "Retained earnings"
+abacus report --income-statement
+abacus report --balance-sheet
 abacus balances --output end_balances.json
 ```
 
@@ -90,11 +90,11 @@ abacus chart set --assets cash,prepaid_rent,goods_for_sale \
                  --capital shareholder_equity \
                  --retained_earnings retained_earnings \
                  --income sales
-# two ways to add contra account
-# 1. creates ppe account
-abacus chart add --assets ppe --contra-accounts depreciation --create net_ppe
+# two ways to add contra accounts
+# 1. add ppe account
+abacus chart add --assets ppe --contra-accounts depreciation --resulting-name net_ppe
 # 2. ppe account must already exist in chart
-abacus chart add --contra-accounts depreciation --link ppe --create net_ppe 
+abacus chart offset ppe --resulting-name net_ppe --contra-accounts depreciation
 abacus chart add --contra-accounts discount cashback --link sales --create net_sales 
 abacus chart add --liabilities loans dividend_due
 abacus chart add --expenses interest 
@@ -140,22 +140,24 @@ abacus --dir . create names --output names.json
 `jaba` is a minimal subset of `abacus` commands without configuration file:
   
 - zero config (no `abacus.toml`)
-- output to stdout where possible, no `--output <filename>` option
-- no commands: `rename`, `init` 
+- no `rename`
+- no `init` 
  
 ```bash
 jaba chart new --output chart.json  
-jaba add accounts --assets <names> --chart chart.json   
-jaba add accounts --expenses <names> --chart chart.json   
-jaba add accounts --capital <names> --chart chart.json   
-jaba add accounts --liabilities <names> --chart chart.json   
-jaba add accounts --income <names> --chart chart.json   
-jaba add accounts --contra <names> --link name --create name --chart chart.json   
+jaba chart add --assets <names> --chart chart.json
+jaba chart add --expenses <names> --chart chart.json   
+jaba chart add --capital <names> --chart chart.json   
+jaba chart add --liabilities <names> --chart chart.json   
+jaba chart add --income <names> --chart chart.json   
+jaba chart offset <name> --contra-accounts <names> --resulting-name <new_name> --chart chart.json   
 jaba store new [--start-balances start_balances.json] --output entries.json
-jaba add entry --dr dr_account --cr cr_account --amount amount --store entries.json [--chart chart.json]
+jaba entry new --dr dr_account --cr cr_account --amount amount [--chart chart.json]
+jaba entry add --dr dr_account --cr cr_account --amount amount --store entries.json [--chart chart.json]
+jaba store list ([--entry] [--rename] [--mark]) | [--all] --store entries.json
 jaba report -t --chart chart.json --store entries.json > trial_balance.json
-jaba close --chart chart.json --store entries.json --contra-income --contra-expenses
-jaba close --chart chart.json --store entries.json --income --expenses --isa
+jaba close --contra-income --contra-expenses --chart chart.json --store entries.json 
+jaba close --income --expenses --isa --chart chart.json --store entries.json 
 jaba report -i --chart chart.json --store entries.json > income_statement.json 
 jaba report -b --chart chart.json --store entries.json > balance_sheet.json 
 jaba report -e --chart chart.json --store entries.json > end_balances.json 
