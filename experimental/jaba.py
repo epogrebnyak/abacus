@@ -1,20 +1,38 @@
 """
+`jaba` is a minimal accounting manager.
+
 Usage:
-jaba chart new --output chart.json  
-jaba chart add --assets <names> --chart chart.json
-jaba chart add --expenses <names> --chart chart.json   
-jaba chart add --capital <names> --chart chart.json   
-jaba chart add --liabilities <names> --chart chart.json   
-jaba chart add --income <names> --chart chart.json   
-jaba chart offset <name> --contra-accounts <names> --resulting-name <new_name> --chart chart.json   
-jaba store new [--start-balances start_balances.json] --output entries.json
-jaba entry new --dr dr_account --cr cr_account --amount amount [--chart chart.json]
-jaba entry add --dr dr_account --cr cr_account --amount amount --store entries.json [--chart chart.json]
-jaba store list ([--entry] [--rename] [--mark]) | [--all] --store entries.json
-jaba report -t --chart chart.json --store entries.json > trial_balance.json
-jaba close --contra-income --contra-expenses --chart chart.json --store entries.json 
-jaba close --income --expenses --isa --chart chart.json --store entries.json 
-jaba report -i --chart chart.json --store entries.json > income_statement.json 
-jaba report -b --chart chart.json --store entries.json > balance_sheet.json 
-jaba report -e --chart chart.json --store entries.json > end_balances.json
+jaba create chart <file>
+jaba chart <chart_file> add --assets <account_names>
+jaba chart <chart_file> add --expenses <account_names>  
+jaba chart <chart_file> add --capital <account_names>  
+jaba chart <chart_file> add --liabilities <account_names>   
+jaba chart <chart_file> add --income <account_names>   
+jaba chart <chart_file> contains <account_names>
+jaba chart <chart_file> list
+jaba chart <file> offset --name <account_name> --resulting-name <new_account_name> --contra-accounts <account_names>   
+jaba create names <name_file>
+jaba names <name_file> add <var> <title> 
+jaba names <name_file> list
+jaba create store <store_file> [--start-balances start_balances.json] [--verify-with chart.json]
+jaba store <store_file> add entry --dr dr_account --cr cr_account --amount amount
+jaba store <store_file> add mark <event>
+jaba store <store_file> add multiple --dr account,amount [--dr account,amount] --cr account,amount [--cr account,amount]
+jaba store <store_file> list --all
+jaba store <store_file> list [--start-balances] [--entry] [--rename-account] [--mark-event]
+jaba store <store_file> <chart_file> report -t > trial_balance.json
+jaba store <store_file> <chart_file> close --contra-income --contra-expenses
+jaba store <store_file> <chart_file> close --income --expenses --isa 
+jaba store <store_file> <chart_file> report -i > income_statement.json [--names <name_file>] 
+jaba store <store_file> <chart_file> report -b > balance_sheet.json [--names <name_file>] 
+jaba store <store_file> <chart_file> report -e > end_balances.json 
+
+Options:
+  -h --help     Show this screen.
+  --version     Show version.
 """
+from docopt import docopt
+
+if __name__ == "__main__":
+    arguments = docopt(__doc__, version="pre_alpha")
+    print(arguments)
