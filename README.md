@@ -302,7 +302,7 @@ You can use `abacus` to teach basics of accounting and accounting information sy
 ### Other uses
 
 - Use as a software component with other open source tools (such as fast `medici` ledger).
-- Convert reports between charts of accounts (eg local accounting standasrds to IFRS).
+- Convert reports between charts of accounts (eg local accounting standards to IFRS).
 - Process streams of business events in business simulations.
 - Generate prompts and enhance a large language model with structured outputs in accounting.
 
