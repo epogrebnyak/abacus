@@ -46,7 +46,13 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## CLI examples (upcoming in 0.4.0)
 
-### Minimal
+### Minimal example
+
+- Chart of accounts has just 7 accounts.
+- Firm created, acquires and sells some goods.  
+- Cash basis, no payables/receivables.
+- Print income statement and balance sheet.
+- Save period end account balances to file.
 
 ```bash
 mkdir demo & cd demo
@@ -62,10 +68,13 @@ abacus post --entry cash sales 350 \
             --entry goods cogs 250
 abacus post sga cash 40
 abacus close --all
+abacus add name sga "Selling, general and adm.expenses"
+abacus add name cogs "Cost of goods sold"
+abacus add name re "Retained earnings"
 abacus show report --income-statement
 abacus show report --balance-sheet
+abacus balances --output end_balances.json
 ```
-
 
 <details>
   <summary>Click to reveal extended script</summary>
@@ -105,8 +114,8 @@ abacus close --all
 abacus post-close retained_earnings dividend_due 200 -t "Announced dividend" 
 
 # Show reports
-abacus name sga "Selling, general and adm.expenses"
-abacus name cogs "Cost of goods sold"
+abacus add name sga "Selling, general and adm.expenses"
+abacus add name cogs "Cost of goods sold"
 abacus report --income-statement
 abacus show report --balance-sheet
 abacus status
@@ -124,6 +133,25 @@ touch ./abacus.toml
 abacus --dir . create chart --output chart.json
 abacus --dir . create store --output entries.json
 abacus --dir . create names --output names.json
+```
+
+### minimal command group 
+  
+Minimal subset of `abacus` commands, zero config (no abacus.toml) and output to stdout.
+ 
+```bash
+jaba chart new > chart.json  
+jaba add accounts --chart chart.json --assets name,name  
+jaba add accounts --chart chart.json --contra-accounts name,name --link name --create name   
+jaba store new --start start_balances.json > entries.json
+jaba entry --dr dr_account --cr cr_account --amount amount [--chart chart.json] >> entries.json
+jaba add entry --dr dr_account --cr cr_account --amount amount [--chart chart.json] --store entries.json
+jaba report -t --chart chart.json --store entries.json > trial_balance.json
+jaba close --chart chart.json --store entries.json --contra-income --contra-expenses
+jaba close --chart chart.json --store entries.json --expenses --income --isa
+jaba report -i --chart chart.json --store entries.json > income_statement.json 
+jaba report -b --chart chart.json --store entries.json > balance_sheet.json 
+jaba report -e --chart chart.json --store entries.json > end_balances.json 
 ```
 
 </details>
