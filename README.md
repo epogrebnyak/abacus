@@ -137,18 +137,25 @@ abacus --dir . create names --output names.json
 
 ### minimal command group 
   
-Minimal subset of `abacus` commands, zero config (no abacus.toml) and output to stdout.
+`jaba` is a minimal subset of `abacus` commands without configuration file:
+  
+- zero config (no `abacus.toml`)
+- output to stdout where possible, no `--output <filename>` option
+- no commands: `rename`, `init` 
  
 ```bash
-jaba chart new > chart.json  
-jaba add accounts --chart chart.json --assets name,name  
-jaba add accounts --chart chart.json --contra-accounts name,name --link name --create name   
-jaba store new --start start_balances.json > entries.json
-jaba entry --dr dr_account --cr cr_account --amount amount [--chart chart.json] >> entries.json
-jaba add entry --dr dr_account --cr cr_account --amount amount [--chart chart.json] --store entries.json
+jaba chart new --output chart.json  
+jaba add accounts --assets <names> --chart chart.json   
+jaba add accounts --expenses <names> --chart chart.json   
+jaba add accounts --capital <names> --chart chart.json   
+jaba add accounts --liabilities <names> --chart chart.json   
+jaba add accounts --income <names> --chart chart.json   
+jaba add accounts --contra <names> --link name --create name --chart chart.json   
+jaba store new [--start-balances start_balances.json] --output entries.json
+jaba add entry --dr dr_account --cr cr_account --amount amount --store entries.json [--chart chart.json]
 jaba report -t --chart chart.json --store entries.json > trial_balance.json
 jaba close --chart chart.json --store entries.json --contra-income --contra-expenses
-jaba close --chart chart.json --store entries.json --expenses --income --isa
+jaba close --chart chart.json --store entries.json --income --expenses --isa
 jaba report -i --chart chart.json --store entries.json > income_statement.json 
 jaba report -b --chart chart.json --store entries.json > balance_sheet.json 
 jaba report -e --chart chart.json --store entries.json > end_balances.json 
