@@ -1,10 +1,40 @@
 """General ledger."""
 
-from collections import UserDict
+from collections import UserDict, UserList
 from typing import List, Tuple
 
 from .accounting_types import AccountName, Entry, Posting, RenameAccount
 from .accounts import Account, Asset, Capital, Expense, Income, Liability
+
+class Journal(UserList[Posting]):
+    """General ledger that holds all accounts."""
+
+    @classmethod
+    def from_file(cls, path):
+        return cls()
+
+    def post_entries(self, entries: List[Posting]) -> "Journal":
+        self.data.extend(entries)
+        return self
+    
+    def adjust(self, dr, cr, amount) -> "Journal":
+        return self
+
+    def postclose(self, dr, cr, amount) -> "Journal":
+        return self
+
+    def close_period(self) -> "Journal":
+        return self
+
+    def balance_sheet(self):
+        from .reports import balance_sheet
+
+        return balance_sheet(self)
+
+    def income_statement(self):
+        from .reports import income_statement
+
+        return income_statement(self)
 
 
 class Ledger(UserDict[AccountName, Account]):
