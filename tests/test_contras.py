@@ -35,9 +35,9 @@ def test_make_ledger_with_netting():
         liabilities=[],
         income=["sales"],
         contra_accounts={
-            "sales": (["discounts", "returns"], "net_sales"),
-            "shares": (["treasury_shares"], "shares_outstanding"),
-            "ppe": (["depr"], "net_ppe"),
+            "sales": ["discounts", "returns"],
+            "shares": ["treasury_shares"],
+            "ppe": ["depr"]
         },
     )
     ledger = chart.ledger()

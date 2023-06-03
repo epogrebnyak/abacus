@@ -94,7 +94,7 @@ class Chart(BaseModel):
 
     def get_type(self, account_name: AccountName) -> Type:
         """Return account class for *account_name*."""
-        return dict(self._regular_accounts_dict)[account_name]
+        return dict(self._yield_regular_accounts())[account_name]
 
     def _yield_contra_accounts(self):
         for account_name, contra_account_names in self.contra_accounts.items():

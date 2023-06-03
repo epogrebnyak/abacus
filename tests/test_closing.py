@@ -43,7 +43,6 @@ def test_closing_entries():
     assert closing_entries(ledger) == [
         Entry(dr="sales", cr="discount", amount=65),
         Entry(dr="sales", cr="returns", amount=0),
-        RenameAccount(existing_name="sales", new_name="net_sales"),
         Entry(dr="net_sales", cr="profit", amount=555),
         Entry(dr="profit", cr="cogs", amount=180),
         Entry(dr="profit", cr="sga", amount=50),

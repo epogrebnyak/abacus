@@ -108,6 +108,14 @@ class Ledger(UserDict[AccountName, Account]):
         from .reports import balances
 
         return balances(self)
+    
+
+    def balance_sheet(self):
+        from .reports import balance_sheet
+
+        return balance_sheet(self)
+
+
 
     def is_closed(self) -> bool:
         # - income and expense contra accounts are zero
@@ -147,7 +155,7 @@ def income(ledger: Ledger) -> Ledger:
 def process_postings(ledger: Ledger, postings: List[Posting]) -> Ledger:
     ledger, _failed_entries = safe_process_postings(ledger, postings)
     if _failed_entries:
-        raise KeyError(_failed_entries)
+        raise AbacusError(_failed_entries)
     return ledger
 
 
@@ -163,6 +171,9 @@ def _process(ledger: Ledger, posting: Posting) -> Ledger:
                 ledger[account_name] = cls([], [], link).start(amount)
             else:
                 ledger[account_name] = cls().start(amount)
+        case Entry(dr, cr, amount):
+            ledger[dr].debits.append(amount)
+            ledger[cr].credits.append(amount)
         case BaseEntry(dr, cr, amount, _):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)

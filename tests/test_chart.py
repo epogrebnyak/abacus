@@ -26,17 +26,6 @@ chart = Chart(
 )
 
 
-def test_invalid_chart_with_wrong_resulting_key():
-    with pytest.raises(AbacusError):
-        Chart(
-            assets=["cash"],
-            expenses=[],
-            equity=["cap"],
-            liabilities=[],
-            income=[],
-            contra_accounts={"cap": ([], "cash")},
-        )
-
 
 def test_invalid_chart_with_duplicate_key():
     with pytest.raises(AbacusError):
@@ -44,6 +33,7 @@ def test_invalid_chart_with_duplicate_key():
             assets=["cash"],
             expenses=[],
             equity=["cash"],
+            retained_earnings_account="re",
             liabilities=[],
             income=[],
         )
@@ -54,10 +44,11 @@ def test_invalid_chart_with_non_existent_contra_account_name():
         Chart(
             assets=["cash", "goods"],
             expenses=["cogs"],
-            equity=["capital", "re"],
+            equity=["capital"],
+            retained_earnings_account="re",
             liabilities=["loan"],
             income=["sales"],
-            contra_accounts={"sssalessssss": ([], "net_sales")},
+            contra_accounts={"sssalessssss": []},
         )
 
 
@@ -76,16 +67,8 @@ def test_account_names_method():
         "payables",
         "sales",
         "_profit",
+       'depreciation',
+'discount',
+'returned',
     ]
 
-
-def test_chart_flat():
-    assert chart.set_retained_earnings_account("retained_earnings")._flat() == [
-        (Asset, ["cash", "receivables", "goods_for_sale", "ppe"]),
-        (Expense, ["cogs", "sga", "depreciation_expense"]),
-        (Capital, ["equity"]),  # no retained_earnings here
-        (Liability, ["dividend_due", "payables"]),
-        (Income, ["sales"]),
-        (IncomeSummaryAccount, ["_profit"]),
-        (RetainedEarnings, ["retained_earnings"]),  # retained_earnings at the end
-    ]
