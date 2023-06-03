@@ -2,7 +2,7 @@
 
 from typing import List, Type
 
-from .accounting_types import AccountName, Entry, Posting, RenameAccount
+from .accounting_types import AccountName, Entry, Posting
 from .accounts import (
     Asset,
     Capital,
@@ -10,50 +10,36 @@ from .accounts import (
     Income,
     IncomeSummaryAccount,
     Liability,
-    RegularAccount,
     RetainedEarnings,
     Unique,
+    get_contra_account_type,
 )
 from .ledger import Ledger, expenses, income, subset_by_class
 
 __all__ = ["close"]  # type: ignore
 
 
-def closing_entries_for_contra_accounts(
-    ledger: Ledger, classes: List[Type[RegularAccount]]
-):
-    # find all contra accounts to close related to *classes*
-    # (where *cls* is a parent to contra account)
-    gen = list(
-        (name, account)
-        for cls in classes
-        for name, account in subset_by_class(ledger, cls).items()
-        if account.netting
-    )
-    # first, close contra account balances
-    for account_name, account in gen:
-        for contra_account_name in account.netting.contra_accounts:
-            yield ledger[contra_account_name].transfer_balance(
-                contra_account_name, account_name
-            )
-    # second, rename parent accounts (eg 'sales' -> 'net_sales', cannot rename until first step is finished)
-    for account_name, account in gen:
-        yield RenameAccount(account_name, account.netting.target_name)
+def contra_accounts_closing_entries(ledger: Ledger, regular_cls: Type):
+    cls = get_contra_account_type(regular_cls)
+    return [
+        account.transfer_balance(account_name, account.link)
+        for account_name, account in subset_by_class(ledger, cls).items()
+    ]
 
 
 def closing_entries_for_temporary_contra_accounts(ledger) -> List[Posting]:
-    return list(closing_entries_for_contra_accounts(ledger, classes=[Income, Expense]))
+    f = contra_accounts_closing_entries
+    return f(ledger, Income) + f(ledger, Expense)
 
 
 def closing_entries_for_permanent_contra_accounts(ledger) -> List[Posting]:
-    return list(
-        closing_entries_for_contra_accounts(ledger, classes=[Asset, Capital, Liability])
-    )
+    f = contra_accounts_closing_entries
+    return f(ledger, Asset) + f(ledger, Capital) + f(ledger, Liability)
 
 
 def find_account_name(ledger: Ledger, cls: Type[Unique]) -> AccountName:
     """In ledger there should be just one of IncomeSummaryAccount and one of RetainedEarnings,
-    this is a helper function to these account names.
+    this is a helper function to find out these account names.
     """
     account_names = list(subset_by_class(ledger, cls).keys())
     if len(account_names) == 1:
@@ -63,11 +49,14 @@ def find_account_name(ledger: Ledger, cls: Type[Unique]) -> AccountName:
 
 def closing_entries_income_and_expense_to_isa(ledger) -> List[Posting]:
     isa = find_account_name(ledger, IncomeSummaryAccount)
-    res: List[Posting] = []
-    for filter_with in (income, expenses):
-        for name, account in filter_with(ledger).items():
-            res.append(account.transfer_balance(name, isa))
-    return res
+    a = [
+        account.transfer_balance(name, isa)
+        for name, account in expenses(ledger).items()
+    ]
+    b = [
+        account.transfer_balance(name, isa) for name, account in income(ledger).items()
+    ]
+    return a + b
 
 
 def closing_entry_isa_to_retained_earnings(ledger: Ledger) -> Entry:

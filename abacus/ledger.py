@@ -1,10 +1,18 @@
-"""General ledger."""
+"""Journal of entries and general ledger."""
 
 from collections import UserDict, UserList
 from typing import List, Tuple
 
-from .accounting_types import AccountName, Entry, Posting, RenameAccount
+from .accounting_types import (
+    AccountName,
+    Posting,
+    Amount,
+    Entry,
+    OpenAccount,
+    AbacusError,
+)
 from .accounts import Account, Asset, Capital, Expense, Income, Liability
+
 
 class Journal(UserList[Posting]):
     """General ledger that holds all accounts."""
@@ -16,25 +24,51 @@ class Journal(UserList[Posting]):
     def post_entries(self, entries: List[Posting]) -> "Journal":
         self.data.extend(entries)
         return self
-    
+
+    def open_account(self, name, type, balance, link=None):
+        p = OpenAccount(name, type.__name__, balance, link)
+        self.data.append(p)
+        return self
+
+    def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
+        entry = Entry(dr, cr, amount)
+        return self.post_entries([entry])
+
     def adjust(self, dr, cr, amount) -> "Journal":
         return self
 
     def postclose(self, dr, cr, amount) -> "Journal":
         return self
 
-    def close_period(self) -> "Journal":
+    def close(self) -> "Journal":
+        from abacus.closing import closing_entries
+
+        self.post_entries(closing_entries(self.ledger()))
         return self
+
+    def balances(self):
+        pass
+
+    def current_profit(self):
+        return self.income_statement().current_profit
+
+    def ledger(self):
+        return Ledger().process_entries(self.data)
+
+    def balances(self):
+        from .reports import balances
+
+        return balances(self.ledger())
 
     def balance_sheet(self):
         from .reports import balance_sheet
 
-        return balance_sheet(self)
+        return balance_sheet(self.ledger())
 
     def income_statement(self):
         from .reports import income_statement
 
-        return income_statement(self)
+        return income_statement(self.ledger())
 
 
 class Ledger(UserDict[AccountName, Account]):
@@ -62,21 +96,6 @@ class Ledger(UserDict[AccountName, Account]):
         # - income and expense accounts are zero
         # - isa is zero
         return False
-
-    def balances(self):
-        from .reports import balances
-
-        return balances(self)
-
-    def balance_sheet(self):
-        from .reports import balance_sheet
-
-        return balance_sheet(self)
-
-    def income_statement(self):
-        from .reports import income_statement
-
-        return income_statement(self)
 
 
 def subset_by_class(ledger, cls):
@@ -115,13 +134,20 @@ def process_postings(ledger: Ledger, postings: List[Posting]) -> Ledger:
 
 
 def _process(ledger: Ledger, posting: Posting) -> Ledger:
+    from abacus.accounts import get_class_constructor
+
     match posting:
+        case OpenAccount(account_name, cls_, amount, link):
+            if account_name in ledger.keys():
+                raise AbacusError("Cannot open: account {account_name} already exists.")
+            cls = get_class_constructor(cls_)
+            if link:
+                ledger[account_name] = cls([], [], link).start(amount)
+            else:
+                ledger[account_name] = cls().start(amount)
         case Entry(dr, cr, amount):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)
-        case RenameAccount(existing_name, new_name):
-            ledger[new_name] = ledger[existing_name].safe_copy()
-            del ledger[existing_name]
     return ledger
 
 

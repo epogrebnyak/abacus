@@ -10,13 +10,12 @@
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Type
 
-from abacus import Entry
 
-from .accounting_types import AccountName, Amount
+from abacus.accounting_types import Entry, AccountName, Amount
 
-__all__ = ["Account", "RegularAccount"]
+__all__ = ["Account"]
 
 
 # Experimental, cannot blend to Account, may remove
@@ -24,17 +23,6 @@ class SafeCopy(ABC):
     @abstractmethod
     def safe_copy(self):
         pass
-
-
-@dataclass
-class Netting(SafeCopy):
-    """Netting information - *contra_accounts* and *target_name*."""
-
-    contra_accounts: List[AccountName]
-    target_name: AccountName
-
-    def safe_copy(self):
-        return self
 
 
 # > Using ABCs states the programmer’s intent clearly
@@ -69,16 +57,13 @@ class Account(ABC):
     def safe_copy(self):
         return self.__class__(self.debits.copy(), self.credits.copy())
 
+    @abstractmethod
+    def start(self, amount: Amount):
+        """Initialize account with starting value."""
 
-@dataclass
-class RegularAccount(Account):
-    """Account with information which contra accounts must be netted with this account."""
 
-    netting: Optional[Netting] = None
-
-    def safe_copy(self):
-        netting = self.netting.safe_copy() if self.netting else None
-        return self.__class__(self.debits.copy(), self.credits.copy(), netting)
+class RegularAccount:
+    pass
 
 
 class DebitAccount(Account):
@@ -90,6 +75,10 @@ class DebitAccount(Account):
     ) -> Entry:
         return Entry(cr=this_account, dr=to_account, amount=self.balance())
 
+    def start(self, amount: Amount):
+        self.debit(amount)
+        return self
+
 
 class CreditAccount(Account):
     def balance(self) -> Amount:
@@ -99,6 +88,10 @@ class CreditAccount(Account):
         self, this_account: AccountName, to_account: AccountName
     ) -> Entry:
         return Entry(dr=this_account, cr=to_account, amount=self.balance())
+
+    def start(self, amount: Amount):
+        self.credit(amount)
+        return self
 
 
 class Asset(DebitAccount, RegularAccount):
@@ -122,7 +115,7 @@ class Income(CreditAccount, RegularAccount):
 
 
 class Unique:
-    """There sould be just one account of this class in any ledger.
+    """There should be just one account of this class in any ledger.
     IncomeSummaryAccount and RetainedEarnings are unique.
     """
 
@@ -135,8 +128,9 @@ class RetainedEarnings(Capital, Unique):
     pass
 
 
+@dataclass
 class ContraAccount(Account):
-    pass
+    link: str = ""
 
 
 class ContraAsset(CreditAccount, ContraAccount):
@@ -171,3 +165,25 @@ def get_contra_account_type(cls: Type[RegularAccount]) -> Type[ContraAccount]:
         ]
     )
     return mapping[cls]
+
+
+all_account_classes = (
+    Asset,
+    ContraAsset,
+    Expense,
+    ContraExpense,
+    Capital,
+    ContraCapital,
+    Liability,
+    ContraLiability,
+    Income,
+    ContraIncome,
+    IncomeSummaryAccount,
+    RetainedEarnings,
+)
+
+all_accounts_dict = {cls.__name__: cls for cls in all_account_classes}
+
+
+def get_class_constructor(class_name: str) -> Type:
+    return all_accounts_dict[class_name]
