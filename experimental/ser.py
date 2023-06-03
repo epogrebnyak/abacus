@@ -1,5 +1,4 @@
 from pydantic import BaseModel, parse_obj_as
-from pathlib import Path
 
 
 class Entry(BaseModel):

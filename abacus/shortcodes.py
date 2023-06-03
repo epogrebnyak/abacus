@@ -1,3 +1,9 @@
+from dataclasses import dataclass
+from abacus.accounting_types import Amount, AccountName, Entry
+from typing import Tuple, List
+from collections import UserDict
+
+
 @dataclass
 class NamedEntry:
     opcode: str

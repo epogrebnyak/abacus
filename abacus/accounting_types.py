@@ -4,8 +4,6 @@ Base classes for a minimal accounting framework.
 
 # pylint: disable=no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
-from collections import UserDict
-from typing import List, Tuple, Union, Type
 
 from enum import Enum
 
