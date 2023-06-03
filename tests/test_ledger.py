@@ -11,7 +11,7 @@ def test_make_ledger():
         expenses=[],
         liabilities=[],
     )
-    assert _chart.set_retained_earnings_account("re").make_ledger() == {
+    assert _chart.set_retained_earnings_account("re").ledger() == {
         "cash": Asset(debits=[], credits=[]),
         "equity": Capital(debits=[], credits=[]),
         "_profit": IncomeSummaryAccount(debits=[], credits=[]),

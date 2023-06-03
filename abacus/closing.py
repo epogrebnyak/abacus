@@ -42,6 +42,7 @@ def closing_entries_for_temporary_contra_accounts(
 ) -> List[CloseTempContraAccounts]:
     def f(t):
         return contra_accounts_closing_entries(ledger, t, CloseTempContraAccounts)
+
     return f(Income) + f(Expense)
 
 
@@ -50,6 +51,7 @@ def closing_entries_for_permanent_contra_accounts(
 ) -> List[ClosePermContraAccounts]:
     def f(t):
         return contra_accounts_closing_entries(ledger, t, ClosePermContraAccounts)
+
     return f(Asset) + f(Capital) + f(Liability)
 
 

@@ -1,7 +1,7 @@
 import pytest  # pylint: disable=import-error
 
 from abacus import Chart, Entry
-from abacus.accounting_types import NamedEntry, Shortcodes
+from abacus.shortcodes import NamedEntry, Shortcodes
 from abacus.reports import BalanceSheet, IncomeStatement
 
 _shortcodes = Shortcodes(
@@ -48,10 +48,11 @@ def named_entries():
 _chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
-    equity=["equity", "re"],
+    equity=["equity"],
+    retained_earnings_account="re",
     liabilities=["divp", "payables"],
     income=["sales"],
-).set_retained_earnings_account("re")
+)
 
 
 @pytest.fixture
@@ -68,7 +69,7 @@ def test_make_entry():
 
 def test_named_entries_income_statement(chart, shortcodes, named_entries):
     entries = shortcodes.make_entries(named_entries)
-    ledger = chart.make_ledger().process_entries(entries)
+    ledger = chart.ledger().process_entries(entries)
     income_st = ledger.income_statement()
     assert income_st == IncomeStatement(
         income={"sales": 760}, expenses={"cogs": 440, "sga": 400}
@@ -76,12 +77,12 @@ def test_named_entries_income_statement(chart, shortcodes, named_entries):
 
 
 _entries = _shortcodes.make_entries(_named_entries)
-b = _chart.make_ledger().process_entries(_entries).close().balances()
+b = _chart.ledger().process_entries(_entries).close().balances()
 
 
 def test_named_entries_balance_sheet(chart, shortcodes, named_entries):
     entries = shortcodes.make_entries(named_entries)
-    balance_st = chart.make_ledger().process_entries(entries).close().balance_sheet()
+    balance_st = chart.ledger().process_entries(entries).close().balance_sheet()
     assert balance_st == BalanceSheet(
         assets={"cash": 464, "receivables": 131, "goods_for_sale": 380},
         capital={"equity": 1000, "re": -80},

@@ -15,12 +15,13 @@ from abacus.accounts import (
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale", "ppe"],
     expenses=["cogs", "sga", "depreciation_expense"],
-    equity=["equity", "retained_earnings"],
+    equity=["equity"],
+    retained_earnings_account="retained_earnings",
     liabilities=["dividend_due", "payables"],
     income=["sales"],
     contra_accounts={
-        "ppe": (["depreciation"], "net_ppe"),
-        "sales": (["discount", "returned"], "net_sales"),
+        "ppe": ["depreciation"],
+        "sales": ["discount", "returned"],
     },
 )
 

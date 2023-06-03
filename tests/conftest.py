@@ -9,7 +9,7 @@ def chart0():
     return Chart(
         assets=["cash", "receivables", "goods_for_sale"],
         expenses=["cogs", "sga"],
-        equity=["equity", "re"],
+        equity=["equity"],
         liabilities=["divp", "payables"],
         income=["sales"],
         retained_earnings_account="re",

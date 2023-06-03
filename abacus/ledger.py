@@ -104,11 +104,16 @@ class Ledger(UserDict[AccountName, Account]):
 
         return close(self)
 
+    def balances(self):
+        from .reports import balances
+
+        return balances(self)
+
     def is_closed(self) -> bool:
         # - income and expense contra accounts are zero
         # - income and expense accounts are zero
         # - isa is zero
-        return False
+        raise NotImplementedError
 
 
 def subset_by_class(ledger, cls):

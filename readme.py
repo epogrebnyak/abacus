@@ -46,7 +46,7 @@ entries = [
 
 # %%
 # create ledger and process entries
-ledger = chart.make_ledger().process_entries(entries)
+ledger = chart.ledger().process_entries(entries)
 
 # %%
 # create income statement

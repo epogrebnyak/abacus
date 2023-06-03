@@ -8,7 +8,6 @@ from abacus.accounts import (
     ContraIncome,
     Income,
     IncomeSummaryAccount,
-    Netting,
     RetainedEarnings,
 )
 from abacus.chart import Chart
@@ -16,13 +15,14 @@ from abacus.chart import Chart
 chart = Chart(
     assets=["cash", "ppe"],
     expenses=[],
-    equity=["shares", "re"],
+    equity=["shares"],
+    retained_earnings_account="re",
     liabilities=[],
     income=["sales"],
     contra_accounts={
-        "sales": (["discounts", "returns"], "net_sales"),
-        "shares": (["treasury_shares"], "shares_outstanding"),
-        "ppe": (["depr"], "net_ppe"),
+        "sales": ["discounts", "returns"],
+        "shares": ["treasury_shares"],
+        "ppe": ["depr"],
     },
 )
 
@@ -40,29 +40,19 @@ def test_make_ledger_with_netting():
             "ppe": (["depr"], "net_ppe"),
         },
     )
-    ledger = chart.set_retained_earnings_account("re").make_ledger()
+    ledger = chart.ledger()
     assert ledger == {
-        "cash": Asset(debits=[], credits=[], netting=None),
+        "cash": Asset(debits=[], credits=[]),
         "ppe": Asset(
             debits=[],
             credits=[],
-            netting=Netting(contra_accounts=["depr"], target_name="net_ppe"),
         ),
         "shares": Capital(
             debits=[],
             credits=[],
-            netting=Netting(
-                contra_accounts=["treasury_shares"], target_name="shares_outstanding"
-            ),
         ),
-        "re": RetainedEarnings(debits=[], credits=[], netting=None),
-        "sales": Income(
-            debits=[],
-            credits=[],
-            netting=Netting(
-                contra_accounts=["discounts", "returns"], target_name="net_sales"
-            ),
-        ),
+        "re": RetainedEarnings(debits=[], credits=[]),
+        "sales": Income(debits=[], credits=[]),
         "discounts": ContraIncome(debits=[], credits=[]),
         "returns": ContraIncome(debits=[], credits=[]),
         "treasury_shares": ContraCapital(debits=[], credits=[]),

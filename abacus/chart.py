@@ -1,6 +1,6 @@
 """Chart of accounts."""
 
-from typing import List, Type
+from typing import List, Type, Dict
 
 from pydantic import BaseModel, root_validator  # type: ignore
 
@@ -26,7 +26,7 @@ def is_unique(xs):
 def contra_account_names(values):
     return [
         contra_account
-        for _, contra_accounts in values.get("contra_accounts", {})
+        for _, contra_accounts in values.get("contra_accounts", {}).items()
         for contra_account in contra_accounts
     ]
 
@@ -55,7 +55,7 @@ class Chart(BaseModel):
     retained_earnings_account: str
     liabilities: list[str] = []
     income: list[str]
-    contra_accounts: dict[str, list[str]] = {}
+    contra_accounts: Dict[str, List[str]] = {}
     income_summary_account: str = "_profit"
 
     @root_validator

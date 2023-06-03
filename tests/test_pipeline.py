@@ -8,34 +8,23 @@ from abacus.accounts import (
     Income,
     IncomeSummaryAccount,
     Liability,
-    Netting,
 )
 
 ledger = Ledger(
     {
-        "cash": Asset(debits=[], credits=[], netting=None),
-        "goods_for_sale": Asset(debits=[], credits=[], netting=None),
-        "ppe": Asset(
-            debits=[],
-            credits=[],
-            netting=Netting(contra_accounts=["depreciation"], target_name="net_ppe"),
-        ),
-        "cogs": Expense(debits=[], credits=[], netting=None),
-        "sga": Expense(debits=[], credits=[], netting=None),
-        "depreciation_expense": Expense(debits=[], credits=[], netting=None),
-        "equity": Capital(debits=[], credits=[], netting=None),
-        "re": Capital(debits=[], credits=[], netting=None),
-        "divp": Liability(debits=[], credits=[], netting=None),
-        "sales": Income(
-            debits=[],
-            credits=[],
-            netting=Netting(
-                contra_accounts=["discount", "returns"], target_name="net_sales"
-            ),
-        ),
-        "depreciation": ContraAsset(debits=[], credits=[]),
-        "discount": ContraIncome(debits=[], credits=[]),
-        "returns": ContraIncome(debits=[], credits=[]),
+        "cash": Asset(debits=[], credits=[]),
+        "goods_for_sale": Asset(debits=[], credits=[]),
+        "ppe": Asset(debits=[], credits=[]),
+        "cogs": Expense(debits=[], credits=[]),
+        "sga": Expense(debits=[], credits=[]),
+        "depreciation_expense": Expense(debits=[], credits=[]),
+        "equity": Capital(debits=[], credits=[]),
+        "re": Capital(debits=[], credits=[]),
+        "divp": Liability(debits=[], credits=[]),
+        "sales": Income(debits=[], credits=[]),
+        "depreciation": ContraAsset(debits=[], credits=[], link="ppe"),
+        "discount": ContraIncome(debits=[], credits=[], link="sales"),
+        "returns": ContraIncome(debits=[], credits=[], link="sales"),
         "profit": IncomeSummaryAccount(debits=[], credits=[]),
     }
 )

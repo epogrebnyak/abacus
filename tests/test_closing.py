@@ -1,4 +1,4 @@
-from abacus.accounting_types import Entry, RenameAccount
+from abacus.accounting_types import Entry
 from abacus.accounts import (
     Asset,
     Capital,
@@ -8,7 +8,6 @@ from abacus.accounts import (
     Income,
     IncomeSummaryAccount,
     Liability,
-    Netting,
     RetainedEarnings,
 )
 from abacus.closing import closing_entries
@@ -16,27 +15,21 @@ from abacus.ledger import Ledger
 
 ledger = Ledger(
     {
-        "cash": Asset(
-            debits=[4000, 620], credits=[3000, 250, 40, 25, 50], netting=None
-        ),
-        "goods_for_sale": Asset(debits=[250], credits=[180], netting=None),
+        "cash": Asset(debits=[4000, 620], credits=[3000, 250, 40, 25, 50]),
+        "goods_for_sale": Asset(debits=[250], credits=[180]),
         "ppe": Asset(
             debits=[3000],
             credits=[],
-            netting=Netting(contra_accounts=["depreciation"], target_name="net_ppe"),
         ),
-        "cogs": Expense(debits=[180], credits=[], netting=None),
-        "sga": Expense(debits=[50], credits=[], netting=None),
-        "depreciation_expense": Expense(debits=[250], credits=[], netting=None),
-        "equity": Capital(debits=[], credits=[4000], netting=None),
-        "re": RetainedEarnings(debits=[], credits=[], netting=None),
-        "divp": Liability(debits=[], credits=[], netting=None),
+        "cogs": Expense(debits=[180], credits=[]),
+        "sga": Expense(debits=[50], credits=[]),
+        "depreciation_expense": Expense(debits=[250], credits=[]),
+        "equity": Capital(debits=[], credits=[4000]),
+        "re": RetainedEarnings(debits=[], credits=[]),
+        "divp": Liability(debits=[], credits=[]),
         "sales": Income(
             debits=[],
             credits=[620],
-            netting=Netting(
-                contra_accounts=["discount", "returns"], target_name="net_sales"
-            ),
         ),
         "depreciation": ContraAsset(debits=[], credits=[250]),
         "discount": ContraIncome(debits=[40, 25], credits=[]),

@@ -189,7 +189,7 @@ entries = [
 balance_sheet = (
     chart
     .set_retained_earnings_account("retained_earnings")
-    .make_ledger()
+    .ledger()
     .process_entries(entries)
     .close()
     .process_entry(dr="retained_earnings", cr="dividend_payable", amount=35)
@@ -230,7 +230,7 @@ chart = chart.set_retained_earnings_account("re")
 3. Next, create a general ledger based on chart of accounts.
 
 ```python
-ledger = chart.make_ledger()
+ledger = chart.ledger()
 ```
 
 4. Add accounting entries using account names from the chart of accounts.
