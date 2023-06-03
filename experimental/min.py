@@ -1,53 +1,34 @@
-# abacus chart set --assets cash,goods \
-#                  --expenses cogs,sga \
-#                  --capital equity \
-#                  --retained_earnings re \
-#                  --income sales
-# abacus post cash equity 5000
-# abacus post goods cash 1000
-# abacus post --entry cash sales 350 \
-#             --entry goods cogs 250
-# abacus post sga cash 40
+from abacus import Chart
 
-from abacus import Chart, Entry, BalanceSheet, IncomeStatement
-
+# Create chart of accounts
 chart = Chart(
-    assets=["cash", "receivables", "goods", "prepaid_rent"],
-    expenses=["cogs", "sga"],
-    equity=["equity"],  # FIXME: change to capital
-    retained_earnings="retained_earnings",
-    liabilities=["dividend_payable"],
-    income=["sales"],
-    contra_accounts={
-        "sales": (["discounts, cashback"], "net_sales")
-    },  # FIXME:{"sales": ["discounts, cashback"]}
+    assets=["cash", "receivables"],
+    equity=["equity"],
+    retained_earnings="re",
+    liabilities=[],
+    income=["services"],
+    expenses=["salaries", "rent"],
 )
-starting_balances = {
-    "cash": 4500,
-    "receivables": 480,
-    "equity": 5000,
-    "retained_earnings": -20,
-}
-entries = [
-    Entry("prepaid_rent", "cash", 120),  # prepay rent
-    Entry("goods", "cash", 1500),  # acquire goods
-    Entry("cash", "sales", 750),  # sell some goods
-    Entry("cogs", "goods", 500),  # register costs
-    Entry("sga", "cash", 100),  # and selling expenses
-]
+
+# Account balances known from previous period end
+starting_balances = {"cash": 1150, "receivables": 350, "equity": 1500}
+
+# Create general ledger and post new entries
 ledger = (
     chart.ledger(**starting_balances)
-    .post_entries(entries)
-    .adjust(dr="sga", cr="prepaid_rent", amount=90)
-    .close_period()
-    .postclose(dr="retained_earnings", 
-               cr="dividend_payable",
-               amount=75)
+    .post(dr="rent", cr="cash", amount=240)
+    .post(dr="services", cr="cash", amount=800)
+    .post(dr="salaries", cr="cash", amount=400)
 )
-# check what we've got
-assert ledger.balance_sheet() == BalanceSheet(
-    assets={"cash": 570},
-    capital={"equity": 500, "retained_earnings": 35},
-    liabilities={"dividend_payable": 35},
-)
-assert ledger.income_statement() == IncomeStatement()
+
+# Current period profit
+ledger.current_profit()
+
+# Get financial reports
+ledger.income_statement()
+# IncomeStatement ...
+
+ledger.balance_sheet()
+# BalanceSheet ...
+
+

@@ -30,7 +30,7 @@ def all_args(values):
         + values["assets"]
         + values["expenses"]
         + values["equity"]
-        + values["liabilities"]
+        + values.get("liabilities", [])
         + values["income"]
     )
 
@@ -41,11 +41,11 @@ class Chart(BaseModel):
     May include contra accounts.
     Must set *retained_earnings_account* to be able to use Ledger.close()."""
 
-    assets: List[str]
-    expenses: List[str]
-    equity: List[str]
-    liabilities: List[str]
-    income: List[str]
+    assets: list[str]
+    expenses: list[str]
+    equity: list[str]
+    liabilities: list[str] = []
+    income: list[str]
     contra_accounts: Dict[str, Tuple[List[str], str]] = {}
     income_summary_account: str = "_profit"
     retained_earnings_account: Optional[str] = None
