@@ -87,7 +87,7 @@ def config_file(config):
 @click.option("-l", "--liabilities", required=True)
 @click.option("-i", "--income", required=True)
 @click.option("-s", "--income-summary-account", default="_profit")
-@click.option("-n", "--contra-accounts", nargs=3, multiple=True)
+@click.option("-n", "--contra-accounts", nargs=2, multiple=True)
 def chart(**kwargs):
     click.echo(make_chart(**kwargs).json())
 

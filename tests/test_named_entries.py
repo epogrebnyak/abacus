@@ -68,9 +68,11 @@ def test_make_entry():
 
 
 def test_named_entries_income_statement(chart, shortcodes, named_entries):
+    from abacus.reports import income_statement
+    
     entries = shortcodes.make_entries(named_entries)
     ledger = chart.ledger().process_entries(entries)
-    income_st = ledger.income_statement()
+    income_st = income_statement(ledger)
     assert income_st == IncomeStatement(
         income={"sales": 760}, expenses={"cogs": 440, "sga": 400}
     )

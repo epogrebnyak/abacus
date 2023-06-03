@@ -14,7 +14,9 @@ def test_AccountBalanceDict():
 
 
 def test_income_statement(chart0, entries0):
-    income_st = chart0.ledger().process_entries(entries0).income_statement()
+    from abacus.reports import income_statement
+
+    income_st = income_statement(chart0.ledger().process_entries(entries0))
     assert income_st == IncomeStatement(
         income={"sales": 400}, expenses={"cogs": 200, "sga": 50}
     )

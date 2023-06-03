@@ -138,27 +138,30 @@ class RetainedEarnings(Capital, Unique):
 
 
 @dataclass
-class ContraAccount(Account):
-    link: str = ""
+class ContraAccount:
+    link: str
+    debits: List[Amount] = field(default_factory=list)
+    credits: List[Amount] = field(default_factory=list)
 
 
-class ContraAsset(CreditAccount, ContraAccount):
+
+class ContraAsset(ContraAccount, CreditAccount):
     pass
 
 
-class ContraExpense(CreditAccount, ContraAccount):
+class ContraExpense( ContraAccount, CreditAccount):
     pass
 
 
-class ContraCapital(DebitAccount, ContraAccount):
+class ContraCapital(ContraAccount, DebitAccount):
     pass
 
 
-class ContraLiability(DebitAccount, ContraAccount):
+class ContraLiability(ContraAccount, DebitAccount):
     pass
 
 
-class ContraIncome(DebitAccount, ContraAccount):
+class ContraIncome(ContraAccount, DebitAccount):
     pass
 
 

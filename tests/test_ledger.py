@@ -6,16 +6,17 @@ from abacus.ledger import Ledger, safe_process_postings
 def test_make_ledger():
     _chart = Chart(
         assets=["cash"],
-        equity=["equity", "re"],
+        equity=["equity"],
+        retained_earnings_account="re",
         income=[],
         expenses=[],
         liabilities=[],
     )
-    assert _chart.set_retained_earnings_account("re").ledger() == {
+    assert _chart.ledger() == {
         "cash": Asset(debits=[], credits=[]),
         "equity": Capital(debits=[], credits=[]),
         "_profit": IncomeSummaryAccount(debits=[], credits=[]),
-        "re": RetainedEarnings(debits=[], credits=[], netting=None),
+        "re": RetainedEarnings(debits=[], credits=[]),
     }
 
 
