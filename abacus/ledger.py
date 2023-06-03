@@ -7,11 +7,22 @@ from .accounting_types import (
     AccountName,
     Posting,
     Amount,
+    BaseEntry,
+    BusinessEntry,
     Entry,
     OpenAccount,
     AbacusError,
+    CloseExpense,
+    CloseIncome,
 )
-from .accounts import Account, Asset, Capital, Expense, Income, Liability
+from abacus.accounts import Account, Asset, Capital, Expense, Income, Liability
+
+
+def yield_until(xs, classes):
+    for x in xs:
+        if any(isinstance(x, cls) for cls in classes):
+            break
+        yield x
 
 
 class Journal(UserList[Posting]):
@@ -31,14 +42,14 @@ class Journal(UserList[Posting]):
         return self
 
     def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
-        entry = Entry(dr, cr, amount)
+        entry = BusinessEntry(dr, cr, amount)
         return self.post_entries([entry])
 
     def adjust(self, dr, cr, amount) -> "Journal":
-        return self
+        raise NotImplementedError
 
     def postclose(self, dr, cr, amount) -> "Journal":
-        return self
+        raise NotImplementedError
 
     def close(self) -> "Journal":
         from abacus.closing import closing_entries
@@ -46,11 +57,8 @@ class Journal(UserList[Posting]):
         self.post_entries(closing_entries(self.ledger()))
         return self
 
-    def balances(self):
-        pass
-
     def current_profit(self):
-        return self.income_statement().current_profit
+        return self.income_statement().current_profit()
 
     def ledger(self):
         return Ledger().process_entries(self.data)
@@ -66,9 +74,14 @@ class Journal(UserList[Posting]):
         return balance_sheet(self.ledger())
 
     def income_statement(self):
-        from .reports import income_statement
+        from .reports import IncomeStatement, balances
 
-        return income_statement(self.ledger())
+        _gen = yield_until(self.data, [CloseExpense, CloseIncome])
+        _ledger = Ledger().process_entries(_gen)
+        return IncomeStatement(
+            income=balances(income(_ledger)),
+            expenses=balances(expenses(_ledger)),
+        )
 
 
 class Ledger(UserDict[AccountName, Account]):
@@ -145,7 +158,7 @@ def _process(ledger: Ledger, posting: Posting) -> Ledger:
                 ledger[account_name] = cls([], [], link).start(amount)
             else:
                 ledger[account_name] = cls().start(amount)
-        case Entry(dr, cr, amount):
+        case BaseEntry(dr, cr, amount, _):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)
     return ledger

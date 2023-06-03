@@ -97,7 +97,6 @@ class Chart(BaseModel):
         return dict(self._regular_accounts_dict)[account_name]
 
     def _yield_contra_accounts(self):
-        """ """
         for account_name, contra_account_names in self.contra_accounts.items():
             cls = get_contra_account_type(self.get_type(account_name))
             for contra_account in contra_account_names:
@@ -116,19 +115,19 @@ class Chart(BaseModel):
     def journal(self, **kwargs):
         from abacus.ledger import Journal
 
-        j = Journal()
+        journal = Journal()
         for account_name, cls in self._yield_regular_accounts():
             amount = kwargs.get(account_name, 0)
-            j.open_account(account_name, cls, amount, link=None)
+            journal.open_account(account_name, cls, amount, link=None)
         for account_name, cls, link in self._yield_contra_accounts():
             amount = kwargs.get(account_name, 0)
-            j.open_account(account_name, cls, amount, link)
-        return j
+            journal.open_account(account_name, cls, amount, link)
+        return journal
 
     def ledger(self):
+        """Create empty ledger based on this chart."""
         from abacus.ledger import Ledger
 
-        """Create empty ledger based on this chart."""
         _gen1 = [
             (account_name, cls())
             for account_name, cls in self._yield_regular_accounts()

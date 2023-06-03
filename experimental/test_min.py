@@ -1,4 +1,11 @@
 from abacus import Chart, IncomeStatement, BalanceSheet
+from abacus.accounting_types import (
+    OpenAccount,
+    CloseExpense,
+    CloseIncome,
+    CloseISA,
+    BusinessEntry,
+)
 
 # Create chart of accounts
 chart = Chart(
@@ -18,12 +25,52 @@ journal = (
     .post(dr="rent", cr="cash", amount=200)
     .post(dr="cash", cr="services", amount=800)
     .post(dr="salaries", cr="cash", amount=400)
-    .close()  # not implemented
+    .close()
 )
 
 
 def test_postings():
-    assert journal.data == []
+    assert journal.data == [
+        OpenAccount(name="cash", type="Asset", balance=1400, link=None),
+        OpenAccount(
+            name="salaries",
+            type="Expense",
+            balance=0,
+            link=None,
+        ),
+        OpenAccount(name="rent", type="Expense", balance=0, link=None),
+        OpenAccount(
+            name="equity",
+            type="Capital",
+            balance=1500,
+            link=None,
+        ),
+        OpenAccount(
+            name="re",
+            type="RetainedEarnings",
+            balance=-100,
+            link=None,
+        ),
+        OpenAccount(
+            name="services",
+            type="Income",
+            balance=0,
+            link=None,
+        ),
+        OpenAccount(
+            name="_profit",
+            type="IncomeSummaryAccount",
+            balance=0,
+            link=None,
+        ),
+        BusinessEntry(dr="rent", cr="cash", amount=200, action="post"),
+        BusinessEntry(dr="cash", cr="services", amount=800, action="post"),
+        BusinessEntry(dr="salaries", cr="cash", amount=400, action="post"),
+        CloseExpense(dr="_profit", cr="salaries", amount=400, action="close_expense"),
+        CloseExpense(dr="_profit", cr="rent", amount=200, action="close_expense"),
+        CloseIncome(dr="services", cr="_profit", amount=800, action="close_income"),
+        CloseISA(dr="_profit", cr="re", amount=200, action="close_isa"),
+    ]
 
 
 def test_balance_sheet():

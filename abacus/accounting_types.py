@@ -24,9 +24,9 @@ class AbacusError(Exception):
 class OpenAccount:
     """Command to open regular or contra account in ledger."""
 
-    account_name: AccountName
-    account_type: str
-    starting_balance: Amount = 0
+    name: AccountName
+    type: str
+    balance: Amount = 0
     link: AccountName | None = None
 
 
@@ -38,6 +38,56 @@ class Entry:
     dr: AccountName
     cr: AccountName
     amount: Amount
+
+
+@dataclass
+class BaseEntry(Entry):
+    action: str
+
+
+@dataclass
+class BusinessEntry(BaseEntry):
+    action: str = "post"
+
+
+@dataclass
+class AdjustmentEntry(BaseEntry):
+    action: str = "adjust"
+
+
+@dataclass
+class ClosingEntry(BaseEntry):
+    action: str = "generic_close"
+
+
+@dataclass
+class PostEntry(BaseEntry):
+    action: str = "post_close"
+
+
+@dataclass
+class CloseTempContraAccounts(BaseEntry):
+    action: str = "close_tca"
+
+
+@dataclass
+class CloseIncome(BaseEntry):
+    action: str = "close_income"
+
+
+@dataclass
+class CloseExpense(BaseEntry):
+    action: str = "close_expense"
+
+
+@dataclass
+class CloseISA(BaseEntry):
+    action: str = "close_isa"
+
+
+@dataclass
+class ClosePermContraAccounts(BaseEntry):
+    action: str = "close_pca"
 
 
 class Event(str, Enum):

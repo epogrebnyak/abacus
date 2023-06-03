@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Type
 
 
-from abacus.accounting_types import Entry, AccountName, Amount
+from abacus.accounting_types import Entry, AccountName, Amount, ClosingEntry
 
 __all__ = ["Account"]
 
@@ -40,7 +40,10 @@ class Account(ABC):
 
     @abstractmethod
     def transfer_balance(
-        self, this_account: AccountName, to_account: AccountName
+        self,
+        this_account: AccountName,
+        to_account: AccountName,
+        entry_constructor: Type = ClosingEntry,
     ) -> Entry:
         """Create an entry that will move balance of *this_account*
         to *to_account*. Used when closing accounts. The resulting entry
@@ -71,9 +74,12 @@ class DebitAccount(Account):
         return sum(self.debits) - sum(self.credits)
 
     def transfer_balance(
-        self, this_account: AccountName, to_account: AccountName
+        self,
+        this_account: AccountName,
+        to_account: AccountName,
+        entry_constructor: Type = ClosingEntry,
     ) -> Entry:
-        return Entry(cr=this_account, dr=to_account, amount=self.balance())
+        return entry_constructor(cr=this_account, dr=to_account, amount=self.balance())
 
     def start(self, amount: Amount):
         self.debit(amount)
@@ -85,9 +91,12 @@ class CreditAccount(Account):
         return sum(self.credits) - sum(self.debits)
 
     def transfer_balance(
-        self, this_account: AccountName, to_account: AccountName
+        self,
+        this_account: AccountName,
+        to_account: AccountName,
+        entry_constructor: Type = ClosingEntry,
     ) -> Entry:
-        return Entry(dr=this_account, cr=to_account, amount=self.balance())
+        return entry_constructor(dr=this_account, cr=to_account, amount=self.balance())
 
     def start(self, amount: Amount):
         self.credit(amount)
