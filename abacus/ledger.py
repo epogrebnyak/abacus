@@ -36,7 +36,7 @@ class Ledger(UserDict[AccountName, Account]):
 
         return balances(self)
 
-    def balance_sheet(self):
+    def _balance_sheet(self):
         from .reports import balance_sheet
 
         return balance_sheet(self)

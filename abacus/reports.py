@@ -53,10 +53,6 @@ def balances(ledger: Ledger) -> AccountBalancesDict:
 
 
 def balance_sheet(ledger: Ledger) -> BalanceSheet:
-    # Note: must be closed ledger, may need to check:
-    # - contraccounts to income and expense must be zero
-    # - income and expense balances must be zero
-    # - isa must be zero
     entries = closing_entries_for_permanent_contra_accounts(ledger)
     ledger = ledger.process_entries(entries)
     return BalanceSheet(
@@ -67,11 +63,9 @@ def balance_sheet(ledger: Ledger) -> BalanceSheet:
 
 
 def income_statement(ledger: Ledger) -> IncomeStatement:
-    entries = closing_entries_for_temporary_contra_accounts(ledger)
-    _ledger = ledger.process_entries(entries)
     return IncomeStatement(
-        income=balances(income(_ledger)),
-        expenses=balances(expenses(_ledger)),
+        income=balances(income(ledger)),
+        expenses=balances(expenses(ledger)),
     )
 
 

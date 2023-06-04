@@ -58,23 +58,13 @@ class Journal(UserList[Posting]):
         return balances(self.ledger())
 
     def balance_sheet(self):
-        from .reports import BalanceSheet, balances
-        from .ledger import assets, capital, liabilities
+        from .reports import balance_sheet
 
-        _ledger = self.ledger()
-        return BalanceSheet(
-            assets=balances(assets(_ledger)),
-            capital=balances(capital(_ledger)),
-            liabilities=balances(liabilities(_ledger)),
-        )
+        return balance_sheet(self.ledger())
 
     def income_statement(self):
-        from .reports import IncomeStatement, balances
-        from .ledger import income, expenses
+        from .reports import income_statement
 
         _gen = yield_until(self.data, [CloseExpense, CloseIncome])
         _ledger = Ledger().process_entries(_gen)
-        return IncomeStatement(
-            income=balances(income(_ledger)),
-            expenses=balances(expenses(_ledger)),
-        )
+        return income_statement(_ledger)
