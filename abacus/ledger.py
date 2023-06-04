@@ -38,11 +38,13 @@ class Journal(UserList[Posting]):
         self.data.extend(entries)
         return self
 
-    def open_account(self, name, type, balance, link=None):
-        if link:
-            p = OpenContraAccount(name, type.__name__, balance, link)
-        else:
-            p = OpenRegularAccount(name, type.__name__, balance)
+    def open_regular_account(self, name, type, balance):
+        p = OpenRegularAccount(name, type.__name__, balance)
+        self.data.append(p)
+        return self
+
+    def open_contra_account(self, name, type, balance, link):
+        p = OpenContraAccount(name, type.__name__, balance, link)
         self.data.append(p)
         return self
 

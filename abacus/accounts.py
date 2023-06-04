@@ -159,7 +159,7 @@ class ContraIncome(ContraAccount, DebitAccount):
 
 
 def get_contra_account_type(cls: Type[RegularAccount]) -> Type[ContraAccount]:
-    # Without this long signature below we get typing error for get_contra_account_type()
+    # long signature for mypy
     mapping: Dict[Type[RegularAccount], Type[ContraAccount]] = dict(
         [
             (Asset, ContraAsset),

@@ -114,13 +114,18 @@ class Chart(BaseModel):
     def journal(self, **kwargs):
         from abacus.ledger import Journal
 
+        def get_balance(account_name):
+            return kwargs.get(account_name, 0)
+
         journal = Journal()
-        for account_name, cls in self._yield_regular_accounts():
-            amount = kwargs.get(account_name, 0)
-            journal.open_account(account_name, cls, amount, link=None)
-        for account_name, cls, link in self._yield_contra_accounts():
-            amount = kwargs.get(account_name, 0)
-            journal.open_account(account_name, cls, amount, link)
+        for account_name, cls_string in self._yield_regular_accounts():
+            journal.open_regular_account(
+                account_name, cls_string, get_balance(account_name)
+            )
+        for account_name, cls_string, link in self._yield_contra_accounts():
+            journal.open_contra_account(
+                account_name, cls_string, get_balance(account_name), link
+            )
         return journal
 
     def ledger(self):
