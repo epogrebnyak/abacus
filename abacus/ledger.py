@@ -1,86 +1,14 @@
 """Journal of entries and general ledger."""
 
-from collections import UserDict, UserList
-from typing import List, Tuple
-from typing import Type
-from abacus.accounts import Unique
+from collections import UserDict
+from typing import List, Tuple, Type
 
-from abacus.accounts import Account, Asset, Capital, Expense, Income, Liability
+from pydantic.dataclasses import dataclass
 
-from .accounting_types import (
-    AbacusError,
-    AccountName,
-    Amount,
-    BaseEntry,
-    BusinessEntry,
-    CloseExpense,
-    CloseIncome,
-    Entry,
-    OpenContraAccount,
-    OpenRegularAccount,
-    Posting,
-)
+from abacus.accounting_types import Amount
+from abacus.accounts import Account, Asset, Capital, Expense, Income, Liability, Unique
 
-
-def yield_until(xs, classes):
-    for x in xs:
-        if any(isinstance(x, cls) for cls in classes):
-            break
-        yield x
-
-
-class Journal(UserList[Posting]):
-    """General ledger that holds all accounts."""
-
-    @classmethod
-    def from_file(cls, path):
-        return cls()
-
-    def post_entries(self, entries: List[Posting]) -> "Journal":
-        self.data.extend(entries)
-        return self
-
-    def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
-        entry = BusinessEntry(dr, cr, amount)
-        return self.post_entries([entry])
-
-    def adjust(self, dr, cr, amount) -> "Journal":
-        raise NotImplementedError
-
-    def postclose(self, dr, cr, amount) -> "Journal":
-        raise NotImplementedError
-
-    def close(self) -> "Journal":
-        from abacus.closing import closing_entries
-
-        self.post_entries(closing_entries(self.ledger()))  # type: ignore
-        return self
-
-    def current_profit(self):
-        return self.income_statement().current_profit()
-
-    def ledger(self):
-        return Ledger().process_entries(self.data)
-
-    def balances(self):
-        from .reports import balances
-
-        return balances(self.ledger())
-
-    def balance_sheet(self):
-        from .reports import balance_sheet
-
-        return balance_sheet(self.ledger())
-
-    def income_statement(self):
-        from .reports import IncomeStatement, balances
-
-        _gen = yield_until(self.data, [CloseExpense, CloseIncome])
-        _ledger = Ledger().process_entries(_gen)
-        return IncomeStatement(
-            income=balances(income(_ledger)),
-            expenses=balances(expenses(_ledger)),
-        )
+from .accounting_types import AbacusError, AccountName, BaseEntry, Entry
 
 
 class Ledger(UserDict[AccountName, Account]):
@@ -112,12 +40,6 @@ class Ledger(UserDict[AccountName, Account]):
         from .reports import balance_sheet
 
         return balance_sheet(self)
-
-    def is_closed(self) -> bool:
-        # - income and expense contra accounts are zero
-        # - income and expense accounts are zero
-        # - isa is zero
-        raise NotImplementedError
 
     def find_account_name(self, cls: Type[Unique]) -> AccountName:
         return find_account_name(self, cls)
@@ -161,11 +83,29 @@ def income(ledger: Ledger) -> Ledger:
     return subset_by_class(ledger, Income)
 
 
-def process_postings(ledger: Ledger, postings: List[Posting]) -> Ledger:
-    ledger, _failed_entries = safe_process_postings(ledger, postings)
-    if _failed_entries:
-        raise AbacusError(_failed_entries)
-    return ledger
+AccountType = str
+
+
+@dataclass
+class OpenRegularAccount:
+    """Command to open regular account in ledger."""
+
+    name: AccountName
+    type: AccountType
+    balance: Amount
+
+
+@dataclass
+class OpenContraAccount:
+    """Command to open contra account in ledger."""
+
+    name: AccountName
+    type: AccountType
+    balance: Amount
+    link: AccountName
+
+
+Posting = OpenRegularAccount | OpenContraAccount | BaseEntry | Entry
 
 
 def check_not_exists(ledger, account_name):
@@ -205,3 +145,10 @@ def safe_process_postings(
         except KeyError:
             _failed.append(posting)
     return _ledger, _failed
+
+
+def process_postings(ledger: Ledger, postings: List[Posting]) -> Ledger:
+    ledger, _failed_entries = safe_process_postings(ledger, postings)
+    if _failed_entries:
+        raise AbacusError(_failed_entries)
+    return ledger

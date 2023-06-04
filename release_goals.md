@@ -1,4 +1,4 @@
-# Release target: 0.4.0 CLI app with local json file backend
+# Release target: 0.5.0 CLI app with local json file backend
 
 ```console
 # start project in current directory

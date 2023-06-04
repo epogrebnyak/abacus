@@ -46,18 +46,28 @@ def all_args(values):
     return regular_account_names(values) + contra_account_names(values)
 
 
-def chart_to_opening_entries(chart, starting_balances):
-    from abacus.accounting_types import OpenRegularAccount, OpenContraAccount
+def opening_entries_regular(chart, starting_balances):
+    from abacus.ledger import OpenRegularAccount
 
     def get_balance(account_name):
         return starting_balances.get(account_name, 0)
 
-    for account_name, cls in chart._yield_regular_accounts():
-        yield OpenRegularAccount(account_name, cls.__name__, get_balance(account_name))
-    for account_name, cls, link in chart._yield_contra_accounts():
-        yield OpenContraAccount(
-            account_name, cls.__name__, get_balance(account_name), link
-        )
+    return [
+        OpenRegularAccount(account_name, cls.__name__, get_balance(account_name))
+        for account_name, cls in chart._yield_regular_accounts()
+    ]
+
+
+def opening_entries_contra(chart, starting_balances):
+    from abacus.ledger import OpenContraAccount
+
+    def get_balance(account_name):
+        return starting_balances.get(account_name, 0)
+
+    return [
+        OpenContraAccount(account_name, cls.__name__, get_balance(account_name), link)
+        for account_name, cls, link in chart._yield_contra_accounts()
+    ]
 
 
 class Chart(BaseModel):
@@ -129,12 +139,14 @@ class Chart(BaseModel):
 
     def journal(self, **starting_balances):
         """Create a journal based on this chart and starting_balances."""
-        from abacus.ledger import Journal
+        from abacus.journal import Journal
 
         # FIXME: Will refactor: adding starting balances in a multiple entry,
         #        and needs checking if balance is done right.
         journal = Journal()
-        opening_entries = list(chart_to_opening_entries(self, starting_balances))
+        opening_entries = opening_entries_regular(
+            self, starting_balances
+        ) + opening_entries_contra(self, starting_balances)
         journal.data.extend(opening_entries)
         return journal
 

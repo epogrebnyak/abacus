@@ -2,14 +2,6 @@
 
 from typing import List, Type
 
-from abacus.accounting_types import (
-    AbacusError,
-    AccountName,
-    CloseExpense,
-    CloseIncome,
-    CloseISA,
-    ClosingEntry,
-)
 from abacus.accounts import (
     Asset,
     Capital,
@@ -19,18 +11,25 @@ from abacus.accounts import (
     Liability,
     RegularAccount,
     RetainedEarnings,
-    Unique,
     get_contra_account_type,
 )
-from abacus.closing_types import CloseContra, get_closing_entry_type
-from abacus.ledger import Ledger, expenses, income, subset_by_class
+from abacus.closing_types import (
+    CloseContra,
+    CloseExpense,
+    CloseIncome,
+    CloseISA,
+    get_closing_entry_type,
+)
+from abacus.ledger import Ledger
 
 __all__ = ["close"]  # type: ignore
 
 
 def closing_entries_contra_accounts(
-    ledger: Ledger, regular_cls: Type[RegularAccount]
+    ledger: "Ledger", regular_cls: Type[RegularAccount]
 ) -> List[CloseContra]:
+    from abacus.ledger import subset_by_class
+
     cls = get_contra_account_type(regular_cls)
     constructor = get_closing_entry_type(regular_cls)
     return [
@@ -83,14 +82,14 @@ def closing_entries_expenses_to_isa(ledger) -> List[CloseExpense]:
 
 
 def closing_entry_isa_to_retained_earnings(
-    ledger: Ledger,
+    ledger: "Ledger",
 ) -> CloseISA:
     isa = ledger.find_account_name(IncomeSummaryAccount)
     re = ledger.find_account_name(RetainedEarnings)
     return CloseISA(*ledger[isa].transfer_balance_entry(isa, re))
 
 
-def closing_entries(ledger: Ledger) -> List:
+def closing_entries(ledger: "Ledger") -> List:
     es1 = closing_entries_for_temporary_contra_accounts(ledger)
     _dummy_ledger = ledger.process_entries(es1)
     # At this point we can issue IncomeStatement
@@ -101,6 +100,6 @@ def closing_entries(ledger: Ledger) -> List:
     return es1 + es2 + es3 + [es4]
 
 
-def close(ledger: Ledger) -> Ledger:
+def close(ledger: "Ledger") -> "Ledger":
     """Close ledger to *retained_earnings_account_name*."""
     return ledger.process_entries(closing_entries(ledger))

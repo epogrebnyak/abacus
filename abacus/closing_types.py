@@ -4,18 +4,32 @@ from typing import Dict, Type
 
 from pydantic.dataclasses import dataclass
 
-from abacus.accounting_types import BaseEntry, ClosingEntry
+from abacus.accounting_types import BaseEntry
 from abacus.accounts import Asset, Capital, Expense, Income, Liability, RegularAccount
+
+
+class ClosingEntry:
+    pass
+
+
+@dataclass
+class CloseIncome(BaseEntry, ClosingEntry):
+    action: str = "close_income"
+
+
+@dataclass
+class CloseExpense(BaseEntry, ClosingEntry):
+    action: str = "close_expense"
+
+
+@dataclass
+class CloseISA(BaseEntry, ClosingEntry):
+    action: str = "close_isa"
 
 
 @dataclass
 class CloseContra(ClosingEntry):
     pass
-
-
-@dataclass
-class CloseTempContraAccounts(BaseEntry, CloseContra):
-    action: str = "close_tca"
 
 
 @dataclass

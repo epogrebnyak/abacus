@@ -1,12 +1,7 @@
 from abacus import BalanceSheet, Chart, IncomeStatement
-from abacus.accounting_types import (
-    OpenRegularAccount,
-    OpenContraAccount,
-    BusinessEntry,
-    CloseExpense,
-    CloseIncome,
-    CloseISA,
-)
+from abacus.accounting_types import BusinessEntry
+from abacus.closing_types import CloseExpense, CloseIncome, CloseISA
+from abacus.ledger import OpenRegularAccount
 
 # Create chart of accounts
 chart = Chart(
