@@ -1,9 +1,18 @@
 from collections import UserList
 from typing import List
 
-from abacus.accounting_types import AccountName, Amount, BusinessEntry
-from abacus.closing_types import CloseExpense, CloseIncome
+from pydantic import BaseModel
+
+from abacus.accounting_types import (
+    AccountName,
+    Amount,
+    BusinessEntry,
+    Entry,
+    AbacusError,
+)
+from abacus.closing_types import ClosingEntry, CloseExpense, CloseIncome
 from abacus.ledger import Ledger, Posting, process_postings
+from abacus.ledger import OpenRegularAccount, OpenContraAccount
 
 
 def yield_until(xs, classes):
@@ -11,6 +20,85 @@ def yield_until(xs, classes):
         if any(isinstance(x, cls) for cls in classes):
             break
         yield x
+
+
+class BaseJournal(BaseModel):
+    open_regular_accounts: list[OpenRegularAccount] = []
+    open_contra_accounts: list[OpenContraAccount] = []
+    business_entries: list[Entry] = []
+    adjustment_entries: list[Entry] = []
+    closing_entries: list[ClosingEntry] = []
+    post_close_entries: list[Entry] = []
+    is_closed: bool = False
+
+    def entries_for_closing_temp_contra_accounts(self):
+        """Return close contra income and close contra expense accounts.
+        Used to construct income statement."""
+        def is_required(p):
+            from abacus.closing import CloseContraExpense, CloseContraIncome
+            return isinstance(p, CloseContraExpense) or isinstance(p,CloseContraIncome)
+        return [p for p in self.closing_entries if is_required(p)]
+    
+    def yield_for_income_statement(self):
+        entry_lists = [
+            self.open_regular_accounts,
+            self.open_contra_accounts,
+            self.business_entries,
+            self.adjustment_entries,
+            self.entries_for_closing_temp_contra_accounts(),
+            self.post_close_entries,
+        ]
+        for entry_list in entry_lists:
+            for entry in entry_list:
+                yield entry
+
+    def yield_all(self):
+        entry_lists = [
+            self.open_regular_accounts,
+            self.open_contra_accounts,
+            self.business_entries,
+            self.adjustment_entries,
+            self.closing_entries,
+            self.post_close_entries,
+        ]
+        for entry_list in entry_lists:
+            for entry in entry_list:
+                yield entry
+
+    def ledger(self):
+        return process_postings(Ledger(), self.yield_all())
+
+    def add_regular_accounts(self, ps: list[OpenRegularAccount]):
+        self.open_regular_accounts.extend(ps)
+        return self
+
+    def add_contra_accounts(self, ps: list[OpenContraAccount]):
+        self.open_contra_accounts.extend(ps)
+        return self
+
+    def add_business_entries(self, ps: list[Entry]):
+        if self.closed:
+            raise AbacusError("Cannot add entries to closed ledger.")
+        self.business_entries.extend(ps)
+        return self
+
+    def add_adjustment_entries(self, ps: list[Entry]):
+        if self.closed:
+            raise AbacusError("Cannot add entries to closed ledger.")
+        self.business_entries.extend(ps)
+        return self
+
+    def close(self):
+        from abacus.closing import closing_entries
+
+        if self.closed:
+            raise AbacusError("Ledger already closed.")
+        self.closing_entries = closing_entries(self.ledger())  # type: ignore
+        return self
+
+    def add_post_close_entries(self, ps: list[Entry]):
+        self.post_close_entries.extend(ps)
+        return self
 
 
 class Journal(UserList[Posting]):
