@@ -66,16 +66,15 @@ class Chart(BaseModel):
 
     @root_validator
     def contra_accounts_should_match_chart_of_accounts(cls, values):
-        if values.get("contra_accounts"):
-            regular_account_names = all_args(values)
-            for account_name in values["contra_accounts"].keys():
-                if account_name not in regular_account_names:
-                    raise AbacusError(
-                        [
-                            regular_account_names,
-                            f"{account_name} must be specified in chart",
-                        ]
-                    )
+        regular_account_names = all_args(values)
+        for account_name in values.get("contra_accounts", {}).keys():
+            if account_name not in regular_account_names:
+                raise AbacusError(
+                    [
+                        regular_account_names,
+                        f"{account_name} must be specified in chart",
+                    ]
+                )
         return values
 
     def _yield_regular_accounts(self):

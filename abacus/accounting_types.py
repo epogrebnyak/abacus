@@ -21,13 +21,21 @@ class AbacusError(Exception):
 
 
 @dataclass
-class OpenAccount:
-    """Command to open regular or contra account in ledger."""
+class OpenRegularAccount:
+    """Command to open regular account in ledger."""
 
     name: AccountName
     type: AccountType
-    balance: Amount = 0
-    link: AccountName | None = None
+    balance: Amount
+
+@dataclass
+class OpenContraAccount:
+    """Command to open contra account in ledger."""
+
+    name: AccountName
+    type: AccountType
+    balance: Amount
+    link: AccountName
 
 
 @dataclass
@@ -68,25 +76,22 @@ class Event(str, Enum):
 class Mark:
     event: Event
 
+class ClosingEntry:
+    pass
 
 @dataclass
-class ClosingEntry(BaseEntry):
-    action: str = "generic_close"
-
-
-@dataclass
-class CloseIncome(BaseEntry):
+class CloseIncome(BaseEntry, ClosingEntry):
     action: str = "close_income"
 
 
 @dataclass
-class CloseExpense(BaseEntry):
+class CloseExpense(BaseEntry, ClosingEntry):
     action: str = "close_expense"
 
 
 @dataclass
-class CloseISA(BaseEntry):
+class CloseISA(BaseEntry, ClosingEntry):
     action: str = "close_isa"
 
 
-Posting = Entry | ClosingEntry | BaseEntry | Mark | OpenAccount
+Posting = Entry | BaseEntry | Mark | OpenRegularAccount | OpenContraAccount

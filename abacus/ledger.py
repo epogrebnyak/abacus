@@ -14,7 +14,8 @@ from .accounting_types import (
     CloseExpense,
     CloseIncome,
     Entry,
-    OpenAccount,
+    OpenContraAccount,
+    OpenRegularAccount,
     Posting,
 )
 
@@ -38,7 +39,10 @@ class Journal(UserList[Posting]):
         return self
 
     def open_account(self, name, type, balance, link=None):
-        p = OpenAccount(name, type.__name__, balance, link)
+        if link:
+            p = OpenContraAccount(name, type.__name__, balance, link)
+        else:
+            p = OpenRegularAccount(name, type.__name__, balance)
         self.data.append(p)
         return self
 
@@ -156,19 +160,22 @@ def process_postings(ledger: Ledger, postings: List[Posting]) -> Ledger:
         raise AbacusError(_failed_entries)
     return ledger
 
+def check_not_exists(ledger, account_name):
+            if account_name in ledger.keys():
+                raise AbacusError("Cannot open: account {account_name} already exists.")
 
 def _process(ledger: Ledger, posting: Posting) -> Ledger:
     from abacus.accounts import get_class_constructor
 
     match posting:
-        case OpenAccount(account_name, cls_, amount, link):
-            if account_name in ledger.keys():
-                raise AbacusError("Cannot open: account {account_name} already exists.")
-            cls = get_class_constructor(cls_)
-            if link:
-                ledger[account_name] = cls([], [], link).start(amount)
-            else:
-                ledger[account_name] = cls().start(amount)
+        case OpenContraAccount(account_name, cls_string, amount, link):
+            check_not_exists(ledger, account_name)
+            cls = get_class_constructor(cls_string)
+            ledger[account_name] = cls([], [], link).start(amount)
+        case OpenRegularAccount(account_name, cls_string, amount):
+            check_not_exists(ledger, account_name)
+            cls = get_class_constructor(cls_string)
+            ledger[account_name] = cls([], []).start(amount)
         case Entry(dr, cr, amount):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)

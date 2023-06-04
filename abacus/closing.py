@@ -96,7 +96,7 @@ def closing_entry_isa_to_retained_earnings(
     return CloseISA(*ledger[isa].transfer_balance_entry(isa, re))
 
 
-def closing_entries(ledger: Ledger) -> List[ClosingEntry]:
+def closing_entries(ledger: Ledger) -> List:
     es1 = closing_entries_for_temporary_contra_accounts(ledger)
     _dummy_ledger = ledger.process_entries(es1)
     # At this point we can issue IncomeStatement

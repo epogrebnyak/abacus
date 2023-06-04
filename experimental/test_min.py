@@ -1,10 +1,11 @@
 from abacus import BalanceSheet, Chart, IncomeStatement
 from abacus.accounting_types import (
+    OpenRegularAccount,
+    OpenContraAccount,
     BusinessEntry,
     CloseExpense,
     CloseIncome,
     CloseISA,
-    OpenAccount,
 )
 
 # Create chart of accounts
@@ -31,37 +32,31 @@ journal = (
 
 def test_postings():
     assert journal.data == [
-        OpenAccount(name="cash", type="Asset", balance=1400, link=None),
-        OpenAccount(
-            name="salaries",
+        OpenRegularAccount(name="cash", type="Asset", balance=1400),
+        OpenRegularAccount(name="salaries",
             type="Expense",
-            balance=0,
-            link=None,
+            balance=0
         ),
-        OpenAccount(name="rent", type="Expense", balance=0, link=None),
-        OpenAccount(
+        OpenRegularAccount(name="rent", type="Expense", balance=0),
+        OpenRegularAccount(
             name="equity",
             type="Capital",
-            balance=1500,
-            link=None,
+            balance=1500
         ),
-        OpenAccount(
+        OpenRegularAccount(
             name="re",
             type="RetainedEarnings",
             balance=-100,
-            link=None,
         ),
-        OpenAccount(
+        OpenRegularAccount(
             name="services",
             type="Income",
             balance=0,
-            link=None,
         ),
-        OpenAccount(
+        OpenRegularAccount(
             name="_profit",
             type="IncomeSummaryAccount",
             balance=0,
-            link=None,
         ),
         BusinessEntry(dr="rent", cr="cash", amount=200, action="post"),
         BusinessEntry(dr="cash", cr="services", amount=800, action="post"),
