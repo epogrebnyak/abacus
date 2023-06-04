@@ -256,6 +256,6 @@ Got a use case for `abacus`? Used package in classroom for teaching?
 Feel free to contact `abacus` author
 in [issues](https://github.com/epogrebnyak/abacus/issues),
 on [reddit](https://www.reddit.com/user/iamevpo)
-or via [Telegram](https://t.me/epoepo). 
+or via [Telegram](https://t.me/epoepo).
 
 Your feedback is highly appreciated and helps steering development of `abacus`.

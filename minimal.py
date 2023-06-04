@@ -1,4 +1,4 @@
-from abacus import Chart, BalanceSheet, IncomeStatement
+from abacus import BalanceSheet, Chart, IncomeStatement
 
 chart = Chart(
     assets=["cash", "ar", "goods"],
@@ -18,17 +18,14 @@ journal = (
     .close()
 )
 print(journal.balance_sheet())
-# BalanceSheet(
-#     assets={"cash": 1540, "goods": 50},
-#     capital={"equity": 1500, "re": 90},
-#     liabilities={},
-# )
+# BalanceSheet(assets={'cash': 1350, 'ar': 190, 'goods': 50},
+#              capital={'equity': 1500, 're': 90},
+#              liabilities={})
 print(journal.income_statement())
-# IncomeStatement(income={"sales": 399},
-#                 expenses={"cogs": 250, "sga": 59})
+# IncomeStatement(income={'sales': 399},
+#                 expenses={'cogs': 250, 'sga': 59})
 
 from abacus import Chart, Entry
-
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
@@ -65,7 +62,6 @@ assert balance_sheet == BalanceSheet(
 )
 
 from abacus import RichViewer
-
 
 rename_dict = {
     "re": "Retained earnings",

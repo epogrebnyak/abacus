@@ -1,18 +1,21 @@
-from collections import UserList
 from typing import List
 
 from pydantic import BaseModel
 
 from abacus.accounting_types import (
+    AbacusError,
     AccountName,
     Amount,
     BusinessEntry,
     Entry,
-    AbacusError,
 )
-from abacus.closing_types import ClosingEntry, CloseExpense, CloseIncome
-from abacus.ledger import Ledger, Posting, process_postings
-from abacus.ledger import OpenRegularAccount, OpenContraAccount
+from abacus.closing_types import ClosingEntry
+from abacus.ledger import (
+    Ledger,
+    OpenContraAccount,
+    OpenRegularAccount,
+    process_postings,
+)
 
 
 def yield_until(xs, classes):

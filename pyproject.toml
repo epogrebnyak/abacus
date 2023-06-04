@@ -3,6 +3,7 @@ skip_gitignore = true
 
 [tool.ruff]
 ignore=['E501', 'E741']
+extend-exclude=["minimal.py"]
 
 [tool.poetry]
 name = "abacus"

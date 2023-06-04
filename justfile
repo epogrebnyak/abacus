@@ -9,17 +9,14 @@ grill:
   just test
   just mypy
   just ruff
+  just readme
   just lint 
   just md
 
 # run code from README.md
 readme:
-  cat README.md | npx codedown python | poetry run python 
-
-# run all code examples
-examples:
-  just readme
-  poetry run python readme.py
+  cat README.md | npx codedown python > minimal.py
+  poetry run python minimal.py
 
 # run readme.py
 md:
