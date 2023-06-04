@@ -141,13 +141,15 @@ class Chart(BaseModel):
         """Create a journal based on this chart and starting_balances."""
         from abacus.journal import Journal
 
+        journal = Journal()
+        journal.data.open_regular_accounts = opening_entries_regular(
+            self, starting_balances
+        )
+        journal.data.open_contra_accounts = opening_entries_contra(
+            self, starting_balances
+        )
         # FIXME: Will refactor: adding starting balances in a multiple entry,
         #        and needs checking if balance is done right.
-        journal = Journal()
-        opening_entries = opening_entries_regular(
-            self, starting_balances
-        ) + opening_entries_contra(self, starting_balances)
-        journal.data.extend(opening_entries)
         return journal
 
     def ledger(self):

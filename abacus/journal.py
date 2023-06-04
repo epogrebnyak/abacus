@@ -34,11 +34,14 @@ class BaseJournal(BaseModel):
     def entries_for_closing_temp_contra_accounts(self):
         """Return close contra income and close contra expense accounts.
         Used to construct income statement."""
+
         def is_required(p):
-            from abacus.closing import CloseContraExpense, CloseContraIncome
-            return isinstance(p, CloseContraExpense) or isinstance(p,CloseContraIncome)
+            from abacus.closing_types import CloseContraExpense, CloseContraIncome
+
+            return isinstance(p, CloseContraExpense) or isinstance(p, CloseContraIncome)
+
         return [p for p in self.closing_entries if is_required(p)]
-    
+
     def yield_for_income_statement(self):
         entry_lists = [
             self.open_regular_accounts,
@@ -77,13 +80,13 @@ class BaseJournal(BaseModel):
         return self
 
     def add_business_entries(self, ps: list[Entry]):
-        if self.closed:
+        if self.is_closed:
             raise AbacusError("Cannot add entries to closed ledger.")
         self.business_entries.extend(ps)
         return self
 
     def add_adjustment_entries(self, ps: list[Entry]):
-        if self.closed:
+        if self.is_closed:
             raise AbacusError("Cannot add entries to closed ledger.")
         self.business_entries.extend(ps)
         return self
@@ -91,9 +94,10 @@ class BaseJournal(BaseModel):
     def close(self):
         from abacus.closing import closing_entries
 
-        if self.closed:
+        if self.is_closed:
             raise AbacusError("Ledger already closed.")
         self.closing_entries = closing_entries(self.ledger())  # type: ignore
+        self.is_closed = True
         return self
 
     def add_post_close_entries(self, ps: list[Entry]):
@@ -101,44 +105,33 @@ class BaseJournal(BaseModel):
         return self
 
 
-class Journal(UserList[Posting]):
-    """A list of postings."""
-
-    # def is_closed(self) -> bool:
-    #     # - income and expense contra accounts are zero
-    #     # - income and expense accounts are zero
-    #     # - isa is zero
-    #     raise NotImplementedError
+class Journal(BaseModel):
+    data: BaseJournal = BaseJournal()
 
     @classmethod
     def from_file(cls, path) -> "Journal":
         raise NotImplementedError
 
-    def post_many(self, entries: List[Posting]) -> "Journal":
-        self.data.extend(entries)
+    def post_many(self, entries: List[Entry]) -> "Journal":
+        self.data.business_entries.extend(entries)
         return self
 
     def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
         entry = BusinessEntry(dr, cr, amount)
         return self.post_many([entry])
 
-    def adjust(self, dr, cr, amount) -> "Journal":
+    def adjust(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
         raise NotImplementedError
 
-    def post_close(self, dr, cr, amount) -> "Journal":
+    def post_close(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
         raise NotImplementedError
 
     def close(self) -> "Journal":
-        from abacus.closing import closing_entries
-
-        self.post_many(closing_entries(self.ledger()))  # type: ignore
+        self.data.close()
         return self
 
-    def current_profit(self):
-        return self.income_statement().current_profit()
-
     def ledger(self):
-        return process_postings(Ledger(), self.data)
+        return self.data.ledger()
 
     def balances(self):
         from .reports import balances
@@ -148,11 +141,68 @@ class Journal(UserList[Posting]):
     def balance_sheet(self):
         from .reports import balance_sheet
 
-        return balance_sheet(self.ledger())
+        return balance_sheet(self.data.ledger())
 
     def income_statement(self):
         from .reports import income_statement
 
-        _gen = yield_until(self.data, [CloseExpense, CloseIncome])
+        _gen = self.data.yield_for_income_statement()
         _ledger = process_postings(Ledger(), _gen)
         return income_statement(_ledger)
+
+    def current_profit(self) -> Amount:
+        return self.income_statement().current_profit()
+
+
+# class Journal(UserList[Posting]):
+#     """A list of postings."""
+
+#     # def is_closed(self) -> bool:
+#     #     # - income and expense contra accounts are zero
+#     #     # - income and expense accounts are zero
+#     #     # - isa is zero
+#     #     raise NotImplementedError
+
+
+#     def post_many(self, entries: List[Posting]) -> "Journal":
+#         self.data.extend(entries)
+#         return self
+
+#     def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
+#         entry = BusinessEntry(dr, cr, amount)
+#         return self.post_many([entry])
+
+#     def adjust(self, dr, cr, amount) -> "Journal":
+#         raise NotImplementedError
+
+#     def post_close(self, dr, cr, amount) -> "Journal":
+#         raise NotImplementedError
+
+#     def close(self) -> "Journal":
+#         from abacus.closing import closing_entries
+
+#         self.post_many(closing_entries(self.ledger()))  # type: ignore
+#         return self
+
+#     def current_profit(self):
+#         return self.income_statement().current_profit()
+
+#     def ledger(self):
+#         return process_postings(Ledger(), self.data)
+
+#     def balances(self):
+#         from .reports import balances
+
+#         return balances(self.ledger())
+
+#     def balance_sheet(self):
+#         from .reports import balance_sheet
+
+#         return balance_sheet(self.ledger())
+
+#     def income_statement(self):
+#         from .reports import income_statement
+
+#         _gen = yield_until(self.data, [CloseExpense, CloseIncome])
+#         _ledger = process_postings(Ledger(), _gen)
+#         return income_statement(_ledger)

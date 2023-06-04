@@ -2,6 +2,7 @@ from abacus import BalanceSheet, Chart, IncomeStatement
 from abacus.accounting_types import BusinessEntry
 from abacus.closing_types import CloseExpense, CloseIncome, CloseISA
 from abacus.ledger import OpenRegularAccount
+from abacus.journal import BaseJournal
 
 # Create chart of accounts
 chart = Chart(
@@ -26,34 +27,34 @@ journal = (
 
 
 def test_postings():
-    assert journal.data == [
-        OpenRegularAccount(name="cash", type="Asset", balance=1400),
-        OpenRegularAccount(name="salaries", type="Expense", balance=0),
-        OpenRegularAccount(name="rent", type="Expense", balance=0),
-        OpenRegularAccount(name="equity", type="Capital", balance=1500),
-        OpenRegularAccount(
-            name="re",
-            type="RetainedEarnings",
-            balance=-100,
-        ),
-        OpenRegularAccount(
-            name="services",
-            type="Income",
-            balance=0,
-        ),
-        OpenRegularAccount(
-            name="_profit",
-            type="IncomeSummaryAccount",
-            balance=0,
-        ),
-        BusinessEntry(dr="rent", cr="cash", amount=200, action="post"),
-        BusinessEntry(dr="cash", cr="services", amount=800, action="post"),
-        BusinessEntry(dr="salaries", cr="cash", amount=400, action="post"),
-        CloseExpense(dr="_profit", cr="salaries", amount=400, action="close_expense"),
-        CloseExpense(dr="_profit", cr="rent", amount=200, action="close_expense"),
-        CloseIncome(dr="services", cr="_profit", amount=800, action="close_income"),
-        CloseISA(dr="_profit", cr="re", amount=200, action="close_isa"),
-    ]
+    assert journal.data == BaseJournal(
+        open_regular_accounts=[
+            OpenRegularAccount(name="cash", type="Asset", balance=1400),
+            OpenRegularAccount(name="salaries", type="Expense", balance=0),
+            OpenRegularAccount(name="rent", type="Expense", balance=0),
+            OpenRegularAccount(name="equity", type="Capital", balance=1500),
+            OpenRegularAccount(name="re", type="RetainedEarnings", balance=-100),
+            OpenRegularAccount(name="services", type="Income", balance=0),
+            OpenRegularAccount(name="_profit", type="IncomeSummaryAccount", balance=0),
+        ],
+        open_contra_accounts=[],
+        business_entries=[
+            BusinessEntry(dr="rent", cr="cash", amount=200, action="post"),
+            BusinessEntry(dr="cash", cr="services", amount=800, action="post"),
+            BusinessEntry(dr="salaries", cr="cash", amount=400, action="post"),
+        ],
+        adjustment_entries=[],
+        closing_entries=[
+            CloseExpense(
+                dr="_profit", cr="salaries", amount=400, action="close_expense"
+            ),
+            CloseExpense(dr="_profit", cr="rent", amount=200, action="close_expense"),
+            CloseIncome(dr="services", cr="_profit", amount=800, action="close_income"),
+            CloseISA(dr="_profit", cr="re", amount=200, action="close_isa"),
+        ],
+        post_close_entries=[],
+        is_closed=True,
+    )
 
 
 def test_balance_sheet():
