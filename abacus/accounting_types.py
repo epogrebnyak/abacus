@@ -26,6 +26,13 @@ class Entry:
     amount: Amount
 
 
+# not used
+@dataclass
+class Saldo:
+    account_type: str
+    balance: Amount
+
+
 @dataclass
 class BaseEntry(Entry):
     """Represent various types of entries and serialisable."""

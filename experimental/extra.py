@@ -1,4 +1,6 @@
-from abacus import BalanceSheet, Chart, Entry, IncomeStatement
+from pprint import pprint
+
+from abacus import Chart, Entry
 
 chart = Chart(
     assets=["cash", "goods", "ppe", "prepaid_expenses"],
@@ -27,7 +29,6 @@ entries = [
     Entry("sga.services", "prepaid_expenses", 80),  # adjust services
 ]
 
-from pprint import pprint
 
 journal = (
     chart.journal(**starting_balances)

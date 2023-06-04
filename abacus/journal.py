@@ -3,7 +3,7 @@ from typing import List
 
 from abacus.accounting_types import AccountName, Amount, BusinessEntry
 from abacus.closing_types import CloseExpense, CloseIncome
-from abacus.ledger import Ledger, Posting
+from abacus.ledger import Ledger, Posting, process_postings
 
 
 def yield_until(xs, classes):
@@ -26,13 +26,13 @@ class Journal(UserList[Posting]):
     def from_file(cls, path) -> "Journal":
         raise NotImplementedError
 
-    def post_entries(self, entries: List[Posting]) -> "Journal":
+    def post_many(self, entries: List[Posting]) -> "Journal":
         self.data.extend(entries)
         return self
 
     def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
         entry = BusinessEntry(dr, cr, amount)
-        return self.post_entries([entry])
+        return self.post_many([entry])
 
     def adjust(self, dr, cr, amount) -> "Journal":
         raise NotImplementedError
@@ -43,14 +43,14 @@ class Journal(UserList[Posting]):
     def close(self) -> "Journal":
         from abacus.closing import closing_entries
 
-        self.post_entries(closing_entries(self.ledger()))  # type: ignore
+        self.post_many(closing_entries(self.ledger()))  # type: ignore
         return self
 
     def current_profit(self):
         return self.income_statement().current_profit()
 
     def ledger(self):
-        return Ledger().process_entries(self.data)
+        return process_postings(Ledger(), self.data)
 
     def balances(self):
         from .reports import balances
@@ -66,5 +66,5 @@ class Journal(UserList[Posting]):
         from .reports import income_statement
 
         _gen = yield_until(self.data, [CloseExpense, CloseIncome])
-        _ledger = Ledger().process_entries(_gen)
+        _ledger = process_postings(Ledger(), _gen)
         return income_statement(_ledger)

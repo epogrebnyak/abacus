@@ -17,32 +17,14 @@ class Ledger(UserDict[AccountName, Account]):
     def safe_copy(self) -> "Ledger":
         return Ledger((k, account.safe_copy()) for k, account in self.items())
 
-    def process_entries(self, entries) -> "Ledger":
-        return process_postings(self, entries)
-
-    def process_entry(self, dr, cr, amount) -> "Ledger":
-        return process_postings(self, [Entry(dr, cr, amount)])
-
-    def close(self) -> "Ledger":
-        """Close contraaccounts associated with income and expense accounts,
-        aggregate profit or loss at income summary account
-        and move balance of income summary account to retained earnings."""
-        from .closing import close
-
-        return close(self)
-
-    def balances(self):
-        from .reports import balances
-
-        return balances(self)
-
-    def _balance_sheet(self):
-        from .reports import balance_sheet
-
-        return balance_sheet(self)
-
     def find_account_name(self, cls: Type[Unique]) -> AccountName:
         return find_account_name(self, cls)
+
+    def subset(self, cls):
+        return subset_by_class(self, cls)
+
+    def process_postings(self, postings: List["Posting"]) -> "Ledger":
+        return process_postings(self, postings)
 
 
 def subset_by_class(ledger, cls):
@@ -131,6 +113,8 @@ def _process(ledger: Ledger, posting: Posting) -> Ledger:
         case BaseEntry(dr, cr, amount, _):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)
+        case _:
+            raise AbacusError(f"{posting} type unknown.")
     return ledger
 
 

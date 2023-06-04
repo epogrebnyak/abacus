@@ -68,11 +68,8 @@ def test_make_entry():
 
 
 def test_named_entries_income_statement(chart, shortcodes, named_entries):
-    from abacus.reports import income_statement
-
     entries = shortcodes.make_entries(named_entries)
-    ledger = chart.ledger().process_entries(entries)
-    income_st = income_statement(ledger)
+    income_st = chart.journal().post_many(entries).close().income_statement()
     assert income_st == IncomeStatement(
         income={"sales": 760}, expenses={"cogs": 440, "sga": 400}
     )
@@ -80,7 +77,7 @@ def test_named_entries_income_statement(chart, shortcodes, named_entries):
 
 def test_named_entries_balance_sheet(chart, shortcodes, named_entries):
     entries = shortcodes.make_entries(named_entries)
-    assert chart.ledger().process_entries(entries).close()._balance_sheet() == BalanceSheet(
+    assert chart.journal().post_many(entries).close().balance_sheet() == BalanceSheet(
         assets={"cash": 464, "receivables": 131, "goods_for_sale": 380},
         capital={"equity": 1000, "re": -80},
         liabilities={"divp": 0, "payables": 55},

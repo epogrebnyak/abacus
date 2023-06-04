@@ -4,10 +4,7 @@ from collections import UserDict
 from dataclasses import dataclass
 
 from abacus.accounting_types import AccountName, Amount
-from abacus.closing import (
-    closing_entries_for_permanent_contra_accounts,
-    closing_entries_for_temporary_contra_accounts,
-)
+from abacus.closing import closing_entries_for_permanent_contra_accounts
 
 from .ledger import Ledger, assets, capital, expenses, income, liabilities
 
@@ -54,7 +51,7 @@ def balances(ledger: Ledger) -> AccountBalancesDict:
 
 def balance_sheet(ledger: Ledger) -> BalanceSheet:
     entries = closing_entries_for_permanent_contra_accounts(ledger)
-    ledger = ledger.process_entries(entries)
+    ledger = ledger.process_postings(entries)
     return BalanceSheet(
         assets=balances(assets(ledger)),
         capital=balances(capital(ledger)),

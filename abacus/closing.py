@@ -22,7 +22,7 @@ from abacus.closing_types import (
 )
 from abacus.ledger import Ledger
 
-__all__ = ["close"]  # type: ignore
+__all__ = ["closing_entries"]  # type: ignore
 
 
 def closing_entries_contra_accounts(
@@ -90,16 +90,14 @@ def closing_entry_isa_to_retained_earnings(
 
 
 def closing_entries(ledger: "Ledger") -> List:
+    #     #     """Close contra accounts associated with income and expense accounts,
+    #     #     aggregate profit or loss at income summary account
+    #     #     and move balance of income summary account to retained earnings."""
     es1 = closing_entries_for_temporary_contra_accounts(ledger)
-    _dummy_ledger = ledger.process_entries(es1)
+    _dummy_ledger = ledger.process_postings(es1)
     # At this point we can issue IncomeStatement
     es2 = closing_entries_expenses_to_isa(_dummy_ledger)
     es3 = closing_entries_income_to_isa(_dummy_ledger)
-    _dummy_ledger = _dummy_ledger.process_entries(es2 + es3)
+    _dummy_ledger = _dummy_ledger.process_postings(es2 + es3)  # type: ignore
     es4 = closing_entry_isa_to_retained_earnings(_dummy_ledger)
     return es1 + es2 + es3 + [es4]
-
-
-def close(ledger: "Ledger") -> "Ledger":
-    """Close ledger to *retained_earnings_account_name*."""
-    return ledger.process_entries(closing_entries(ledger))
