@@ -36,6 +36,7 @@ Options:
 from docopt import docopt
 from pathlib import Path
 from pprint import pprint
+from abacus.chart import Chart
 
 
 def main():
@@ -49,10 +50,22 @@ def main():
             if not path.exists():
                 path.write_text(empty_chart().json(indent=2), encoding="utf-8")
         elif arguments["add"]:
-            pass
+            chart = Chart.parse_file(path)
+            account_names = arguments["<account_names>"]
+            if arguments["retained-earnings"]:
+                chart.retained_earnings = arguments["<account_name>"]
+            if arguments["assets"]:
+                chart.assets.extend(account_names)
+            if arguments["capital"]:
+                pass
+            if arguments["liabilities"]:
+                pass
+            if arguments["expenses"]:
+                pass
+            if arguments["income"]:
+                pass
+            path.write_text(chart.json(indent=2), encoding="utf-8")
         elif arguments["list"]:
-            from abacus.chart import Chart
-
             chart = Chart.parse_file(path)
             pprint(chart.dict())
     elif arguments["names"]:

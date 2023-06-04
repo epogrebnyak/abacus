@@ -1,5 +1,8 @@
 {
-  "assets": [],
+  "assets": [
+    "cash",
+    "goods"
+  ],
   "expenses": [],
   "equity": [],
   "retained_earnings_account": "",
