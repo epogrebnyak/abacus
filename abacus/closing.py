@@ -48,9 +48,9 @@ def closing_entries_contra_expense(ledger):
 
 
 def closing_entries_for_temporary_contra_accounts(ledger):
-    return closing_entries_contra_income(ledger) + closing_entries_contra_expense(
-        ledger
-    )
+    f = closing_entries_contra_income
+    g = closing_entries_contra_expense
+    return f(ledger) + g(ledger)
 
 
 def closing_entries_for_permanent_contra_accounts(
@@ -62,18 +62,10 @@ def closing_entries_for_permanent_contra_accounts(
     return f(Asset) + f(Capital) + f(Liability)
 
 
-def find_account_name(ledger: Ledger, cls: Type[Unique]) -> AccountName:
-    """In ledger there should be just one of IncomeSummaryAccount and one of RetainedEarnings,
-    this is a helper function to find out these account names.
-    """
-    account_names = list(subset_by_class(ledger, cls).keys())
-    if len(account_names) == 1:
-        return account_names[0]
-    raise AbacusError(f"{cls} must be unique in ledger")
-
-
 def closing_entries_income_to_isa(ledger) -> List[CloseIncome]:
-    isa = find_account_name(ledger, IncomeSummaryAccount)
+    from abacus.ledger import income
+
+    isa = ledger.find_account_name(IncomeSummaryAccount)
     return [
         CloseIncome(*account.transfer_balance_entry(name, isa))
         for name, account in income(ledger).items()
@@ -81,7 +73,9 @@ def closing_entries_income_to_isa(ledger) -> List[CloseIncome]:
 
 
 def closing_entries_expenses_to_isa(ledger) -> List[CloseExpense]:
-    isa = find_account_name(ledger, IncomeSummaryAccount)
+    from abacus.ledger import expenses
+
+    isa = ledger.find_account_name(IncomeSummaryAccount)
     return [
         CloseExpense(*account.transfer_balance_entry(name, isa))
         for name, account in expenses(ledger).items()
@@ -91,8 +85,8 @@ def closing_entries_expenses_to_isa(ledger) -> List[CloseExpense]:
 def closing_entry_isa_to_retained_earnings(
     ledger: Ledger,
 ) -> CloseISA:
-    isa = find_account_name(ledger, IncomeSummaryAccount)
-    re = find_account_name(ledger, RetainedEarnings)
+    isa = ledger.find_account_name(IncomeSummaryAccount)
+    re = ledger.find_account_name(RetainedEarnings)
     return CloseISA(*ledger[isa].transfer_balance_entry(isa, re))
 
 

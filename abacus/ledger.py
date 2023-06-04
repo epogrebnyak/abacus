@@ -2,6 +2,8 @@
 
 from collections import UserDict, UserList
 from typing import List, Tuple
+from typing import Type
+from abacus.accounts import Unique
 
 from abacus.accounts import Account, Asset, Capital, Expense, Income, Liability
 
@@ -36,16 +38,6 @@ class Journal(UserList[Posting]):
 
     def post_entries(self, entries: List[Posting]) -> "Journal":
         self.data.extend(entries)
-        return self
-
-    def open_regular_account(self, name, type, balance):
-        p = OpenRegularAccount(name, type.__name__, balance)
-        self.data.append(p)
-        return self
-
-    def open_contra_account(self, name, type, balance, link):
-        p = OpenContraAccount(name, type.__name__, balance, link)
-        self.data.append(p)
         return self
 
     def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
@@ -127,6 +119,9 @@ class Ledger(UserDict[AccountName, Account]):
         # - isa is zero
         raise NotImplementedError
 
+    def find_account_name(self, cls: Type[Unique]) -> AccountName:
+        return find_account_name(self, cls)
+
 
 def subset_by_class(ledger, cls):
     return Ledger(
@@ -134,6 +129,16 @@ def subset_by_class(ledger, cls):
         for account_name, account in ledger.items()
         if isinstance(account, cls)
     )
+
+
+def find_account_name(ledger: Ledger, cls: Type[Unique]) -> AccountName:
+    """In ledger there should be just one of IncomeSummaryAccount and one of RetainedEarnings,
+    this is a helper function to find out these account names.
+    """
+    account_names = list(subset_by_class(ledger, cls).keys())
+    if len(account_names) == 1:
+        return account_names[0]
+    raise AbacusError(f"{cls} must be unique in ledger")
 
 
 def assets(ledger: Ledger) -> Ledger:

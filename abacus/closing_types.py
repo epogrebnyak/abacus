@@ -1,4 +1,4 @@
-"""CloseContra classes (moved to separate module to prevent circular imports)."""
+"""CloseContra classes (moved to separate module here to prevent circular imports)."""
 
 from typing import Dict, Type
 

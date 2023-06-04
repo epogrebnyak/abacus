@@ -46,6 +46,20 @@ def all_args(values):
     return regular_account_names(values) + contra_account_names(values)
 
 
+def chart_to_opening_entries(chart, starting_balances):
+    from abacus.accounting_types import OpenRegularAccount, OpenContraAccount
+
+    def get_balance(account_name):
+        return starting_balances.get(account_name, 0)
+
+    for account_name, cls in chart._yield_regular_accounts():
+        yield OpenRegularAccount(account_name, cls.__name__, get_balance(account_name))
+    for account_name, cls, link in chart._yield_contra_accounts():
+        yield OpenContraAccount(
+            account_name, cls.__name__, get_balance(account_name), link
+        )
+
+
 class Chart(BaseModel):
     """Chart of accounts."""
 
@@ -58,6 +72,8 @@ class Chart(BaseModel):
     contra_accounts: Dict[str, List[str]] = {}
     income_summary_account: str = "_profit"
 
+    # FIXME: in pydantic 2.0 we can save some code with __post_init__()
+    #        there will be no @root_validator with values and no helper functions.
     @root_validator
     def account_names_should_be_unique(cls, values):
         if not is_unique(all_args(values)):
@@ -111,21 +127,15 @@ class Chart(BaseModel):
         """List all account names in chart."""
         return [xs[0] for xs in self.yield_accounts()]
 
-    def journal(self, **kwargs):
+    def journal(self, **starting_balances):
+        """Create a journal based on this chart and starting_balances."""
         from abacus.ledger import Journal
 
-        def get_balance(account_name):
-            return kwargs.get(account_name, 0)
-
+        # FIXME: Will refactor: adding starting balances in a multiple entry,
+        #        and needs checking if balance is done right.
         journal = Journal()
-        for account_name, cls_string in self._yield_regular_accounts():
-            journal.open_regular_account(
-                account_name, cls_string, get_balance(account_name)
-            )
-        for account_name, cls_string, link in self._yield_contra_accounts():
-            journal.open_contra_account(
-                account_name, cls_string, get_balance(account_name), link
-            )
+        opening_entries = list(chart_to_opening_entries(self, starting_balances))
+        journal.data.extend(opening_entries)
         return journal
 
     def ledger(self):
