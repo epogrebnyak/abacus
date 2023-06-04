@@ -4,14 +4,12 @@ from abacus import Chart, Entry
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale", "ppe"],
     expenses=["cogs", "sga", "dexp"],
-    equity=["equity", "re"],
+    equity=["equity"],
+    retained_earnings_account="re",
     liabilities=["divp", "payables"],
     income=["sales"],
-    contra_accounts={
-        "ppe": (["depr"], "net_ppe"),
-        "sales": (["discount", "returns"], "net_sales"),
-    },
-).set_retained_earnings_account("re")
+    contra_accounts={"ppe": ["depr"], "sales": ["discount", "returns"]},
+)
 
 rename_dict = {
     "re": "Retained earnings",
@@ -45,26 +43,27 @@ entries = [
 ]
 
 # %%
-# create ledger and process entries
-ledger = chart.ledger().process_entries(entries)
+# create ledger and process entries and close
+journal = chart.journal().post_entries(entries).close()
+print(journal)
+breakpoint()
+
+#
 
 # %%
 # create income statement
-income_statement = ledger.income_statement()
+income_statement = journal.income_statement()
 print(income_statement)
 print(income_statement.current_profit())
 
 # %%
-# close ledger at period end
-# (a) move income and expenses to retained earnings
-closed_ledger = ledger.close()
-# (b) accure dividend
-post_entries = [
+# accure dividend
+post_close_entries = [
     Entry(cr="divp", dr="re", amount=45),
 ]
-closed_ledger = closed_ledger.process_entries(post_entries)
+journal = journal.post_entries(post_close_entries)
 # produce balance sheet
-balance_sheet = closed_ledger.balance_sheet()
+balance_sheet = journal.balance_sheet()
 print(balance_sheet)
 
 # %%

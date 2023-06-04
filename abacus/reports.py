@@ -2,13 +2,13 @@
 
 from collections import UserDict
 from dataclasses import dataclass
-from typing import Dict
 
 from abacus.accounting_types import AccountName, Amount
 from abacus.closing import (
     closing_entries_for_permanent_contra_accounts,
     closing_entries_for_temporary_contra_accounts,
 )
+
 from .ledger import Ledger, assets, capital, expenses, income, liabilities
 
 __all__ = ["BalanceSheet", "IncomeStatement"]
@@ -77,4 +77,3 @@ def income_statement(ledger: Ledger) -> IncomeStatement:
 
 def current_profit(ledger: Ledger) -> Amount:
     return income_statement(ledger).current_profit()
-

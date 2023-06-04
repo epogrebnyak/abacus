@@ -55,7 +55,7 @@ class Journal(UserList[Posting]):
     def close(self) -> "Journal":
         from abacus.closing import closing_entries
 
-        self.post_entries(closing_entries(self.ledger()))
+        self.post_entries(closing_entries(self.ledger()))  # type: ignore
         return self
 
     def current_profit(self):

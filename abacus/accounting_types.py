@@ -69,9 +69,6 @@ class Mark:
     event: Event
 
 
-Posting = Entry | Mark | OpenAccount
-
-
 @dataclass
 class ClosingEntry(BaseEntry):
     action: str = "generic_close"
@@ -90,3 +87,6 @@ class CloseExpense(BaseEntry):
 @dataclass
 class CloseISA(BaseEntry):
     action: str = "close_isa"
+
+
+Posting = Entry | ClosingEntry | BaseEntry | Mark | OpenAccount

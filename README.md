@@ -175,10 +175,11 @@ from abacus import Chart, Entry, BalanceSheet
 chart = Chart(
     assets=["cash"],
     expenses=["overhead"],
-    equity=["equity", "retained_earnings"],
+    equity=["equity"],
+    retained_earnings_account="retained_earnings",
     liabilities=["dividend_payable"],
     income=["sales"],
-    contra_accounts={"sales": (["discounts"], "net_sales")},
+    contra_accounts={"sales": ["discounts"]},
 )
 entries = [
     Entry("cash", "equity", 500),   # started a company
@@ -214,26 +215,21 @@ from abacus import Chart, Entry
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
-    equity=["equity", "re"],
+    equity=["equity"],
+    retained_earnings_account="re",
     liabilities=["divp", "payables"],
     income=["sales"],
 )
 ```
 
-2. Set retained earnings account, you will need it to close
-   accoutns at period end.
 
-```python
-chart = chart.set_retained_earnings_account("re")
-```
-
-3. Next, create a general ledger based on chart of accounts.
+2. Next, create a general ledger based on chart of accounts.
 
 ```python
 ledger = chart.ledger()
 ```
 
-4. Add accounting entries using account names from the chart of accounts.
+3. Add accounting entries using account names from the chart of accounts.
 
 ```python
 e1 = Entry(dr="cash", cr="equity", amount=1000)        # pay in capital
@@ -244,7 +240,7 @@ e5 = Entry(cr="cash", dr="sga", amount=50)             # administrative expenses
 ledger = ledger.process_entries([e1, e2, e3, e4, e5])
 ```
 
-5. Make income statement at accounting period end.
+4. Make income statement at accounting period end.
 
 ```python
 from abacus import IncomeStatement
@@ -256,7 +252,7 @@ assert income_statement == IncomeStatement(
 )
 ```
 
-6. Close ledger and make balance sheet.
+5. Close ledger and make balance sheet.
 
 ```python
 from abacus import BalanceSheet
@@ -270,7 +266,7 @@ assert balance_sheet == BalanceSheet(
 )
 ```
 
-7. Print balance sheet and income statement to screen 
+6. Print balance sheet and income statement to screen 
    with verbose account names and rich formatting.
 
 ```python

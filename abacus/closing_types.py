@@ -3,15 +3,7 @@ from typing import Dict, Type
 from pydantic.dataclasses import dataclass
 
 from abacus.accounting_types import BaseEntry
-from abacus.accounts import (
-    Account,
-    Asset,
-    Capital,
-    Expense,
-    Income,
-    Liability,
-    RegularAccount,
-)
+from abacus.accounts import Asset, Capital, Expense, Income, Liability, RegularAccount
 
 
 class CloseContra:
@@ -49,7 +41,7 @@ class CloseContraCapital(BaseEntry, CloseContra):
 
 
 def get_closing_entry_type(cls: Type[RegularAccount]) -> Type[CloseContra]:
-    mapping: Dict[Type[Account], Type[CloseContra]] = dict(
+    mapping: Dict[Type[RegularAccount], Type[CloseContra]] = dict(
         [
             (Income, CloseContraIncome),
             (Expense, CloseContraExpense),

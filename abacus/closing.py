@@ -2,15 +2,9 @@
 
 from typing import List, Type
 
-from pydantic.dataclasses import dataclass
-
-from abacus.closing_types import CloseContra, get_closing_entry_type
-from abacus.ledger import Ledger, expenses, income, subset_by_class
-
 from abacus.accounting_types import (
     AbacusError,
     AccountName,
-    BaseEntry,
     CloseExpense,
     CloseIncome,
     CloseISA,
@@ -28,6 +22,8 @@ from abacus.accounts import (
     Unique,
     get_contra_account_type,
 )
+from abacus.closing_types import CloseContra, get_closing_entry_type
+from abacus.ledger import Ledger, expenses, income, subset_by_class
 
 __all__ = ["close"]  # type: ignore
 
@@ -52,7 +48,10 @@ def closing_entries_contra_expense(ledger):
 
 
 def closing_entries_for_temporary_contra_accounts(ledger):
-    return closing_entries_contra_income(ledger) + closing_entries_contra_expense(ledger)
+    return closing_entries_contra_income(ledger) + closing_entries_contra_expense(
+        ledger
+    )
+
 
 def closing_entries_for_permanent_contra_accounts(
     ledger,
@@ -98,15 +97,14 @@ def closing_entry_isa_to_retained_earnings(
 
 
 def closing_entries(ledger: Ledger) -> List[ClosingEntry]:
-    es0 = closing_entries_contra_income(ledger)
-    es1 = closing_entries_contra_expense(ledger)
+    es1 = closing_entries_for_temporary_contra_accounts(ledger)
     _dummy_ledger = ledger.process_entries(es1)
     # At this point we can issue IncomeStatement
     es2 = closing_entries_expenses_to_isa(_dummy_ledger)
     es3 = closing_entries_income_to_isa(_dummy_ledger)
     _dummy_ledger = _dummy_ledger.process_entries(es2 + es3)
     es4 = closing_entry_isa_to_retained_earnings(_dummy_ledger)
-    return es0 + es1 + es2 + es3 + [es4]
+    return es1 + es2 + es3 + [es4]
 
 
 def close(ledger: Ledger) -> Ledger:

@@ -1,23 +1,3 @@
-# Next release: 0.3.0 Pipelines
-
-A pipeline will allow to create lists of entries using commands
-to close contra accounts as well as closing temporary ("nominal") accounts
-(income, expense and income summary accounts) and will add current period
-profit to retained earnings.
-
-A pipeline will contain a start ledger (possibly empty ledger made from a chart of accounts), a list of postings to a ledger and methods to grow this list like
-`add_entries()`, `.close_income()` or `.close_expenses()`.
-These closing methods will add new postings to a list of postings, but creating a new ledger is postponed until all required entries are added to the list.
-
-This enables composability of a pipeline, even though at a cost: a pipeline may need to execute internally to produce next ledger state. For example, to close income or expense accounts one must execute all postings to these accounts and find out the balance of this account.
-
-The `run()` method will execute a pipeline py posting all entries to a start ledger. Pipeines should help to produce ledger states required for the income statement and balance sheet or other points in time of the accounting cylce.
-
-Pipeines can be further optimised for performance, the initial implementation
-disregards speed and computational intensity of a pipeline.
-
-Affected issues are [#11](https://github.com/epogrebnyak/abacus/issues/11), [#10](https://github.com/epogrebnyak/abacus/issues/10) and [#7](https://github.com/epogrebnyak/abacus/issues/7).
-
 # Release target: 0.4.0 CLI app with local json file backend
 
 ```console

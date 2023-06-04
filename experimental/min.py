@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from abacus import Chart
 from abacus.accounting_types import CloseExpense, CloseIncome
 from abacus.ledger import yield_until
@@ -24,8 +26,6 @@ journal = (
     .close()
 )
 
-
-from pprint import pprint
 
 pprint(list(yield_until(journal.data, [CloseIncome, CloseExpense])))
 

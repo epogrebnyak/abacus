@@ -1,3 +1,5 @@
+import json
+
 from pydantic import BaseModel, parse_obj_as
 
 
@@ -34,8 +36,6 @@ ps = [
     AdjustmentEntry(dr="cash", cr="eq", amount=100),
     Rename(take="eq", make="cap"),
 ]
-
-import json
 
 
 def readline(line):

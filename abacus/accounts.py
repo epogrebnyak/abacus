@@ -39,11 +39,8 @@ class Account(ABC):
 
     @abstractmethod
     def transfer_balance_entry(
-        self,
-        this_account: AccountName,
-        to_account: AccountName,
-        entry_constructor: Type,
-    ) -> Tuple:
+        self, this_account: AccountName, to_account: AccountName
+    ) -> Tuple[AccountName, AccountName, Amount]:
         """Create an entry that will move balance of *this_account*
         to *to_account*. Used when closing accounts. The resulting entry
         differs for debit and credit accounts."""
@@ -163,7 +160,7 @@ class ContraIncome(ContraAccount, DebitAccount):
 
 def get_contra_account_type(cls: Type[RegularAccount]) -> Type[ContraAccount]:
     # Without this long signature below we get typing error for get_contra_account_type()
-    mapping: Dict[Type[Account], Type[ContraAccount]] = dict(
+    mapping: Dict[Type[RegularAccount], Type[ContraAccount]] = dict(
         [
             (Asset, ContraAsset),
             (Expense, ContraExpense),

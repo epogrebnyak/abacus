@@ -9,7 +9,6 @@ grill:
   just test
   just mypy
   just ruff
-  just examples
   just lint 
   just md
 
