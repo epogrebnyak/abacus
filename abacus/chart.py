@@ -1,6 +1,6 @@
 """Chart of accounts."""
 
-from typing import List, Type, Dict
+from typing import Dict, List, Type
 
 from pydantic import BaseModel, root_validator  # type: ignore
 

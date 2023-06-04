@@ -10,10 +10,9 @@
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Type
+from typing import Dict, List, Tuple, Type
 
-
-from abacus.accounting_types import Entry, AccountName, Amount, ClosingEntry
+from abacus.accounting_types import AccountName, Amount
 
 __all__ = ["Account"]
 
@@ -39,12 +38,12 @@ class Account(ABC):
         """Return account balance."""
 
     @abstractmethod
-    def transfer_balance(
+    def transfer_balance_entry(
         self,
         this_account: AccountName,
         to_account: AccountName,
-        entry_constructor: Type = ClosingEntry,
-    ) -> Entry:
+        entry_constructor: Type,
+    ) -> Tuple:
         """Create an entry that will move balance of *this_account*
         to *to_account*. Used when closing accounts. The resulting entry
         differs for debit and credit accounts."""
@@ -73,13 +72,12 @@ class DebitAccount(Account):
     def balance(self) -> Amount:
         return sum(self.debits) - sum(self.credits)
 
-    def transfer_balance(
+    def transfer_balance_entry(
         self,
         this_account: AccountName,
         to_account: AccountName,
-        entry_constructor: Type = ClosingEntry,
-    ) -> Entry:
-        return entry_constructor(cr=this_account, dr=to_account, amount=self.balance())
+    ):
+        return (to_account, this_account, self.balance())
 
     def start(self, amount: Amount):
         self.debit(amount)
@@ -90,13 +88,12 @@ class CreditAccount(Account):
     def balance(self) -> Amount:
         return sum(self.credits) - sum(self.debits)
 
-    def transfer_balance(
+    def transfer_balance_entry(
         self,
         this_account: AccountName,
         to_account: AccountName,
-        entry_constructor: Type = ClosingEntry,
-    ) -> Entry:
-        return entry_constructor(dr=this_account, cr=to_account, amount=self.balance())
+    ):
+        return (this_account, to_account, self.balance())
 
     def start(self, amount: Amount):
         self.credit(amount)
@@ -144,12 +141,11 @@ class ContraAccount:
     credits: List[Amount] = field(default_factory=list)
 
 
-
 class ContraAsset(ContraAccount, CreditAccount):
     pass
 
 
-class ContraExpense( ContraAccount, CreditAccount):
+class ContraExpense(ContraAccount, CreditAccount):
     pass
 
 

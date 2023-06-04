@@ -1,5 +1,5 @@
 from abacus import Chart
-from abacus.accounting_types import CloseIncome, CloseExpense
+from abacus.accounting_types import CloseExpense, CloseIncome
 from abacus.ledger import yield_until
 
 # Create chart of accounts

@@ -1,4 +1,3 @@
-from abacus.accounting_types import Entry
 from abacus.accounts import (
     Asset,
     Capital,
@@ -40,21 +39,21 @@ ledger = Ledger(
 
 
 def test_closing_entries():
-    from abacus.closing import CloseTempContraAccounts, CloseIncome, CloseExpense,CloseISA
-    assert closing_entries(ledger) == [CloseTempContraAccounts(dr='sales',
-                        cr='discount',
-                        amount=65,
-                        action='close_tca'),
-CloseTempContraAccounts(dr='sales',
-                        cr='returns',
-                        amount=0,
-                        action='close_tca'),
-CloseExpense(dr='profit', cr='cogs', amount=180, action='close_expense'),
-CloseExpense(dr='profit', cr='sga', amount=50, action='close_expense'),
-CloseExpense(dr='profit',
-             cr='depreciation_expense',
-             amount=250,
-             action='close_expense'),
-CloseIncome(dr='sales', cr='profit', amount=555, action='close_income'),
-CloseISA(dr='profit', cr='re', amount=75, action='close_isa'),
-]
+    from abacus.closing import CloseExpense, CloseIncome, CloseISA
+    from abacus.closing_types import CloseContraIncome
+
+    assert closing_entries(ledger) == [
+        CloseContraIncome(
+            dr="sales", cr="discount", amount=65, action="close_contra_income"
+        ),
+        CloseContraIncome(
+            dr="sales", cr="returns", amount=0, action="close_contra_income"
+        ),
+        CloseExpense(dr="profit", cr="cogs", amount=180, action="close_expense"),
+        CloseExpense(dr="profit", cr="sga", amount=50, action="close_expense"),
+        CloseExpense(
+            dr="profit", cr="depreciation_expense", amount=250, action="close_expense"
+        ),
+        CloseIncome(dr="sales", cr="profit", amount=555, action="close_income"),
+        CloseISA(dr="profit", cr="re", amount=75, action="close_isa"),
+    ]

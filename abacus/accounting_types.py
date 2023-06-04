@@ -11,7 +11,7 @@ from pydantic.dataclasses import dataclass
 
 Amount = int
 AccountName = str
-
+AccountType = str
 
 __all__ = ["Entry", "OpenAccount", "Mark"]
 
@@ -25,7 +25,7 @@ class OpenAccount:
     """Command to open regular or contra account in ledger."""
 
     name: AccountName
-    type: str
+    type: AccountType
     balance: Amount = 0
     link: AccountName | None = None
 
@@ -56,18 +56,25 @@ class AdjustmentEntry(BaseEntry):
 
 
 @dataclass
-class ClosingEntry(BaseEntry):
-    action: str = "generic_close"
-
-
-@dataclass
-class PostEntry(BaseEntry):
+class PostClose(BaseEntry):
     action: str = "post_close"
 
 
+class Event(str, Enum):
+    IssueIncomeStatement = "issue_income_statement"
+
+
 @dataclass
-class CloseTempContraAccounts(BaseEntry):
-    action: str = "close_tca"
+class Mark:
+    event: Event
+
+
+Posting = Entry | Mark | OpenAccount
+
+
+@dataclass
+class ClosingEntry(BaseEntry):
+    action: str = "generic_close"
 
 
 @dataclass
@@ -83,20 +90,3 @@ class CloseExpense(BaseEntry):
 @dataclass
 class CloseISA(BaseEntry):
     action: str = "close_isa"
-
-
-@dataclass
-class ClosePermContraAccounts(BaseEntry):
-    action: str = "close_pca"
-
-
-class Event(str, Enum):
-    IssueIncomeStatement = "issue_income_statement"
-
-
-@dataclass
-class Mark:
-    event: Event
-
-
-Posting = Entry | Mark | OpenAccount

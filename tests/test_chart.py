@@ -2,15 +2,6 @@ import pytest
 
 from abacus import Chart
 from abacus.accounting_types import AbacusError
-from abacus.accounts import (
-    Asset,
-    Capital,
-    Expense,
-    Income,
-    IncomeSummaryAccount,
-    Liability,
-    RetainedEarnings,
-)
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale", "ppe"],
@@ -24,7 +15,6 @@ chart = Chart(
         "sales": ["discount", "returned"],
     },
 )
-
 
 
 def test_invalid_chart_with_duplicate_key():
@@ -67,8 +57,7 @@ def test_account_names_method():
         "payables",
         "sales",
         "_profit",
-       'depreciation',
-'discount',
-'returned',
+        "depreciation",
+        "discount",
+        "returned",
     ]
-

@@ -3,19 +3,20 @@
 from collections import UserDict, UserList
 from typing import List, Tuple
 
+from abacus.accounts import Account, Asset, Capital, Expense, Income, Liability
+
 from .accounting_types import (
+    AbacusError,
     AccountName,
-    Posting,
     Amount,
     BaseEntry,
     BusinessEntry,
-    Entry,
-    OpenAccount,
-    AbacusError,
     CloseExpense,
     CloseIncome,
+    Entry,
+    OpenAccount,
+    Posting,
 )
-from abacus.accounts import Account, Asset, Capital, Expense, Income, Liability
 
 
 def yield_until(xs, classes):
@@ -108,14 +109,11 @@ class Ledger(UserDict[AccountName, Account]):
         from .reports import balances
 
         return balances(self)
-    
 
     def balance_sheet(self):
         from .reports import balance_sheet
 
         return balance_sheet(self)
-
-
 
     def is_closed(self) -> bool:
         # - income and expense contra accounts are zero

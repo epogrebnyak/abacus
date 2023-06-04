@@ -38,7 +38,7 @@ def test_make_ledger_with_netting():
         contra_accounts={
             "sales": ["discounts", "returns"],
             "shares": ["treasury_shares"],
-            "ppe": ["depr"]
+            "ppe": ["depr"],
         },
     )
     ledger = chart.ledger()
@@ -55,7 +55,7 @@ def test_make_ledger_with_netting():
         "re": RetainedEarnings(debits=[], credits=[]),
         "sales": Income(debits=[], credits=[]),
         "discounts": ContraIncome(link="sales", debits=[], credits=[]),
-        "returns": ContraIncome(link="sales",  debits=[], credits=[]),
+        "returns": ContraIncome(link="sales", debits=[], credits=[]),
         "treasury_shares": ContraCapital(link="shares", debits=[], credits=[]),
         "depr": ContraAsset(link="ppe", debits=[], credits=[]),
         "_profit": IncomeSummaryAccount(debits=[], credits=[]),

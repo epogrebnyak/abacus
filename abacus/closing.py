@@ -2,55 +2,60 @@
 
 from typing import List, Type
 
-from .accounting_types import (
+from pydantic.dataclasses import dataclass
+
+from abacus.closing_types import CloseContra, get_closing_entry_type
+from abacus.ledger import Ledger, expenses, income, subset_by_class
+
+from abacus.accounting_types import (
+    AbacusError,
     AccountName,
-    ClosingEntry,
-    CloseTempContraAccounts,
-    ClosePermContraAccounts,
-    CloseIncome,
+    BaseEntry,
     CloseExpense,
+    CloseIncome,
     CloseISA,
+    ClosingEntry,
 )
-from .accounts import (
+from abacus.accounts import (
     Asset,
     Capital,
     Expense,
     Income,
     IncomeSummaryAccount,
     Liability,
+    RegularAccount,
     RetainedEarnings,
     Unique,
     get_contra_account_type,
 )
-from .ledger import Ledger, expenses, income, subset_by_class
 
 __all__ = ["close"]  # type: ignore
 
 
-def contra_accounts_closing_entries(
-    ledger: Ledger, regular_cls: Type, constructor_class: ClosingEntry
-):
+def closing_entries_contra_accounts(
+    ledger: Ledger, regular_cls: Type[RegularAccount]
+) -> List[CloseContra]:
     cls = get_contra_account_type(regular_cls)
+    constructor = get_closing_entry_type(regular_cls)
     return [
-        account.transfer_balance(account_name, account.link, constructor_class)
+        constructor(*account.transfer_balance_entry(account_name, account.link))
         for account_name, account in subset_by_class(ledger, cls).items()
     ]
 
 
-def closing_entries_for_temporary_contra_accounts(
-    ledger,
-) -> List[CloseTempContraAccounts]:
-    def f(t):
-        return contra_accounts_closing_entries(ledger, t, CloseTempContraAccounts)
+def closing_entries_contra_income(ledger):
+    return closing_entries_contra_accounts(ledger, Income)
 
-    return f(Income) + f(Expense)
+
+def closing_entries_contra_expense(ledger):
+    return closing_entries_contra_accounts(ledger, Expense)
 
 
 def closing_entries_for_permanent_contra_accounts(
     ledger,
-) -> List[ClosePermContraAccounts]:
+) -> List:
     def f(t):
-        return contra_accounts_closing_entries(ledger, t, ClosePermContraAccounts)
+        return closing_entries_contra_accounts(ledger, t)
 
     return f(Asset) + f(Capital) + f(Liability)
 
@@ -62,22 +67,23 @@ def find_account_name(ledger: Ledger, cls: Type[Unique]) -> AccountName:
     account_names = list(subset_by_class(ledger, cls).keys())
     if len(account_names) == 1:
         return account_names[0]
-    raise ValueError(cls)
+    raise AbacusError(f"{cls} must be unique in ledger")
 
 
-def closing_entries_income_and_expense_to_isa(
-    ledger,
-) -> List[CloseIncome | CloseExpense]:
+def closing_entries_income_to_isa(ledger) -> List[CloseIncome]:
     isa = find_account_name(ledger, IncomeSummaryAccount)
-    a = [
-        account.transfer_balance(name, isa, CloseExpense)
-        for name, account in expenses(ledger).items()
-    ]
-    b = [
-        account.transfer_balance(name, isa, CloseIncome)
+    return [
+        CloseIncome(*account.transfer_balance_entry(name, isa))
         for name, account in income(ledger).items()
     ]
-    return a + b
+
+
+def closing_entries_expenses_to_isa(ledger) -> List[CloseExpense]:
+    isa = find_account_name(ledger, IncomeSummaryAccount)
+    return [
+        CloseExpense(*account.transfer_balance_entry(name, isa))
+        for name, account in expenses(ledger).items()
+    ]
 
 
 def closing_entry_isa_to_retained_earnings(
@@ -85,17 +91,19 @@ def closing_entry_isa_to_retained_earnings(
 ) -> CloseISA:
     isa = find_account_name(ledger, IncomeSummaryAccount)
     re = find_account_name(ledger, RetainedEarnings)
-    return ledger[isa].transfer_balance(isa, re, CloseISA)
+    return CloseISA(*ledger[isa].transfer_balance_entry(isa, re))
 
 
 def closing_entries(ledger: Ledger) -> List[ClosingEntry]:
-    es1 = closing_entries_for_temporary_contra_accounts(ledger)
+    es0 = closing_entries_contra_income(ledger)
+    es1 = closing_entries_contra_expense(ledger)
     _dummy_ledger = ledger.process_entries(es1)
     # At this point we can issue IncomeStatement
-    es2 = closing_entries_income_and_expense_to_isa(_dummy_ledger)
-    _dummy_ledger = _dummy_ledger.process_entries(es2)
-    es3 = closing_entry_isa_to_retained_earnings(_dummy_ledger)
-    return es1 + es2 + [es3]
+    es2 = closing_entries_expenses_to_isa(_dummy_ledger)
+    es3 = closing_entries_income_to_isa(_dummy_ledger)
+    _dummy_ledger = _dummy_ledger.process_entries(es2 + es3)
+    es4 = closing_entry_isa_to_retained_earnings(_dummy_ledger)
+    return es0 + es1 + es2 + es3 + [es4]
 
 
 def close(ledger: Ledger) -> Ledger:

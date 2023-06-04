@@ -1,4 +1,4 @@
-from abacus import Chart, Entry, BalanceSheet, IncomeStatement
+from abacus import BalanceSheet, Chart, Entry, IncomeStatement
 
 chart = Chart(
     assets=["cash", "receivables", "goods", "prepaid_rent"],

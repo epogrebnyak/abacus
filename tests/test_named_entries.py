@@ -1,8 +1,8 @@
 import pytest  # pylint: disable=import-error
 
 from abacus import Chart, Entry
-from abacus.shortcodes import NamedEntry, Shortcodes
 from abacus.reports import BalanceSheet, IncomeStatement
+from abacus.shortcodes import NamedEntry, Shortcodes
 
 _shortcodes = Shortcodes(
     pay_shareholder_capital=("cash", "equity"),
@@ -69,7 +69,7 @@ def test_make_entry():
 
 def test_named_entries_income_statement(chart, shortcodes, named_entries):
     from abacus.reports import income_statement
-    
+
     entries = shortcodes.make_entries(named_entries)
     ledger = chart.ledger().process_entries(entries)
     income_st = income_statement(ledger)
