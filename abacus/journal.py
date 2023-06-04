@@ -3,7 +3,7 @@ from typing import List
 
 from abacus.accounting_types import AccountName, Amount, BusinessEntry
 from abacus.closing_types import CloseExpense, CloseIncome
-from abacus.ledger import Ledger, Posting, expenses, income
+from abacus.ledger import Ledger, Posting
 
 
 def yield_until(xs, classes):
@@ -58,12 +58,19 @@ class Journal(UserList[Posting]):
         return balances(self.ledger())
 
     def balance_sheet(self):
-        from .reports import balance_sheet
+        from .reports import BalanceSheet, balances
+        from .ledger import assets, capital, liabilities
 
-        return balance_sheet(self.ledger())
+        _ledger = self.ledger()
+        return BalanceSheet(
+            assets=balances(assets(_ledger)),
+            capital=balances(capital(_ledger)),
+            liabilities=balances(liabilities(_ledger)),
+        )
 
     def income_statement(self):
         from .reports import IncomeStatement, balances
+        from .ledger import income, expenses
 
         _gen = yield_until(self.data, [CloseExpense, CloseIncome])
         _ledger = Ledger().process_entries(_gen)

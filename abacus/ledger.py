@@ -120,11 +120,11 @@ def _process(ledger: Ledger, posting: Posting) -> Ledger:
         case OpenContraAccount(account_name, cls_string, amount, link):
             check_not_exists(ledger, account_name)
             cls = get_class_constructor(cls_string)
-            ledger[account_name] = cls([], [], link).start(amount)
+            ledger[account_name] = cls(link=link).start(amount)
         case OpenRegularAccount(account_name, cls_string, amount):
             check_not_exists(ledger, account_name)
             cls = get_class_constructor(cls_string)
-            ledger[account_name] = cls([], []).start(amount)
+            ledger[account_name] = cls().start(amount)
         case Entry(dr, cr, amount):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)

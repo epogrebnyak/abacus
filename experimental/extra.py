@@ -1,40 +1,45 @@
 from abacus import BalanceSheet, Chart, Entry, IncomeStatement
 
 chart = Chart(
-    assets=["cash", "receivables", "goods", "prepaid_rent"],
-    expenses=["cogs", "sga"],
-    equity=["equity"],  # FIXME: change to capital
-    retained_earnings="retained_earnings",
+    assets=["cash", "goods", "ppe", "prepaid_expenses"],
+    expenses=["cogs", "sga.services", "sga.salaries", "sga.d"],
+    equity=["equity"],
+    retained_earnings_account="retained_earnings",
     liabilities=["dividend_payable"],
     income=["sales"],
-    contra_accounts={
-        "sales": (["discounts, cashback"], "net_sales")
-    },  # FIXME:{"sales": ["discounts, cashback"]}
+    contra_accounts={"sales": ["discounts", "cashback"], "ppe": ["depreciation"]},
 )
 starting_balances = {
-    "cash": 4500,
-    "receivables": 480,
-    "equity": 5000,
-    "retained_earnings": -20,
+    "cash": 500,
+    "ppe": 3500,
+    "goods": 1000,
+    "equity": 4200,
+    "retained_earnings": 800,
 }
 entries = [
-    Entry("prepaid_rent", "cash", 120),  # prepay rent
-    Entry("goods", "cash", 1500),  # acquire goods
-    Entry("cash", "sales", 750),  # sell some goods
-    Entry("cogs", "goods", 500),  # register costs
-    Entry("sga", "cash", 100),  # and selling expenses
+    Entry("prepaid_expenses", "cash", 120),  # prepay rent
+    Entry("cash", "sales", 850),  # sell some goods
+    Entry("discounts", "cash", 75),
+    Entry("cashback", "cash", 25),
+    Entry("cogs", "goods", 300),  # register cost of sales
+    Entry("sga.d", "depreciation", 250),  # add depreciation
+    Entry("sga.salaries", "cash", 200),  # and selling expenses
+    Entry("sga.services", "prepaid_expenses", 80),  # adjust services
 ]
-ledger = (
-    chart.ledger(**starting_balances)
+
+from pprint import pprint
+
+journal = (
+    chart.journal(**starting_balances)
     .post_entries(entries)
-    .adjust(dr="sga", cr="prepaid_rent", amount=90)
-    .close_period()
-    .postclose(dr="retained_earnings", cr="dividend_payable", amount=75)
+    .close()
+    #      .post_close(dr="retained_earnings", cr="dividend_payable", amount=75)
 )
+
 # check what we've got
-assert ledger.balance_sheet() == BalanceSheet(
-    assets={"cash": 570},
-    capital={"equity": 500, "retained_earnings": 35},
-    liabilities={"dividend_payable": 35},
-)
-assert ledger.income_statement() == IncomeStatement()
+pprint(starting_balances)
+pprint(journal.balance_sheet())
+pprint(journal.income_statement())
+pprint(journal.current_profit())
+
+# TODO: convert to test.
