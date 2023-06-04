@@ -51,6 +51,9 @@ def closing_entries_contra_expense(ledger):
     return closing_entries_contra_accounts(ledger, Expense)
 
 
+def closing_entries_for_temporary_contra_accounts(ledger):
+    return closing_entries_contra_income(ledger) + closing_entries_contra_expense(ledger)
+
 def closing_entries_for_permanent_contra_accounts(
     ledger,
 ) -> List:

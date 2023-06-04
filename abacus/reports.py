@@ -4,8 +4,8 @@ from collections import UserDict
 from dataclasses import dataclass
 from typing import Dict
 
-from .accounting_types import AccountName, Amount
-from .closing import (
+from abacus.accounting_types import AccountName, Amount
+from abacus.closing import (
     closing_entries_for_permanent_contra_accounts,
     closing_entries_for_temporary_contra_accounts,
 )
@@ -68,21 +68,13 @@ def balance_sheet(ledger: Ledger) -> BalanceSheet:
 
 def income_statement(ledger: Ledger) -> IncomeStatement:
     entries = closing_entries_for_temporary_contra_accounts(ledger)
-    ledger = ledger.process_entries(entries)
+    _ledger = ledger.process_entries(entries)
     return IncomeStatement(
-        income=balances(income(ledger)),
-        expenses=balances(expenses(ledger)),
+        income=balances(income(_ledger)),
+        expenses=balances(expenses(_ledger)),
     )
 
 
 def current_profit(ledger: Ledger) -> Amount:
     return income_statement(ledger).current_profit()
 
-
-def rename_keys(
-    balances_dict: AccountBalancesDict, rename_dict: Dict
-) -> AccountBalancesDict:
-    def mut(s):
-        return rename_dict.get(s, s).replace("_", " ").strip().capitalize()
-
-    return AccountBalancesDict((mut(k), v) for k, v in balances_dict.items())
