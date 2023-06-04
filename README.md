@@ -69,6 +69,8 @@ More usage ideas in [Motivation](#motivation) section below.
 
 ## Upcoming in 0.5.0 - command line interface (CLI)
 
+See [milestone](https://github.com/epogrebnyak/abacus/issues?q=is%3Aopen+is%3Aissue+milestone%3A%220.5.0+release%3A+CLI+with+json+file+backend%22).
+
 ## Step by step example
 
 1. We start with a chart of accounts of five types: assets, equity, liabilities, income and expenses.
@@ -254,4 +256,6 @@ Got a use case for `abacus`? Used package in classroom for teaching?
 Feel free to contact `abacus` author
 in [issues](https://github.com/epogrebnyak/abacus/issues),
 on [reddit](https://www.reddit.com/user/iamevpo)
-or via [Telegram](https://t.me/epoepo).
+or via [Telegram](https://t.me/epoepo). 
+
+Your feedback is highly appreciated and helps steering development of `abacus`.
