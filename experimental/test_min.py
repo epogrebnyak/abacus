@@ -33,16 +33,9 @@ journal = (
 def test_postings():
     assert journal.data == [
         OpenRegularAccount(name="cash", type="Asset", balance=1400),
-        OpenRegularAccount(name="salaries",
-            type="Expense",
-            balance=0
-        ),
+        OpenRegularAccount(name="salaries", type="Expense", balance=0),
         OpenRegularAccount(name="rent", type="Expense", balance=0),
-        OpenRegularAccount(
-            name="equity",
-            type="Capital",
-            balance=1500
-        ),
+        OpenRegularAccount(name="equity", type="Capital", balance=1500),
         OpenRegularAccount(
             name="re",
             type="RetainedEarnings",

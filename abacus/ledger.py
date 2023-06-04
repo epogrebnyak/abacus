@@ -160,9 +160,11 @@ def process_postings(ledger: Ledger, postings: List[Posting]) -> Ledger:
         raise AbacusError(_failed_entries)
     return ledger
 
+
 def check_not_exists(ledger, account_name):
-            if account_name in ledger.keys():
-                raise AbacusError("Cannot open: account {account_name} already exists.")
+    if account_name in ledger.keys():
+        raise AbacusError("Cannot open: account {account_name} already exists.")
+
 
 def _process(ledger: Ledger, posting: Posting) -> Ledger:
     from abacus.accounts import get_class_constructor

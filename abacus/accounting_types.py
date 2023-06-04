@@ -28,6 +28,7 @@ class OpenRegularAccount:
     type: AccountType
     balance: Amount
 
+
 @dataclass
 class OpenContraAccount:
     """Command to open contra account in ledger."""
@@ -76,8 +77,10 @@ class Event(str, Enum):
 class Mark:
     event: Event
 
+
 class ClosingEntry:
     pass
+
 
 @dataclass
 class CloseIncome(BaseEntry, ClosingEntry):

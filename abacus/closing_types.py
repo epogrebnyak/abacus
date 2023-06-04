@@ -1,9 +1,12 @@
+"""CloseContra classes (moved to separate module to prevent circular imports)."""
+
 from typing import Dict, Type
 
 from pydantic.dataclasses import dataclass
 
 from abacus.accounting_types import BaseEntry, ClosingEntry
 from abacus.accounts import Asset, Capital, Expense, Income, Liability, RegularAccount
+
 
 @dataclass
 class CloseContra(ClosingEntry):
