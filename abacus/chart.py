@@ -19,6 +19,17 @@ from .accounts import (
 __all__ = ["Chart"]
 
 
+def empty_chart():
+    return Chart(
+        assets=[],
+        expenses=[],
+        equity=[],
+        retained_earnings_account="",
+        liabilities=[],
+        income=[],
+    )
+
+
 def is_unique(xs):
     return len(set(xs)) == len(xs)
 
