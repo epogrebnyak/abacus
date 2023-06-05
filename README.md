@@ -3,7 +3,7 @@
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
 A minimal, yet valid double-entry accounting system written in Python:
-- `abacus` package
+- `abacus` package, and
 - `jaba` command line tool.
 
 
