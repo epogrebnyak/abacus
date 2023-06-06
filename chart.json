@@ -1,13 +1,12 @@
 {
-  "assets": [
-    "cash",
-    "goods"
-  ],
-  "expenses": [],
-  "equity": [],
+  "assets": ["cash", "goods"],
+  "expenses": ["cogs", "sga"],
+  "equity": ["sharehodler_equity"],
   "retained_earnings_account": "",
   "liabilities": [],
   "income": [],
-  "contra_accounts": {},
+  "contra_accounts": {
+    "cash": ["123", "456"]
+  },
   "income_summary_account": "_profit"
 }
