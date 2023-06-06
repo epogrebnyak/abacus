@@ -6,33 +6,38 @@ A minimal, yet valid double-entry accounting system:
 
 - `abacus` package,
 - `jaba` command line tool,
-- collection of chart of accounts.
+- collection of templates (charts of accounts).
 
 ## Chart of accounts
 
-Chart of accounts (CAO) is a list of accounts to be used by a company,
-which may be defined by the government (Europe) or
-can be specified by the company itself according to guidelines (US).
-Fiscal rules and financial reporting requirements also affect the choice of a chart of accounts.
+Chart of accounts (CAO) is a list of accounts to be used by a company.
+Chart of accounts may be defined by the government (in Europe) or
+can be specified by the company itself according to guidelines (in the US).
+Fiscal rules and reporting requirements also affect 
+the composition of a chart of accounts.
 
-Chart of accounts are not that easy to find in an open, machine-readable format.
-They usually exist as a published document (sometimes with an Excel file)
-or may be embedded in accounting software, open source (like [Odoo][odoo])
+Charts of accounts are not that easy to find in an open, structured and machine-readable format.
+They usually exist as a published PDF document (sometimes an Excel file)
+or may be deeply embedded in accounting software, either open source (like [Odoo][odoo])
 or proprietary (Oracle, SAP, NetSuite, Xero or QuickBooks).
 
 [odoo]: https://www.odoo.com/documentation/16.0/applications/finance/fiscal_localizations.html
 
-`abacus` allows to create and maintain charts of accounts as JSON files
-and start using them right away to post accounting entries and create financial reports.
-(Migration between charts also considered for `abacus`, but not implemented yet.)
-
-Tentative list of charts:
+`abacus` allows to create and maintain charts of accounts as JSON files.
+The tentative list of charts is the following:
 
 - IFRS reference chart (similar to [this](https://www.ifrs-gaap.com/ifrs-chart-accounts))
 - [BAS (Sweden)](https://www.bas.se/english/chart-of-account/)
 - [SKR03 and SKR04 (Germany)](https://github.com/Dolibarr/dolibarr/issues/22363)
-- [RAS (Russia)](https://minfin.gov.ru/ru/document/?id_4=2293-plan_schetov_bukhgalterskogo_ucheta_finansovo-khozyaistvennoi_dyeyatelnosti_organizatsii_i_instruktsiya_po_primeneniyu_plana_schetov_bukhgalterskogo_ucheta_finansovo-khozyaistv&ysclid=lijx40k86b226897047)
-- Textbook and sample charts (including [fun charts][yv8bkm]).
+- [RAS (Russia)](https://minfin.gov.ru/ru/document/?id_4=2293-plan_schetov_bukhgalterskogo_ucheta_finansovo-khozyaistvennoi_dyeyatelnosti_organizatsii_i_instruktsiya_po_primeneniyu_plana_schetov_bukhgalterskogo_ucheta_finansovo-khozyaistv)
+
+Migration between domestic and IFRS-compatible charts considered for `abacus`, but not implemented yet (see [issue #4][4]).
+
+[4]: https://github.com/epogrebnyak/abacus/issues/4
+
+Textbook and sample charts (including fun charts like [Dunder Muffin Paper Company][yv8bkm]) can also be defined with `abacus`.
+
+In `abacus` after a chart is specified, one can post entries and create financial reports. 
 
 [yv8bkm]: https://www.reddit.com/r/DunderMifflin/comments/yv8bkm/the_office_chart_of_accounts
 
@@ -106,9 +111,9 @@ jaba chart chart.json offset sales discount
 jaba chart chart.json list
 ```
 
-## Accounting cycle with `abacus`
+## Accounting cycle
 
-`abacus` aims to complete an accounting cycle in following steps.
+`abacus` enables to complete an accounting cycle in following steps.
 
 1. Define a chart of accounts with five types of accounts (assets, expenses, capital, liabilities and income) and contra accounts (eg depreciation).
 2. Create a blank general ledger for a new company or a general ledger with starting balances from previous period for existing company.
