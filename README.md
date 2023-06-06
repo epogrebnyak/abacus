@@ -73,13 +73,13 @@ chart = Chart(
     retained_earnings_account="re",
     income=["sales"],
     liabilities=["ap", "dividend_due"],
-    contra_accounts={"sales": ["discount"]},
+    contra_accounts={"sales": ["discounts", "cashback"]},
 )
 journal = (
     chart.journal(cash=1200, inventory=300, equity=1500)
     .post(dr="cogs", cr="inventory", amount=250)
     .post(dr="ar", cr="sales", amount=440)
-    .post(dr="discount", cr="ar", amount=41)
+    .post(dr="discounts", cr="ar", amount=41)
     .post(dr="cash", cr="ar", amount=250)
     .post(dr="sga", cr="cash", amount=59)
     .close()
@@ -101,13 +101,14 @@ Create chart of accounts:
 
 ```console
 jaba chart chart.json create
-jaba chart chart.json set assets cash ar inventory
-jaba chart chart.json set capital equity
-jaba chart chart.json set retained-earnings re
-jaba chart chart.json set liabilities ap dividend_due
-jaba chart chart.json set income sales
-jaba chart chart.json set expenses cogs sga
-jaba chart chart.json offset sales discount
+jaba chart chart.json set --assets cash ar inventory
+jaba chart chart.json set --capital equity
+jaba chart chart.json set --retained-earnings re
+jaba chart chart.json set --liabilities ap dividend_due
+jaba chart chart.json set --income sales
+jaba chart chart.json set --expenses cogs sga
+jaba chart chart.json offset discounts cashback --contra sales
+jaba chart chart.json validate
 jaba chart chart.json list
 ```
 

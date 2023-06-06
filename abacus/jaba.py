@@ -3,18 +3,19 @@ jaba is a minimal accounting manager.
 
 Usage:
   jaba chart <chart_file> create
-  jaba chart <chart_file> set assets <account_names>...
-  jaba chart <chart_file> set expenses <account_names>... 
-  jaba chart <chart_file> set capital <account_names>...
-  jaba chart <chart_file> set [re | retained-earnings] <account_name>
-  jaba chart <chart_file> set liabilities <account_names>...
-  jaba chart <chart_file> set income <account_names>...
-  jaba chart <chart_file> offset <account_name> <contra_account_names>...
+  jaba chart <chart_file> set --assets <account_names>...
+  jaba chart <chart_file> set --expenses <account_names>... 
+  jaba chart <chart_file> set --capital <account_names>...
+  jaba chart <chart_file> set [--re | --retained-earnings] <account_name>
+  jaba chart <chart_file> set --liabilities <account_names>...
+  jaba chart <chart_file> set --income <account_names>...
+  jaba chart <chart_file> offset <contra_account_names>... --contra <account_name>
+  jaba chart <chart_file> validate
   jaba chart <chart_file> list
   jaba names <name_file> create
   jaba names <name_file> set <account_name> <title>
   jaba names <name_file> list
-  jaba store <store_file> <chart_file> create [using <start_balances_file>]
+  jaba store <store_file> <chart_file> create [--using <start_balances_file>]
   jaba store <store_file> post <dr_account> <cr_account> <amount> [--adjust] [--post-close]
   jaba store <store_file> close --all
   jaba store <store_file> list [--head <n> | --tail <n> | --last]
@@ -77,12 +78,13 @@ def main():
         chart = PreChart.from_file(path)
         if arguments["set"]:
             account_names = arguments["<account_names>"]
-            if arguments["re"] or arguments["retained-earnings"]:
+            if arguments["--re"] or arguments["--retained-earnings"]:
                 chart.retained_earnings = arguments["<account_name>"]
-            if arguments["capital"]:
+            if arguments["--capital"]:
                 chart.equity = account_names  # rename 'equity' to "capital"
-            for attr in ["assets", "income", "expenses", "liabilities"]:
-                if arguments[attr]:
+            for flag in ["--assets", "--income", "--expenses", "--liabilities"]:                
+                if arguments[flag]:
+                    attr = flag[2:]
                     setattr(chart, attr, account_names)
             chart.to_file(path)
             pprint(chart.dict())
