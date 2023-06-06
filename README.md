@@ -2,10 +2,39 @@
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
-A minimal, yet valid double-entry accounting system written in Python:
-- `abacus` package, and
-- `jaba` command line tool.
+A minimal, yet valid double-entry accounting system:
 
+- `abacus` package,
+- `jaba` command line tool,
+- collection of chart of accounts.
+
+## Chart of accounts
+
+Chart of accounts (CAO) is a list of accounts to be used by a company,
+which may be defined by the government (Europe) or
+can be specified by the company itself according to guidelines (US).
+Fiscal rules and financial reporting requirements also affect the choice of a chart of accounts.
+
+Chart of accounts are not that easy to find in an open, machine-readable format.
+They usually exist as a published document (sometimes with an Excel file)
+or may be embedded in accounting software, open source (like [Odoo][odoo])
+or proprietary (Oracle, SAP, NetSuite, Xero or QuickBooks).
+
+[odoo]: https://www.odoo.com/documentation/16.0/applications/finance/fiscal_localizations.html
+
+`abacus` allows to create and maintain charts of accounts as JSON files
+and start using them right away to post accounting entries and create financial reports.
+(Migration between charts also considered for `abacus`, but not implemented yet.)
+
+Tentative list of charts:
+
+- IFRS reference chart (similar to [this](https://www.ifrs-gaap.com/ifrs-chart-accounts))
+- [BAS (Sweden)](https://www.bas.se/english/chart-of-account/)
+- [SKR03 and SKR04 (Germany)](https://github.com/Dolibarr/dolibarr/issues/22363)
+- [RAS (Russia)](https://minfin.gov.ru/ru/document/?id_4=2293-plan_schetov_bukhgalterskogo_ucheta_finansovo-khozyaistvennoi_dyeyatelnosti_organizatsii_i_instruktsiya_po_primeneniyu_plana_schetov_bukhgalterskogo_ucheta_finansovo-khozyaistv&ysclid=lijx40k86b226897047)
+- Textbook and sample charts (including [fun charts][yv8bkm]).
+
+[yv8bkm]: https://www.reddit.com/r/DunderMifflin/comments/yv8bkm/the_office_chart_of_accounts
 
 ## Quotes about `abacus`
 
@@ -23,38 +52,61 @@ A minimal, yet valid double-entry accounting system written in Python:
 pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 
+This will install both `abacus` package and `jaba` tool.
+
 ## Minimal example
 
+### Python code
+
 ```python
-from abacus import Chart, BalanceSheet, IncomeStatement
+from abacus import Chart
 
 chart = Chart(
-    assets=["cash", "ar", "goods"],
+    assets=["cash", "ar", "inventory"],
     expenses=["cogs", "sga"],
     equity=["equity"],
     retained_earnings_account="re",
     income=["sales"],
-    contra_accounts={"sales": ["cashback"]},
+    liabilities=["ap", "dividend_due"],
+    contra_accounts={"sales": ["discount"]},
 )
 journal = (
-    chart.journal(cash=1200, goods=300, equity=1500)
+    chart.journal(cash=1200, inventory=300, equity=1500)
+    .post(dr="cogs", cr="inventory", amount=250)
     .post(dr="ar", cr="sales", amount=440)
-    .post(dr="cashback", cr="cash", amount=41)
+    .post(dr="discount", cr="ar", amount=41)
     .post(dr="cash", cr="ar", amount=250)
-    .post(dr="cogs", cr="goods", amount=250)
     .post(dr="sga", cr="cash", amount=59)
     .close()
 )
 print(journal.balance_sheet())
+# Output similar to:
 # BalanceSheet(assets={'cash': 1350, 'ar': 190, 'goods': 50},
 #              capital={'equity': 1500, 're': 90},
 #              liabilities={})
 print(journal.income_statement())
+# Output similar to:
 # IncomeStatement(income={'sales': 399},
 #                 expenses={'cogs': 250, 'sga': 59})
 ```
 
-## What `abacus` is for?
+### Command line
+
+Create chart of accounts:
+
+```console
+jaba chart chart.json create
+jaba chart chart.json set assets cash ar inventory
+jaba chart chart.json set capital equity
+jaba chart chart.json set retained-earnings re
+jaba chart chart.json set liabilities ap dividend_due
+jaba chart chart.json set income sales
+jaba chart chart.json set expenses cogs sga
+jaba chart chart.json offset sales discount
+jaba chart chart.json list
+```
+
+## Accounting cycle with `abacus`
 
 `abacus` aims to complete an accounting cycle in following steps.
 
@@ -87,7 +139,7 @@ chart = Chart(
     expenses=["cogs", "sga"],
     equity=["equity"],
     retained_earnings_account="re",
-    liabilities=["divp", "payables"],
+    liabilities=["dividend_due", "payables"],
     income=["sales"],
 )
 ```
@@ -131,7 +183,7 @@ balance_sheet = journal.balance_sheet()
 assert balance_sheet == BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},
-    liabilities={"divp": 0, "payables": 0}
+    liabilities={"dividend_due": 0, "payables": 0}
 )
 ```
 
@@ -144,7 +196,8 @@ from abacus import RichViewer
 
 rename_dict = {
     "re": "Retained earnings",
-    "divp": "Dividend due",
+    "ar": "Accounts receivable",
+    "ap": "Accounts payable",
     "cogs": "Cost of goods sold",
     "sga": "Selling, general and adm. expenses",
 }
