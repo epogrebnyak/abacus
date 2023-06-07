@@ -1,12 +1,29 @@
 {
-  "assets": ["cash", "goods"],
-  "expenses": ["cogs", "sga"],
-  "equity": ["sharehodler_equity"],
-  "retained_earnings_account": "",
-  "liabilities": [],
-  "income": [],
+  "assets": [
+    "cash",
+    "ar",
+    "inventory"
+  ],
+  "expenses": [
+    "cogs",
+    "sga"
+  ],
+  "equity": [
+    "equity"
+  ],
+  "retained_earnings_account": "re",
+  "liabilities": [
+    "ap",
+    "dividend_due"
+  ],
+  "income": [
+    "sales"
+  ],
   "contra_accounts": {
-    "cash": ["123", "456"]
+    "sales": [
+      "discounts",
+      "cashback"
+    ]
   },
   "income_summary_account": "_profit"
 }

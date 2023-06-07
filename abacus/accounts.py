@@ -192,3 +192,35 @@ all_accounts_dict = {cls.__name__: cls for cls in all_account_classes}
 
 def get_class_constructor(class_name: str) -> Type:
     return all_accounts_dict[class_name]
+
+
+@dataclass
+class OpenAccount(ABC):
+    pass
+
+    @classmethod
+    def new():
+        pass
+
+
+@dataclass
+class OpenRegularAccount:
+    """Command to open regular account in ledger."""
+
+    name: AccountName
+    type: str
+
+    def new(self):
+        return get_class_constructor(self.type)()
+
+
+@dataclass
+class OpenContraAccount:
+    """Command to open contra account in ledger."""
+
+    name: AccountName
+    type: str
+    link: AccountName
+
+    def new(self):
+        return get_class_constructor(self.type)(link=self.link)

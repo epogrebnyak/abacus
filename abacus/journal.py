@@ -9,11 +9,10 @@ from abacus.accounting_types import (
     BusinessEntry,
     Entry,
 )
+from abacus.accounts import OpenAccount
 from abacus.closing_types import ClosingEntry
 from abacus.ledger import (
     Ledger,
-    OpenContraAccount,
-    OpenRegularAccount,
     process_postings,
 )
 
@@ -25,9 +24,12 @@ def yield_until(xs, classes):
         yield x
 
 
+def isin(x, classes):
+    return any(isinstance(x, cls) for cls in classes)
+
+
 class BaseJournal(BaseModel):
-    open_regular_accounts: list[OpenRegularAccount] = []
-    open_contra_accounts: list[OpenContraAccount] = []
+    open_accounts: list[OpenAccount] = []
     business_entries: list[Entry] = []
     adjustment_entries: list[Entry] = []
     closing_entries: list[ClosingEntry] = []
@@ -37,18 +39,16 @@ class BaseJournal(BaseModel):
     def entries_for_closing_temp_contra_accounts(self):
         """Return close contra income and close contra expense accounts.
         Used to construct income statement."""
+        from abacus.closing_types import CloseContraExpense, CloseContraIncome
 
-        def is_required(p):
-            from abacus.closing_types import CloseContraExpense, CloseContraIncome
-
-            return isinstance(p, CloseContraExpense) or isinstance(p, CloseContraIncome)
-
-        return [p for p in self.closing_entries if is_required(p)]
+        return [
+            p
+            for p in self.closing_entries
+            if isin(p, [CloseContraExpense, CloseContraIncome])
+        ]
 
     def yield_for_income_statement(self):
         entry_lists = [
-            self.open_regular_accounts,
-            self.open_contra_accounts,
             self.business_entries,
             self.adjustment_entries,
             self.entries_for_closing_temp_contra_accounts(),
@@ -60,8 +60,6 @@ class BaseJournal(BaseModel):
 
     def yield_all(self):
         entry_lists = [
-            self.open_regular_accounts,
-            self.open_contra_accounts,
             self.business_entries,
             self.adjustment_entries,
             self.closing_entries,
@@ -71,16 +69,19 @@ class BaseJournal(BaseModel):
             for entry in entry_list:
                 yield entry
 
+    @property
+    def start_ledger(self):
+        return Ledger.from_stream(self.open_accounts)
+
+    def process(self, postings):
+        return process_postings(self.start_ledger, postings)
+
     def ledger(self):
-        return process_postings(Ledger(), self.yield_all())
+        return self.process(self.yield_all())
 
-    def add_regular_accounts(self, ps: list[OpenRegularAccount]):
-        self.open_regular_accounts.extend(ps)
-        return self
-
-    def add_contra_accounts(self, ps: list[OpenContraAccount]):
-        self.open_contra_accounts.extend(ps)
-        return self
+    def ledger_for_income_statement(self):
+        _gen = self.data.yield_for_income_statement()
+        return self.data.process(_gen)
 
     def add_business_entries(self, ps: list[Entry]):
         if self.is_closed:
@@ -114,6 +115,15 @@ class Journal(BaseModel):
     @classmethod
     def from_file(cls, path) -> "Journal":
         raise NotImplementedError
+
+    def save(self, path: str):
+        from pathlib import Path
+
+        Path(path).write_text(self.json(indent=2), encoding="utf-8")
+
+    #def start(self, starting_balances):
+    #    for name, amount in starting_balances.items:    
+    
 
     def post_many(self, entries: List[Entry]) -> "Journal":
         self.data.business_entries.extend(entries)
@@ -149,9 +159,7 @@ class Journal(BaseModel):
     def income_statement(self):
         from .reports import income_statement
 
-        _gen = self.data.yield_for_income_statement()
-        _ledger = process_postings(Ledger(), _gen)
-        return income_statement(_ledger)
+        return income_statement(self.data.ledger_for_income_statement())
 
     def current_profit(self) -> Amount:
         return self.income_statement().current_profit()

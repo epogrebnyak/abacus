@@ -1,0 +1,65 @@
+{
+  "data": {
+    "open_accounts": [
+      {
+        "name": "cash",
+        "type": "Asset"
+      },
+      {
+        "name": "ar",
+        "type": "Asset"
+      },
+      {
+        "name": "inventory",
+        "type": "Asset"
+      },
+      {
+        "name": "cogs",
+        "type": "Expense"
+      },
+      {
+        "name": "sga",
+        "type": "Expense"
+      },
+      {
+        "name": "equity",
+        "type": "Capital"
+      },
+      {
+        "name": "re",
+        "type": "RetainedEarnings"
+      },
+      {
+        "name": "ap",
+        "type": "Liability"
+      },
+      {
+        "name": "dividend_due",
+        "type": "Liability"
+      },
+      {
+        "name": "sales",
+        "type": "Income"
+      },
+      {
+        "name": "_profit",
+        "type": "IncomeSummaryAccount"
+      },
+      {
+        "name": "discounts",
+        "type": "ContraIncome",
+        "link": "sales"
+      },
+      {
+        "name": "cashback",
+        "type": "ContraIncome",
+        "link": "sales"
+      }
+    ],
+    "business_entries": [],
+    "adjustment_entries": [],
+    "closing_entries": [],
+    "post_close_entries": [],
+    "is_closed": false
+  }
+}

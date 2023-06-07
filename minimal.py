@@ -1,38 +1,42 @@
-from abacus import BalanceSheet, Chart, IncomeStatement
+from abacus import Chart
 
 chart = Chart(
-    assets=["cash", "ar", "goods"],
+    assets=["cash", "ar", "inventory"],
     expenses=["cogs", "sga"],
     equity=["equity"],
     retained_earnings_account="re",
     income=["sales"],
-    contra_accounts={"sales": ["cashback"]},
+    liabilities=["ap", "dividend_due"],
+    contra_accounts={"sales": ["discounts", "cashback"]},
 )
 journal = (
-    chart.journal(cash=1200, goods=300, equity=1500)
+    chart.journal(cash=1200, inventory=300, equity=1500)
+    .post(dr="cogs", cr="inventory", amount=250)
     .post(dr="ar", cr="sales", amount=440)
-    .post(dr="cashback", cr="cash", amount=41)
+    .post(dr="discounts", cr="ar", amount=41)
     .post(dr="cash", cr="ar", amount=250)
-    .post(dr="cogs", cr="goods", amount=250)
     .post(dr="sga", cr="cash", amount=59)
     .close()
 )
 print(journal.balance_sheet())
+# Output similar to:
 # BalanceSheet(assets={'cash': 1350, 'ar': 190, 'goods': 50},
 #              capital={'equity': 1500, 're': 90},
 #              liabilities={})
 print(journal.income_statement())
+# Output similar to:
 # IncomeStatement(income={'sales': 399},
 #                 expenses={'cogs': 250, 'sga': 59})
 
 from abacus import Chart, Entry
+
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
     equity=["equity"],
     retained_earnings_account="re",
-    liabilities=["divp", "payables"],
+    liabilities=["dividend_due", "payables"],
     income=["sales"],
 )
 
@@ -58,14 +62,16 @@ balance_sheet = journal.balance_sheet()
 assert balance_sheet == BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},
-    liabilities={"divp": 0, "payables": 0},
+    liabilities={"dividend_due": 0, "payables": 0},
 )
 
 from abacus import RichViewer
 
+
 rename_dict = {
     "re": "Retained earnings",
-    "divp": "Dividend due",
+    "ar": "Accounts receivable",
+    "ap": "Accounts payable",
     "cogs": "Cost of goods sold",
     "sga": "Selling, general and adm. expenses",
 }

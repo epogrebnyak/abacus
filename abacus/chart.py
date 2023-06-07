@@ -4,8 +4,9 @@ from typing import Dict, List, Type
 
 from pydantic import BaseModel, root_validator  # type: ignore
 
-from .accounting_types import AbacusError, AccountName
-from .accounts import (
+from abacus.accounts import OpenRegularAccount, OpenContraAccount
+from abacus.accounting_types import AbacusError, AccountName
+from abacus.accounts import (
     Asset,
     Capital,
     Expense,
@@ -115,17 +116,17 @@ class Chart(BaseModel):
         return values
 
     def _yield_regular_accounts(self):
-        for a in self.assets:
-            yield a, Asset
-        for e in self.expenses:
-            yield e, Expense
-        for c in self.equity:
-            yield c, Capital
+        for account_name in self.assets:
+            yield account_name, Asset
+        for account_name in self.expenses:
+            yield account_name, Expense
+        for account_name in self.equity:
+            yield account_name, Capital
         yield self.retained_earnings_account, RetainedEarnings
-        for l in self.liabilities:
-            yield l, Liability
-        for i in self.income:
-            yield i, Income
+        for account_name in self.liabilities:
+            yield account_name, Liability
+        for account_name in self.income:
+            yield account_name, Income
         yield self.income_summary_account, IncomeSummaryAccount
 
     def get_type(self, account_name: AccountName) -> Type:
@@ -139,40 +140,26 @@ class Chart(BaseModel):
                 yield contra_account, cls, account_name
 
     def yield_accounts(self):
-        from itertools import chain
-
-        return chain(self._yield_regular_accounts(), self._yield_contra_accounts())
+        for account_name, cls in self._yield_regular_accounts():
+            yield OpenRegularAccount(account_name, cls.__name__)
+        for account_name, cls, link in self._yield_contra_accounts():
+            yield OpenContraAccount(account_name, cls.__name__, link)
 
     @property
     def account_names(self) -> List[AccountName]:
         """List all account names in chart."""
-        return [xs[0] for xs in self.yield_accounts()]
+        return [a.name for a in self.yield_accounts()]
 
-    def journal(self, **starting_balances):
-        """Create a journal based on this chart and starting_balances."""
+    def journal(self):
+        """Create a journal based on this chart."""
         from abacus.journal import Journal
 
         journal = Journal()
-        journal.data.open_regular_accounts = opening_entries_regular(
-            self, starting_balances
-        )
-        journal.data.open_contra_accounts = opening_entries_contra(
-            self, starting_balances
-        )
-        # FIXME: Will refactor: adding starting balances in a multiple entry,
-        #        and needs checking if balance is done right.
+        journal.data.open_accounts = list(self.yield_accounts())
         return journal
 
     def ledger(self):
         """Create empty ledger based on this chart."""
         from abacus.ledger import Ledger
 
-        _gen1 = [
-            (account_name, cls())
-            for account_name, cls in self._yield_regular_accounts()
-        ]
-        _gen2 = [
-            (account_name, cls(link=link))
-            for account_name, cls, link in self._yield_contra_accounts()
-        ]
-        return Ledger(_gen1 + _gen2)
+        return Ledger.from_stream(self.yield_accounts())

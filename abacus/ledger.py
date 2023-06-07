@@ -3,16 +3,27 @@
 from collections import UserDict
 from typing import List, Tuple, Type
 
-from pydantic.dataclasses import dataclass
 
-from abacus.accounting_types import Amount
-from abacus.accounts import Account, Asset, Capital, Expense, Income, Liability, Unique
+from abacus.accounts import (
+    Account,
+    Asset,
+    Capital,
+    Expense,
+    Income,
+    Liability,
+    Unique,
+    OpenAccount,
+)
 
 from .accounting_types import AbacusError, AccountName, BaseEntry, Entry
 
 
 class Ledger(UserDict[AccountName, Account]):
     """General ledger that holds all accounts."""
+
+    @classmethod
+    def from_stream(cls, stream: List[OpenAccount]):
+        return Ledger((a.name, a.new()) for a in stream)
 
     def safe_copy(self) -> "Ledger":
         return Ledger((k, account.safe_copy()) for k, account in self.items())
@@ -68,26 +79,7 @@ def income(ledger: Ledger) -> Ledger:
 AccountType = str
 
 
-@dataclass
-class OpenRegularAccount:
-    """Command to open regular account in ledger."""
-
-    name: AccountName
-    type: AccountType
-    balance: Amount
-
-
-@dataclass
-class OpenContraAccount:
-    """Command to open contra account in ledger."""
-
-    name: AccountName
-    type: AccountType
-    balance: Amount
-    link: AccountName
-
-
-Posting = OpenRegularAccount | OpenContraAccount | BaseEntry | Entry
+Posting = BaseEntry | Entry
 
 
 def check_not_exists(ledger, account_name):
@@ -96,17 +88,7 @@ def check_not_exists(ledger, account_name):
 
 
 def _process(ledger: Ledger, posting: Posting) -> Ledger:
-    from abacus.accounts import get_class_constructor
-
     match posting:
-        case OpenContraAccount(account_name, cls_string, amount, link):
-            check_not_exists(ledger, account_name)
-            cls = get_class_constructor(cls_string)
-            ledger[account_name] = cls(link=link).start(amount)
-        case OpenRegularAccount(account_name, cls_string, amount):
-            check_not_exists(ledger, account_name)
-            cls = get_class_constructor(cls_string)
-            ledger[account_name] = cls().start(amount)
         case Entry(dr, cr, amount):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)
