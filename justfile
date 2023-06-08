@@ -14,7 +14,12 @@ grill:
   just md
 
 # run code from README.md
-readme:
+readme-bat:
+  cat README.md | npx codedown console > minimal.sh
+  cat minimal.sh | python call.py > minimal.bat
+  poetry run minimal.bat
+
+readme-py:
   cat README.md | npx codedown python > minimal.py
   poetry run python minimal.py
 

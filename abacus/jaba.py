@@ -20,22 +20,20 @@ Usage:
   jaba names <name_file> set <account_name> <title>
   jaba names <name_file> list
   jaba store <store_file> post <dr_account> <cr_account> <amount> [--adjust] [--post-close]
-  jaba store <store_file> close --all
+  jaba store <store_file> close [--again]
   jaba store <store_file> list [--head <n> | --tail <n> | --last]
   jaba store <store_file> list [--open | --business | --adjust | --close | --post-close]
   jaba store <store_file> report (-i | --income-statement) [--names <name_file>]
   jaba store <store_file> report (-b | --balance-sheet) [--names <name_file>]
-  jaba store <store_file> balances [--credit [--sum] | --debit [--sum]] 
+  jaba store <store_file> balances [--credit [--sum] | --debit [--sum]] [--all | --nonzero]
   jaba store <store_file> balance <account_name>
+  jaba --args
 
 Options:
   -h --help     Show this screen.
   --version     Show version.
+  --args        Print arguments.
 """
-
-# jaba store <store_file> <chart_file> close (--contra-income --contra-expenses)
-# jaba store <store_file> <chart_file> close (--income --expenses)
-# jaba store <store_file> <chart_file> close (--isa | --income-summary-account)
 
 import json
 import sys
@@ -46,7 +44,7 @@ from typing import Dict, List
 from docopt import docopt
 from pydantic import BaseModel
 
-from abacus.chart import Chart
+from abacus import Chart, Journal
 
 
 def read_json(path):
@@ -73,7 +71,8 @@ class PreChart(BaseModel):
 
 def main():
     arguments = docopt(__doc__, version="0.4.3")
-    print(arguments)
+    if arguments["--args"]:
+        print(arguments)
     if arguments["chart"]:
         path = Path(arguments["<chart_file>"])
         if arguments["touch"]:
@@ -116,15 +115,60 @@ def main():
     elif arguments["names"]:
         pass
     elif arguments["store"]:
-        pass
+        path = Path(arguments["<store_file>"])
+        journal = Journal.parse_file(path)
+        if arguments["post"]:
+            dr = arguments["<dr_account>"]
+            cr = arguments["<cr_account>"]
+            amount = arguments["<amount>"]
+            journal.post(dr, cr, amount)
+            journal.save(path)
+        if arguments["close"]:
+            if arguments["--again"]:
+                journal.data.is_closed=False
+            journal.close()
+            journal.save(path)
+        if arguments["list"]:
+            show = journal.dict()
+            # [--open | --business | --adjust | --close | --post-close]
+            if arguments["--open"]:
+                show = journal.data.open_accounts
+            if arguments["--business"]:
+                show = journal.data.business_entries
+            if arguments["--adjust"]:
+                show = ""
+            if arguments["--close"]:
+                show = journal.data.closing_entries
+            if arguments["--is-closed"]:
+                show = journal.data.is_closed
+            if arguments["--post-close"]:
+                show = ""
+            pprint(show)
+        if arguments["report"]:
+            path = Path(arguments["<store_file>"])
+            journal = Journal.parse_file(path)
+            if arguments["-i"] or arguments["--income-statement"]:
+                pprint(journal.income_statement().__dict__)
+            if arguments["-b"] or arguments["--balance-sheet"]:
+                pprint(journal.balance_sheet().__dict__)
+        if arguments["balances"]:
+            path = Path(arguments["<store_file>"])
+            journal = Journal.parse_file(path)
+            if arguments["--all"]:
+                pprint(journal.balances())
+            else:
+                pprint(journal.nonzero_balances())
+        if arguments["balance"]:
+            path = Path(arguments["<store_file>"])
+            journal = Journal.parse_file(path)
+            account_name = arguments["<account_name>"]
+            pprint(journal.balances()[account_name])
 
 
 """
 -- testing of a multiline string pytest-console-plugin
 -- extract console code from README
 -- names class
--- store details
--- ...  
 """
 if __name__ == "__main__":
     main()

@@ -22,10 +22,6 @@ def yield_until(xs, classes):
         yield x
 
 
-def is_in(x, classes):
-    return any(isinstance(x, cls) for cls in classes)
-
-
 Netting = dict[str, list[str]]
 
 
@@ -47,7 +43,9 @@ class BaseJournal(BaseModel):
         return [
             p
             for p in self.closing_entries
-            if is_in(p, [CloseContraExpense, CloseContraIncome])
+            if isinstance(p, CloseContraExpense)
+               or isinstance(p, CloseContraIncome) 
+               or p.action in ["close_contra_expense", "close_contra_income"]
         ]
 
     def yield_for_income_statement(self):
@@ -117,10 +115,6 @@ class BaseJournal(BaseModel):
 class Journal(BaseModel):
     data: BaseJournal = BaseJournal()
 
-    @classmethod
-    def from_file(cls, path) -> "Journal":
-        raise NotImplementedError
-
     def save(self, path: str):
         from pathlib import Path
 
@@ -151,6 +145,12 @@ class Journal(BaseModel):
         from .reports import balances
 
         return balances(self.ledger())
+
+    def nonzero_balances(self):
+        from .reports import AccountBalancesDict
+
+        return AccountBalancesDict({k:v for k, v in self.balances().items() if v !=0 })
+
 
     def balance_sheet(self):
         from .reports import balance_sheet

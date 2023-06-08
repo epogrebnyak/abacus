@@ -20,9 +20,10 @@ from abacus.closing_types import (
     CloseISA,
     get_closing_entry_type,
 )
+from abacus.ledger import expenses, income
 from abacus.ledger import Ledger
 
-__all__ = ["closing_entries"]  # type: ignore
+__all__ = ["closing_entries", "closing_entries_for_permanent_contra_accounts"]  # type: ignore
 
 
 def close_contra_accounts(ledger, netting, regular_cls):
@@ -53,9 +54,18 @@ def closing_entries_for_permanent_contra_accounts(ledger, netting) -> List:
 
     return f(Asset) + f(Capital) + f(Liability)
 
+def close_to_isa(ledger, cls) -> List[CloseIncome | CloseExpense]:
 
-def close_to_isa(ledger, select, entry_cls) -> List[CloseIncome]:
     isa = ledger.find_account_name(IncomeSummaryAccount)
+    match cls.__name__:
+        case "Income":
+           select = income
+           entry_cls = CloseIncome # type: ignore
+        case "Expense":
+           select = expenses
+           entry_cls = CloseExpense # type: ignore
+        case _:
+            raise TypeError(cls)   
     return [
         transfer_entry(account, name, isa).coerce(entry_cls)
         for name, account in select(ledger).items()
@@ -71,17 +81,15 @@ def closing_entry_isa_to_retained_earnings(
 
 
 def closing_entries(ledger: Ledger, netting) -> List:
-    from abacus.ledger import expenses, income
-
-    #     #     """Close contra accounts associated with income and expense accounts,
-    #     #     aggregate profit or loss at income summary account
-    #     #     and move balance of income summary account to retained earnings."""
+    # Close contra accounts associated with income and expense accounts
     es0 = close_contra_accounts(ledger, netting, Income)
     es1 = close_contra_accounts(ledger, netting, Expense)
     _dummy_ledger = ledger.process_postings(es0 + es1)
     # At this point we can issue IncomeStatement
-    es2 = close_to_isa(_dummy_ledger, income, CloseIncome)
-    es3 = close_to_isa(_dummy_ledger, expenses, CloseExpense)
+    # Next. aggregate profit or loss at income summary account
+    es2 = close_to_isa(_dummy_ledger, Income)
+    es3 = close_to_isa(_dummy_ledger, Expense)
     _dummy_ledger = _dummy_ledger.process_postings(es2 + es3)  # type: ignore
+    # Move balance of income summary account to retained earnings
     es4 = closing_entry_isa_to_retained_earnings(_dummy_ledger)
     return es0 + es1 + es2 + es3 + [es4]

@@ -9,22 +9,22 @@ from abacus.accounts import Asset, Capital, Expense, Income, Liability, RegularA
 
 
 @dataclass
-class ClosingEntry:
-    pass
+class ClosingEntry(BaseEntry):
+    action: str = "closing_entry"
 
 
 @dataclass
-class CloseIncome(BaseEntry, ClosingEntry):
+class CloseIncome(ClosingEntry):
     action: str = "close_income"
 
 
 @dataclass
-class CloseExpense(BaseEntry, ClosingEntry):
+class CloseExpense(ClosingEntry):
     action: str = "close_expense"
 
 
 @dataclass
-class CloseISA(BaseEntry, ClosingEntry):
+class CloseISA(ClosingEntry):
     action: str = "close_isa"
 
 
@@ -34,27 +34,27 @@ class CloseContra(ClosingEntry):
 
 
 @dataclass
-class CloseContraIncome(BaseEntry, CloseContra):
+class CloseContraIncome(CloseContra):
     action: str = "close_contra_income"
 
 
 @dataclass
-class CloseContraExpense(BaseEntry, CloseContra):
+class CloseContraExpense(CloseContra):
     action: str = "close_contra_expense"
 
 
 @dataclass
-class CloseContraAsset(BaseEntry, CloseContra):
+class CloseContraAsset(CloseContra):
     action: str = "close_contra_asset"
 
 
 @dataclass
-class CloseContraLiability(BaseEntry, CloseContra):
+class CloseContraLiability(CloseContra):
     action: str = "close_contra_liability"
 
 
 @dataclass
-class CloseContraCapital(BaseEntry, CloseContra):
+class CloseContraCapital(CloseContra):
     action: str = "close_contra_capital"
 
 

@@ -1,5 +1,14 @@
 {
   "data": {
+    "netting": {
+      "ppe": [
+        "depreciation"
+      ],
+      "sales": [
+        "discounts",
+        "cashback"
+      ]
+    },
     "open_accounts": [
       {
         "name": "cash",
@@ -11,6 +20,10 @@
       },
       {
         "name": "inventory",
+        "type": "Asset"
+      },
+      {
+        "name": "ppe",
         "type": "Asset"
       },
       {
@@ -46,24 +59,79 @@
         "type": "IncomeSummaryAccount"
       },
       {
+        "name": "depreciation",
+        "type": "ContraAsset"
+      },
+      {
         "name": "discounts",
-        "type": "ContraIncome",
-        "link": "sales"
+        "type": "ContraIncome"
       },
       {
         "name": "cashback",
-        "type": "ContraIncome",
-        "link": "sales"
+        "type": "ContraIncome"
       }
     ],
     "start_entry": {
       "debit_entries": [],
       "credit_entries": []
     },
-    "business_entries": [],
+    "business_entries": [
+      {
+        "dr": "cash",
+        "cr": "equity",
+        "amount": 1000
+      },
+      {
+        "dr": "cash",
+        "cr": "sales",
+        "amount": 220
+      },
+      {
+        "dr": "cashback",
+        "cr": "cash",
+        "amount": 21
+      }
+    ],
     "adjustment_entries": [],
-    "closing_entries": [],
+    "closing_entries": [
+      {
+        "dr": "sales",
+        "cr": "discounts",
+        "amount": 0,
+        "action": "close_contra_income"
+      },
+      {
+        "dr": "sales",
+        "cr": "cashback",
+        "amount": 21,
+        "action": "close_contra_income"
+      },
+      {
+        "dr": "sales",
+        "cr": "_profit",
+        "amount": 199,
+        "action": "close_income"
+      },
+      {
+        "dr": "_profit",
+        "cr": "cogs",
+        "amount": 0,
+        "action": "close_expense"
+      },
+      {
+        "dr": "_profit",
+        "cr": "sga",
+        "amount": 0,
+        "action": "close_expense"
+      },
+      {
+        "dr": "_profit",
+        "cr": "re",
+        "amount": 199,
+        "action": "close_isa"
+      }
+    ],
     "post_close_entries": [],
-    "is_closed": false
+    "is_closed": true
   }
 }

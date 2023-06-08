@@ -6,7 +6,7 @@ from abacus.accounting_types import (
     MultipleEntry,
 )
 from abacus.accounts import OpenAccount
-from abacus.closing_types import CloseExpense, CloseIncome, CloseISA
+from abacus.closing_types import CloseContraIncome, CloseExpense, CloseIncome, CloseISA
 
 # Create chart of accounts
 chart = Chart(
@@ -15,6 +15,7 @@ chart = Chart(
     retained_earnings_account="re",
     expenses=["salaries", "rent"],
     income=["services"],
+    contra_accounts={"services": ["cashback"]},
 )
 
 # Account balances are known from previous period end
@@ -24,14 +25,15 @@ starting_balances = {"cash": 1400, "equity": 1500, "re": -100}
 journal = (
     chart.journal(starting_balances)
     .post(dr="rent", cr="cash", amount=200)
-    .post(dr="cash", cr="services", amount=800)
+    .post(dr="cash", cr="services", amount=825)
+    .post(dr="cashback", cr="cash", amount=25)
     .post(dr="salaries", cr="cash", amount=400)
     .close()
 )
 
 
 def test_netting():
-    assert journal.data.netting == {}
+    assert journal.data.netting == {"services": ["cashback"]}
 
 
 def test_open_accounts():
@@ -43,6 +45,7 @@ def test_open_accounts():
         OpenAccount(name="re", type="RetainedEarnings"),
         OpenAccount(name="services", type="Income"),
         OpenAccount(name="_profit", type="IncomeSummaryAccount"),
+        OpenAccount(name="cashback", type="ContraIncome"),
     ]
 
 
@@ -56,7 +59,8 @@ def test_start_entry():
 def test_business_entries():
     assert journal.data.business_entries == [
         BusinessEntry(dr="rent", cr="cash", amount=200, action="post"),
-        BusinessEntry(dr="cash", cr="services", amount=800, action="post"),
+        BusinessEntry(dr="cash", cr="services", amount=825, action="post"),
+        BusinessEntry(dr="cashback", cr="cash", amount=25, action="post"),
         BusinessEntry(dr="salaries", cr="cash", amount=400, action="post"),
     ]
 
@@ -67,6 +71,9 @@ def test_adjustment_entries():
 
 def test_closing_entries():
     assert journal.data.closing_entries == [
+        CloseContraIncome(
+            dr="services", cr="cashback", amount=25, action="close_contra_income"
+        ),
         CloseIncome(dr="services", cr="_profit", amount=800, action="close_income"),
         CloseExpense(dr="_profit", cr="salaries", amount=400, action="close_expense"),
         CloseExpense(dr="_profit", cr="rent", amount=200, action="close_expense"),
@@ -91,6 +98,7 @@ def test_balance_sheet():
 def test_balances():
     assert journal.balances() == {
         "_profit": 0,
+        "cashback": 0,
         "cash": 1600,
         "equity": 1500,
         "re": 100,

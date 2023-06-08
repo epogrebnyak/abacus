@@ -188,6 +188,7 @@ def make_journal(chart, starting_balances: dict):
     from abacus.journal import Journal
 
     journal = Journal()
+    journal.data.netting = chart.contra_accounts
     journal.data.open_accounts = list(chart.yield_accounts())
     journal.data.start_entry = to_multiple_entry(chart, starting_balances)
     return journal
