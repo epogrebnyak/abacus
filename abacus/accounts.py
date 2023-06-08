@@ -57,10 +57,22 @@ class DebitAccount(Account):
     def balance(self) -> Amount:
         return sum(self.debits) - sum(self.credits)
 
+    def is_debit_account(self):
+        return True
+
+    def is_credit_account(self):
+        return False
+
 
 class CreditAccount(Account):
     def balance(self) -> Amount:
         return sum(self.credits) - sum(self.debits)
+
+    def is_debit_account(self):
+        return False
+
+    def is_credit_account(self):
+        return True
 
 
 class Asset(DebitAccount, RegularAccount):
@@ -155,6 +167,10 @@ all_accounts_dict = {cls.__name__: cls for cls in all_account_classes}
 
 def get_class_constructor(class_name: str) -> Type:
     return all_accounts_dict[class_name]
+
+
+def new(class_name: str):
+    return get_class_constructor(class_name)()
 
 
 @dataclass

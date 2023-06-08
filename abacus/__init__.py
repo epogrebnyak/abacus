@@ -18,7 +18,7 @@ Simplifying assumptions:
 - balances stick to one side (dr or cr) based on type of account
 
 """
-from .accounting_types import Entry  # noqa: F401
+from .accounting_types import AbacusError, Amount, Entry  # noqa: F401
 from .chart import Chart  # noqa: F401
 from .journal import Journal  # noqa: F401
 from .ledger import Ledger  # noqa: F401

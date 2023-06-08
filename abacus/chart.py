@@ -161,15 +161,18 @@ class Chart(BaseModel):
     def yield_accounts(self):
         from itertools import chain
 
-        for account_name, cls in chain(
-            self._yield_regular_accounts(), self._yield_contra_accounts()
-        ):
-            yield OpenAccount(account_name, cls.__name__)
+        a = self._yield_regular_accounts()
+        b = self._yield_contra_accounts()
+        return chain(a, b)
+
+    def yield_accounts_as_text(self):
+        for account_name, cls in self.yield_accounts():
+            yield account_name, cls.__name__
 
     @property
     def account_names(self) -> List[AccountName]:
         """List all account names in chart."""
-        return [a.name for a in self.yield_accounts()]
+        return [a[0] for a in self.yield_accounts()]
 
     def journal(self, starting_balances: dict | None = None):
         """Create a journal based on this chart."""
@@ -181,7 +184,7 @@ class Chart(BaseModel):
         """Create empty ledger based on this chart."""
         from abacus.ledger import Ledger
 
-        return Ledger.from_stream(self.yield_accounts())
+        return Ledger((a, b()) for a, b in self.yield_accounts())
 
 
 def make_journal(chart, starting_balances: dict):
@@ -189,18 +192,6 @@ def make_journal(chart, starting_balances: dict):
 
     journal = Journal()
     journal.data.netting = chart.contra_accounts
-    journal.data.open_accounts = list(chart.yield_accounts())
-    journal.data.start_entry = to_multiple_entry(chart, starting_balances)
+    journal.data.accounts = list(chart.yield_accounts_as_text())
+    journal.data.starting_balances = starting_balances
     return journal
-
-
-def to_multiple_entry(chart: Chart, starting_balances: dict) -> MultipleEntry:
-    me = MultipleEntry([], [])
-    for account_name, amount in starting_balances.items():
-        if chart.is_debit_account(account_name):
-            me.debit_entries.append(DebitEntry(account_name, amount))
-        elif chart.is_credit_account(account_name):
-            me.credit_entries.append(CreditEntry(account_name, amount))
-        else:
-            raise TypeError([chart, f"{account_name} type not identified within chart"])
-    return me

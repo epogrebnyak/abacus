@@ -11,7 +11,7 @@ jaba chart chart.json validate
 jaba chart chart.json list
 jaba chart chart.json create store.json
 
-jaba store store.json post cash equity 1500
+jaba store store.json post --dr cash --cr equity --amount 1500
 jaba store store.json post inventory cash 300
 jaba store store.json post cogs inventory 250
 jaba store store.json post ar sales 440
@@ -21,7 +21,7 @@ jaba store store.json post sga cash 59
 jaba store store.json close
 jaba store store.json list
 
-jaba report store.json -b
-jaba report store.json -i
-jaba report store.json -t
-jaba report store.json -t re
+jaba report store.json --balance-sheet
+jaba report store.json --income-statement
+jaba report store.json --trial-balance
+jaba report store.json --account re --assert 90

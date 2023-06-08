@@ -28,9 +28,9 @@ from .accounting_types import (
 class Ledger(UserDict[AccountName, Account]):
     """General ledger that holds all accounts."""
 
-    @classmethod
-    def from_stream(cls, stream: List[OpenAccount]):
-        return Ledger((a.name, a.new()) for a in stream)
+    #    @classmethod
+    #    def from_stream(cls, stream: List[OpenAccount]):
+    #        return Ledger((a.name, a.new()) for a in stream)
 
     def safe_copy(self) -> "Ledger":
         return Ledger((k, account.safe_copy()) for k, account in self.items())
@@ -88,11 +88,9 @@ Posting = BaseEntry | Entry | MultipleEntry | DebitEntry | CreditEntry
 
 def _process(ledger: Ledger, posting: Posting) -> Ledger:
     match posting:
-        case MultipleEntry(ds, cs):
-            for d in ds:
-                ledger = _process(ledger, d)
-            for c in cs:
-                ledger = _process(ledger, c)
+        case MultipleEntry(_, _):
+            for e in posting.entries():
+                ledger = _process(ledger, e)
         case DebitEntry(dr, amount):
             ledger[dr].debits.append(amount)
         case CreditEntry(cr, amount):

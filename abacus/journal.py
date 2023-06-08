@@ -10,7 +10,6 @@ from abacus.accounting_types import (
     Entry,
     MultipleEntry,
 )
-from abacus.accounts import OpenAccount
 from abacus.closing_types import ClosingEntry
 from abacus.ledger import Ledger, process_postings
 
@@ -25,15 +24,30 @@ def yield_until(xs, classes):
 Netting = dict[str, list[str]]
 
 
+def to_multiple_entry(ledger, starting_balances: dict) -> MultipleEntry:
+    me = MultipleEntry([], [])
+    for account_name, amount in starting_balances.items():
+        account = ledger[account_name]
+        t = (account_name, amount)
+        if account.is_debit_account():
+            me.debit_entries.append(t)
+        if account.is_credit_account():
+            me.credit_entries.append(t)
+    return me
+
+
 class BaseJournal(BaseModel):
+    accounts: list[tuple[str, str]] = []
     netting: Netting = {}
-    open_accounts: list[OpenAccount] = []
-    start_entry: MultipleEntry = MultipleEntry([], [])
+    starting_balances: dict = {}
     business_entries: list[Entry] = []
     adjustment_entries: list[Entry] = []
     closing_entries: list[ClosingEntry] = []
     post_close_entries: list[Entry] = []
     is_closed: bool = False
+
+    def starting_entry(self) -> MultipleEntry:
+        return to_multiple_entry(self.base_ledger, self.starting_balances)
 
     def entries_for_closing_temp_contra_accounts(self):
         """Return close contra income and close contra expense accounts.
@@ -71,10 +85,17 @@ class BaseJournal(BaseModel):
                 yield entry
 
     @property
-    def start_ledger(self):
-        return Ledger.from_stream(self.open_accounts).process_postings(
-            [self.start_entry]
+    def base_ledger(self):
+        from abacus.accounts import new
+
+        return Ledger(
+            (account_name, new(cls_name)) for (account_name, cls_name) in self.accounts
         )
+
+    @property
+    def start_ledger(self):
+        """Ledger with some balances."""
+        return self.base_ledger.process_postings([self.starting_entry()])
 
     def process(self, postings):
         return process_postings(self.start_ledger, postings)
@@ -118,7 +139,11 @@ class Journal(BaseModel):
     def save(self, path: str):
         from pathlib import Path
 
-        Path(path).write_text(self.json(indent=2), encoding="utf-8")
+        Path(path).write_text(self.data.json(indent=2), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path: str):
+        return Journal(data=BaseJournal.parse_file(path))
 
     def post_many(self, entries: List[Entry]) -> "Journal":
         self.data.business_entries.extend(entries)

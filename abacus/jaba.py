@@ -20,12 +20,13 @@ Usage:
   jaba names <name_file> set <account_name> <title>
   jaba names <name_file> list
   jaba store <store_file> post <dr_account> <cr_account> <amount> [--adjust] [--post-close]
+  jaba store <store_file> post --dr <dr_account> --cr <cr_account> --amount <amount> [--adjust] [--post-close]
   jaba store <store_file> close [--again]
   jaba store <store_file> list [--open | --business | --adjust | --close | --post-close | --is-closed]
-  jaba report <store_file> (-i | --income-statement) [--names <name_file>]
-  jaba report <store_file> (-b | --balance-sheet) [--names <name_file>]
+  jaba report <store_file> (-i | --income-statement) [--names <name_file>] [--rich]
+  jaba report <store_file> (-b | --balance-sheet) [--names <name_file>] [--rich]
   jaba report <store_file> (-t | --trial-balance) [--credit [--sum] | --debit [--sum]] [--all]
-  jaba report <store_file> (-t | --trial-balance) <account_name>
+  jaba report <store_file> (-a | --account) <account_name> [--assert <amount>]
   jaba --args
 
 Options:
@@ -43,7 +44,7 @@ from typing import Dict, List
 from docopt import docopt
 from pydantic import BaseModel
 
-from abacus import Chart, Journal
+from abacus import AbacusError, Amount, Chart, Journal
 
 
 def read_json(path):
@@ -51,6 +52,10 @@ def read_json(path):
 
 
 class PreChart(BaseModel):
+    """A class similar to Chart, but allowing empty fields.
+    PreChart is used to gather parameters from command line interface
+    and later create Chart."""
+
     assets: List[str] = []
     expenses: List[str] = []
     equity: List[str] = []
@@ -58,7 +63,7 @@ class PreChart(BaseModel):
     liabilities: List[str] = []
     income: List[str] = []
     contra_accounts: Dict[str, List[str]] = {}
-    income_summary_account = "_profit"
+    # income_summary_account = "_profit"
 
     def to_file(self, path):
         Path(path).write_text(json.dumps(self.dict(), indent=2), encoding="utf-8")
@@ -85,20 +90,22 @@ def main():
             account_names = arguments["<account_names>"]
             if arguments["--re"] or arguments["--retained-earnings"]:
                 chart.retained_earnings_account = arguments["<account_name>"]
+                pprint(chart.retained_earnings_account)
             if arguments["--capital"]:
                 chart.equity = account_names  # rename 'equity' to "capital"
+                pprint(chart.equity)
             for flag in ["--assets", "--income", "--expenses", "--liabilities"]:
                 if arguments[flag]:
                     attr = flag[2:]
                     setattr(chart, attr, account_names)
+                    pprint(getattr(chart, attr))
             chart.to_file(path)
-            pprint(chart.dict())
         if arguments["offset"]:
             chart.contra_accounts[arguments["<account_name>"]] = arguments[
                 "<contra_account_names>"
             ]
+            pprint(chart.contra_accounts)
             chart.to_file(path)
-            pprint(chart.dict())
         if arguments["validate"]:
             # Create Chart object and see what happens
             chart2 = Chart(**PreChart.from_file(path).dict())
@@ -106,16 +113,16 @@ def main():
         if arguments["create"]:
             chart = Chart(**PreChart.from_file(path).dict())
             journal = chart.journal()
-            if arguments["--using"]:
+            if arguments["--using"]:  # FIXME: does not work
                 starting_balances = read_json(arguments["<start_balances_file>"])
                 journal = chart.journal(starting_balances)
             journal.save(arguments["<store_file>"])
-            pprint(journal.dict())
+            pprint(journal.data.dict())
     elif arguments["names"]:
         pass
     elif arguments["store"]:
         path = Path(arguments["<store_file>"])
-        journal = Journal.parse_file(path)
+        journal = Journal.load(path)
         if arguments["post"]:
             journal.post(
                 dr=arguments["<dr_account>"],
@@ -129,10 +136,10 @@ def main():
             journal.close()
             journal.save(path)
         if arguments["list"]:
-            show = journal.dict()
+            show = journal.data.dict()
             # [--open | --business | --adjust | --close | --post-close]
             if arguments["--open"]:
-                show = journal.data.open_accounts
+                show = journal.data.accounts
             if arguments["--business"]:
                 show = journal.data.business_entries
             if arguments["--adjust"]:
@@ -144,34 +151,29 @@ def main():
             if arguments["--post-close"]:
                 show = ""
             pprint(show)
-        if arguments["report"]:
-            path = Path(arguments["<store_file>"])
-            journal = Journal.parse_file(path)
-            if arguments["-i"] or arguments["--income-statement"]:
-                pprint(journal.income_statement().__dict__)
-            if arguments["-b"] or arguments["--balance-sheet"]:
-                pprint(journal.balance_sheet().__dict__)
-        if arguments["balances"]:
-            path = Path(arguments["<store_file>"])
-            journal = Journal.parse_file(path)
+    elif arguments["report"]:
+        path = Path(arguments["<store_file>"])
+        journal = Journal.load(path)
+        if arguments["-i"] or arguments["--income-statement"]:
+            pprint(journal.income_statement().__dict__)
+        if arguments["-b"] or arguments["--balance-sheet"]:
+            pprint(journal.balance_sheet().__dict__)
+        if arguments["-t"] or arguments["--trial-balance"]:
             if arguments["--all"]:
-                pprint(json.dumps(journal.balances().data))
+                pprint(journal.balances().data)
             else:
-                s = repr(journal.nonzero_balances().data).replace("'", '"')
-                pprint(s)
-        if arguments["balance"]:
-            path = Path(arguments["<store_file>"])
-            journal = Journal.parse_file(path)
+                pprint(journal.nonzero_balances().data)
+        if arguments["-a"] or arguments["--account"]:
             account_name = arguments["<account_name>"]
-            print(json.dumps(journal.balances().data[account_name]))
+            actual = journal.balances().data[account_name]
+            if arguments["--assert"]:
+                amount = Amount(arguments["<amount>"])
+                if actual != amount:
+                    raise AbacusError([account_name, actual, amount])
+            pprint(actual)
     elif arguments["names"]:
         raise NotImplementedError  # yet
 
 
-"""
--- testing of a multiline string pytest-console-plugin
--- extract console code from README
--- names command
-"""
 if __name__ == "__main__":
     main()

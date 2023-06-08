@@ -1,4 +1,5 @@
 [abacus.options]
-chart = "chart.json"
-start_balances = "start_balances.json" 
-entries = "entries.json"
+chart="chart.json"
+start="start_balances.json"
+store="entries.json"
+rename="rename.json"

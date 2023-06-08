@@ -1,157 +1,152 @@
 {
-  "data": {
-    "netting": {
-      "ppe": [
-        "depreciation"
-      ],
-      "sales": [
-        "discounts",
-        "cashback"
-      ]
+  "accounts": [
+    [
+      "cash",
+      "Asset"
+    ],
+    [
+      "ar",
+      "Asset"
+    ],
+    [
+      "inventory",
+      "Asset"
+    ],
+    [
+      "ppe",
+      "Asset"
+    ],
+    [
+      "cogs",
+      "Expense"
+    ],
+    [
+      "sga",
+      "Expense"
+    ],
+    [
+      "equity",
+      "Capital"
+    ],
+    [
+      "re",
+      "RetainedEarnings"
+    ],
+    [
+      "ap",
+      "Liability"
+    ],
+    [
+      "dividend_due",
+      "Liability"
+    ],
+    [
+      "sales",
+      "Income"
+    ],
+    [
+      "_profit",
+      "IncomeSummaryAccount"
+    ],
+    [
+      "depreciation",
+      "ContraAsset"
+    ],
+    [
+      "discounts",
+      "ContraIncome"
+    ],
+    [
+      "cashback",
+      "ContraIncome"
+    ]
+  ],
+  "netting": {
+    "ppe": [
+      "depreciation"
+    ],
+    "sales": [
+      "discounts",
+      "cashback"
+    ]
+  },
+  "starting_balances": {},
+  "business_entries": [
+    {
+      "dr": "cash",
+      "cr": "equity",
+      "amount": 1500
     },
-    "open_accounts": [
-      {
-        "name": "cash",
-        "type": "Asset"
-      },
-      {
-        "name": "ar",
-        "type": "Asset"
-      },
-      {
-        "name": "inventory",
-        "type": "Asset"
-      },
-      {
-        "name": "ppe",
-        "type": "Asset"
-      },
-      {
-        "name": "cogs",
-        "type": "Expense"
-      },
-      {
-        "name": "sga",
-        "type": "Expense"
-      },
-      {
-        "name": "equity",
-        "type": "Capital"
-      },
-      {
-        "name": "re",
-        "type": "RetainedEarnings"
-      },
-      {
-        "name": "ap",
-        "type": "Liability"
-      },
-      {
-        "name": "dividend_due",
-        "type": "Liability"
-      },
-      {
-        "name": "sales",
-        "type": "Income"
-      },
-      {
-        "name": "_profit",
-        "type": "IncomeSummaryAccount"
-      },
-      {
-        "name": "depreciation",
-        "type": "ContraAsset"
-      },
-      {
-        "name": "discounts",
-        "type": "ContraIncome"
-      },
-      {
-        "name": "cashback",
-        "type": "ContraIncome"
-      }
-    ],
-    "start_entry": {
-      "debit_entries": [],
-      "credit_entries": []
+    {
+      "dr": "inventory",
+      "cr": "cash",
+      "amount": 300
     },
-    "business_entries": [
-      {
-        "dr": "cash",
-        "cr": "equity",
-        "amount": 1500
-      },
-      {
-        "dr": "inventory",
-        "cr": "cash",
-        "amount": 300
-      },
-      {
-        "dr": "cogs",
-        "cr": "inventory",
-        "amount": 250
-      },
-      {
-        "dr": "ar",
-        "cr": "sales",
-        "amount": 440
-      },
-      {
-        "dr": "discounts",
-        "cr": "ar",
-        "amount": 41
-      },
-      {
-        "dr": "cash",
-        "cr": "ar",
-        "amount": 250
-      },
-      {
-        "dr": "sga",
-        "cr": "cash",
-        "amount": 59
-      }
-    ],
-    "adjustment_entries": [],
-    "closing_entries": [
-      {
-        "dr": "sales",
-        "cr": "discounts",
-        "amount": 41,
-        "action": "close_contra_income"
-      },
-      {
-        "dr": "sales",
-        "cr": "cashback",
-        "amount": 0,
-        "action": "close_contra_income"
-      },
-      {
-        "dr": "sales",
-        "cr": "_profit",
-        "amount": 399,
-        "action": "close_income"
-      },
-      {
-        "dr": "_profit",
-        "cr": "cogs",
-        "amount": 250,
-        "action": "close_expense"
-      },
-      {
-        "dr": "_profit",
-        "cr": "sga",
-        "amount": 59,
-        "action": "close_expense"
-      },
-      {
-        "dr": "_profit",
-        "cr": "re",
-        "amount": 90,
-        "action": "close_isa"
-      }
-    ],
-    "post_close_entries": [],
-    "is_closed": true
-  }
+    {
+      "dr": "cogs",
+      "cr": "inventory",
+      "amount": 250
+    },
+    {
+      "dr": "ar",
+      "cr": "sales",
+      "amount": 440
+    },
+    {
+      "dr": "discounts",
+      "cr": "ar",
+      "amount": 41
+    },
+    {
+      "dr": "cash",
+      "cr": "ar",
+      "amount": 250
+    },
+    {
+      "dr": "sga",
+      "cr": "cash",
+      "amount": 59
+    }
+  ],
+  "adjustment_entries": [],
+  "closing_entries": [
+    {
+      "dr": "sales",
+      "cr": "discounts",
+      "amount": 41,
+      "action": "close_contra_income"
+    },
+    {
+      "dr": "sales",
+      "cr": "cashback",
+      "amount": 0,
+      "action": "close_contra_income"
+    },
+    {
+      "dr": "sales",
+      "cr": "_profit",
+      "amount": 399,
+      "action": "close_income"
+    },
+    {
+      "dr": "_profit",
+      "cr": "cogs",
+      "amount": 250,
+      "action": "close_expense"
+    },
+    {
+      "dr": "_profit",
+      "cr": "sga",
+      "amount": 59,
+      "action": "close_expense"
+    },
+    {
+      "dr": "_profit",
+      "cr": "re",
+      "amount": 90,
+      "action": "close_isa"
+    }
+  ],
+  "post_close_entries": [],
+  "is_closed": true
 }

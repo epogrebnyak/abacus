@@ -34,13 +34,19 @@ class CreditEntry(SingleEntry):
 
 
 def amount_sum(entries):
-    return sum(e.amount for e in entries)
+    return sum(e[1] for e in entries)
 
 
 @dataclass
 class MultipleEntry:
-    debit_entries: list[DebitEntry]
-    credit_entries: list[CreditEntry]
+    debit_entries: list[tuple[AccountName, Amount]]
+    credit_entries: list[tuple[AccountName, Amount]]
+
+    def entries(self):
+        for d in self.debit_entries:
+            yield DebitEntry(*d)
+        for c in self.credit_entries:
+            yield CreditEntry(*c)
 
     def match_amounts(self):  # should be post-init method
         if amount_sum(self.debit_entries) != amount_sum(self.credit_entries):

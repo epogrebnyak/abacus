@@ -37,22 +37,22 @@ def test_netting():
 
 
 def test_open_accounts():
-    assert journal.data.open_accounts == [
-        OpenAccount(name="cash", type="Asset"),
-        OpenAccount(name="salaries", type="Expense"),
-        OpenAccount(name="rent", type="Expense"),
-        OpenAccount(name="equity", type="Capital"),
-        OpenAccount(name="re", type="RetainedEarnings"),
-        OpenAccount(name="services", type="Income"),
-        OpenAccount(name="_profit", type="IncomeSummaryAccount"),
-        OpenAccount(name="cashback", type="ContraIncome"),
+    assert journal.data.accounts == [
+        ("cash", "Asset"),
+        ("salaries", "Expense"),
+        ("rent", "Expense"),
+        ("equity", "Capital"),
+        ("re", "RetainedEarnings"),
+        ("services", "Income"),
+        ("_profit", "IncomeSummaryAccount"),
+        ("cashback", "ContraIncome"),
     ]
 
 
 def test_start_entry():
-    assert journal.data.start_entry == MultipleEntry(
-        [DebitEntry("cash", 1400)],
-        [CreditEntry("equity", 1500), CreditEntry("re", -100)],
+    assert journal.data.starting_entry() == MultipleEntry(
+        [("cash", 1400)],
+        [("equity", 1500), ("re", -100)],
     )
 
 
