@@ -3,16 +3,7 @@
 from collections import UserDict
 from typing import List, Tuple, Type
 
-from abacus.accounts import (
-    Account,
-    Asset,
-    Capital,
-    Expense,
-    Income,
-    Liability,
-    OpenAccount,
-    Unique,
-)
+from abacus.accounts import Account, Asset, Capital, Expense, Income, Liability, Unique
 
 from .accounting_types import (
     AbacusError,

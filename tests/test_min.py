@@ -1,11 +1,5 @@
 from abacus import BalanceSheet, Chart, IncomeStatement
-from abacus.accounting_types import (
-    BusinessEntry,
-    CreditEntry,
-    DebitEntry,
-    MultipleEntry,
-)
-from abacus.accounts import OpenAccount
+from abacus.accounting_types import BusinessEntry, MultipleEntry
 from abacus.closing_types import CloseContraIncome, CloseExpense, CloseIncome, CloseISA
 
 # Create chart of accounts

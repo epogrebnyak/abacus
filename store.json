@@ -1,74 +1,24 @@
 {
   "accounts": [
-    [
-      "cash",
-      "Asset"
-    ],
-    [
-      "ar",
-      "Asset"
-    ],
-    [
-      "inventory",
-      "Asset"
-    ],
-    [
-      "ppe",
-      "Asset"
-    ],
-    [
-      "cogs",
-      "Expense"
-    ],
-    [
-      "sga",
-      "Expense"
-    ],
-    [
-      "equity",
-      "Capital"
-    ],
-    [
-      "re",
-      "RetainedEarnings"
-    ],
-    [
-      "ap",
-      "Liability"
-    ],
-    [
-      "dividend_due",
-      "Liability"
-    ],
-    [
-      "sales",
-      "Income"
-    ],
-    [
-      "_profit",
-      "IncomeSummaryAccount"
-    ],
-    [
-      "depreciation",
-      "ContraAsset"
-    ],
-    [
-      "discounts",
-      "ContraIncome"
-    ],
-    [
-      "cashback",
-      "ContraIncome"
-    ]
+    ["cash", "Asset"],
+    ["ar", "Asset"],
+    ["inventory", "Asset"],
+    ["ppe", "Asset"],
+    ["cogs", "Expense"],
+    ["sga", "Expense"],
+    ["equity", "Capital"],
+    ["re", "RetainedEarnings"],
+    ["ap", "Liability"],
+    ["dividend_due", "Liability"],
+    ["sales", "Income"],
+    ["_profit", "IncomeSummaryAccount"],
+    ["depreciation", "ContraAsset"],
+    ["discounts", "ContraIncome"],
+    ["cashback", "ContraIncome"]
   ],
   "netting": {
-    "ppe": [
-      "depreciation"
-    ],
-    "sales": [
-      "discounts",
-      "cashback"
-    ]
+    "ppe": ["depreciation"],
+    "sales": ["discounts", "cashback"]
   },
   "starting_balances": {},
   "business_entries": [

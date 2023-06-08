@@ -1,7 +1,7 @@
 import pytest
 
 from abacus import Chart
-from abacus.accounting_types import AbacusError, CreditEntry, DebitEntry, MultipleEntry
+from abacus.accounting_types import AbacusError, MultipleEntry
 
 
 def test_is_debit_account():

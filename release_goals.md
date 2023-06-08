@@ -22,11 +22,11 @@ Example with `init`:
 mkdir demo & cd demo
 abacus init .
 abacus chart set --assets cash goods
-abacus chart set --expenses cogs sga 
-abacus chart set --capital equity 
-abacus chart set --retained_earnings re 
+abacus chart set --expenses cogs sga
+abacus chart set --capital equity
+abacus chart set --retained_earnings re
 abacus chart set --income sales
-abacus chart offset sales cashback discounts  
+abacus chart offset sales cashback discounts
 abacus chart validate
 abacus post cash equity 5000
 abacus post goods cash 1000

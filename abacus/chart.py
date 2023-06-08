@@ -4,13 +4,7 @@ from typing import Dict, List, Type
 
 from pydantic import BaseModel, root_validator  # type: ignore
 
-from abacus.accounting_types import (
-    AbacusError,
-    AccountName,
-    CreditEntry,
-    DebitEntry,
-    MultipleEntry,
-)
+from abacus.accounting_types import AbacusError, AccountName
 from abacus.accounts import (
     Asset,
     Capital,
@@ -18,7 +12,6 @@ from abacus.accounts import (
     Income,
     IncomeSummaryAccount,
     Liability,
-    OpenAccount,
     RetainedEarnings,
     get_contra_account_type,
 )
