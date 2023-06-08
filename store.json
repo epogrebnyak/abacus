@@ -1,13 +1,8 @@
 {
   "data": {
     "netting": {
-      "ppe": [
-        "depreciation"
-      ],
-      "sales": [
-        "discounts",
-        "cashback"
-      ]
+      "ppe": ["depreciation"],
+      "sales": ["discounts", "cashback"]
     },
     "open_accounts": [
       {
@@ -79,17 +74,37 @@
       {
         "dr": "cash",
         "cr": "equity",
-        "amount": 1000
+        "amount": 1500
+      },
+      {
+        "dr": "inventory",
+        "cr": "cash",
+        "amount": 300
+      },
+      {
+        "dr": "cogs",
+        "cr": "inventory",
+        "amount": 250
+      },
+      {
+        "dr": "ar",
+        "cr": "sales",
+        "amount": 440
+      },
+      {
+        "dr": "discounts",
+        "cr": "ar",
+        "amount": 41
       },
       {
         "dr": "cash",
-        "cr": "sales",
-        "amount": 220
+        "cr": "ar",
+        "amount": 250
       },
       {
-        "dr": "cashback",
+        "dr": "sga",
         "cr": "cash",
-        "amount": 21
+        "amount": 59
       }
     ],
     "adjustment_entries": [],
@@ -97,37 +112,37 @@
       {
         "dr": "sales",
         "cr": "discounts",
-        "amount": 0,
+        "amount": 41,
         "action": "close_contra_income"
       },
       {
         "dr": "sales",
         "cr": "cashback",
-        "amount": 21,
+        "amount": 0,
         "action": "close_contra_income"
       },
       {
         "dr": "sales",
         "cr": "_profit",
-        "amount": 199,
+        "amount": 399,
         "action": "close_income"
       },
       {
         "dr": "_profit",
         "cr": "cogs",
-        "amount": 0,
+        "amount": 250,
         "action": "close_expense"
       },
       {
         "dr": "_profit",
         "cr": "sga",
-        "amount": 0,
+        "amount": 59,
         "action": "close_expense"
       },
       {
         "dr": "_profit",
         "cr": "re",
-        "amount": 199,
+        "amount": 90,
         "action": "close_isa"
       }
     ],

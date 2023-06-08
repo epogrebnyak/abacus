@@ -44,8 +44,8 @@ class BaseJournal(BaseModel):
             p
             for p in self.closing_entries
             if isinstance(p, CloseContraExpense)
-               or isinstance(p, CloseContraIncome) 
-               or p.action in ["close_contra_expense", "close_contra_income"]
+            or isinstance(p, CloseContraIncome)
+            or p.action in ["close_contra_expense", "close_contra_income"]
         ]
 
     def yield_for_income_statement(self):
@@ -149,8 +149,7 @@ class Journal(BaseModel):
     def nonzero_balances(self):
         from .reports import AccountBalancesDict
 
-        return AccountBalancesDict({k:v for k, v in self.balances().items() if v !=0 })
-
+        return AccountBalancesDict({k: v for k, v in self.balances().items() if v != 0})
 
     def balance_sheet(self):
         from .reports import balance_sheet

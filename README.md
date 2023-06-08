@@ -117,10 +117,24 @@ jaba chart chart.json list
 Post entries to journal:
 
 ```console
-jaba chart chart.json create store.json 
-jaba store store.json post cash equity 1500 
+jaba chart chart.json create store.json
+jaba store store.json post cash equity 1500
+jaba store store.json post inventory cash 300
+jaba store store.json post cogs inventory 250
+jaba store store.json post ar sales 440
+jaba store store.json post discounts ar 41
+jaba store store.json post cash ar 250
+jaba store store.json post sga cash 59
 jaba store store.json close
 jaba store store.json list
+```
+
+Report:
+
+```console
+jaba store store.json report -b
+jaba store store.json report -i
+jaba store store.json balances
 ```
 
 ## Accounting cycle

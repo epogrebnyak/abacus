@@ -20,8 +20,7 @@ from abacus.closing_types import (
     CloseISA,
     get_closing_entry_type,
 )
-from abacus.ledger import expenses, income
-from abacus.ledger import Ledger
+from abacus.ledger import Ledger, expenses, income
 
 __all__ = ["closing_entries", "closing_entries_for_permanent_contra_accounts"]  # type: ignore
 
@@ -54,18 +53,18 @@ def closing_entries_for_permanent_contra_accounts(ledger, netting) -> List:
 
     return f(Asset) + f(Capital) + f(Liability)
 
-def close_to_isa(ledger, cls) -> List[CloseIncome | CloseExpense]:
 
+def close_to_isa(ledger, cls) -> List[CloseIncome | CloseExpense]:
     isa = ledger.find_account_name(IncomeSummaryAccount)
     match cls.__name__:
         case "Income":
-           select = income
-           entry_cls = CloseIncome # type: ignore
+            select = income
+            entry_cls = CloseIncome  # type: ignore
         case "Expense":
-           select = expenses
-           entry_cls = CloseExpense # type: ignore
+            select = expenses
+            entry_cls = CloseExpense  # type: ignore
         case _:
-            raise TypeError(cls)   
+            raise TypeError(cls)
     return [
         transfer_entry(account, name, isa).coerce(entry_cls)
         for name, account in select(ledger).items()

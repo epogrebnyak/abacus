@@ -9,7 +9,8 @@ grill:
   just test
   just mypy
   just ruff
-  just readme
+  just readme-py
+  just readme-bat
   just lint 
   just md
 

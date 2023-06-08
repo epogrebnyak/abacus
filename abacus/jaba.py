@@ -15,17 +15,16 @@ Usage:
   jaba chart <chart_file> offset <account_name> <contra_account_names>...
   jaba chart <chart_file> validate
   jaba chart <chart_file> list
-  jaba chart <chart_file> create <store_file> [--balances <start_balances_file>]
+  jaba chart <chart_file> create <store_file> [--using <start_balances_file>]
   jaba names <name_file> touch
   jaba names <name_file> set <account_name> <title>
   jaba names <name_file> list
   jaba store <store_file> post <dr_account> <cr_account> <amount> [--adjust] [--post-close]
   jaba store <store_file> close [--again]
-  jaba store <store_file> list [--head <n> | --tail <n> | --last]
-  jaba store <store_file> list [--open | --business | --adjust | --close | --post-close]
+  jaba store <store_file> list [--open | --business | --adjust | --close | --post-close | --is-closed]
   jaba store <store_file> report (-i | --income-statement) [--names <name_file>]
   jaba store <store_file> report (-b | --balance-sheet) [--names <name_file>]
-  jaba store <store_file> balances [--credit [--sum] | --debit [--sum]] [--all | --nonzero]
+  jaba store <store_file> balances [--credit [--sum] | --debit [--sum]] [--all]
   jaba store <store_file> balance <account_name>
   jaba --args
 
@@ -107,9 +106,9 @@ def main():
         if arguments["create"]:
             chart = Chart(**PreChart.from_file(path).dict())
             journal = chart.journal()
-            if arguments["--balances"]:
-                starting_balances = read_json(arguments["starting_balances_file"])
-                journal = journal.start(starting_balances)
+            if arguments["--using"]:
+                starting_balances = read_json(arguments["<start_balances_file>"])
+                journal = chart.journal(starting_balances)
             journal.save(arguments["<store_file>"])
             pprint(journal.dict())
     elif arguments["names"]:
@@ -118,14 +117,15 @@ def main():
         path = Path(arguments["<store_file>"])
         journal = Journal.parse_file(path)
         if arguments["post"]:
-            dr = arguments["<dr_account>"]
-            cr = arguments["<cr_account>"]
-            amount = arguments["<amount>"]
-            journal.post(dr, cr, amount)
+            journal.post(
+                dr=arguments["<dr_account>"],
+                cr=arguments["<cr_account>"],
+                amount=arguments["<amount>"],
+            )
             journal.save(path)
         if arguments["close"]:
             if arguments["--again"]:
-                journal.data.is_closed=False
+                journal.data.is_closed = False
             journal.close()
             journal.save(path)
         if arguments["list"]:
@@ -155,20 +155,23 @@ def main():
             path = Path(arguments["<store_file>"])
             journal = Journal.parse_file(path)
             if arguments["--all"]:
-                pprint(journal.balances())
+                pprint(json.dumps(journal.balances().data))
             else:
-                pprint(journal.nonzero_balances())
+                s = repr(journal.nonzero_balances().data).replace("'", '"')
+                pprint(s)
         if arguments["balance"]:
             path = Path(arguments["<store_file>"])
             journal = Journal.parse_file(path)
             account_name = arguments["<account_name>"]
-            pprint(journal.balances()[account_name])
+            print(json.dumps(journal.balances().data[account_name]))
+    elif arguments["names"]:
+        raise NotImplementedError  # yet
 
 
 """
 -- testing of a multiline string pytest-console-plugin
 -- extract console code from README
--- names class
+-- names command
 """
 if __name__ == "__main__":
     main()
