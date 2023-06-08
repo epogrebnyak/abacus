@@ -112,12 +112,12 @@ jaba chart chart.json offset ppe depreciation
 jaba chart chart.json offset sales discounts cashback
 jaba chart chart.json validate
 jaba chart chart.json list
+jaba chart chart.json create store.json
 ```
 
 Post entries to journal:
 
 ```console
-jaba chart chart.json create store.json
 jaba store store.json post cash equity 1500
 jaba store store.json post inventory cash 300
 jaba store store.json post cogs inventory 250
@@ -132,9 +132,10 @@ jaba store store.json list
 Report:
 
 ```console
-jaba store store.json report -b
-jaba store store.json report -i
-jaba store store.json balances
+jaba report store.json -b
+jaba report store.json -i
+jaba report store.json -t
+jaba report store.json -t re
 ```
 
 ## Accounting cycle

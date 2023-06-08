@@ -22,10 +22,10 @@ Usage:
   jaba store <store_file> post <dr_account> <cr_account> <amount> [--adjust] [--post-close]
   jaba store <store_file> close [--again]
   jaba store <store_file> list [--open | --business | --adjust | --close | --post-close | --is-closed]
-  jaba store <store_file> report (-i | --income-statement) [--names <name_file>]
-  jaba store <store_file> report (-b | --balance-sheet) [--names <name_file>]
-  jaba store <store_file> balances [--credit [--sum] | --debit [--sum]] [--all]
-  jaba store <store_file> balance <account_name>
+  jaba report <store_file> (-i | --income-statement) [--names <name_file>]
+  jaba report <store_file> (-b | --balance-sheet) [--names <name_file>]
+  jaba report <store_file> (-t | --trial-balance) [--credit [--sum] | --debit [--sum]] [--all]
+  jaba report <store_file> (-t | --trial-balance) <account_name>
   jaba --args
 
 Options:

@@ -1,8 +1,13 @@
 {
   "data": {
     "netting": {
-      "ppe": ["depreciation"],
-      "sales": ["discounts", "cashback"]
+      "ppe": [
+        "depreciation"
+      ],
+      "sales": [
+        "discounts",
+        "cashback"
+      ]
     },
     "open_accounts": [
       {
