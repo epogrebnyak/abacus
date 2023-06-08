@@ -5,6 +5,10 @@ from typing import List
 import pandas as pd
 import streamlit as st
 
+from abacus.naming import variable  # noqa: E402
+from abacus.remove.accounting import Chart, Entry, make_book  # noqa: E402
+from abacus.remove.formatting import side_by_side  # noqa: E402
+
 st.set_page_config(
     page_title="Accounting as Code",
     page_icon=None,
@@ -24,9 +28,6 @@ st.header("1. Make a chart of accounts")
 Example: `[Eq]uity` will create a shorthand `Eq` for Equity account. 
 """
 
-from abacus.naming import variable  # noqa: E402
-from abacus.remove.formatting import side_by_side  # noqa: E402
-
 
 def as_dict(varline: str):
     return dict(variable(item) for item in varline.split(";"))
@@ -41,8 +42,6 @@ expenses_dict = ask("Expenses accounts", "COGS; [Int]erest")
 capital_dict = ask("Capital accounts", "[Eq]uity")
 liabilities_dict = ask("Liabilities accounts", "Debt; Accrued interest [ai]")
 income_dict = ask("Income accounts", "Sales")
-
-from abacus.remove.accounting import Chart, Entry, make_book  # noqa: E402
 
 
 def keys(d):

@@ -49,8 +49,8 @@ def balances(ledger: Ledger) -> AccountBalancesDict:
     )
 
 
-def balance_sheet(ledger: Ledger) -> BalanceSheet:
-    entries = closing_entries_for_permanent_contra_accounts(ledger)
+def balance_sheet(ledger: Ledger, netting) -> BalanceSheet:
+    entries = closing_entries_for_permanent_contra_accounts(ledger, netting)
     ledger = ledger.process_postings(entries)
     return BalanceSheet(
         assets=balances(assets(ledger)),

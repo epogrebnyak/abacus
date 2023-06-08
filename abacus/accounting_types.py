@@ -17,6 +17,37 @@ class AbacusError(Exception):
 
 
 @dataclass
+class SingleEntry:
+    pass
+
+
+@dataclass
+class DebitEntry(SingleEntry):
+    dr: AccountName
+    amount: Amount
+
+
+@dataclass
+class CreditEntry(SingleEntry):
+    cr: AccountName
+    amount: Amount
+
+
+def amount_sum(entries):
+    return sum(e.amount for e in entries)
+
+
+@dataclass
+class MultipleEntry:
+    debit_entries: list[DebitEntry]
+    credit_entries: list[CreditEntry]
+
+    def match_amounts(self):  # should be post-init method
+        if amount_sum(self.debit_entries) != amount_sum(self.credit_entries):
+            raise AbacusError(["Invalid multiple entry", self])
+
+
+@dataclass
 class Entry:
     """Double entry with amount, account names to be debited (dr)
     and account name to be credited (cr)."""
@@ -25,10 +56,14 @@ class Entry:
     cr: AccountName
     amount: Amount
 
+    def coerce(self, cls):
+        """Change type of entry."""
+        return cls(**self.__dict__)
+
 
 @dataclass
 class BaseEntry(Entry):
-    """Represent various types of entries and serialisable."""
+    """Represent various types of entries and serializable."""
 
     action: str
 

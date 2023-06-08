@@ -1,20 +1,20 @@
 """Closing accounts at period end"""
 
-from typing import List, Type
+from typing import List
 
+from abacus.accounting_types import Entry
 from abacus.accounts import (
     Asset,
     Capital,
+    CreditAccount,
+    DebitAccount,
     Expense,
     Income,
     IncomeSummaryAccount,
     Liability,
-    RegularAccount,
     RetainedEarnings,
-    get_contra_account_type,
 )
 from abacus.closing_types import (
-    CloseContra,
     CloseExpense,
     CloseIncome,
     CloseISA,
@@ -25,59 +25,40 @@ from abacus.ledger import Ledger
 __all__ = ["closing_entries"]  # type: ignore
 
 
-def closing_entries_contra_accounts(
-    ledger: "Ledger", regular_cls: Type[RegularAccount]
-) -> List[CloseContra]:
-    from abacus.ledger import subset_by_class
-
-    cls = get_contra_account_type(regular_cls)
-    constructor = get_closing_entry_type(regular_cls)
-    return [
-        constructor(*account.transfer_balance_entry(account_name, account.link))
-        for account_name, account in subset_by_class(ledger, cls).items()
-    ]
-
-
-def closing_entries_contra_income(ledger):
-    return closing_entries_contra_accounts(ledger, Income)
+def close_contra_accounts(ledger, netting, regular_cls):
+    res = []
+    for linked_account, contra_accounts in netting.items():
+        if isinstance(ledger[linked_account], regular_cls):
+            closing_entry_type = get_closing_entry_type(regular_cls)
+            for contra_account in contra_accounts:
+                entry = transfer_entry(
+                    ledger[contra_account], contra_account, linked_account
+                )
+                res.append(entry.coerce(closing_entry_type))
+    return res
 
 
-def closing_entries_contra_expense(ledger):
-    return closing_entries_contra_accounts(ledger, Expense)
+def transfer_entry(account, from_, to_):
+    amount = account.balance()
+    if isinstance(account, DebitAccount):
+        return Entry(dr=to_, cr=from_, amount=amount)
+    elif isinstance(account, CreditAccount):
+        return Entry(dr=from_, cr=to_, amount=amount)
+    raise TypeError(account)
 
 
-def closing_entries_for_temporary_contra_accounts(ledger):
-    f = closing_entries_contra_income
-    g = closing_entries_contra_expense
-    return f(ledger) + g(ledger)
-
-
-def closing_entries_for_permanent_contra_accounts(
-    ledger,
-) -> List:
+def closing_entries_for_permanent_contra_accounts(ledger, netting) -> List:
     def f(t):
-        return closing_entries_contra_accounts(ledger, t)
+        return close_contra_accounts(ledger, netting, t)
 
     return f(Asset) + f(Capital) + f(Liability)
 
 
-def closing_entries_income_to_isa(ledger) -> List[CloseIncome]:
-    from abacus.ledger import income
-
+def close_to_isa(ledger, select, entry_cls) -> List[CloseIncome]:
     isa = ledger.find_account_name(IncomeSummaryAccount)
     return [
-        CloseIncome(*account.transfer_balance_entry(name, isa))
-        for name, account in income(ledger).items()
-    ]
-
-
-def closing_entries_expenses_to_isa(ledger) -> List[CloseExpense]:
-    from abacus.ledger import expenses
-
-    isa = ledger.find_account_name(IncomeSummaryAccount)
-    return [
-        CloseExpense(*account.transfer_balance_entry(name, isa))
-        for name, account in expenses(ledger).items()
+        transfer_entry(account, name, isa).coerce(entry_cls)
+        for name, account in select(ledger).items()
     ]
 
 
@@ -86,18 +67,21 @@ def closing_entry_isa_to_retained_earnings(
 ) -> CloseISA:
     isa = ledger.find_account_name(IncomeSummaryAccount)
     re = ledger.find_account_name(RetainedEarnings)
-    return CloseISA(*ledger[isa].transfer_balance_entry(isa, re))
+    return transfer_entry(ledger[isa], isa, re).coerce(CloseISA)
 
 
-def closing_entries(ledger: "Ledger") -> List:
+def closing_entries(ledger: Ledger, netting) -> List:
+    from abacus.ledger import expenses, income
+
     #     #     """Close contra accounts associated with income and expense accounts,
     #     #     aggregate profit or loss at income summary account
     #     #     and move balance of income summary account to retained earnings."""
-    es1 = closing_entries_for_temporary_contra_accounts(ledger)
-    _dummy_ledger = ledger.process_postings(es1)
+    es0 = close_contra_accounts(ledger, netting, Income)
+    es1 = close_contra_accounts(ledger, netting, Expense)
+    _dummy_ledger = ledger.process_postings(es0 + es1)
     # At this point we can issue IncomeStatement
-    es2 = closing_entries_expenses_to_isa(_dummy_ledger)
-    es3 = closing_entries_income_to_isa(_dummy_ledger)
+    es2 = close_to_isa(_dummy_ledger, income, CloseIncome)
+    es3 = close_to_isa(_dummy_ledger, expenses, CloseExpense)
     _dummy_ledger = _dummy_ledger.process_postings(es2 + es3)  # type: ignore
     es4 = closing_entry_isa_to_retained_earnings(_dummy_ledger)
-    return es1 + es2 + es3 + [es4]
+    return es0 + es1 + es2 + es3 + [es4]

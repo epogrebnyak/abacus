@@ -3,7 +3,6 @@
 from collections import UserDict
 from typing import List, Tuple, Type
 
-
 from abacus.accounts import (
     Account,
     Asset,
@@ -11,11 +10,19 @@ from abacus.accounts import (
     Expense,
     Income,
     Liability,
-    Unique,
     OpenAccount,
+    Unique,
 )
 
-from .accounting_types import AbacusError, AccountName, BaseEntry, Entry
+from .accounting_types import (
+    AbacusError,
+    AccountName,
+    BaseEntry,
+    CreditEntry,
+    DebitEntry,
+    Entry,
+    MultipleEntry,
+)
 
 
 class Ledger(UserDict[AccountName, Account]):
@@ -76,19 +83,20 @@ def income(ledger: Ledger) -> Ledger:
     return subset_by_class(ledger, Income)
 
 
-AccountType = str
-
-
-Posting = BaseEntry | Entry
-
-
-def check_not_exists(ledger, account_name):
-    if account_name in ledger.keys():
-        raise AbacusError("Cannot open: account {account_name} already exists.")
+Posting = BaseEntry | Entry | MultipleEntry | DebitEntry | CreditEntry
 
 
 def _process(ledger: Ledger, posting: Posting) -> Ledger:
     match posting:
+        case MultipleEntry(ds, cs):
+            for d in ds:
+                ledger = _process(ledger, d)
+            for c in cs:
+                ledger = _process(ledger, c)
+        case DebitEntry(dr, amount):
+            ledger[dr].debits.append(amount)
+        case CreditEntry(cr, amount):
+            ledger[cr].credits.append(amount)
         case Entry(dr, cr, amount):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)

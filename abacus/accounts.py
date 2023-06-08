@@ -10,7 +10,7 @@
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Type
+from typing import Dict, List, Type
 
 from abacus.accounting_types import AccountName, Amount
 
@@ -37,14 +37,6 @@ class Account(ABC):
     def balance(self) -> Amount:
         """Return account balance."""
 
-    @abstractmethod
-    def transfer_balance_entry(
-        self, this_account: AccountName, to_account: AccountName
-    ) -> Tuple[AccountName, AccountName, Amount]:
-        """Create an entry that will move balance of *this_account*
-        to *to_account*. Used when closing accounts. The resulting entry
-        differs for debit and credit accounts."""
-
     def debit(self, amount: Amount):
         """Append *amount* to debit side of account."""
         self.debits.append(amount)
@@ -56,10 +48,6 @@ class Account(ABC):
     def safe_copy(self):
         return self.__class__(self.debits.copy(), self.credits.copy())
 
-    @abstractmethod
-    def start(self, amount: Amount):
-        """Initialize account with starting value."""
-
 
 class RegularAccount:
     pass
@@ -69,32 +57,10 @@ class DebitAccount(Account):
     def balance(self) -> Amount:
         return sum(self.debits) - sum(self.credits)
 
-    def transfer_balance_entry(
-        self,
-        this_account: AccountName,
-        to_account: AccountName,
-    ):
-        return (to_account, this_account, self.balance())
-
-    def start(self, amount: Amount):
-        self.debit(amount)
-        return self
-
 
 class CreditAccount(Account):
     def balance(self) -> Amount:
         return sum(self.credits) - sum(self.debits)
-
-    def transfer_balance_entry(
-        self,
-        this_account: AccountName,
-        to_account: AccountName,
-    ):
-        return (this_account, to_account, self.balance())
-
-    def start(self, amount: Amount):
-        self.credit(amount)
-        return self
 
 
 class Asset(DebitAccount, RegularAccount):
@@ -131,30 +97,27 @@ class RetainedEarnings(Capital, Unique):
     pass
 
 
-@dataclass
 class ContraAccount:
-    link: str
-    debits: List[Amount] = field(default_factory=list)
-    credits: List[Amount] = field(default_factory=list)
-
-
-class ContraAsset(ContraAccount, CreditAccount):
     pass
 
 
-class ContraExpense(ContraAccount, CreditAccount):
+class ContraAsset(CreditAccount, ContraAccount):
     pass
 
 
-class ContraCapital(ContraAccount, DebitAccount):
+class ContraExpense(CreditAccount, ContraAccount):
     pass
 
 
-class ContraLiability(ContraAccount, DebitAccount):
+class ContraCapital(DebitAccount, ContraAccount):
     pass
 
 
-class ContraIncome(ContraAccount, DebitAccount):
+class ContraLiability(DebitAccount, ContraAccount):
+    pass
+
+
+class ContraIncome(DebitAccount, ContraAccount):
     pass
 
 
@@ -195,32 +158,11 @@ def get_class_constructor(class_name: str) -> Type:
 
 
 @dataclass
-class OpenAccount(ABC):
-    pass
-
-    @classmethod
-    def new():
-        pass
-
-
-@dataclass
-class OpenRegularAccount:
-    """Command to open regular account in ledger."""
+class OpenAccount:
+    """Command to open account in ledger."""
 
     name: AccountName
     type: str
 
     def new(self):
-        return get_class_constructor(self.type)()
-
-
-@dataclass
-class OpenContraAccount:
-    """Command to open contra account in ledger."""
-
-    name: AccountName
-    type: str
-    link: AccountName
-
-    def new(self):
-        return get_class_constructor(self.type)(link=self.link)
+        return get_class_constructor(self.type)([], [])

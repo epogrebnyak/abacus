@@ -1,29 +1,12 @@
 {
-  "assets": [
-    "cash",
-    "ar",
-    "inventory"
-  ],
-  "expenses": [
-    "cogs",
-    "sga"
-  ],
-  "equity": [
-    "equity"
-  ],
+  "assets": ["cash", "ar", "inventory"],
+  "expenses": ["cogs", "sga"],
+  "equity": ["equity"],
   "retained_earnings_account": "re",
-  "liabilities": [
-    "ap",
-    "dividend_due"
-  ],
-  "income": [
-    "sales"
-  ],
+  "liabilities": ["ap", "dividend_due"],
+  "income": ["sales"],
   "contra_accounts": {
-    "sales": [
-      "discounts",
-      "cashback"
-    ]
+    "sales": ["discounts", "cashback"]
   },
   "income_summary_account": "_profit"
 }

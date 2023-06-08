@@ -13,7 +13,7 @@ A minimal, yet valid double-entry accounting system:
 Chart of accounts (CAO) is a list of accounts to be used by a company.
 Chart of accounts may be defined by the government (in Europe) or
 can be specified by the company itself according to guidelines (in the US).
-Fiscal rules and reporting requirements also affect 
+Fiscal rules and reporting requirements also affect
 the composition of a chart of accounts.
 
 Charts of accounts are not that easy to find in an open, structured and machine-readable format.
@@ -37,7 +37,7 @@ Migration between domestic and IFRS-compatible charts considered for `abacus`, b
 
 Textbook and sample charts (including fun charts like [Dunder Muffin Paper Company][yv8bkm]) can also be defined with `abacus`.
 
-In `abacus` after a chart is specified, one can post entries and create financial reports. 
+In `abacus` after a chart is specified, one can post entries and create financial reports.
 
 [yv8bkm]: https://www.reddit.com/r/DunderMifflin/comments/yv8bkm/the_office_chart_of_accounts
 
@@ -75,8 +75,9 @@ chart = Chart(
     liabilities=["ap", "dividend_due"],
     contra_accounts={"sales": ["discounts", "cashback"]},
 )
+starting_balances = {"cash": 1200, "inventory": 300, "equity": 1500}
 journal = (
-    chart.journal(cash=1200, inventory=300, equity=1500)
+    chart.journal(starting_balances)
     .post(dr="cogs", cr="inventory", amount=250)
     .post(dr="ar", cr="sales", amount=440)
     .post(dr="discounts", cr="ar", amount=41)

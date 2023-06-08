@@ -1,5 +1,7 @@
 # %%
-from abacus import Chart, Entry
+# Show reports in plain text or rich formatting
+# %%
+from abacus import Chart, Entry, PlainTextViewer, RichViewer  # noqa: E402
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale", "ppe"],
@@ -66,9 +68,6 @@ journal = journal.post_entries(post_close_entries)
 balance_sheet = journal.balance_sheet()
 print(balance_sheet)
 
-# %%
-# Show reports in plain text or rich formatting
-from abacus import PlainTextViewer, RichViewer  # noqa: E402
 
 tv = PlainTextViewer(rename_dict)
 tv.print(balance_sheet)

@@ -1101,6 +1101,17 @@ files = [
 ]
 
 [[package]]
+name = "types-docopt"
+version = "0.6.11.3"
+description = "Typing stubs for docopt"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-docopt-0.6.11.3.tar.gz", hash = "sha256:ee6db04587900d94f4c137f9b191cc72ca8920a2bd7f823e27b72cb8da0d9d3b"},
+    {file = "types_docopt-0.6.11.3-py3-none-any.whl", hash = "sha256:6836fbc5f4f622a0a97f9dea03f62a387e03157e6559e3086f49be0ca089590a"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.6.2"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -1185,4 +1196,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "e7c9f3cba408c3b053ca6f9ac744704ebd80f1084ae3a6bc723ec3b26eb46e8f"
+content-hash = "78314678e128e71cc761e37239b01e00334fbb43de51fe8e39e6e62ddad9f7f6"

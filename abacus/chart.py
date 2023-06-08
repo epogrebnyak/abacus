@@ -4,8 +4,13 @@ from typing import Dict, List, Type
 
 from pydantic import BaseModel, root_validator  # type: ignore
 
-from abacus.accounts import OpenRegularAccount, OpenContraAccount
-from abacus.accounting_types import AbacusError, AccountName
+from abacus.accounting_types import (
+    AbacusError,
+    AccountName,
+    CreditEntry,
+    DebitEntry,
+    MultipleEntry,
+)
 from abacus.accounts import (
     Asset,
     Capital,
@@ -13,6 +18,7 @@ from abacus.accounts import (
     Income,
     IncomeSummaryAccount,
     Liability,
+    OpenAccount,
     RetainedEarnings,
     get_contra_account_type,
 )
@@ -133,33 +139,67 @@ class Chart(BaseModel):
         """Return account class for *account_name*."""
         return dict(self._yield_regular_accounts())[account_name]
 
+    def check_type(self, account_name: AccountName, cls: Type) -> bool:
+        return isinstance(self.get_type(account_name)(), cls)
+
+    def is_debit_account(self, account_name: AccountName) -> bool:
+        from abacus.accounts import DebitAccount
+
+        return self.check_type(account_name, DebitAccount)
+
+    def is_credit_account(self, account_name: AccountName) -> bool:
+        from abacus.accounts import CreditAccount
+
+        return self.check_type(account_name, CreditAccount)
+
     def _yield_contra_accounts(self):
-        for account_name, contra_account_names in self.contra_accounts.items():
-            cls = get_contra_account_type(self.get_type(account_name))
+        for linked_account_name, contra_account_names in self.contra_accounts.items():
+            cls = get_contra_account_type(self.get_type(linked_account_name))
             for contra_account in contra_account_names:
-                yield contra_account, cls, account_name
+                yield contra_account, cls
 
     def yield_accounts(self):
-        for account_name, cls in self._yield_regular_accounts():
-            yield OpenRegularAccount(account_name, cls.__name__)
-        for account_name, cls, link in self._yield_contra_accounts():
-            yield OpenContraAccount(account_name, cls.__name__, link)
+        from itertools import chain
+
+        for account_name, cls in chain(
+            self._yield_regular_accounts(), self._yield_contra_accounts()
+        ):
+            yield OpenAccount(account_name, cls.__name__)
 
     @property
     def account_names(self) -> List[AccountName]:
         """List all account names in chart."""
         return [a.name for a in self.yield_accounts()]
 
-    def journal(self):
+    def journal(self, starting_balances: dict | None = None):
         """Create a journal based on this chart."""
-        from abacus.journal import Journal
-
-        journal = Journal()
-        journal.data.open_accounts = list(self.yield_accounts())
-        return journal
+        if starting_balances is None:
+            starting_balances = {}
+        return make_journal(self, starting_balances)
 
     def ledger(self):
         """Create empty ledger based on this chart."""
         from abacus.ledger import Ledger
 
         return Ledger.from_stream(self.yield_accounts())
+
+
+def make_journal(chart, starting_balances: dict):
+    from abacus.journal import Journal
+
+    journal = Journal()
+    journal.data.open_accounts = list(chart.yield_accounts())
+    journal.data.start_entry = to_multiple_entry(chart, starting_balances)
+    return journal
+
+
+def to_multiple_entry(chart: Chart, starting_balances: dict) -> MultipleEntry:
+    me = MultipleEntry([], [])
+    for account_name, amount in starting_balances.items():
+        if chart.is_debit_account(account_name):
+            me.debit_entries.append(DebitEntry(account_name, amount))
+        elif chart.is_credit_account(account_name):
+            me.credit_entries.append(CreditEntry(account_name, amount))
+        else:
+            raise TypeError([chart, f"{account_name} type not identified within chart"])
+    return me

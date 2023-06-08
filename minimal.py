@@ -9,8 +9,9 @@ chart = Chart(
     liabilities=["ap", "dividend_due"],
     contra_accounts={"sales": ["discounts", "cashback"]},
 )
+starting_balances = {"cash": 1200, "inventory": 300, "equity": 1500}
 journal = (
-    chart.journal(cash=1200, inventory=300, equity=1500)
+    chart.journal(starting_balances)
     .post(dr="cogs", cr="inventory", amount=250)
     .post(dr="ar", cr="sales", amount=440)
     .post(dr="discounts", cr="ar", amount=41)
@@ -29,7 +30,6 @@ print(journal.income_statement())
 #                 expenses={'cogs': 250, 'sga': 59})
 
 from abacus import Chart, Entry
-
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
@@ -66,7 +66,6 @@ assert balance_sheet == BalanceSheet(
 )
 
 from abacus import RichViewer
-
 
 rename_dict = {
     "re": "Retained earnings",

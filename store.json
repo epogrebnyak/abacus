@@ -56,6 +56,10 @@
         "link": "sales"
       }
     ],
+    "start_entry": {
+      "debit_entries": [],
+      "credit_entries": []
+    },
     "business_entries": [],
     "adjustment_entries": [],
     "closing_entries": [],

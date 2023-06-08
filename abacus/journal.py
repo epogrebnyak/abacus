@@ -8,13 +8,11 @@ from abacus.accounting_types import (
     Amount,
     BusinessEntry,
     Entry,
+    MultipleEntry,
 )
 from abacus.accounts import OpenAccount
 from abacus.closing_types import ClosingEntry
-from abacus.ledger import (
-    Ledger,
-    process_postings,
-)
+from abacus.ledger import Ledger, process_postings
 
 
 def yield_until(xs, classes):
@@ -24,12 +22,17 @@ def yield_until(xs, classes):
         yield x
 
 
-def isin(x, classes):
+def is_in(x, classes):
     return any(isinstance(x, cls) for cls in classes)
 
 
+Netting = dict[str, list[str]]
+
+
 class BaseJournal(BaseModel):
+    netting: Netting = {}
     open_accounts: list[OpenAccount] = []
+    start_entry: MultipleEntry = MultipleEntry([], [])
     business_entries: list[Entry] = []
     adjustment_entries: list[Entry] = []
     closing_entries: list[ClosingEntry] = []
@@ -44,7 +47,7 @@ class BaseJournal(BaseModel):
         return [
             p
             for p in self.closing_entries
-            if isin(p, [CloseContraExpense, CloseContraIncome])
+            if is_in(p, [CloseContraExpense, CloseContraIncome])
         ]
 
     def yield_for_income_statement(self):
@@ -71,7 +74,9 @@ class BaseJournal(BaseModel):
 
     @property
     def start_ledger(self):
-        return Ledger.from_stream(self.open_accounts)
+        return Ledger.from_stream(self.open_accounts).process_postings(
+            [self.start_entry]
+        )
 
     def process(self, postings):
         return process_postings(self.start_ledger, postings)
@@ -80,8 +85,8 @@ class BaseJournal(BaseModel):
         return self.process(self.yield_all())
 
     def ledger_for_income_statement(self):
-        _gen = self.data.yield_for_income_statement()
-        return self.data.process(_gen)
+        _gen = self.yield_for_income_statement()
+        return self.process(_gen)
 
     def add_business_entries(self, ps: list[Entry]):
         if self.is_closed:
@@ -99,8 +104,8 @@ class BaseJournal(BaseModel):
         from abacus.closing import closing_entries
 
         if self.is_closed:
-            raise AbacusError("Ledger already closed.")
-        self.closing_entries = closing_entries(self.ledger())  # type: ignore
+            raise AbacusError("Ledger already closed, cannot close again.")
+        self.closing_entries = closing_entries(self.ledger(), self.netting)  # type: ignore
         self.is_closed = True
         return self
 
@@ -120,10 +125,6 @@ class Journal(BaseModel):
         from pathlib import Path
 
         Path(path).write_text(self.json(indent=2), encoding="utf-8")
-
-    #def start(self, starting_balances):
-    #    for name, amount in starting_balances.items:    
-    
 
     def post_many(self, entries: List[Entry]) -> "Journal":
         self.data.business_entries.extend(entries)
@@ -154,7 +155,7 @@ class Journal(BaseModel):
     def balance_sheet(self):
         from .reports import balance_sheet
 
-        return balance_sheet(self.data.ledger())
+        return balance_sheet(self.data.ledger(), self.data.netting)
 
     def income_statement(self):
         from .reports import income_statement
@@ -163,57 +164,3 @@ class Journal(BaseModel):
 
     def current_profit(self) -> Amount:
         return self.income_statement().current_profit()
-
-
-# class Journal(UserList[Posting]):
-#     """A list of postings."""
-
-#     # def is_closed(self) -> bool:
-#     #     # - income and expense contra accounts are zero
-#     #     # - income and expense accounts are zero
-#     #     # - isa is zero
-#     #     raise NotImplementedError
-
-
-#     def post_many(self, entries: List[Posting]) -> "Journal":
-#         self.data.extend(entries)
-#         return self
-
-#     def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Journal":
-#         entry = BusinessEntry(dr, cr, amount)
-#         return self.post_many([entry])
-
-#     def adjust(self, dr, cr, amount) -> "Journal":
-#         raise NotImplementedError
-
-#     def post_close(self, dr, cr, amount) -> "Journal":
-#         raise NotImplementedError
-
-#     def close(self) -> "Journal":
-#         from abacus.closing import closing_entries
-
-#         self.post_many(closing_entries(self.ledger()))  # type: ignore
-#         return self
-
-#     def current_profit(self):
-#         return self.income_statement().current_profit()
-
-#     def ledger(self):
-#         return process_postings(Ledger(), self.data)
-
-#     def balances(self):
-#         from .reports import balances
-
-#         return balances(self.ledger())
-
-#     def balance_sheet(self):
-#         from .reports import balance_sheet
-
-#         return balance_sheet(self.ledger())
-
-#     def income_statement(self):
-#         from .reports import income_statement
-
-#         _gen = yield_until(self.data, [CloseExpense, CloseIncome])
-#         _ledger = process_postings(Ledger(), _gen)
-#         return income_statement(_ledger)

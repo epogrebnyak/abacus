@@ -37,15 +37,16 @@ Options:
 # jaba store <store_file> <chart_file> close (--income --expenses)
 # jaba store <store_file> <chart_file> close (--isa | --income-summary-account)
 
+import json
 import sys
-from docopt import docopt
 from pathlib import Path
 from pprint import pprint
-from abacus.chart import Chart
-from typing import List, Dict
-import json
+from typing import Dict, List
 
+from docopt import docopt
 from pydantic import BaseModel
+
+from abacus.chart import Chart
 
 
 def read_json(path):
