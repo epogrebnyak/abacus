@@ -16,30 +16,54 @@ abacus dump --store store.json --to-excel-file store.xlsx
 abacus read --from-excel-file store_fix.xlsx > store_fix.json
 ```
 
-Example with `init`:
+```bash
+account -m cash "Cash"
+account -ac inv "Inventories"
+account -ac ar "Accounts receivable" 
+account -an ppe "Property, plant, equipment" 
+account -an gw "Goodwill" 
+account -e cos "Cost of sales"
+account -e dc "Distribution costs"
+account -e ae "Administrative expenses" 
+account -e de "Depreciation expense"
+account -с eq "Shareholder equity"
+account -r re "Retained earnings"
+account -l ap "Accounts payable"
+account -i sales "Revenue"
+account --contra sales discounts 
+
+```
 
 ```bash
 mkdir demo & cd demo
 abacus init .
-abacus chart set --assets cash goods
-abacus chart set --expenses cogs sga
-abacus chart set --capital equity
-abacus chart set --retained_earnings re
-abacus chart set --income sales
-abacus chart offset sales cashback discounts
-abacus chart validate
-abacus post cash equity 5000
-abacus post goods cash 1000
-abacus post --entry cash sales 375 \
-            --entry goods cogs 250 \
-            --entry cashback cash 25 \
-            --title "Sale of goods"
-abacus post sga cash 40
+abacus save dwp.json
+abacus chart --check
+abacus chart --assets cash ar inv ppe
+abacus chart --expenses cogs sga de 
+abacus account -m cash 
+abacus account -m bank "Bank account"
+abacus account -a ar "Accounts receivable" 
+abacus account -a ppe "Property, plant, equipment" 
+abacus account -e cos "Cost of sales" 
+abacus account -e de "Depreciation expense" 
+abacus chart --capital equity
+abacus chart --re re
+abacus chart --income sales
+abacus chart --liabilities ap loan
+abacus chart --offset sales cashback
+abacus chart --offset ppe depr
+abacus post cash equity 5000 -t "Paid in capital"
+abacus post -e goods ap 1000  -e ap cash 300 -t "Bought goods on credit"
+abacus post -e cash sales 375 \
+            -e goods cogs 250 \
+            -e cashback cash 25 -t "Sold goods"
+abacus post sga cash 40 -t "Selling expenses"
 abacus close
 abacus name sga "Selling, general and adm.expenses"
 abacus name cogs "Cost of goods sold"
 abacus name re "Retained earnings"
 abacus report --income-statement
 abacus report --balance-sheet
-abacus balances --output end_balances.json
+abacus report --trial-balance --output end_balances.json
 ```
