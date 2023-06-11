@@ -15,7 +15,6 @@ from .accounting_types import (
     Entry,
     MultipleEntry,
 )
-from .closing_types import ClosingEntry
 
 
 class Ledger(UserDict[AccountName, Account]):
@@ -61,29 +60,7 @@ def find_account_name(ledger: Ledger, cls: Type[Unique]) -> AccountName:
     raise AbacusError(f"{cls} must be unique in ledger")
 
 
-# NEXT: remove this code
-# def assets(ledger: Ledger) -> Ledger:
-#     return subset_by_class(ledger, Asset)
-
-
-# def expenses(ledger: Ledger) -> Ledger:
-#     return subset_by_class(ledger, Expense)
-
-
-# def capital(ledger: Ledger) -> Ledger:
-#     return subset_by_class(ledger, Capital)
-
-
-# def liabilities(ledger: Ledger) -> Ledger:
-#     return subset_by_class(ledger, Liability)
-
-
-# def income(ledger: Ledger) -> Ledger:
-#     return subset_by_class(ledger, Income)
-
-
-# NEXT: see if ClosingEntry really needed here
-Posting = BaseEntry | Entry | MultipleEntry | DebitEntry | CreditEntry | ClosingEntry
+Posting = BaseEntry | Entry | MultipleEntry | DebitEntry | CreditEntry
 
 
 def _process(ledger: Ledger, posting: Posting) -> Ledger:
@@ -98,7 +75,6 @@ def _process(ledger: Ledger, posting: Posting) -> Ledger:
         case Entry(dr, cr, amount):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)
-        # ClosingEntry is a subclass of BaseEntry
         case BaseEntry(dr, cr, amount, _):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)
