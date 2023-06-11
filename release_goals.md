@@ -19,18 +19,18 @@ abacus read --from-excel-file store_fix.xlsx > store_fix.json
 ```bash
 account -m cash "Cash"
 account -ac inv "Inventories"
-account -ac ar "Accounts receivable" 
-account -an ppe "Property, plant, equipment" 
-account -an gw "Goodwill" 
+account -ac ar "Accounts receivable"
+account -an ppe "Property, plant, equipment"
+account -an gw "Goodwill"
 account -e cos "Cost of sales"
 account -e dc "Distribution costs"
-account -e ae "Administrative expenses" 
+account -e ae "Administrative expenses"
 account -e de "Depreciation expense"
 account -с eq "Shareholder equity"
 account -r re "Retained earnings"
 account -l ap "Accounts payable"
 account -i sales "Revenue"
-account --contra sales discounts 
+account --contra sales discounts
 
 ```
 
@@ -40,13 +40,13 @@ abacus init .
 abacus save dwp.json
 abacus chart --check
 abacus chart --assets cash ar inv ppe
-abacus chart --expenses cogs sga de 
-abacus account -m cash 
+abacus chart --expenses cogs sga de
+abacus account -m cash
 abacus account -m bank "Bank account"
-abacus account -a ar "Accounts receivable" 
-abacus account -a ppe "Property, plant, equipment" 
-abacus account -e cos "Cost of sales" 
-abacus account -e de "Depreciation expense" 
+abacus account -a ar "Accounts receivable"
+abacus account -a ppe "Property, plant, equipment"
+abacus account -e cos "Cost of sales"
+abacus account -e de "Depreciation expense"
 abacus chart --capital equity
 abacus chart --re re
 abacus chart --income sales

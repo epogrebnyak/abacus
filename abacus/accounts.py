@@ -1,12 +1,23 @@
 """Account classes.
 
-- Permanent accounts: `Asset`, `Capital` and `Liability`.
+## Regular accounts (`RegularAccount`)
+
+- Permanent accounts are `Asset`, `Capital` and `Liability`.
 - `RetainedEarnings` is a subclass of `Capital` account. 
-- Temporary accounts that are closed at period end: `Income` and `Expense`.
-- Contra accounts: `ContraAsset`, `ContraExpense`, `ContraCapital`, 
-  `ContraLiability`, and `ContraIncome`. 
-- Income summary account: `IncomeSummaryAccount`.
-- There must be exactly one `RetainedEarnings` and one `IncomeSummaryAccount` account in a ledger.
+- Income summary account is `IncomeSummaryAccount`.
+- There must be exactly one `RetainedEarnings` 
+  and one `IncomeSummaryAccount` account in a ledger.
+- Temporary accounts `Income` and `Expense` are closed at period end.
+  Their balances are transferred to `IncomeSummaryAccount`.
+  `IncomeSummaryAccount` balance is transferred to  `RetainedEarnings`.
+
+## Contra accounts (`ContraAccount`)
+  
+- `ContraIncome` and `ContraExpense` are closed before closing of 
+  `Income` and `Expense`.
+- `ContraAsset`, `ContraCapital` and `ContraLiability` are permanent,
+   they are passed to next period. These accounts are netted for 
+   balance sheet presentation.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -49,10 +60,6 @@ class Account(ABC):
         return self.__class__(self.debits.copy(), self.credits.copy())
 
 
-class RegularAccount:
-    pass
-
-
 class DebitAccount(Account):
     def balance(self) -> Amount:
         return sum(self.debits) - sum(self.credits)
@@ -73,6 +80,10 @@ class CreditAccount(Account):
 
     def is_credit_account(self):
         return True
+
+
+class RegularAccount:
+    pass
 
 
 class Asset(DebitAccount, RegularAccount):
@@ -97,7 +108,7 @@ class Income(CreditAccount, RegularAccount):
 
 class Unique:
     """There should be just one account of this class in any ledger.
-    IncomeSummaryAccount and RetainedEarnings are unique.
+    `IncomeSummaryAccount` and `RetainedEarnings` are unique.
     """
 
 
@@ -134,7 +145,7 @@ class ContraIncome(DebitAccount, ContraAccount):
 
 
 def get_contra_account_type(cls: Type[RegularAccount]) -> Type[ContraAccount]:
-    # long signature for mypy
+    # signature added for mypy
     mapping: Dict[Type[RegularAccount], Type[ContraAccount]] = dict(
         [
             (Asset, ContraAsset),
@@ -166,13 +177,18 @@ all_accounts_dict = {cls.__name__: cls for cls in all_account_classes}
 
 
 def get_class_constructor(class_name: str) -> Type:
+    """Return class constructor (eg `Expense`) given a string name (`'Expense'`)."""
     return all_accounts_dict[class_name]
 
 
-def new(class_name: str):
+def new(class_name: str) -> Account:
+    """Construct empty `Account` subclass."""
     return get_class_constructor(class_name)()
 
 
+# FIXME: maybe OpenAccount not needed as Chart can directly create to Ledger
+#        can have Journal.chart as very simple representation of accounts
+#        and Journal.empty_ledger() as make_ledger(self.chart)
 @dataclass
 class OpenAccount:
     """Command to open account in ledger."""

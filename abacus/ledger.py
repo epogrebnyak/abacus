@@ -1,9 +1,10 @@
-"""Journal of entries and general ledger."""
+"""General ledger."""
 
 from collections import UserDict
 from typing import List, Tuple, Type
 
-from abacus.accounts import Account, Asset, Capital, Expense, Income, Liability, Unique
+from abacus.accounting_types import AccountBalancesDict
+from abacus.accounts import Account, Unique
 
 from .accounting_types import (
     AbacusError,
@@ -14,14 +15,11 @@ from .accounting_types import (
     Entry,
     MultipleEntry,
 )
+from .closing_types import ClosingEntry
 
 
 class Ledger(UserDict[AccountName, Account]):
-    """General ledger that holds all accounts."""
-
-    #    @classmethod
-    #    def from_stream(cls, stream: List[OpenAccount]):
-    #        return Ledger((a.name, a.new()) for a in stream)
+    """General ledger that holds all accounts and accounts can be referenced by name."""
 
     def safe_copy(self) -> "Ledger":
         return Ledger((k, account.safe_copy()) for k, account in self.items())
@@ -32,11 +30,20 @@ class Ledger(UserDict[AccountName, Account]):
     def subset(self, cls):
         return subset_by_class(self, cls)
 
+    def balances(self):
+        return balances(self)
+
     def process_postings(self, postings: List["Posting"]) -> "Ledger":
         return process_postings(self, postings)
 
 
-def subset_by_class(ledger, cls):
+def balances(ledger: Ledger) -> AccountBalancesDict:
+    return AccountBalancesDict(
+        {account_name: account.balance() for account_name, account in ledger.items()}
+    )
+
+
+def subset_by_class(ledger: Ledger, cls: Type):
     return Ledger(
         (account_name, account)
         for account_name, account in ledger.items()
@@ -54,27 +61,29 @@ def find_account_name(ledger: Ledger, cls: Type[Unique]) -> AccountName:
     raise AbacusError(f"{cls} must be unique in ledger")
 
 
-def assets(ledger: Ledger) -> Ledger:
-    return subset_by_class(ledger, Asset)
+# NEXT: remove this code
+# def assets(ledger: Ledger) -> Ledger:
+#     return subset_by_class(ledger, Asset)
 
 
-def expenses(ledger: Ledger) -> Ledger:
-    return subset_by_class(ledger, Expense)
+# def expenses(ledger: Ledger) -> Ledger:
+#     return subset_by_class(ledger, Expense)
 
 
-def capital(ledger: Ledger) -> Ledger:
-    return subset_by_class(ledger, Capital)
+# def capital(ledger: Ledger) -> Ledger:
+#     return subset_by_class(ledger, Capital)
 
 
-def liabilities(ledger: Ledger) -> Ledger:
-    return subset_by_class(ledger, Liability)
+# def liabilities(ledger: Ledger) -> Ledger:
+#     return subset_by_class(ledger, Liability)
 
 
-def income(ledger: Ledger) -> Ledger:
-    return subset_by_class(ledger, Income)
+# def income(ledger: Ledger) -> Ledger:
+#     return subset_by_class(ledger, Income)
 
 
-Posting = BaseEntry | Entry | MultipleEntry | DebitEntry | CreditEntry
+# NEXT: see if ClosingEntry really needed here
+Posting = BaseEntry | Entry | MultipleEntry | DebitEntry | CreditEntry | ClosingEntry
 
 
 def _process(ledger: Ledger, posting: Posting) -> Ledger:
@@ -89,6 +98,7 @@ def _process(ledger: Ledger, posting: Posting) -> Ledger:
         case Entry(dr, cr, amount):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)
+        # ClosingEntry is a subclass of BaseEntry
         case BaseEntry(dr, cr, amount, _):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)

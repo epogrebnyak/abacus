@@ -4,11 +4,13 @@ from pydantic import BaseModel
 
 from abacus.accounting_types import (
     AbacusError,
+    AccountBalancesDict,
     AccountName,
     Amount,
     BusinessEntry,
     Entry,
     MultipleEntry,
+    Netting,
 )
 from abacus.closing_types import ClosingEntry
 from abacus.ledger import Ledger, process_postings
@@ -19,9 +21,6 @@ def yield_until(xs, classes):
         if any(isinstance(x, cls) for cls in classes):
             break
         yield x
-
-
-Netting = dict[str, list[str]]
 
 
 def to_multiple_entry(ledger, starting_balances: dict) -> MultipleEntry:
@@ -166,14 +165,10 @@ class Journal(BaseModel):
     def ledger(self):
         return self.data.ledger()
 
-    def balances(self):
-        from .reports import balances
-
-        return balances(self.ledger())
+    def balances(self) -> AccountBalancesDict:
+        return self.ledger().balances()
 
     def nonzero_balances(self):
-        from .reports import AccountBalancesDict
-
         return AccountBalancesDict({k: v for k, v in self.balances().items() if v != 0})
 
     def balance_sheet(self):

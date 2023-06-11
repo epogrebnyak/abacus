@@ -11,7 +11,8 @@ grill:
   just ruff
   just readme-py
   just readme-bat
-  just lint 
+  just isort
+  just black
   just md
 
 # run code from README.md
@@ -28,6 +29,9 @@ readme-py:
 md:
   npx prettier . --write
 
+isort:
+  poetry run isort --float-to-top .
+
 # apply ruff linter
 ruff:
   poetry run ruff check . --fix
@@ -37,8 +41,7 @@ mypy:
   poetry run mypy abacus
 
 # use black and isort
-lint:  
-  poetry run isort .
+black:  
   poetry run black .
 
 # build and serve docs

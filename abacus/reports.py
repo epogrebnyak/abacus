@@ -1,26 +1,13 @@
 # pylint: disable=import-error, no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
-from collections import UserDict
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 
-from abacus.accounting_types import AccountName, Amount
+from abacus.accounting_types import AccountBalancesDict, Amount, Netting
+from abacus.accounts import Asset, Capital, Expense, Income, Liability
 from abacus.closing import closing_entries_for_permanent_contra_accounts
-
-from .ledger import Ledger, assets, capital, expenses, income, liabilities
+from abacus.ledger import Ledger
 
 __all__ = ["BalanceSheet", "IncomeStatement"]
-
-
-class AccountBalancesDict(UserDict[AccountName, Amount]):
-    """Dictionary with account names and balances, example:
-    AccountBalancesDict({'cash': 100})
-    """
-
-    def total(self) -> Amount:
-        return sum(self.values())
-
-
-TrialBalance = AccountBalancesDict
 
 
 class Report:
@@ -43,26 +30,27 @@ class IncomeStatement(Report):
         return self.income.total() - self.expenses.total()
 
 
-def balances(ledger: Ledger) -> AccountBalancesDict:
-    return AccountBalancesDict(
-        {account_name: account.balance() for account_name, account in ledger.items()}
-    )
-
-
-def balance_sheet(ledger: Ledger, netting) -> BalanceSheet:
+def balance_sheet(ledger: Ledger, netting: Netting) -> BalanceSheet:
+    # Ledger will have permanent contra accounts which we did not net
+    # because we pass them to next period (eg accumulated depreciation
+    # does not go away).
+    # We close this ledger internally and will provide netted permanent
+    # accounts in the balance sheet report.
+    # This may change if we have a more complicated balance sheet report
+    # with net.. = gross... - less...
     entries = closing_entries_for_permanent_contra_accounts(ledger, netting)
-    ledger = ledger.process_postings(entries)
+    _ledger = ledger.process_postings(list(entries))
     return BalanceSheet(
-        assets=balances(assets(ledger)),
-        capital=balances(capital(ledger)),
-        liabilities=balances(liabilities(ledger)),
+        assets=_ledger.subset(Asset).balances(),
+        capital=_ledger.subset(Capital).balances(),
+        liabilities=_ledger.subset(Liability).balances(),
     )
 
 
 def income_statement(ledger: Ledger) -> IncomeStatement:
     return IncomeStatement(
-        income=balances(income(ledger)),
-        expenses=balances(expenses(ledger)),
+        income=ledger.subset(Income).balances(),
+        expenses=ledger.subset(Expense).balances(),
     )
 
 

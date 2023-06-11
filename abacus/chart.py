@@ -158,6 +158,7 @@ class Chart(BaseModel):
         b = self._yield_contra_accounts()
         return chain(a, b)
 
+    # remove  this
     def yield_accounts_as_text(self):
         for account_name, cls in self.yield_accounts():
             yield account_name, cls.__name__
