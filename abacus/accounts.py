@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Dict, List, Type
 
-from abacus.accounting_types import AccountName, Amount
+from abacus.accounting_types import Amount
 
 __all__ = ["Account"]
 
@@ -174,27 +174,3 @@ all_account_classes = (
 )
 
 all_accounts_dict = {cls.__name__: cls for cls in all_account_classes}
-
-
-def get_class_constructor(class_name: str) -> Type:
-    """Return class constructor (eg `Expense`) given a string name (`'Expense'`)."""
-    return all_accounts_dict[class_name]
-
-
-def new(class_name: str) -> Account:
-    """Construct empty `Account` subclass."""
-    return get_class_constructor(class_name)()
-
-
-# FIXME: maybe OpenAccount not needed as Chart can directly create to Ledger
-#        can have Journal.chart as very simple representation of accounts
-#        and Journal.empty_ledger() as make_ledger(self.chart)
-@dataclass
-class OpenAccount:
-    """Command to open account in ledger."""
-
-    name: AccountName
-    type: str
-
-    def new(self):
-        return get_class_constructor(self.type)([], [])

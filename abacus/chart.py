@@ -57,30 +57,6 @@ def all_args(values):
     return regular_account_names(values) + contra_account_names(values)
 
 
-def opening_entries_regular(chart, starting_balances):
-    from abacus.ledger import OpenRegularAccount
-
-    def get_balance(account_name):
-        return starting_balances.get(account_name, 0)
-
-    return [
-        OpenRegularAccount(account_name, cls.__name__, get_balance(account_name))
-        for account_name, cls in chart._yield_regular_accounts()
-    ]
-
-
-def opening_entries_contra(chart, starting_balances):
-    from abacus.ledger import OpenContraAccount
-
-    def get_balance(account_name):
-        return starting_balances.get(account_name, 0)
-
-    return [
-        OpenContraAccount(account_name, cls.__name__, get_balance(account_name), link)
-        for account_name, cls, link in chart._yield_contra_accounts()
-    ]
-
-
 class Chart(BaseModel):
     """Chart of accounts."""
 
@@ -158,11 +134,6 @@ class Chart(BaseModel):
         b = self._yield_contra_accounts()
         return chain(a, b)
 
-    # remove  this
-    def yield_accounts_as_text(self):
-        for account_name, cls in self.yield_accounts():
-            yield account_name, cls.__name__
-
     @property
     def account_names(self) -> List[AccountName]:
         """List all account names in chart."""
@@ -178,14 +149,12 @@ class Chart(BaseModel):
         """Create empty ledger based on this chart."""
         from abacus.ledger import Ledger
 
-        return Ledger((a, b()) for a, b in self.yield_accounts())
+        return Ledger(
+            (account_name, cls()) for account_name, cls in self.yield_accounts()
+        )
 
 
 def make_journal(chart, starting_balances: dict):
-    from abacus.journal import Journal
+    from abacus.journal import BaseJournal, Journal
 
-    journal = Journal()
-    journal.data.netting = chart.contra_accounts
-    journal.data.accounts = list(chart.yield_accounts_as_text())
-    journal.data.starting_balances = starting_balances
-    return journal
+    return Journal(data=BaseJournal(chart=chart, starting_balances=starting_balances))

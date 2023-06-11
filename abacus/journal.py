@@ -12,8 +12,9 @@ from abacus.accounting_types import (
     MultipleEntry,
     Netting,
 )
+from abacus.chart import Chart
 from abacus.closing_types import ClosingEntry
-from abacus.ledger import Ledger, process_postings
+from abacus.ledger import process_postings
 
 
 def yield_until(xs, classes):
@@ -36,8 +37,7 @@ def to_multiple_entry(ledger, starting_balances: dict) -> MultipleEntry:
 
 
 class BaseJournal(BaseModel):
-    accounts: list[tuple[str, str]] = []
-    netting: Netting = {}
+    chart: Chart
     starting_balances: dict = {}
     business_entries: list[Entry] = []
     adjustment_entries: list[Entry] = []
@@ -45,8 +45,12 @@ class BaseJournal(BaseModel):
     post_close_entries: list[Entry] = []
     is_closed: bool = False
 
+    @property
+    def netting(self) -> Netting:
+        return self.chart.contra_accounts
+
     def starting_entry(self) -> MultipleEntry:
-        return to_multiple_entry(self.base_ledger, self.starting_balances)
+        return to_multiple_entry(self.empty_ledger, self.starting_balances)
 
     def entries_for_closing_temp_contra_accounts(self):
         """Return close contra income and close contra expense accounts.
@@ -84,17 +88,13 @@ class BaseJournal(BaseModel):
                 yield entry
 
     @property
-    def base_ledger(self):
-        from abacus.accounts import new
-
-        return Ledger(
-            (account_name, new(cls_name)) for (account_name, cls_name) in self.accounts
-        )
+    def empty_ledger(self):
+        return self.chart.ledger()
 
     @property
     def start_ledger(self):
         """Ledger with some balances."""
-        return self.base_ledger.process_postings([self.starting_entry()])
+        return self.empty_ledger.process_postings([self.starting_entry()])
 
     def process(self, postings):
         return process_postings(self.start_ledger, postings)
@@ -133,7 +133,7 @@ class BaseJournal(BaseModel):
 
 
 class Journal(BaseModel):
-    data: BaseJournal = BaseJournal()
+    data: BaseJournal
 
     def save(self, path: str):
         from pathlib import Path

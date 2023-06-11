@@ -31,16 +31,16 @@ def test_netting():
 
 
 def test_open_accounts():
-    assert journal.data.accounts == [
-        ("cash", "Asset"),
-        ("salaries", "Expense"),
-        ("rent", "Expense"),
-        ("equity", "Capital"),
-        ("re", "RetainedEarnings"),
-        ("services", "Income"),
-        ("_profit", "IncomeSummaryAccount"),
-        ("cashback", "ContraIncome"),
-    ]
+    assert journal.data.chart == Chart(
+        assets=["cash"],
+        expenses=["salaries", "rent"],
+        equity=["equity"],
+        retained_earnings_account="re",
+        liabilities=[],
+        income=["services"],
+        contra_accounts={"services": ["cashback"]},
+        income_summary_account="_profit",
+    )
 
 
 def test_start_entry():

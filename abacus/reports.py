@@ -1,6 +1,6 @@
 # pylint: disable=import-error, no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
 
-from pydantic.dataclasses import dataclass
+from dataclasses import dataclass
 
 from abacus.accounting_types import AccountBalancesDict, Amount, Netting
 from abacus.accounts import Asset, Capital, Expense, Income, Liability

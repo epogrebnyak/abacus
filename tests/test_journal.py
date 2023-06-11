@@ -1,21 +1,20 @@
-from abacus.accounting_types import BusinessEntry, MultipleEntry
-from abacus.accounts import ContraAsset, OpenAccount
+from abacus.accounting_types import BusinessEntry
+from abacus.chart import Chart
 from abacus.closing import CloseExpense, CloseIncome, CloseISA
 from abacus.journal import BaseJournal
 
 
 def test_base_journal():
     BaseJournal(
-        open_accounts=[
-            OpenAccount(name="cash", type="Asset"),
-            OpenAccount(name="salaries", type="Expense"),
-            OpenAccount(name="rent", type="Expense"),
-            OpenAccount(name="equity", type="Capital"),
-            OpenAccount(name="re", type="RetainedEarnings"),
-            OpenAccount(name="services", type="Income"),
-            OpenAccount(name="_profit", type="IncomeSummaryAccount"),
-        ],
-        start_entry=MultipleEntry([], []),
+        chart=Chart(
+            assets=["cash", "receivables", "goods_for_sale"],
+            expenses=["cogs", "sga"],
+            equity=["equity"],
+            liabilities=["divp", "payables"],
+            income=["sales"],
+            retained_earnings_account="re",
+        ),
+        starting_balance={},
         business_entries=[
             BusinessEntry(dr="rent", cr="cash", amount=200, action="post"),
             BusinessEntry(dr="cash", cr="services", amount=800, action="post"),
@@ -33,8 +32,3 @@ def test_base_journal():
         post_close_entries=[],
         is_closed=True,
     )
-
-
-def test_open_contra():
-    oe = OpenAccount("depreciation", "ContraAsset")
-    assert oe.new() == ContraAsset(debits=[], credits=[])
