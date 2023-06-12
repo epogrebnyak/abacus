@@ -51,26 +51,26 @@ def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-class PreChart(BaseModel):
-    """A class similar to Chart, but allowing empty fields.
-    PreChart is used to gather parameters from command line interface
-    and later create Chart."""
+# class PreChart(BaseModel):
+#     """A class similar to Chart, but allowing empty fields.
+#     PreChart is used to gather parameters from command line interface
+#     and later create Chart."""
 
-    assets: List[str] = []
-    expenses: List[str] = []
-    equity: List[str] = []
-    retained_earnings_account: str | None = None
-    liabilities: List[str] = []
-    income: List[str] = []
-    contra_accounts: Dict[str, List[str]] = {}
-    # income_summary_account = "_profit"
+#     assets: List[str] = []
+#     expenses: List[str] = []
+#     equity: List[str] = []
+#     retained_earnings_account: str | None = None
+#     liabilities: List[str] = []
+#     income: List[str] = []
+#     contra_accounts: Dict[str, List[str]] = {}
+#     # income_summary_account = "_profit"
 
-    def to_file(self, path):
-        Path(path).write_text(json.dumps(self.dict(), indent=2), encoding="utf-8")
+#     def to_file(self, path):
+#         Path(path).write_text(json.dumps(self.dict(), indent=2), encoding="utf-8")
 
-    @classmethod
-    def from_file(cls, path):
-        return PreChart(**read_json(path))
+#     @classmethod
+#     def from_file(cls, path):
+#         return PreChart(**read_json(path))
 
 
 def main():
@@ -82,10 +82,12 @@ def main():
         if arguments["touch"]:
             if path.exists():
                 sys.exit(f"Cannot create chart, file {path} already exists.")
-            chart = PreChart()
-            chart.to_file(path)
+            chart = Chart.empty()
+            chart.save(path)
             pprint(chart.dict())
-        chart = PreChart.from_file(path)
+        chart = Chart.load(path)
+        if arguments["list"]:
+            pprint(chart.dict())
         if arguments["set"]:
             account_names = arguments["<account_names>"]
             if arguments["--re"] or arguments["--retained-earnings"]:
@@ -99,16 +101,17 @@ def main():
                     attr = flag[2:]
                     setattr(chart, attr, account_names)
                     pprint(getattr(chart, attr))
-            chart.to_file(path)
+            chart.save(path)
         if arguments["offset"]:
             chart.contra_accounts[arguments["<account_name>"]] = arguments[
                 "<contra_account_names>"
             ]
             pprint(chart.contra_accounts)
-            chart.to_file(path)
+            chart.save(path)
+        # FIXME: re-create chart on every save to catch duplicates problem 
         if arguments["validate"]:
             # Create Chart object and see what happens
-            chart2 = Chart(**PreChart.from_file(path).dict())
+            chart2 = Chart(**chart.dict())
             pprint(chart2.dict())
         if arguments["create"]:
             chart = Chart(**PreChart.from_file(path).dict())

@@ -1,12 +1,15 @@
 {
-  "assets": ["cash", "ar", "inventory", "ppe"],
-  "expenses": ["cogs", "sga"],
-  "equity": ["equity"],
-  "retained_earnings_account": "re",
-  "liabilities": ["ap", "dividend_due"],
-  "income": ["sales"],
-  "contra_accounts": {
-    "ppe": ["depreciation"],
-    "sales": ["discounts", "cashback"]
-  }
+  "assets": [
+    "cash",
+    "goods"
+  ],
+  "expenses": [],
+  "equity": [
+    "cash"
+  ],
+  "retained_earnings_account": "",
+  "liabilities": [],
+  "income": [],
+  "contra_accounts": {},
+  "income_summary_account": "_profit"
 }

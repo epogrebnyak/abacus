@@ -35,7 +35,6 @@ def is_unique(xs):
     return len(set(xs)) == len(xs)
 
 
-
 class Chart(BaseModel):
     """Chart of accounts."""
 
