@@ -102,5 +102,5 @@ class AdjustmentEntry(BaseEntry):
 
 
 @dataclass
-class PostClose(BaseEntry):
+class PostCloseEntry(BaseEntry):
     action: str = "post_close"
