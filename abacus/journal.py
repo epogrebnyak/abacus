@@ -38,10 +38,14 @@ def to_multiple_entry(ledger, starting_balances: dict) -> MultipleEntry:
             me.credit_entries.append(t)
     return me
 
-TypedEntry = BusinessEntry | AdjustmentEntry | ClosingEntry | PostCloseEntry
-EntryList = List[TypedEntry] 
 
-def choose_entries_for_closing_temp_contra_accounts(closing_entries: List[ClosingEntry]):
+TypedEntry = BusinessEntry | AdjustmentEntry | ClosingEntry | PostCloseEntry
+EntryList = List[TypedEntry]
+
+
+def choose_entries_for_closing_temp_contra_accounts(
+    closing_entries: List[ClosingEntry],
+):
     """Return close contra income and close contra expense accounts.
     Used to construct income statement."""
     from abacus.closing_types import CloseContraExpense, CloseContraIncome
@@ -54,7 +58,9 @@ def choose_entries_for_closing_temp_contra_accounts(closing_entries: List[Closin
         or p.action in ["close_contra_expense", "close_contra_income"]
     ]
 
+
 from pydantic.dataclasses import dataclass
+
 
 @dataclass
 class Entries:
@@ -142,7 +148,7 @@ class Book(BaseModel):
         self.closing_entries = closing_entries(self.ledger(), self.netting)  # type: ignore
         self.is_closed = True
         return self
-        
+
     def unlock(self) -> "Book":
         """Reverse .close() command."""
         raise NotImplemented
@@ -187,7 +193,7 @@ def ledger_all(book: Book) -> Ledger:
 
 def ledger_for_income_statement(book: Book) -> Ledger:
     """Return ledger for creating income statement.
-    This ledger excludes closing entries that remove 
+    This ledger excludes closing entries that remove
     income and expenses information, but includes post-close entries."""
     _ledger = ledger_with_starting_balances(book)
     postings = book.entries.yield_for_income_statement()
