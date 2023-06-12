@@ -120,18 +120,18 @@ class Chart(BaseModel):
         """Return account class for *account_name*."""
         return dict(self._yield_regular_accounts())[account_name]
 
-    def check_type(self, account_name: AccountName, cls: Type) -> bool:
-        return isinstance(self.get_type(account_name)(), cls)
+    # def check_type(self, account_name: AccountName, cls: Type) -> bool:
+    #     return isinstance(self.get_type(account_name)(), cls)
 
-    def is_debit_account(self, account_name: AccountName) -> bool:
-        from abacus.accounts import DebitAccount
+    # def is_debit_account(self, account_name: AccountName) -> bool:
+    #     from abacus.accounts import DebitAccount
 
-        return self.check_type(account_name, DebitAccount)
+    #     return self.check_type(account_name, DebitAccount)
 
-    def is_credit_account(self, account_name: AccountName) -> bool:
-        from abacus.accounts import CreditAccount
+    # def is_credit_account(self, account_name: AccountName) -> bool:
+    #     from abacus.accounts import CreditAccount
 
-        return self.check_type(account_name, CreditAccount)
+    #     return self.check_type(account_name, CreditAccount)
 
     def _yield_contra_accounts(self):
         for linked_account_name, contra_account_names in self.contra_accounts.items():

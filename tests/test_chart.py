@@ -14,7 +14,9 @@ def test_is_debit_account():
             expenses=[],
             liabilities=[],
             income=[],
-        ).is_debit_account("cash")
+        )
+        .ledger()["cash"]
+        .is_debit_account()
         is True
     )
 
