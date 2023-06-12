@@ -39,10 +39,8 @@ import json
 import sys
 from pathlib import Path
 from pprint import pprint
-from typing import Dict, List
 
 from docopt import docopt
-from pydantic import BaseModel
 
 from abacus import AbacusError, Amount, Chart, Journal
 
@@ -114,9 +112,9 @@ def main():
             chart2 = Chart(**chart.dict())
             pprint(chart2.dict())
         if arguments["create"]:
-            chart = Chart(**PreChart.from_file(path).dict())
+            chart = Chart.load(path)
             journal = chart.journal()
-            if arguments["--using"]:  # FIXME: does not work
+            if arguments["--using"]:  # FIXME: does not work due to JSON issues 
                 starting_balances = read_json(arguments["<start_balances_file>"])
                 journal = chart.journal(starting_balances)
             journal.save(arguments["<store_file>"])

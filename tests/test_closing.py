@@ -1,14 +1,6 @@
-from abacus.accounts import (
-    Asset,
-    Capital,
-    ContraAsset,
-    ContraIncome,
-    Expense,
-    Income,
-    IncomeSummaryAccount,
-    Liability,
-    RetainedEarnings,
-)
+from abacus.accounts import (Asset, Capital, ContraAsset, ContraIncome,
+                             Expense, Income, IncomeSummaryAccount, Liability,
+                             RetainedEarnings)
 from abacus.closing import close_contra_accounts, closing_entries
 from abacus.closing_types import CloseContraIncome
 from abacus.ledger import Ledger

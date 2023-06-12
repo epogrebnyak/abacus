@@ -6,15 +6,8 @@ from typing import List, Tuple, Type
 from abacus.accounting_types import AccountBalancesDict
 from abacus.accounts import Account, Unique
 
-from .accounting_types import (
-    AbacusError,
-    AccountName,
-    BaseEntry,
-    CreditEntry,
-    DebitEntry,
-    Entry,
-    MultipleEntry,
-)
+from .accounting_types import (AbacusError, AccountName, BaseEntry,
+                               CreditEntry, DebitEntry, Entry, MultipleEntry)
 
 
 class Ledger(UserDict[AccountName, Account]):

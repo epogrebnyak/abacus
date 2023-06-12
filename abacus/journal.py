@@ -1,22 +1,17 @@
-from typing import List
+from typing import List, Dict
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
-from abacus.accounting_types import (
-    AbacusError,
-    AccountBalancesDict,
-    AccountName,
-    AdjustmentEntry,
-    Amount,
-    BusinessEntry,
-    Entry,
-    MultipleEntry,
-    Netting,
-    PostCloseEntry,
-)
+from abacus.accounting_types import (AbacusError, AccountBalancesDict,
+                                     AccountName, Amount,
+                                     BusinessEntry, Entry, MultipleEntry,
+                                     Netting)
 from abacus.chart import Chart
+from abacus.closing import (CloseContraExpense, CloseContraIncome,
+                            CloseExpense, CloseIncome, CloseISA)
 from abacus.closing_types import ClosingEntry
+from abacus.closing import closing_entries
 from abacus.ledger import Ledger, process_postings
 
 
@@ -39,17 +34,11 @@ def to_multiple_entry(ledger, starting_balances: dict) -> MultipleEntry:
     return me
 
 
-TypedEntry = BusinessEntry | AdjustmentEntry | ClosingEntry | PostCloseEntry
-EntryList = List[TypedEntry]
-
-
 def choose_entries_for_closing_temp_contra_accounts(
     closing_entries: List[ClosingEntry],
 ):
     """Return close contra income and close contra expense accounts.
     Used to construct income statement."""
-    from abacus.closing_types import CloseContraExpense, CloseContraIncome
-
     return [
         p
         for p in closing_entries
@@ -61,10 +50,10 @@ def choose_entries_for_closing_temp_contra_accounts(
 
 @dataclass
 class Entries:
-    business: EntryList
-    adjustment: EntryList
-    closing: EntryList
-    post_close: EntryList
+    business: List[Entry]
+    adjustment: List[Entry]
+    closing: List[CloseContraIncome | CloseContraExpense | CloseIncome | CloseExpense | CloseISA ]
+    post_close: List[Entry]
 
     def yield_for_income_statement(self):
         entry_lists = [
@@ -91,7 +80,7 @@ class Entries:
 
 class Book(BaseModel):
     chart: Chart
-    starting_balances: dict = {}
+    starting_balances: Dict[AccountName, Amount] = {}
     entries: Entries
     is_closed: bool = False
 
@@ -110,39 +99,25 @@ class Book(BaseModel):
         if self.is_closed:
             raise AbacusError("Cannot add entries to closed ledger.")
 
-    def add_business_entries(self, ps: list[BusinessEntry]):
-        self.assert_book_was_not_closed()
-        self.entries.business.extend(ps)
-        return self
-
-    def add_adjustment_entries(self, ps: list[AdjustmentEntry]):
-        self.assert_book_was_not_closed()
-        self.entries.adjustment.extend(ps)
-        return self
-
-    def add_post_close_entries(self, ps: list[PostCloseEntry]):
-        # no assert_book_was_not_closed() - can add post-close entries at any time
-        self.entries.post_close.extend(ps)
-        return self
-
     def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Book":
-        entry = BusinessEntry(dr, cr, amount)
-        return self.add_business_entries([entry])
+        entry = Entry(dr, cr, amount)
+        self.entries.business.append(entry)
+        return self
 
     def adjust(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Book":
-        entry = AdjustmentEntry(dr, cr, amount)
-        return self.add_adjustment_entries([entry])
+        entry = Entry(dr, cr, amount)
+        self.entries.adjustment.append(entry)
+        return self
 
     def post_close(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Book":
-        entry = PostCloseEntry(dr, cr, amount)
-        return self.add_post_close_entries([entry])
+        entry = Entry(dr, cr, amount)
+        self.entries.post_close.append(entry)
+        return self
 
     def close(self):
-        from abacus.closing import closing_entries
-
         if self.is_closed:
             raise AbacusError("Ledger already closed, cannot close again.")
-        self.closing_entries = closing_entries(self.ledger(), self.netting)  # type: ignore
+        self.entries.closing = closing_entries(self.ledger(), self.netting)  # type: ignore
         self.is_closed = True
         return self
 

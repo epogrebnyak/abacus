@@ -1,4 +1,5 @@
 package := "abacus"
+command := if os_family() == "windows" { "poetry run minimal.bat" } else { "bash source ./minimal.sh" }
 
 # run pytest
 test:
@@ -15,17 +16,18 @@ grill:
   just black
   just md
 
-# run code from README.md
-readme-bat:
+# run console examples from README.md (FIXME)
+readme-console:
   cat README.md | npx codedown console > minimal.sh
   cat minimal.sh | python call.py > minimal.bat
-  poetry run minimal.bat
+  {{ command }}
 
+# run Python code from README.md
 readme-py:
   cat README.md | npx codedown python > minimal.py
   poetry run python minimal.py
 
-# run readme.py
+# prettify markdown
 md:
   npx prettier . --write
 

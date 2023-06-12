@@ -1,15 +1,8 @@
 # %%
 
-from abacus.accounts import (
-    Asset,
-    Capital,
-    ContraAsset,
-    ContraCapital,
-    ContraIncome,
-    Income,
-    IncomeSummaryAccount,
-    RetainedEarnings,
-)
+from abacus.accounts import (Asset, Capital, ContraAsset, ContraCapital,
+                             ContraIncome, Income, IncomeSummaryAccount,
+                             RetainedEarnings)
 from abacus.chart import Chart
 
 chart = Chart(

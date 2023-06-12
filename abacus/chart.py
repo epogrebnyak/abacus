@@ -6,16 +6,9 @@ from typing import Dict, List, Type
 from pydantic import BaseModel  # type: ignore
 
 from abacus.accounting_types import AbacusError, AccountName
-from abacus.accounts import (
-    Asset,
-    Capital,
-    Expense,
-    Income,
-    IncomeSummaryAccount,
-    Liability,
-    RetainedEarnings,
-    get_contra_account_type,
-)
+from abacus.accounts import (Asset, Capital, Expense, Income,
+                             IncomeSummaryAccount, Liability, RetainedEarnings,
+                             get_contra_account_type)
 
 __all__ = ["Chart"]
 
