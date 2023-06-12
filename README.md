@@ -76,8 +76,8 @@ chart = Chart(
     contra_accounts={"sales": ["discounts", "cashback"]},
 )
 starting_balances = {"cash": 1200, "inventory": 300, "equity": 1500}
-journal = (
-    chart.journal(starting_balances)
+book = (
+    chart.book(starting_balances)
     .post(dr="cogs", cr="inventory", amount=250)
     .post(dr="ar", cr="sales", amount=440)
     .post(dr="discounts", cr="ar", amount=41)
@@ -85,12 +85,12 @@ journal = (
     .post(dr="sga", cr="cash", amount=59)
     .close()
 )
-print(journal.balance_sheet())
+print(book.balance_sheet())
 # Output similar to:
 # BalanceSheet(assets={'cash': 1350, 'ar': 190, 'goods': 50},
 #              capital={'equity': 1500, 're': 90},
 #              liabilities={})
-print(journal.income_statement())
+print(book.income_statement())
 # Output similar to:
 # IncomeStatement(income={'sales': 399},
 #                 expenses={'cogs': 250, 'sga': 59})
@@ -101,6 +101,7 @@ print(journal.income_statement())
 Create chart of accounts:
 
 ```console
+del chart.json
 jaba chart chart.json touch
 jaba chart chart.json set --assets cash ar inventory ppe
 jaba chart chart.json set --capital equity
@@ -115,7 +116,7 @@ jaba chart chart.json list
 jaba chart chart.json create store.json
 ```
 
-Post entries to journal:
+Post entries to ledger:
 
 ```console
 jaba store store.json post --dr cash --cr equity --amount 1500
@@ -176,10 +177,10 @@ chart = Chart(
 )
 ```
 
-2. Next, create a general ledger based on chart of accounts.
+2. Next, create a general ledger (book) based on chart of accounts.
 
 ```python
-journal = chart.journal()
+book = chart.book()
 ```
 
 3. Add accounting entries using account names from the chart of accounts
@@ -191,7 +192,7 @@ e2 = Entry(dr="goods_for_sale", cr="cash", amount=250) # acquire goods worth 250
 e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200) # sell goods worth 200
 e4 = Entry(cr="sales", dr="cash", amount=400)          # for 400 in cash
 e5 = Entry(cr="cash", dr="sga", amount=50)             # administrative expenses
-journal = journal.post_many([e1, e2, e3, e4, e5]).close()
+book = book.post_many([e1, e2, e3, e4, e5]).close()
 ```
 
 4. Make income statement.
@@ -199,7 +200,7 @@ journal = journal.post_many([e1, e2, e3, e4, e5]).close()
 ```python
 from abacus import IncomeStatement
 
-income_statement = journal.income_statement()
+income_statement = book.income_statement()
 assert income_statement == IncomeStatement(
     income={'sales': 400},
     expenses={'cogs': 200, 'sga': 50}
@@ -211,7 +212,7 @@ assert income_statement == IncomeStatement(
 ```python
 from abacus import BalanceSheet
 
-balance_sheet = journal.balance_sheet()
+balance_sheet = book.balance_sheet()
 assert balance_sheet == BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},

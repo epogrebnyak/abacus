@@ -11,7 +11,7 @@ grill:
   just mypy
   just ruff
   just readme-py
-  just readme-bat
+  just readme-console
   just isort
   just black
   just md

@@ -22,7 +22,7 @@ Usage:
   jaba store <store_file> post <dr_account> <cr_account> <amount> [--adjust] [--post-close]
   jaba store <store_file> post --dr <dr_account> --cr <cr_account> --amount <amount> [--adjust] [--post-close]
   jaba store <store_file> close [--again]
-  jaba store <store_file> list [--open | --business | --adjust | --close | --post-close | --is-closed]
+  jaba store <store_file> list [--start | --business | --adjust | --close | --post-close]
   jaba report <store_file> (-i | --income-statement) [--names <name_file>] [--rich]
   jaba report <store_file> (-b | --balance-sheet) [--names <name_file>] [--rich]
   jaba report <store_file> (-t | --trial-balance) [--credit [--sum] | --debit [--sum]] [--all]
@@ -42,33 +42,11 @@ from pprint import pprint
 
 from docopt import docopt
 
-from abacus import AbacusError, Amount, Chart, Journal
+from abacus import AbacusError, Amount, Book, Chart
 
 
 def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
-
-
-# class PreChart(BaseModel):
-#     """A class similar to Chart, but allowing empty fields.
-#     PreChart is used to gather parameters from command line interface
-#     and later create Chart."""
-
-#     assets: List[str] = []
-#     expenses: List[str] = []
-#     equity: List[str] = []
-#     retained_earnings_account: str | None = None
-#     liabilities: List[str] = []
-#     income: List[str] = []
-#     contra_accounts: Dict[str, List[str]] = {}
-#     # income_summary_account = "_profit"
-
-#     def to_file(self, path):
-#         Path(path).write_text(json.dumps(self.dict(), indent=2), encoding="utf-8")
-
-#     @classmethod
-#     def from_file(cls, path):
-#         return PreChart(**read_json(path))
 
 
 def main():
@@ -101,72 +79,71 @@ def main():
                     pprint(getattr(chart, attr))
             chart.save(path)
         if arguments["offset"]:
-            chart.contra_accounts[arguments["<account_name>"]] = arguments[
-                "<contra_account_names>"
-            ]
+            key, names = (
+                arguments["<account_name>"],
+                arguments["<contra_account_names>"],
+            )
+            chart.contra_accounts[key] = names
             pprint(chart.contra_accounts)
             chart.save(path)
-        # FIXME: re-create chart on every save to catch duplicates problem 
+        # FIXME: re-create chart on every save to catch duplicates problem
         if arguments["validate"]:
             # Create Chart object and see what happens
             chart2 = Chart(**chart.dict())
             pprint(chart2.dict())
         if arguments["create"]:
             chart = Chart.load(path)
-            journal = chart.journal()
-            if arguments["--using"]:  # FIXME: does not work due to JSON issues 
+            if arguments["--using"]:  # FIXME: does not work due to JSON issues
                 starting_balances = read_json(arguments["<start_balances_file>"])
-                journal = chart.journal(starting_balances)
-            journal.save(arguments["<store_file>"])
-            pprint(journal.data.dict())
+                book = chart.book(starting_balances)
+            else:
+                book = chart.book()
+            book.save(arguments["<store_file>"])
+            pprint(book.dict())
     elif arguments["names"]:
         pass
     elif arguments["store"]:
-        path = Path(arguments["<store_file>"])
-        journal = Journal.load(path)
+        path = arguments["<store_file>"]
+        book = Book.load(path)
         if arguments["post"]:
-            journal.post(
+            book.post(
                 dr=arguments["<dr_account>"],
                 cr=arguments["<cr_account>"],
                 amount=arguments["<amount>"],
             )
-            journal.save(path)
+            book.save(path)
         if arguments["close"]:
-            if arguments["--again"]:
-                journal.data.is_closed = False
-            journal.close()
-            journal.save(path)
+            book.close()
+            book.save(path)
         if arguments["list"]:
-            show = journal.data.dict()
-            # [--open | --business | --adjust | --close | --post-close]
-            if arguments["--open"]:
-                show = journal.data.accounts
+            show = book
+            # [--start | --business | --adjust | --close | --post-close]
+            if arguments["--start"]:
+                show = book.starting_balance
             if arguments["--business"]:
-                show = journal.data.business_entries
+                show = book.entries.business
             if arguments["--adjust"]:
-                show = ""
+                show = book.entries.adjust
             if arguments["--close"]:
-                show = journal.data.closing_entries
-            if arguments["--is-closed"]:
-                show = journal.data.is_closed
+                show = book.entries.closing
             if arguments["--post-close"]:
-                show = ""
+                show = book.entries.post_close
             pprint(show)
     elif arguments["report"]:
-        path = Path(arguments["<store_file>"])
-        journal = Journal.load(path)
+        path = arguments["<store_file>"]
+        book = Book.load(path)
         if arguments["-i"] or arguments["--income-statement"]:
-            pprint(journal.income_statement().__dict__)
+            pprint(book.income_statement().__dict__)
         if arguments["-b"] or arguments["--balance-sheet"]:
-            pprint(journal.balance_sheet().__dict__)
+            pprint(book.balance_sheet().__dict__)
         if arguments["-t"] or arguments["--trial-balance"]:
             if arguments["--all"]:
-                pprint(journal.balances().data)
+                pprint(book.balances().data)
             else:
-                pprint(journal.nonzero_balances().data)
+                pprint(book.nonzero_balances().data)
         if arguments["-a"] or arguments["--account"]:
             account_name = arguments["<account_name>"]
-            actual = journal.balances().data[account_name]
+            actual = book.balances().data[account_name]
             if arguments["--assert"]:
                 amount = Amount(arguments["<amount>"])
                 if actual != amount:

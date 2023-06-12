@@ -2,6 +2,7 @@ import pytest
 
 from abacus import Chart
 from abacus.accounting_types import AbacusError, MultipleEntry
+from abacus.book import starting_entry
 
 
 def test_is_debit_account():
@@ -11,6 +12,7 @@ def test_is_debit_account():
             equity=[],
             retained_earnings_account="",
             expenses=[],
+            liabilities=[],
             income=[],
         ).is_debit_account("cash")
         is True
@@ -23,11 +25,12 @@ def test_journal_with_starting_balance():
         equity=["equity"],
         retained_earnings_account="re",
         expenses=["salaries", "rent"],
+        liabilities=[],
         income=["services"],
     )
     # Account balances are known from previous period end
     starting_balances = {"cash": 1400, "equity": 1500, "re": -100}
-    assert chart.journal(starting_balances).data.starting_entry() == MultipleEntry(
+    assert starting_entry(chart.book(starting_balances)) == MultipleEntry(
         [("cash", 1400)],
         [("equity", 1500), ("re", -100)],
     )

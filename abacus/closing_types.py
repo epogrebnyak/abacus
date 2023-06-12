@@ -5,8 +5,7 @@ from typing import Dict, Type
 from pydantic.dataclasses import dataclass
 
 from abacus.accounting_types import BaseEntry
-from abacus.accounts import (Asset, Capital, Expense, Income, Liability,
-                             RegularAccount)
+from abacus.accounts import Asset, Capital, Expense, Income, Liability, RegularAccount
 
 
 @dataclass

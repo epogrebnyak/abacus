@@ -10,8 +10,8 @@ chart = Chart(
     contra_accounts={"sales": ["discounts", "cashback"]},
 )
 starting_balances = {"cash": 1200, "inventory": 300, "equity": 1500}
-journal = (
-    chart.journal(starting_balances)
+book = (
+    chart.book(starting_balances)
     .post(dr="cogs", cr="inventory", amount=250)
     .post(dr="ar", cr="sales", amount=440)
     .post(dr="discounts", cr="ar", amount=41)
@@ -19,12 +19,12 @@ journal = (
     .post(dr="sga", cr="cash", amount=59)
     .close()
 )
-print(journal.balance_sheet())
+print(book.balance_sheet())
 # Output similar to:
 # BalanceSheet(assets={'cash': 1350, 'ar': 190, 'goods': 50},
 #              capital={'equity': 1500, 're': 90},
 #              liabilities={})
-print(journal.income_statement())
+print(book.income_statement())
 # Output similar to:
 # IncomeStatement(income={'sales': 399},
 #                 expenses={'cogs': 250, 'sga': 59})
@@ -41,18 +41,18 @@ chart = Chart(
     income=["sales"],
 )
 
-journal = chart.journal()
+book = chart.book()
 
 e1 = Entry(dr="cash", cr="equity", amount=1000)        # pay in capital
 e2 = Entry(dr="goods_for_sale", cr="cash", amount=250) # acquire goods worth 250
 e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200) # sell goods worth 200
 e4 = Entry(cr="sales", dr="cash", amount=400)          # for 400 in cash
 e5 = Entry(cr="cash", dr="sga", amount=50)             # administrative expenses
-journal = journal.post_many([e1, e2, e3, e4, e5]).close()
+book = book.post_many([e1, e2, e3, e4, e5]).close()
 
 from abacus import IncomeStatement
 
-income_statement = journal.income_statement()
+income_statement = book.income_statement()
 assert income_statement == IncomeStatement(
     income={'sales': 400},
     expenses={'cogs': 200, 'sga': 50}
@@ -60,7 +60,7 @@ assert income_statement == IncomeStatement(
 
 from abacus import BalanceSheet
 
-balance_sheet = journal.balance_sheet()
+balance_sheet = book.balance_sheet()
 assert balance_sheet == BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},

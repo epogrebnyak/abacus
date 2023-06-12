@@ -1,94 +1,42 @@
 {
   "chart": {
-    "assets": ["cash", "ar", "inventory", "ppe"],
-    "expenses": ["cogs", "sga"],
-    "equity": ["equity"],
+    "assets": [
+      "cash",
+      "ar",
+      "inventory",
+      "ppe"
+    ],
+    "expenses": [
+      "cogs",
+      "sga"
+    ],
+    "equity": [
+      "equity"
+    ],
     "retained_earnings_account": "re",
-    "liabilities": ["ap", "dividend_due"],
-    "income": ["sales"],
+    "liabilities": [
+      "ap",
+      "dividend_due"
+    ],
+    "income": [
+      "sales"
+    ],
     "contra_accounts": {
-      "ppe": ["depreciation"],
-      "sales": ["discounts", "cashback"]
+      "ppe": [
+        "depreciation"
+      ],
+      "sales": [
+        "discounts",
+        "cashback"
+      ]
     },
     "income_summary_account": "_profit"
   },
   "starting_balances": {},
-  "business_entries": [
-    {
-      "dr": "cash",
-      "cr": "equity",
-      "amount": 1500
-    },
-    {
-      "dr": "inventory",
-      "cr": "cash",
-      "amount": 300
-    },
-    {
-      "dr": "cogs",
-      "cr": "inventory",
-      "amount": 250
-    },
-    {
-      "dr": "ar",
-      "cr": "sales",
-      "amount": 440
-    },
-    {
-      "dr": "discounts",
-      "cr": "ar",
-      "amount": 41
-    },
-    {
-      "dr": "cash",
-      "cr": "ar",
-      "amount": 250
-    },
-    {
-      "dr": "sga",
-      "cr": "cash",
-      "amount": 59
-    }
-  ],
-  "adjustment_entries": [],
-  "closing_entries": [
-    {
-      "dr": "sales",
-      "cr": "discounts",
-      "amount": 41,
-      "action": "close_contra_income"
-    },
-    {
-      "dr": "sales",
-      "cr": "cashback",
-      "amount": 0,
-      "action": "close_contra_income"
-    },
-    {
-      "dr": "sales",
-      "cr": "_profit",
-      "amount": 399,
-      "action": "close_income"
-    },
-    {
-      "dr": "_profit",
-      "cr": "cogs",
-      "amount": 250,
-      "action": "close_expense"
-    },
-    {
-      "dr": "_profit",
-      "cr": "sga",
-      "amount": 59,
-      "action": "close_expense"
-    },
-    {
-      "dr": "_profit",
-      "cr": "re",
-      "amount": 90,
-      "action": "close_isa"
-    }
-  ],
-  "post_close_entries": [],
-  "is_closed": true
+  "entries": {
+    "business": [],
+    "adjustment": [],
+    "closing": [],
+    "post_close": []
+  }
 }

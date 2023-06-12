@@ -1,3 +1,4 @@
+del chart.json
 call jaba chart chart.json touch
 call jaba chart chart.json set --assets cash ar inventory ppe
 call jaba chart chart.json set --capital equity

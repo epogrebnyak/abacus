@@ -1,6 +1,5 @@
 from abacus import Chart, Entry
-from abacus.accounts import (Asset, Capital, IncomeSummaryAccount,
-                             RetainedEarnings)
+from abacus.accounts import Asset, Capital, IncomeSummaryAccount, RetainedEarnings
 from abacus.ledger import Ledger, safe_process_postings
 
 
