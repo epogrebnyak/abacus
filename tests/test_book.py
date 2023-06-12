@@ -1,7 +1,7 @@
 from abacus.accounting_types import Entry
+from abacus.book import Book, Entries
 from abacus.chart import Chart
 from abacus.closing import CloseExpense, CloseIncome, CloseISA
-from abacus.book import Book, Entries
 
 
 def test_post_many():

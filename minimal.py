@@ -1,4 +1,4 @@
-from abacus import Chart
+from abacus import BalanceSheet, Chart, Entry, IncomeStatement, RichViewer
 
 chart = Chart(
     assets=["cash", "ar", "inventory"],
@@ -29,8 +29,6 @@ print(book.income_statement())
 # IncomeStatement(income={'sales': 399},
 #                 expenses={'cogs': 250, 'sga': 59})
 
-from abacus import Chart, Entry
-
 
 chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
@@ -43,31 +41,26 @@ chart = Chart(
 
 book = chart.book()
 
-e1 = Entry(dr="cash", cr="equity", amount=1000)        # pay in capital
-e2 = Entry(dr="goods_for_sale", cr="cash", amount=250) # acquire goods worth 250
-e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200) # sell goods worth 200
-e4 = Entry(cr="sales", dr="cash", amount=400)          # for 400 in cash
-e5 = Entry(cr="cash", dr="sga", amount=50)             # administrative expenses
+e1 = Entry(dr="cash", cr="equity", amount=1000)  # pay in capital
+e2 = Entry(dr="goods_for_sale", cr="cash", amount=250)  # acquire goods worth 250
+e3 = Entry(cr="goods_for_sale", dr="cogs", amount=200)  # sell goods worth 200
+e4 = Entry(cr="sales", dr="cash", amount=400)  # for 400 in cash
+e5 = Entry(cr="cash", dr="sga", amount=50)  # administrative expenses
 book = book.post_many([e1, e2, e3, e4, e5]).close()
 
-from abacus import IncomeStatement
 
 income_statement = book.income_statement()
 assert income_statement == IncomeStatement(
-    income={'sales': 400},
-    expenses={'cogs': 200, 'sga': 50}
+    income={"sales": 400}, expenses={"cogs": 200, "sga": 50}
 )
 
-from abacus import BalanceSheet
 
 balance_sheet = book.balance_sheet()
 assert balance_sheet == BalanceSheet(
     assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
     capital={"equity": 1000, "re": 150},
-    liabilities={"dividend_due": 0, "payables": 0}
+    liabilities={"dividend_due": 0, "payables": 0},
 )
-
-from abacus import RichViewer
 
 
 rename_dict = {
