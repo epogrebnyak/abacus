@@ -1,8 +1,9 @@
 """Chart of accounts."""
 
+from pathlib import Path
 from typing import Dict, List, Type
 
-from pydantic import BaseModel, root_validator  # type: ignore
+from pydantic import BaseModel  # type: ignore
 
 from abacus.accounting_types import AbacusError, AccountName
 from abacus.accounts import (
@@ -34,31 +35,6 @@ def is_unique(xs):
     return len(set(xs)) == len(xs)
 
 
-def contra_account_names(values):
-    return [
-        contra_account
-        for _, contra_accounts in values.get("contra_accounts", {}).items()
-        for contra_account in contra_accounts
-    ]
-
-
-def regular_account_names(values):
-    return (
-        [values["income_summary_account"], values["retained_earnings_account"]]
-        + values["assets"]
-        + values["expenses"]
-        + values["equity"]
-        + values.get("liabilities", [])
-        + values["income"]
-    )
-
-
-def all_args(values):
-    return regular_account_names(values) + contra_account_names(values)
-
-
-from pathlib import Path
-
 
 class Chart(BaseModel):
     """Chart of accounts."""
@@ -75,6 +51,7 @@ class Chart(BaseModel):
     def __init__(self, **kw):
         super().__init__(**kw)
         self.assert_unique_account_names()
+        self.assert_contra_account_names_match_regular_accounts()
 
     @classmethod
     def empty(cls):
@@ -103,42 +80,10 @@ class Chart(BaseModel):
         if not is_unique(self.input_names):
             raise AbacusError("Account names must be unique")
 
-    # FIXME: convert to assert method 
-    def contra_accounts_should_match_chart_of_accounts(cls, values):
-        regular_account_names = all_args(values)
-        for account_name in values.get("contra_accounts", {}).keys():
-            if account_name not in regular_account_names:
-                raise AbacusError(
-                    [
-                        regular_account_names,
-                        f"{account_name} must be specified in chart",
-                    ]
-                )
-
-
-    def model_post_init(self):
-        self.assert_unique_account_names()   
-
-    # FIXME: in pydantic 2.0 we can save some code with __post_init__()
-    #        there will be no @root_validator with values and no helper functions.
-    #@root_validator
-    #def account_names_should_be_unique(cls, values):
-    #    if not is_unique(all_args(values)):
-    #        raise AbacusError("Account names must be unique")
-    #    return values
-
-    @root_validator
-    def contra_accounts_should_match_chart_of_accounts(cls, values):
-        regular_account_names = all_args(values)
-        for account_name in values.get("contra_accounts", {}).keys():
-            if account_name not in regular_account_names:
-                raise AbacusError(
-                    [
-                        regular_account_names,
-                        f"{account_name} must be specified in chart",
-                    ]
-                )
-        return values
+    def assert_contra_account_names_match_regular_accounts(self):
+        for account_name in self.contra_accounts.keys():
+            if account_name not in self.input_names:
+                raise AbacusError(f"{account_name} must be specified in chart")
 
     def _yield_regular_accounts(self):
         for account_name in self.assets:

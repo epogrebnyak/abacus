@@ -1,7 +1,7 @@
-from collections import UserList
 from typing import List
 
 from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
 
 from abacus.accounting_types import (
     AbacusError,
@@ -57,9 +57,6 @@ def choose_entries_for_closing_temp_contra_accounts(
         or isinstance(p, CloseContraIncome)
         or p.action in ["close_contra_expense", "close_contra_income"]
     ]
-
-
-from pydantic.dataclasses import dataclass
 
 
 @dataclass
@@ -151,7 +148,7 @@ class Book(BaseModel):
 
     def unlock(self) -> "Book":
         """Reverse .close() command."""
-        raise NotImplemented
+        raise NotImplementedError
 
     def ledger(self):
         return ledger_all(self)
