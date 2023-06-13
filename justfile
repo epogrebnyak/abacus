@@ -17,15 +17,25 @@ grill:
   just md
 
 # run console examples from README.md (FIXME)
-readme-console:
-  cat README.md | npx codedown console > minimal.sh
-  cat minimal.sh | python call.py > minimal.bat
-  {{ command }}
+readme-console-win:
+  cat README.md | npx codedown console > cli-example/minimal.sh
+  cat cli-example/minimal.sh | python cli-example/call.py > cli-example/minimal.bat
+  echo FIXME: Code below will create chart.json and store.json in root dicrectory,
+  echo but want it in cli-example.
+  cd cli-example & poetry run call "cli-example/minimal.bat"
+  echo For example the command below will print just /abacus, not /abacus/cli-example
+  cd cli-example & pwd
+  echo We do not really know how to switch to a directory in just command runner 
+  echo and make poetry understand the directory has changed.
+
+# run console examples from README.md (FIXME)
+readme-console-linux:
+  echo 
 
 # run Python code from README.md
 readme-py:
-  cat README.md | npx codedown python > minimal.py
-  poetry run python minimal.py
+  cat README.md | npx codedown python > cli-example/minimal.py
+  poetry run python cli-example/minimal.py
 
 # prettify markdown
 md:

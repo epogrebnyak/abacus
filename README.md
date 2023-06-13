@@ -101,7 +101,7 @@ print(book.income_statement())
 Create chart of accounts:
 
 ```console
-del chart.json
+del chart.json store.json
 jaba chart chart.json touch
 jaba chart chart.json set --assets cash ar inventory ppe
 jaba chart chart.json set --capital equity
