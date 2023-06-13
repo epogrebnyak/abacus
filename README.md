@@ -4,9 +4,8 @@
 
 A minimal, yet valid double-entry accounting system:
 
-- `abacus` package,
-- `jaba` command line tool,
-- collection of templates (charts of accounts).
+- `abacus` Pytnon package, and
+- `jaba` command line tool.
 
 ## Chart of accounts
 

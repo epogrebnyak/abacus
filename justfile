@@ -1,5 +1,5 @@
 package := "abacus"
-command := if os_family() == "windows" { "poetry run minimal.bat" } else { "bash source ./minimal.sh" }
+command := if os_family() == "windows" { "readme-console-win" } else { "readme-console-linux" }
 
 # run pytest
 test:
@@ -10,11 +10,17 @@ grill:
   just test
   just mypy
   just ruff
-  just readme-py
-  just readme-console
   just isort
   just black
   just md
+  just readme
+
+readme:  
+  just readme-py
+  just readme-console
+
+readme-console:
+  just {{ command }}
 
 # run console examples from README.md (FIXME)
 readme-console-win:
@@ -30,10 +36,10 @@ readme-console-win:
 
 # run console examples from README.md in linux (FIXME)
 readme-console-linux:
-  echo assume is already created cli-example/minimal.sh
-  echo how can one make it run on linux?
-  echo Tried command below, but no success (source not found)
-  source ./cli-example/minimal.sh
+  echo "assume is already created cli-example/minimal.sh"
+  echo "how can one make it run on linux?"
+  echo "Tried command below, but no success (source not found)"
+  echo "source ./cli-example/minimal.sh"
 
 
 # run Python code from README.md
