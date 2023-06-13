@@ -45,7 +45,7 @@ readme-console:
 
 # Run console examples from README.md (Windows) - FIXME:
 readme-console-win:
-  cat README.md | npx codedown console > cli-example/minimal.sh
+  cat README.md | npx codedown bash > cli-example/minimal.sh
   cat cli-example/minimal.sh | python cli-example/call.py > cli-example/minimal.bat
   echo FIXME: Code below will create chart.json and store.json in root dicrectory,
   echo but want it in cli-example.

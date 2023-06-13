@@ -10,6 +10,19 @@ A minimal, yet valid double-entry accounting system in Python.
 
 > Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
 
-## Repo
+## Accounting cycle
 
-<https://github.com/epogrebnyak/abacus>
+`abacus` enables to complete an accounting cycle in following steps.
+
+1. Define a chart of accounts with five types of accounts (assets, expenses, capital, liabilities and income) and contra accounts (eg depreciation).
+2. Create a blank general ledger for a new company or a general ledger with starting balances from previous period for existing company.
+3. Post entries to a general ledger individually or in bulk.
+4. View trial balance.
+5. Make adjustment entries.
+6. Close income and expenses accounts and transfer current period profit (loss) to retained earnings.
+7. Make post-close entries (eg accrue dividend due to shareholders upon dividend announcement).
+8. View and save income statement and balance sheet reports.
+9. Save period end account balances and use them to initialize a general ledger at the start of a next accounting period.
+
+More usage ideas in [Motivation](#motivation) section below.
+

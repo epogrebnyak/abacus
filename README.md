@@ -4,41 +4,12 @@
 
 A minimal, yet valid double-entry accounting system:
 
-- `abacus` Pytnon package, and
+- `abacus` Python package, and
 - `jaba` command line tool.
 
-## Chart of accounts
+## Documentation
 
-Chart of accounts (CAO) is a list of accounts to be used by a company.
-Chart of accounts may be defined by the government (in Europe) or
-can be specified by the company itself according to guidelines (in the US).
-Fiscal rules and reporting requirements also affect
-the composition of a chart of accounts.
-
-Charts of accounts are not that easy to find in an open, structured and machine-readable format.
-They usually exist as a published PDF document (sometimes an Excel file)
-or may be deeply embedded in accounting software, either open source (like [Odoo][odoo])
-or proprietary (Oracle, SAP, NetSuite, Xero or QuickBooks).
-
-[odoo]: https://www.odoo.com/documentation/16.0/applications/finance/fiscal_localizations.html
-
-`abacus` allows to create and maintain charts of accounts as JSON files.
-The tentative list of charts is the following:
-
-- IFRS reference chart (similar to [this](https://www.ifrs-gaap.com/ifrs-chart-accounts))
-- [BAS (Sweden)](https://www.bas.se/english/chart-of-account/)
-- [SKR03 and SKR04 (Germany)](https://github.com/Dolibarr/dolibarr/issues/22363)
-- [RAS (Russia)](https://minfin.gov.ru/ru/document/?id_4=2293-plan_schetov_bukhgalterskogo_ucheta_finansovo-khozyaistvennoi_dyeyatelnosti_organizatsii_i_instruktsiya_po_primeneniyu_plana_schetov_bukhgalterskogo_ucheta_finansovo-khozyaistv)
-
-Migration between domestic and IFRS-compatible charts considered for `abacus`, but not implemented yet (see [issue #4][4]).
-
-[4]: https://github.com/epogrebnyak/abacus/issues/4
-
-Textbook and sample charts (including fun charts like [Dunder Muffin Paper Company][yv8bkm]) can also be defined with `abacus`.
-
-In `abacus` after a chart is specified, one can post entries and create financial reports.
-
-[yv8bkm]: https://www.reddit.com/r/DunderMifflin/comments/yv8bkm/the_office_chart_of_accounts
+<https://epogrebnyak.github.io/abacus/>
 
 ## Quotes about `abacus`
 
@@ -52,13 +23,14 @@ In `abacus` after a chart is specified, one can post entries and create financia
 
 ## Install
 
+This will install both `abacus` package and `jaba` command line tool:
+
 ```
 pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 
-This will install both `abacus` package and `jaba` tool.
 
-## Minimal example
+## Usage examples
 
 ### Python code
 
@@ -99,7 +71,7 @@ print(book.income_statement())
 
 Create chart of accounts:
 
-```console
+```bash
 del chart.json store.json
 jaba chart chart.json touch
 jaba chart chart.json set --assets cash ar inventory ppe
@@ -117,7 +89,7 @@ jaba chart chart.json create store.json
 
 Post entries to ledger:
 
-```console
+```bash
 jaba store store.json post --dr cash --cr equity --amount 1500
 jaba store store.json post inventory cash 300
 jaba store store.json post cogs inventory 250
@@ -131,34 +103,14 @@ jaba store store.json list
 
 Report:
 
-```console
+```bash
 jaba report store.json --balance-sheet
 jaba report store.json --income-statement
 jaba report store.json --trial-balance
 jaba report store.json --account re --assert 90
 ```
 
-## Accounting cycle
-
-`abacus` enables to complete an accounting cycle in following steps.
-
-1. Define a chart of accounts with five types of accounts (assets, expenses, capital, liabilities and income) and contra accounts (eg depreciation).
-2. Create a blank general ledger for a new company or a general ledger with starting balances from previous period for existing company.
-3. Post entries to a general ledger individually or in bulk.
-4. View trial balance.
-5. Make adjustment entries.
-6. Close income and expenses accounts and transfer current period profit (loss) to retained earnings.
-7. Make post-close entries (eg accrue dividend due to shareholders upon dividend announcement).
-8. View and save income statement and balance sheet reports.
-9. Save period end account balances and use them to initialize a general ledger at the start of a next accounting period.
-
-More usage ideas in [Motivation](#motivation) section below.
-
-## Upcoming in 0.5.0 - command line interface (CLI)
-
-See [milestone](https://github.com/epogrebnyak/abacus/issues?q=is%3Aopen+is%3Aissue+milestone%3A%220.5.0+release%3A+CLI+with+json+file+backend%22).
-
-## Step by step example
+## Step by step code example
 
 1. We start with a chart of accounts of five types: assets, equity, liabilities, income and expenses.
 
@@ -237,104 +189,6 @@ rv = RichViewer(rename_dict, width=60)
 rv.print(balance_sheet)
 rv.print(income_statement)
 ```
-
-## Motivation
-
-### Original intent
-
-`abacus` started as a project to demonstrate principles of double-entry accounting
-through Python code, in spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x).
-You can use `abacus` to teach basics of accounting and accounting information systems (AIS).
-
-### Other uses
-
-- Use as a software component with other open source tools (such as fast `medici` ledger).
-- Convert reports between charts of accounts (eg local accounting standards to IFRS).
-- Process streams of business events in business simulations.
-- Generate prompts and enhance a large language model with structured outputs in accounting.
-
-## Assumptions
-
-Below are some simplifying assumptions and behaviors made for this code.
-Some assumptions may be relaxed, some will remain a feature.
-
-1. Account structure is flat, there are no subaccounts. To override one can use `cash:petty` and `cash:bank_account` to mimic subaccounts.
-
-2. Every entry involves exactly two accounts, there are no compound entries.
-
-3. No cash flow and changes in capital are reported.
-
-4. There are no journals - all records go directly to general ledger.
-
-5. Accounting entry is slim and has no information other than debit and credit accounts
-   and entry amount. In future may add title, timestamp, hash and meta information.
-
-6. Accounts balances can go to negative where they should not and there are no checks for entry validity.
-
-7. We use [just one currency](https://www.mscs.dal.ca/~selinger/accounting/).
-
-8. Account balances stay on one side, and do not migrate from one side to another.
-   Credit accounts have credit balance, debit accounts have debit balance,
-   and income summary account is a credit account.
-
-9. Money amounts are integers, will change to `Decimal`.
-
-10. Renamed accounts are dropped from the ledger. When `sales` becomes `net_sales`
-    after a contra accounts like `discounts` are netted, `sales` leave the ledger,
-    and `net_sales` remains.
-
-## What things are realistic in this code?
-
-1. Entries are stored in a queue and ledger state is calculated
-   based on a previous state and a list of entries to be processed.
-
-2. The chart of accounts can be fairly complex.
-
-3. Chart of accounts may include contra accounts. Temporary contra accounts
-   for income (eg discounts given) and expense (eg discounts or cashbacks received)
-   are cleared at period end, permanent contra accounts
-   (eg accumulated depreciation) are carried forward.
-
-4. You can give a name to typical dr/cr account pairs and use this name to record transactions.
-
-5. Accounts can be renamed for reporting purposes, thus opening a way to internationalisation.
-   You can keep a short name like `cash` or account code in ledger and rename `cash` to `नकद` for a report.
-
-## Implementation details
-
-1. The code is covered by tests, linted and type annotated.
-
-2. Data structures used are serialisable, so inputs and outputs can be stored and retrieved.
-
-3. XML likely to be a format for accounting reports interchange, while JSON and YAML are intended for `abacus`.
-
-4. Modern Python features such as subclasssing and pattern matching help to make code cleaner.
-   Classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income` pass forward useful information about account types and their behaviors.
-
-5. This is experimental software. The upside is that we can make big changes fast. On a downside we do not learn (or earn) from users, at least yet.
-
-6. `abacus` is not optimised for performance and likely to be slow under high load.
-
-## Similar projects
-
-JavaScript:
-
-- [medici](https://github.com/flash-oss/medici) (JavaScript) is a ledger store optimized for high loads (does not enforce any chart of accounts conventions).
-
-Python:
-
-- [pyluca](https://github.com/datasignstech/pyluca) is actively developed and has practical use in mind, coined a term 'headless ledger' (different interface and data structures than `abacus`).
-- [ledger.py](https://github.com/mafm/ledger.py) started about 10 years ago with Python 2, once a [hledger](https://hledger.org/) competitor, has good documentation, but last commit in 2018.
-
-Plain text accounting:
-
-- `Ledger`, `hledger` and `beancount` are leaders in [plain text accounting](https://plaintextaccounting.org/#tools)
-- See also [gnucash](https://www.gnucash.org/)
-
-More:
-
-- Open source ERPs (Odoo, ERPNext) also have accounting functionality.
-- [`double-entry-accounting`](https://github.com/topics/double-entry-accounting) tag on Github
 
 ## Feedback
 
