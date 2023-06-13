@@ -28,9 +28,13 @@ readme-console-win:
   echo We do not really know how to switch to a directory in just command runner 
   echo and make poetry understand the directory has changed.
 
-# run console examples from README.md (FIXME)
+# run console examples from README.md in linux (FIXME)
 readme-console-linux:
-  echo 
+  echo assume is already created cli-example/minimal.sh
+  echo how can one make it run on linux?
+  echo Tried command below, but no success (source not found)
+  source ./cli-example/minimal.sh
+
 
 # run Python code from README.md
 readme-py:
