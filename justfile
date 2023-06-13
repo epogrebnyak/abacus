@@ -1,28 +1,30 @@
 package := "abacus"
-command := if os_family() == "windows" { "readme-console-win" } else { "readme-console-linux" }
+readme_command := if os_family() == "windows" { "readme-console-win" } else { "readme-console-linux" }
 
-# run pytest
+# Run pytest
 test:
   poetry run pytest
 
-# run all tests and checks
+# Run all tests, checks and linters
 grill:
   just test
   just mypy
-  just ruff
   just isort
   just black
+  just ruff
   just md
   just readme
 
+# Run Python code and console commands from README.md 
 readme:  
   just readme-py
   just readme-console
 
+# Run console examples from README.md
 readme-console:
-  just {{ command }}
+  just {{ readme_command }}
 
-# run console examples from README.md (FIXME)
+# Run console examples from README.md (Windows) - FIXME:
 readme-console-win:
   cat README.md | npx codedown console > cli-example/minimal.sh
   cat cli-example/minimal.sh | python cli-example/call.py > cli-example/minimal.bat
@@ -34,7 +36,7 @@ readme-console-win:
   echo We do not really know how to switch to a directory in just command runner 
   echo and make poetry understand the directory has changed.
 
-# run console examples from README.md in linux (FIXME)
+# run console examples from README.md (Linux) - FIXME:
 readme-console-linux:
   echo "assume is already created cli-example/minimal.sh"
   echo "how can one make it run on linux?"
@@ -42,38 +44,39 @@ readme-console-linux:
   echo "source ./cli-example/minimal.sh"
 
 
-# run Python code from README.md
+# Run Python code from README.md
 readme-py:
   cat README.md | npx codedown python > cli-example/minimal.py
   poetry run python cli-example/minimal.py
 
-# prettify markdown
+# Prettify markdown files
 md:
   npx prettier . --write
 
+# Run isort (black-compatible and float imports to top)
 isort:
   poetry run isort --profile black --float-to-top .
 
-# apply ruff linter
+# Apply ruff
 ruff:
   poetry run ruff check . --fix
 
-# type check
+# Type check
 mypy:
-  poetry run mypy abacus
+  poetry run mypy {{ package }}
 
-# use black and isort
+# Run black
 black:  
   poetry run black .
 
-# build and serve docs
+# Build and serve docs
 docs:
   poetry run mkdocs serve 
 
-# publish docs
+# Publish docs
 docs-publish:
   poetry run mkdocs gh-deploy 
 
-# launch streamlit app (depreciated)
+# Launch streamlit app (not in use)
 app:
   poetry run streamlit run app/app.py
