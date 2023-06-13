@@ -1,6 +1,6 @@
+cli-example/chart.json
+cli-example/store.json
 docs/site/
-site/
-.env-cli/
 
 # more hidden folders
 .venv/
@@ -131,6 +131,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-cli-example/chart.json
-.gitignore
-cli-example/store.json
+
