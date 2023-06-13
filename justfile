@@ -57,7 +57,7 @@ readme-console-linux:
 # Run Python code from README.md
 readme-py:
   cat README.md | npx codedown python > cli-example/minimal.py
-  poetry run  cli-example/minimal.py
+  poetry run python cli-example/minimal.py
   
 
 # Build and serve docs
