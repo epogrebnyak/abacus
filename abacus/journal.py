@@ -1,17 +1,28 @@
-from typing import List, Dict
+from typing import Dict, List
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
-from abacus.accounting_types import (AbacusError, AccountBalancesDict,
-                                     AccountName, Amount,
-                                     BusinessEntry, Entry, MultipleEntry,
-                                     Netting)
+from abacus.accounting_types import (
+    AbacusError,
+    AccountBalancesDict,
+    AccountName,
+    Amount,
+    BusinessEntry,
+    Entry,
+    MultipleEntry,
+    Netting,
+)
 from abacus.chart import Chart
-from abacus.closing import (CloseContraExpense, CloseContraIncome,
-                            CloseExpense, CloseIncome, CloseISA)
+from abacus.closing import (
+    CloseContraExpense,
+    CloseContraIncome,
+    CloseExpense,
+    CloseIncome,
+    CloseISA,
+    closing_entries,
+)
 from abacus.closing_types import ClosingEntry
-from abacus.closing import closing_entries
 from abacus.ledger import Ledger, process_postings
 
 
@@ -52,7 +63,9 @@ def choose_entries_for_closing_temp_contra_accounts(
 class Entries:
     business: List[Entry]
     adjustment: List[Entry]
-    closing: List[CloseContraIncome | CloseContraExpense | CloseIncome | CloseExpense | CloseISA ]
+    closing: List[
+        CloseContraIncome | CloseContraExpense | CloseIncome | CloseExpense | CloseISA
+    ]
     post_close: List[Entry]
 
     def yield_for_income_statement(self):

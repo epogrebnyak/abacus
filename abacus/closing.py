@@ -3,14 +3,29 @@
 from typing import List, Type
 
 from abacus.accounting_types import AccountName, Entry, Netting
-from abacus.accounts import (Account, Asset, Capital, CreditAccount,
-                             DebitAccount, Expense, Income,
-                             IncomeSummaryAccount, Liability, RetainedEarnings)
-from abacus.closing_types import (CloseContraAsset, CloseContraCapital,
-                                  CloseContraExpense, CloseContraIncome,
-                                  CloseContraLiability, CloseExpense,
-                                  CloseIncome, CloseISA,
-                                  get_closing_entry_type)
+from abacus.accounts import (
+    Account,
+    Asset,
+    Capital,
+    CreditAccount,
+    DebitAccount,
+    Expense,
+    Income,
+    IncomeSummaryAccount,
+    Liability,
+    RetainedEarnings,
+)
+from abacus.closing_types import (
+    CloseContraAsset,
+    CloseContraCapital,
+    CloseContraExpense,
+    CloseContraIncome,
+    CloseContraLiability,
+    CloseExpense,
+    CloseIncome,
+    CloseISA,
+    get_closing_entry_type,
+)
 from abacus.ledger import Ledger
 
 __all__ = ["closing_entries", "closing_entries_for_permanent_contra_accounts"]  # type: ignore

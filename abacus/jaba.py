@@ -106,7 +106,7 @@ def main():
             ]
             pprint(chart.contra_accounts)
             chart.save(path)
-        # FIXME: re-create chart on every save to catch duplicates problem 
+        # FIXME: re-create chart on every save to catch duplicates problem
         if arguments["validate"]:
             # Create Chart object and see what happens
             chart2 = Chart(**chart.dict())
@@ -114,7 +114,7 @@ def main():
         if arguments["create"]:
             chart = Chart.load(path)
             journal = chart.journal()
-            if arguments["--using"]:  # FIXME: does not work due to JSON issues 
+            if arguments["--using"]:  # FIXME: does not work due to JSON issues
                 starting_balances = read_json(arguments["<start_balances_file>"])
                 journal = chart.journal(starting_balances)
             journal.save(arguments["<store_file>"])

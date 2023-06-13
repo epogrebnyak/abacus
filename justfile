@@ -32,7 +32,7 @@ md:
   npx prettier . --write
 
 isort:
-  poetry run isort --float-to-top .
+  poetry run isort --profile black --float-to-top .
 
 # apply ruff linter
 ruff:
