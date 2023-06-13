@@ -47,16 +47,18 @@ readme-console:
 readme-console-win:
   cat README.md | npx codedown bash > cli-example/minimal.sh
   cat cli-example/minimal.sh | python cli-example/call.py > cli-example/minimal.bat
-  poetry run call "cli-example/minimal.bat" -C cli-example
+  poetry run call "cli-example/minimal.bat" --directory cli-example
 
-# run console examples from README.md (Linux) - FIXME:
+# run console examples from README.md (Linux):
 readme-console-linux:
-  echo "source ./cli-example/minimal.sh"
+  cat README.md | npx codedown bash > cli-example/minimal.sh
+  poetry run bash -c "cd cli-example && source minimal.sh"
 
 # Run Python code from README.md
 readme-py:
   cat README.md | npx codedown python > cli-example/minimal.py
-  poetry run python cli-example/minimal.py
+  poetry run  cli-example/minimal.py
+  
 
 # Build and serve docs
 docs:
