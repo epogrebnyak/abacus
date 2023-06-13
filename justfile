@@ -43,23 +43,14 @@ readme:
 readme-console:
   just {{ readme_command }}
 
-# Run console examples from README.md (Windows) - FIXME:
+# Run console examples from README.md (Windows):
 readme-console-win:
   cat README.md | npx codedown bash > cli-example/minimal.sh
   cat cli-example/minimal.sh | python cli-example/call.py > cli-example/minimal.bat
-  echo FIXME: Code below will create chart.json and store.json in root dicrectory,
-  echo but want it in cli-example.
-  cd cli-example & poetry run call "cli-example/minimal.bat"
-  echo For example the command below will print just /abacus, not /abacus/cli-example
-  cd cli-example & pwd
-  echo We do not really know how to switch to a directory in just command runner 
-  echo and make poetry understand the directory has changed.
+  poetry run call "cli-example/minimal.bat" -C cli-example
 
 # run console examples from README.md (Linux) - FIXME:
 readme-console-linux:
-  echo "assume is already created cli-example/minimal.sh"
-  echo "how can one make it run on linux?"
-  echo "Tried command below, but no success (source not found)"
   echo "source ./cli-example/minimal.sh"
 
 # Run Python code from README.md
