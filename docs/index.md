@@ -25,4 +25,3 @@ A minimal, yet valid double-entry accounting system in Python.
 9. Save period end account balances and use them to initialize a general ledger at the start of a next accounting period.
 
 More usage ideas in [Motivation](#motivation) section below.
-

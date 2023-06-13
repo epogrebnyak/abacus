@@ -1,6 +1,10 @@
 package := "abacus"
 readme_command := if os_family() == "windows" { "readme-console-win" } else { "readme-console-linux" }
 
+# List all commands
+list:
+  just --list 
+
 # Run all tests, checks and linters
 grill:
   just test
@@ -9,6 +13,7 @@ grill:
   just black
   just ruff
   just md
+  just readme
 
 # Run pytest (up to first error)
 test:

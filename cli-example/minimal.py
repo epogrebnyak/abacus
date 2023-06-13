@@ -1,4 +1,4 @@
-from abacus import Chart
+from abacus import Chart, BalanceSheet, IncomeStatement
 
 chart = Chart(
     assets=["cash", "ar", "inventory"],
@@ -19,15 +19,16 @@ book = (
     .post(dr="sga", cr="cash", amount=59)
     .close()
 )
-print(book.balance_sheet())
-# Output similar to:
-# BalanceSheet(assets={'cash': 1350, 'ar': 190, 'goods': 50},
-#              capital={'equity': 1500, 're': 90},
-#              liabilities={})
-print(book.income_statement())
-# Output similar to:
-# IncomeStatement(income={'sales': 399},
-#                 expenses={'cogs': 250, 'sga': 59})
+# Check result
+assert book.balance_sheet() == BalanceSheet(
+    assets={'cash': 1391, 'ar': 149, 'inventory': 50},                                       
+    capital={'equity': 1500, 're': 90}, 
+    liabilities={'ap': 0, 'dividend_due': 0}
+)
+assert book.income_statement() == IncomeStatement(
+    income={'sales': 399}, 
+    expenses={'cogs': 250, 'sga': 59}
+)
 
 from abacus import Chart, Entry
 
