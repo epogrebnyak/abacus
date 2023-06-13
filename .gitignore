@@ -133,3 +133,4 @@ dmypy.json
 .pyre/
 cli-example/chart.json
 .gitignore
+cli-example/store.json
