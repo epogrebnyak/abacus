@@ -42,7 +42,7 @@ class Chart(BaseModel):
     expenses: List[str]
     equity: List[str]
     retained_earnings_account: str
-    liabilities: List[str] = []
+    liabilities: List[str]
     income: List[str]
     contra_accounts: Dict[str, List[str]] = {}
     income_summary_account: str = "_profit"
@@ -51,6 +51,23 @@ class Chart(BaseModel):
         super().__init__(**kw)
         self.assert_unique_account_names()
         self.assert_contra_account_names_match_regular_accounts()
+
+    def weak_validate(self):
+        self.assert_unique_account_names()
+        self.assert_contra_account_names_match_regular_accounts()
+        return self
+
+    def strong_validate(self):
+        self.weak_validate()
+        if not self.retained_earnings_account:
+            raise AbacusError("Must set retained earnings attribute")
+        return self
+
+    def pprint(self):
+        from pprint import pprint
+
+        pprint(self.dict())
+        return self
 
     @classmethod
     def empty(cls):
@@ -66,7 +83,8 @@ class Chart(BaseModel):
     @property
     def input_names(self):
         return (
-            [self.income_summary_account, self.retained_earnings_account]
+            [self.income_summary_account]
+            + [self.retained_earnings_account]
             + self.assets
             + self.expenses
             + self.equity
@@ -102,18 +120,18 @@ class Chart(BaseModel):
         """Return account class for *account_name*."""
         return dict(self._yield_regular_accounts())[account_name]
 
-    def check_type(self, account_name: AccountName, cls: Type) -> bool:
-        return isinstance(self.get_type(account_name)(), cls)
+    # def check_type(self, account_name: AccountName, cls: Type) -> bool:
+    #     return isinstance(self.get_type(account_name)(), cls)
 
-    def is_debit_account(self, account_name: AccountName) -> bool:
-        from abacus.accounts import DebitAccount
+    # def is_debit_account(self, account_name: AccountName) -> bool:
+    #     from abacus.accounts import DebitAccount
 
-        return self.check_type(account_name, DebitAccount)
+    #     return self.check_type(account_name, DebitAccount)
 
-    def is_credit_account(self, account_name: AccountName) -> bool:
-        from abacus.accounts import CreditAccount
+    # def is_credit_account(self, account_name: AccountName) -> bool:
+    #     from abacus.accounts import CreditAccount
 
-        return self.check_type(account_name, CreditAccount)
+    #     return self.check_type(account_name, CreditAccount)
 
     def _yield_contra_accounts(self):
         for linked_account_name, contra_account_names in self.contra_accounts.items():
@@ -133,11 +151,18 @@ class Chart(BaseModel):
         """List all account names in chart."""
         return [a[0] for a in self.yield_accounts()]
 
-    def journal(self, starting_balances: dict | None = None):
-        """Create a journal based on this chart."""
+    def book(self, starting_balances: dict | None = None):
+        from abacus.book import Book
+
         if starting_balances is None:
             starting_balances = {}
-        return make_journal(self, starting_balances)
+        return Book(chart=self, starting_balances=starting_balances)
+
+    # def journal(self, starting_balances: dict | None = None):
+    #     """Create a journal based on this chart."""
+    #     if starting_balances is None:
+    #         starting_balances = {}
+    #     return make_journal(self, starting_balances)
 
     def ledger(self):
         """Create empty ledger based on this chart."""
@@ -146,9 +171,3 @@ class Chart(BaseModel):
         return Ledger(
             (account_name, cls()) for account_name, cls in self.yield_accounts()
         )
-
-
-def make_journal(chart, starting_balances: dict):
-    from abacus.journal import BaseJournal, Journal
-
-    return Journal(data=BaseJournal(chart=chart, starting_balances=starting_balances))
