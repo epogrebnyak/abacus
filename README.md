@@ -2,10 +2,7 @@
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
-A minimal, yet valid double-entry accounting system provided as
-
-- `abacus` Python package, and
-- `jaba` command line tool.
+A minimal, yet valid double-entry accounting system provided as `abacus` Python package and `jaba` command line tool.
 
 ## Documentation
 
