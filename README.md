@@ -183,8 +183,8 @@ jaba report store.json --account re --assert 90
 
 ## Feedback
 
-Anything missing in `abacus`? Noticed a flaw in accounting logic or a lousy variable name?
-Got a use case for `abacus`? Used package in classroom for teaching?
+Anything missing in `abacus`? 
+Thinking of an applied use case? Used package for teaching?
 
 Feel free to contact `abacus` author
 in [issues](https://github.com/epogrebnyak/abacus/issues),
