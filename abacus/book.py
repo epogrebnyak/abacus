@@ -1,4 +1,5 @@
 from dataclasses import field
+from itertools import chain
 from pathlib import Path
 from typing import Dict, List
 
@@ -45,18 +46,16 @@ def to_multiple_entry(ledger, starting_balances: dict) -> MultipleEntry:
     return me
 
 
-def choose_entries_for_closing_temp_contra_accounts(
-    closing_entries: List[ClosingEntry],
+def is_closing_temporary_contra_account(
+    closing_entry: ClosingEntry,
 ):
-    """Return close contra income and close contra expense accounts.
+    """Filter contra income and close contra expense closing entries.
     Used to construct income statement."""
-    return [
-        p
-        for p in closing_entries
-        if isinstance(p, CloseContraExpense)
-        or isinstance(p, CloseContraIncome)
-        or p.action in ["close_contra_expense", "close_contra_income"]
-    ]
+    return (
+        isinstance(closing_entry, CloseContraExpense)
+        or isinstance(closing_entry, CloseContraIncome)
+        or closing_entry.action in ["close_contra_expense", "close_contra_income"]
+    )
 
 
 @dataclass
@@ -69,26 +68,20 @@ class Entries:
     post_close: List[Entry] = field(default_factory=list)
 
     def yield_for_income_statement(self):
-        entry_lists = [
+        return chain(
             self.business,
             self.adjustment,
-            choose_entries_for_closing_temp_contra_accounts(self.closing),
+            filter(is_closing_temporary_contra_account, self.closing),
             self.post_close,
-        ]
-        for entry_list in entry_lists:
-            for entry in entry_list:
-                yield entry
+        )
 
     def yield_all(self):
-        entry_lists = [
+        return chain(
             self.business,
             self.adjustment,
             self.closing,
             self.post_close,
-        ]
-        for entry_list in entry_lists:
-            for entry in entry_list:
-                yield entry
+        )
 
 
 class Book(BaseModel):

@@ -21,9 +21,20 @@
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Type
+from typing import List
 
 from abacus.accounting_types import Amount
+from abacus.closing_types import (
+    CloseContraAsset,
+    CloseContraCapital,
+    CloseContraExpense,
+    CloseContraIncome,
+    CloseContraLiability,
+    CloseExpense,
+    CloseIncome,
+    CloseISA,
+    ClosingEntry,
+)
 
 __all__ = ["Account"]
 
@@ -82,28 +93,58 @@ class CreditAccount(Account):
         return True
 
 
-class RegularAccount:
+class ClosableAccount:
+    closing_entry_constructor = ClosingEntry
+
+
+class ContraAccount(ClosableAccount):
     pass
+
+
+class ContraAsset(CreditAccount, ContraAccount):
+    closing_entry_constructor = CloseContraAsset
+
+
+class ContraExpense(CreditAccount, ContraAccount):
+    closing_entry_constructor = CloseContraExpense
+
+
+class ContraCapital(DebitAccount, ContraAccount):
+    closing_entry_constructor = CloseContraCapital
+
+
+class ContraLiability(DebitAccount, ContraAccount):
+    closing_entry_constructor = CloseContraLiability
+
+
+class ContraIncome(DebitAccount, ContraAccount):
+    closing_entry_constructor = CloseContraIncome
+
+
+class RegularAccount:
+    contra_account_constructor = ContraAccount
 
 
 class Asset(DebitAccount, RegularAccount):
-    pass
+    contra_account_constructor = ContraAsset
 
 
-class Expense(DebitAccount, RegularAccount):
-    pass
+class Expense(DebitAccount, RegularAccount, ClosableAccount):
+    closing_entry_constructor = CloseExpense
+    contra_account_constructor = ContraExpense
 
 
 class Capital(CreditAccount, RegularAccount):
-    pass
+    contra_account_constructor = ContraCapital
 
 
 class Liability(CreditAccount, RegularAccount):
-    pass
+    contra_account_constructor = ContraLiability
 
 
-class Income(CreditAccount, RegularAccount):
-    pass
+class Income(CreditAccount, RegularAccount, ClosableAccount):
+    closing_entry_constructor = CloseIncome
+    contra_account_constructor = ContraIncome
 
 
 class Unique:
@@ -112,50 +153,12 @@ class Unique:
     """
 
 
-class IncomeSummaryAccount(CreditAccount, Unique):
-    pass
+class IncomeSummaryAccount(CreditAccount, Unique, ClosableAccount):
+    closing_entry_constructor = CloseISA
 
 
 class RetainedEarnings(Capital, Unique):
     pass
-
-
-class ContraAccount:
-    pass
-
-
-class ContraAsset(CreditAccount, ContraAccount):
-    pass
-
-
-class ContraExpense(CreditAccount, ContraAccount):
-    pass
-
-
-class ContraCapital(DebitAccount, ContraAccount):
-    pass
-
-
-class ContraLiability(DebitAccount, ContraAccount):
-    pass
-
-
-class ContraIncome(DebitAccount, ContraAccount):
-    pass
-
-
-def get_contra_account_type(cls: Type[RegularAccount]) -> Type[ContraAccount]:
-    # signature added for mypy
-    mapping: Dict[Type[RegularAccount], Type[ContraAccount]] = dict(
-        [
-            (Asset, ContraAsset),
-            (Expense, ContraExpense),
-            (Capital, ContraCapital),
-            (Liability, ContraLiability),
-            (Income, ContraIncome),
-        ]
-    )
-    return mapping[cls]
 
 
 all_account_classes = (

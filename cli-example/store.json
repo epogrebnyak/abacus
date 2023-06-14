@@ -38,7 +38,7 @@
       {
         "dr": "cash",
         "cr": "equity",
-        "amount": 1500
+        "amount": 1000
       },
       {
         "dr": "goods",
@@ -63,12 +63,12 @@
       {
         "dr": "cash",
         "cr": "ar",
-        "amount": 250
+        "amount": 150
       },
       {
         "dr": "sga",
         "cr": "cash",
-        "amount": 59
+        "amount": 69
       }
     ],
     "adjustment": [],
@@ -100,13 +100,13 @@
       {
         "dr": "_profit",
         "cr": "sga",
-        "amount": 59,
+        "amount": 69,
         "action": "close_expense"
       },
       {
         "dr": "_profit",
         "cr": "re",
-        "amount": 90,
+        "amount": 80,
         "action": "close_isa"
       }
     ],

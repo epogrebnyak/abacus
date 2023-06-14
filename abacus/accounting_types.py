@@ -79,10 +79,6 @@ class Entry:
     cr: AccountName
     amount: Amount
 
-    def coerce(self, cls):
-        """Change type of entry."""
-        return cls(**self.__dict__)
-
 
 @dataclass
 class BaseEntry(Entry):

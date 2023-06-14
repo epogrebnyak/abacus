@@ -2,7 +2,9 @@
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
-A minimal, yet valid double-entry accounting system provided as `abacus` Python package and `jaba` command line tool.
+A minimal, yet valid double-entry accounting system.
+
+Provided as `abacus` Python package and `jaba` command line tool.
 
 ## Documentation
 
@@ -20,19 +22,19 @@ A minimal, yet valid double-entry accounting system provided as `abacus` Python 
 
 ## Install
 
-This will install both `abacus` package and `jaba` command line tool:
-
 ```
 pip install git+https://github.com/epogrebnyak/abacus.git
 ```
+
+(This will install both `abacus` package and `jaba` command line tool.)
 
 ## Usage
 
 ### Step by step code example
 
-1. We start with a chart of accounts of five types: 
-   assets, equity, liabilities, income and expenses.
-   `abacus` is also aware of contra accounts.
+1. Define a chart of accounts of five types
+   (assets, equity, liabilities, income and expenses).
+   You can also specify contra accounts (like depreciation).
 
 ```python
 
@@ -40,13 +42,15 @@ from abacus import Chart, Entry, BalanceSheet, IncomeStatement
 
 
 chart = Chart(
-    assets=["cash", "ar", "goods"],
+    assets=["cash", "ar", "goods", "ppe"],
     expenses=["cogs", "sga"],
     equity=["equity"],
     retained_earnings_account="re",
     liabilities=["dividend_due", "ap"],
     income=["sales"],
-    contra_accounts={"sales": ["discounts", "cashback"]},
+    contra_accounts={
+        "sales": ["discounts", "cashback"],
+        "ppe": ["depreciation"]},
 )
 ```
 
@@ -73,7 +77,7 @@ book = book.post_many([e1, e2, e3, e4, e5])
 book = book.close()
 ```
 
-Alternatively you can use chained syntax for steps 2-4 above.
+You can also use chained operation syntax for steps 2-4:
 
 ```python
 book = (chart.book()
@@ -105,7 +109,7 @@ from abacus import BalanceSheet
 
 balance_sheet = book.balance_sheet()
 assert balance_sheet == BalanceSheet(
-    assets={"cash": 1100, "ar": 0, "goods": 50},
+    assets={"cash": 1100, "ar": 0, "goods": 50, "ppe": 0},
     capital={"equity": 1000, "re": 150},
     liabilities={"dividend_due": 0, "ap": 0}
 )
@@ -122,6 +126,7 @@ rename_dict = {
     "re": "Retained earnings",
     "ar": "Accounts receivable",
     "ap": "Accounts payable",
+    "ppe": "Fixed assets",
     "goods": "Inventory (goods for sale)",
     "cogs": "Cost of goods sold",
     "sga": "Selling, general and adm. expenses",
@@ -134,7 +139,9 @@ rv.print(income_statement)
 8. Use current period end balances to initialize book at the start of next accounting period.
 
 ```python
-end_balances = book.balances()
+end_balances = book.nonzero_balances()
+assert end_balances == {'cash': 1100, 'goods': 50, 'equity': 1000, 're': 150}
+
 next_book = chart.book(starting_balances=end_balances)
 assert book.balance_sheet() == next_book.balance_sheet()
 ```
@@ -144,6 +151,7 @@ assert book.balance_sheet() == next_book.balance_sheet()
 ### Create chart of accounts
 
 ```bash
+jaba chart chart.json unlink
 jaba chart chart.json touch
 jaba chart chart.json set --assets cash ar goods ppe
 jaba chart chart.json set --capital equity
@@ -161,13 +169,13 @@ jaba chart chart.json list
 
 ```bash
 jaba chart chart.json create store.json
-jaba store store.json post --dr cash --cr equity --amount 1500
+jaba store store.json post --dr cash --cr equity --amount 1000
 jaba store store.json post goods cash 300
 jaba store store.json post cogs goods 250
 jaba store store.json post ar sales 440
 jaba store store.json post discounts ar 41
-jaba store store.json post cash ar 250
-jaba store store.json post sga cash 59
+jaba store store.json post cash ar 150
+jaba store store.json post sga cash 69
 jaba store store.json close
 jaba store store.json list
 ```
@@ -178,13 +186,14 @@ jaba store store.json list
 jaba report store.json --balance-sheet
 jaba report store.json --income-statement
 jaba report store.json --trial-balance
-jaba report store.json --account re --assert 90
+jaba report store.json --account re --assert 80
 ```
 
 ## Feedback
 
-Anything missing in `abacus`? 
-Thinking of an applied use case? Used package for teaching?
+Anything missing in `abacus`?
+Got a good use case for `abacus`? 
+Used `abacus` for teaching?
 
 Feel free to contact `abacus` author
 in [issues](https://github.com/epogrebnyak/abacus/issues),

@@ -5,6 +5,7 @@ and income statement reports. *jaba* is aware of contra accounts, can do a trail
 and add adjustment and post-close entries.
 
 Usage:
+  jaba chart <chart_file> unlink
   jaba chart <chart_file> touch
   jaba chart <chart_file> set --assets <account_names>...
   jaba chart <chart_file> set --expenses <account_names>... 
@@ -55,13 +56,20 @@ def main():
         print(arguments)
     if arguments["chart"]:
         path = Path(arguments["<chart_file>"])
+        if arguments["unlink"]:
+            if path.exists():
+                path.unlink()
+            sys.exit(0)
         if arguments["touch"]:
             if path.exists():
-                sys.exit(f"Cannot create chart, file {path} already exists.")
+                sys.exit(f"Cannot create {path}, file already exists.")
             chart = Chart.empty()
             chart.save(path)
             pprint(chart.dict())
-        chart = Chart.load(path)
+        try:
+            chart = Chart.load(path)
+        except FileNotFoundError:
+            sys.exit(f"File not found: {path}")
         if arguments["list"]:
             pprint(chart.dict())
         if arguments["set"]:
@@ -86,11 +94,11 @@ def main():
             chart.contra_accounts[key] = names
             pprint(chart.contra_accounts)
             chart.save(path)
-        # FIXME: re-create chart on every save to catch duplicates problem
         if arguments["validate"]:
-            # Create Chart object and see what happens
-            chart2 = Chart(**chart.dict())
-            pprint(chart2.dict())
+            try:
+                chart.strong_validate()
+            except AbacusError as e:
+                sys.exit(repr(e))
         if arguments["create"]:
             chart = Chart.load(path)
             if arguments["--using"]:  # FIXME: does not work due to JSON issues

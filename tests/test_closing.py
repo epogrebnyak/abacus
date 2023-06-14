@@ -66,3 +66,7 @@ def test_closing_entries():
         ),
         CloseISA(dr="profit", cr="re", amount=75, action="close_isa"),
     ]
+
+
+def test_transfer_entry():
+    assert ContraIncome([8], []).balance() == 8

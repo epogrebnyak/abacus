@@ -1,3 +1,4 @@
+jaba chart chart.json unlink
 jaba chart chart.json touch
 jaba chart chart.json set --assets cash ar goods ppe
 jaba chart chart.json set --capital equity
@@ -11,17 +12,17 @@ jaba chart chart.json validate
 jaba chart chart.json list
 
 jaba chart chart.json create store.json
-jaba store store.json post --dr cash --cr equity --amount 1500
+jaba store store.json post --dr cash --cr equity --amount 1000
 jaba store store.json post goods cash 300
 jaba store store.json post cogs goods 250
 jaba store store.json post ar sales 440
 jaba store store.json post discounts ar 41
-jaba store store.json post cash ar 250
-jaba store store.json post sga cash 59
+jaba store store.json post cash ar 150
+jaba store store.json post sga cash 69
 jaba store store.json close
 jaba store store.json list
 
 jaba report store.json --balance-sheet
 jaba report store.json --income-statement
 jaba report store.json --trial-balance
-jaba report store.json --account re --assert 90
+jaba report store.json --account re --assert 80
