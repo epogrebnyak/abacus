@@ -3,7 +3,7 @@
     "assets": [
       "cash",
       "ar",
-      "inventory",
+      "goods",
       "ppe"
     ],
     "expenses": [
@@ -41,13 +41,13 @@
         "amount": 1500
       },
       {
-        "dr": "inventory",
+        "dr": "goods",
         "cr": "cash",
         "amount": 300
       },
       {
         "dr": "cogs",
-        "cr": "inventory",
+        "cr": "goods",
         "amount": 250
       },
       {
