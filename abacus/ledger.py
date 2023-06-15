@@ -69,9 +69,7 @@ class LedgerWithNetting:
         ]
 
 
-def transfer_balance(
-    account, from_: AccountName, to_: AccountName
-) -> ClosingEntry:
+def transfer_balance(account, from_: AccountName, to_: AccountName) -> ClosingEntry:
     amount = account.balance()
     if account.is_debit_account():
         return ClosingEntry(dr=to_, cr=from_, amount=amount)
@@ -104,7 +102,7 @@ def find_account_name(ledger: Ledger, cls: Type[Unique]) -> AccountName:
     raise AbacusError(f"{cls} must be unique in ledger")
 
 
-Posting = BaseEntry | Entry | MultipleEntry | DebitEntry | CreditEntry
+Posting = Entry | ClosingEntry | MultipleEntry | DebitEntry | CreditEntry
 
 
 def _process(ledger: Ledger, posting: Posting) -> Ledger:
@@ -119,7 +117,7 @@ def _process(ledger: Ledger, posting: Posting) -> Ledger:
         case Entry(dr, cr, amount):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)
-        case BaseEntry(dr, cr, amount, _):
+        case ClosingEntry(dr, cr, amount):
             ledger[dr].debits.append(amount)
             ledger[cr].credits.append(amount)
         case _:

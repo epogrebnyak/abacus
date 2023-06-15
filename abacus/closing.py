@@ -30,20 +30,53 @@ from abacus.closing_types import (
 )
 from abacus.ledger import Ledger, LedgerWithNetting
 
-__all__ = ["closing_entries", "closing_entries_for_permanent_contra_accounts"]  # type: ignore
+__all__ = ["make_closing_entries", "make_closing_entries_for_permanent_contra_accounts"]  # type: ignore
 
+from itertools import chain
+from dataclasses import field
 
 @dataclass
 class ClosingEntries:
-    contra_income: List[ClosingEntry]
-    contra_expense: List[ClosingEntry]
-    income: List[ClosingEntry]
-    expense: List[ClosingEntry]
-    isa: ClosingEntry
+    contra_income: List[ClosingEntry] =  field(default_factory=list)
+    contra_expense: List[ClosingEntry] =  field(default_factory=list)
+    income: List[ClosingEntry] = field(default_factory=list)
+    expense: List[ClosingEntry] = field(default_factory=list)
+    isa: ClosingEntry | None = None
+
+    def ci_ce(self):
+        return chain(self.contra_income, self.contra_expense)
+
+    def all(self):
+        return chain(
+            self.contra_income,
+            self.contra_expense,
+            self.income,
+            self.expense,
+            [self.isa],
+        )
+
+
+def make_closing_entries_for_permanent_contra_accounts(
+    ledger: Ledger, netting: Netting
+) -> List[ClosingEntry]:
+    lwn = LedgerWithNetting(ledger, netting)
+
+    def f(t):
+        return lwn.contra_account_closing_entries(t)
+
+    return f(Asset) + f(Capital) + f(Liability)
 
 
 def make_closing_entries(ledger: Ledger, netting: Netting) -> ClosingEntries:
-    raise NotImplementedError
+    lwn = LedgerWithNetting(ledger, netting)
+    a = lwn.contra_account_closing_entries(Income)
+    b = lwn.contra_account_closing_entries(Expense)
+    _dummy_ledger = ledger.process_postings(list(a + b))
+    c = close_income_to_isa(_dummy_ledger)
+    d = close_expense_to_isa(_dummy_ledger)
+    _dummy_ledger = _dummy_ledger.process_postings(list(c + d))
+    e = closing_entry_isa_to_retained_earnings(_dummy_ledger)
+    return ClosingEntries(contra_income=a, contra_expense=b, income=c, expense=d, isa=e)
 
 
 def subset(ledger: Ledger, netting: Netting, regular_cls: Type):
@@ -99,7 +132,7 @@ def closing_entries_for_permanent_contra_accounts(
     return f(Asset) + f(Capital) + f(Liability)
 
 
-def close_income_to_isa(ledger: Ledger) -> List[CloseIncome]:
+def close_income_to_isa(ledger: Ledger) -> List[ClosingEntry]:
     isa = ledger.find_account_name(IncomeSummaryAccount)
     return [
         transfer_entry(account, name, isa)
@@ -107,7 +140,7 @@ def close_income_to_isa(ledger: Ledger) -> List[CloseIncome]:
     ]
 
 
-def close_expense_to_isa(ledger: Ledger) -> List[CloseExpense]:
+def close_expense_to_isa(ledger: Ledger) -> List[ClosingEntry]:
     isa = ledger.find_account_name(IncomeSummaryAccount)
     return [
         transfer_entry(account, name, isa)
@@ -117,7 +150,7 @@ def close_expense_to_isa(ledger: Ledger) -> List[CloseExpense]:
 
 def closing_entry_isa_to_retained_earnings(
     ledger: "Ledger",
-) -> CloseISA:
+) -> ClosingEntry:
     isa = ledger.find_account_name(IncomeSummaryAccount)
     re = ledger.find_account_name(RetainedEarnings)
     return transfer_entry(ledger[isa], isa, re)
