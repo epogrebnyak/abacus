@@ -36,8 +36,11 @@ This will install both `abacus` package and `jaba` command line tool.
    (assets, equity, liabilities, income and expenses).
 
    You can also specify contra accounts
-   such as depreciation (contra account to fixed assets),
-   discounts and cashback (contra accounts to sales).
+   such as depreciation (offset fixed assets),
+   discounts and cashback (offset sales) or others.
+
+   Retained earnings account name must be specified explicitly in the chart
+   - this way we know where to close accounts at accounting period end. 
 
 ```python
 
@@ -57,16 +60,16 @@ chart = Chart(
 )
 ```
 
-2. Next, create a general ledger (book) based on chart of accounts.
+2. Next create a general ledger (book) based on the chart of accounts.
 
 ```python
 book = chart.book()
 ```
 
-3. Add accounting entries using account names from the chart of accounts.
+3. Add accounting entries using account names from the chart of accounts and amounts.
 
 ```python
-e1 = Entry(dr="cash", cr="equity", amount=1000)  # pay in capital
+e1 = Entry(dr="cash", cr="equity", amount=1000)  # pay in shareholder equity
 e2 = Entry(dr="goods", cr="cash", amount=250)    # acquire goods worth 250
 e3 = Entry(cr="goods", dr="cogs", amount=200)    # sell goods worth 200
 e4 = Entry(cr="sales", dr="cash", amount=400)    # for 400 in cash
@@ -139,7 +142,7 @@ rv.print(balance_sheet)
 rv.print(income_statement)
 ```
 
-8. Use current period end balances to initialize book at the start of next accounting period.
+8. Use end balances from current period to initialize book at the start of next accounting period.
 
 ```python
 end_balances = book.nonzero_balances()
@@ -189,8 +192,27 @@ jaba store store.json list
 jaba report store.json --balance-sheet
 jaba report store.json --income-statement
 jaba report store.json --trial-balance
+jaba report store.json --balances
+```
+
+### Check
+
+You may also query balance of a specific account and introduce a check.
+
+This will show the retained earnings account balance value:
+
+```
+jaba report store.json --account re 
+```
+
+The command below will complain if retained earnings account balance 
+is not equal to 80 and pass without an error otherwise (it is useful for testing). 
+
+```
 jaba report store.json --account re --assert 80
 ```
+
+
 
 ## Feedback
 
