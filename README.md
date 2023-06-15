@@ -40,7 +40,7 @@ This will install both `abacus` package and `jaba` command line tool.
    discounts and cashback (offset sales) or others.
 
    Retained earnings account name must be specified explicitly in the chart
-   - this way we know where to close accounts at accounting period end. 
+   (this way we know how to close accounts at accounting period end). 
 
 ```python
 
