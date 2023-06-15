@@ -26,7 +26,7 @@ Provided as `abacus` Python package and `jaba` command line tool.
 pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 
-(This will install both `abacus` package and `jaba` command line tool.)
+This will install both `abacus` package and `jaba` command line tool.
 
 ## Usage
 
@@ -34,7 +34,10 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 1. Define a chart of accounts of five types
    (assets, equity, liabilities, income and expenses).
-   You can also specify contra accounts (like depreciation).
+
+   You can also specify contra accounts
+   such as depreciation (contra account to fixed assets),
+   discounts and cashback (contra accounts to sales).
 
 ```python
 
