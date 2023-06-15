@@ -2,7 +2,9 @@
 
 from typing import List, Type
 
+from pydantic.dataclasses import dataclass
 from abacus.accounting_types import AccountName, Netting
+from abacus.closing_types import ClosingEntry
 from abacus.accounts import (
     Account,
     Asset,
@@ -26,9 +28,22 @@ from abacus.closing_types import (
     CloseIncome,
     CloseISA,
 )
-from abacus.ledger import Ledger
+from abacus.ledger import Ledger, LedgerWithNetting
 
 __all__ = ["closing_entries", "closing_entries_for_permanent_contra_accounts"]  # type: ignore
+
+
+@dataclass
+class ClosingEntries:
+    contra_income: List[ClosingEntry]
+    contra_expense: List[ClosingEntry]
+    income: List[ClosingEntry]
+    expense: List[ClosingEntry]
+    isa: ClosingEntry
+
+
+def make_closing_entries(ledger: Ledger, netting: Netting) -> ClosingEntries:
+    raise NotImplementedError
 
 
 def subset(ledger: Ledger, netting: Netting, regular_cls: Type):

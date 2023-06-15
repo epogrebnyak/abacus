@@ -3,8 +3,10 @@
 from collections import UserDict
 from typing import List, Tuple, Type
 
-from abacus.accounting_types import AccountBalancesDict
-from abacus.accounts import Account, Unique
+from abacus.accounting_types import AccountBalancesDict, Netting
+from abacus.closing_types import ClosingEntry
+from abacus.accounts import Account, Unique, RegularAccount, CreditAccount, DebitAccount
+from dataclasses import dataclass
 
 from .accounting_types import (
     AbacusError,
@@ -34,6 +36,48 @@ class Ledger(UserDict[AccountName, Account]):
 
     def process_postings(self, postings: List["Posting"]) -> "Ledger":
         return process_postings(self, postings)
+
+
+@dataclass
+class LedgerWithNetting:
+    ledger: Ledger
+    netting: Netting
+
+    def contra_account_pairs(
+        self, regular_cls: Type[RegularAccount]
+    ) -> List[Tuple[AccountName, AccountName]]:
+        """Yield link account and contra account name pairs.
+        Linked account is of type *regular_cls*.
+        """
+        return [
+            (linked_account_name, contra_account_name)
+            for linked_account_name, contra_account_names in self.netting.items()
+            for contra_account_name in contra_account_names
+            if isinstance(self.ledger[linked_account_name], regular_cls)
+        ]
+
+    def contra_account_closing_entries(self, regular_cls: Type[RegularAccount]):
+        return [
+            transfer_balance(
+                self.ledger[contra_account_name],
+                contra_account_name,
+                linked_account_name,
+            )
+            for linked_account_name, contra_account_name in self.contra_account_pairs(
+                regular_cls
+            )
+        ]
+
+
+def transfer_balance(
+    account, from_: AccountName, to_: AccountName
+) -> ClosingEntry:
+    amount = account.balance()
+    if account.is_debit_account():
+        return ClosingEntry(dr=to_, cr=from_, amount=amount)
+    elif account.is_credit_account():
+        return ClosingEntry(dr=from_, cr=to_, amount=amount)
+    raise TypeError(account)
 
 
 def balances(ledger: Ledger) -> AccountBalancesDict:
