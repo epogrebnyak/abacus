@@ -175,9 +175,7 @@ rv.print(income_statement)
 ```python
 end_balances = book.nonzero_balances()
 assert end_balances == {'cash': 1100, 'goods': 50, 'equity': 1000, 're': 150}
-
 next_book = chart.book(starting_balances=end_balances)
-assert book.balance_sheet() == next_book.balance_sheet()
 ```
 
 ## Command line
