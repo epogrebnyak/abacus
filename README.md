@@ -61,20 +61,12 @@ This will install both `abacus` package and `jaba` command line tool.
 
 ### Step by step code example
 
-1. Define a chart of accounts of five types
-   (assets, equity, liabilities, income and expenses).
+1. Define a chart of accounts of five types (assets, equity, liabilities, income and expenses).
 
-   You can also specify contra accounts
-   such as depreciation (offset fixed assets),
-   discounts and cashback (offset sales) or others.
-
-   Retained earnings account name must be specified explicitly in the chart
-   (this way we know how to close accounts at period end). 
+   Retained earnings account name must be specified in the chart, so that we can close accounts at period end. 
 
 ```python
-
 from abacus import Chart, Entry, BalanceSheet, IncomeStatement
-
 
 chart = Chart(
     assets=["cash", "ar", "goods", "ppe"],
@@ -82,20 +74,27 @@ chart = Chart(
     equity=["equity"],
     retained_earnings_account="re",
     liabilities=["dividend_due", "ap"],
-    income=["sales"],
-    contra_accounts={
-        "sales": ["discounts", "cashback"],
-        "ppe": ["depreciation"]},
+    income=["sales"]
 )
+```  
+
+2.  Optionally specify contra accounts such as depreciation (offsets fixed assets) or
+    discounts and cashback (offset sales).
+
+```python
+chart.contra_accounts = {
+  "ppe": ["depreciation"],
+  "sales": ["discounts", "cashback"]
+}
 ```
 
-2. Next create a general ledger (book) based on the chart of accounts.
+3. Next create a general ledger (book) based on the chart of accounts.
 
 ```python
 book = chart.book()
 ```
 
-3. Add accounting entries using account names from the chart of accounts and amounts.
+4. Add accounting entries using account names from the chart of accounts and amounts.
 
 ```python
 e1 = Entry(dr="cash", cr="equity", amount=1000)  # pay in shareholder equity
@@ -106,13 +105,13 @@ e5 = Entry(cr="cash", dr="sga", amount=50)       # administrative expenses
 book = book.post_many([e1, e2, e3, e4, e5])
 ```
 
-4. Close book at accounting period end.
+5. Close book at accounting period end.
 
 ```python
 book = book.close()
 ```
 
-You can also use chained operation syntax for steps 2-4:
+You can also use chained operation syntax for steps 3-5:
 
 ```python
 book = (chart.book()
@@ -125,7 +124,7 @@ book = (chart.book()
 )
 ```
 
-5. Make income statement.
+6. Make income statement.
 
 ```python
 from abacus import IncomeStatement
@@ -137,7 +136,7 @@ assert income_statement == IncomeStatement(
 )
 ```
 
-6. Make balance sheet.
+7. Make balance sheet.
 
 ```python
 from abacus import BalanceSheet
@@ -150,12 +149,11 @@ assert balance_sheet == BalanceSheet(
 )
 ```
 
-7. Print balance sheet and income statement to screen
+8. Print balance sheet and income statement to screen
    with verbose account names and rich formatting.
 
 ```python
 from abacus import RichViewer
-
 
 rename_dict = {
     "re": "Retained earnings",
@@ -171,7 +169,7 @@ rv.print(balance_sheet)
 rv.print(income_statement)
 ```
 
-8. Use end balances from current period to initialize book at the start of next accounting period.
+9. Use end balances from current period to initialize book at the start of next accounting period.
 
 ```python
 end_balances = book.nonzero_balances()
@@ -182,6 +180,8 @@ assert book.balance_sheet() == next_book.balance_sheet()
 ```
 
 ## Command line
+
+Similar operations with chart and ledger can be performed on the command line without writing any Python code.
 
 ### Create chart of accounts
 
@@ -240,8 +240,6 @@ is not equal to 80 and pass without an error otherwise (it is useful for testing
 ```
 jaba report store.json --account re --assert 80
 ```
-
-
 
 ## Feedback
 
