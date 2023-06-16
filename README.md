@@ -78,8 +78,9 @@ chart = Chart(
 )
 ```  
 
-2.  Optionally specify contra accounts such as depreciation (offsets fixed assets) or
-    discounts and cashback (offset sales).
+2.  Optionally specify contra accounts. Some contra account examples are the following:
+    - depreciation which offsets `ppe` (property, plant, equipment) account;
+    - discounts and cashback which offset `sales` account.
 
 ```python
 chart.contra_accounts = {
