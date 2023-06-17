@@ -1,8 +1,12 @@
 """
-*jaba* is a minimal double entry accounting manager that can define a chart of accounts,
-open ledger, post entries, close accounts at period end and produce balance sheet 
-and income statement reports. *jaba* is aware of contra accounts, can do a trail balance
-and add adjustment and post-close entries.
+*jaba* is a double entry accounting manager.
+
+Commands: 
+  jaba chart - define a chart of accounts
+  jaba store - post entries and close accounting period
+  jaba names - hold longer names to accounts
+  jaba report - produce trail balance and financial reports
+  jaba balances - show account balances
 
 Usage:
   jaba chart <chart_file> unlink
@@ -14,20 +18,22 @@ Usage:
   jaba chart <chart_file> set --liabilities <account_names>...
   jaba chart <chart_file> set --income <account_names>...
   jaba chart <chart_file> offset <account_name> <contra_account_names>...
-  jaba chart <chart_file> validate
-  jaba chart <chart_file> list
-  jaba chart <chart_file> create <store_file> [--using <start_balances_file>]
-  jaba names <name_file> touch
-  jaba names <name_file> set <account_name> <title>
-  jaba names <name_file> list
+  jaba chart <chart_file> list [--validate [--quiet]] [--json]
+  jaba chart <chart_file> create <store_file> [--start-file <start_balances_file>]
+  jaba store <store_file> init <chart_file> [<start_balances_file>]
   jaba store <store_file> post <dr_account> <cr_account> <amount> [--adjust] [--post-close]
   jaba store <store_file> post --dr <dr_account> --cr <cr_account> --amount <amount> [--adjust] [--post-close]
-  jaba store <store_file> close [--again]
-  jaba store <store_file> list [--start | --business | --adjust | --close | --post-close]
-  jaba report <store_file> (-i | --income-statement) [--names <name_file>] [--rich]
-  jaba report <store_file> (-b | --balance-sheet) [--names <name_file>] [--rich]
-  jaba report <store_file> (-t | --trial-balance) [--credit [--sum] | --debit [--sum]] [--all]
-  jaba report <store_file> (-a | --account) <account_name> [--assert <amount>]
+  jaba store <store_file> close
+  jaba store <store_file> list (--start | --business | --adjust | --close | --post-close | --all) [--json]
+  jaba store <store_file> show <account_name> [--balance] [--net] [--json]
+  jaba store <store_file> assert <account_name> <amount> [--net]
+  jaba names <name_file> touch
+  jaba names <name_file> set <account_name> <title>
+  jaba names <name_file> list [--json]
+  jaba report <store_file> (-i | --income-statement) [--names <name_file>] [--rich] [--json]
+  jaba report <store_file> (-b | --balance-sheet) [--names <name_file>] [--rich] [--json]
+  jaba report <store_file> (-t | --trial-balance) [(--credit | --debit) [--sum]] [--json]
+  jaba balances <store_file> show [--end] [--json]
   jaba --args
 
 Options:
