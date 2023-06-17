@@ -124,9 +124,13 @@ def main():
             )
             chart.contra_accounts[key] = names
             chart.save(path)
-            print(
-                f"Contra account(s) {', '.join([f'<{n}>' for n in names])} offset <{key}>."
-            )
+            if len(names) > 1:
+                print(
+                    f"Contra accounts {', '.join([f'<{n}>' for n in names])} offset <{key}>."
+                )
+
+            else:
+                print(f"Contra account <{names[0]}> offsets <{key}>.")
     elif arguments["names"]:
         pass
     elif arguments["store"]:
