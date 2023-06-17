@@ -19,15 +19,21 @@ call jaba store store.json post discounts ar 41
 call jaba store store.json post cash ar 150
 call jaba store store.json post sga cash 69
 call jaba store store.json close
-call jaba store store.json list
+call jaba store store.json list --quiet
 
 call jaba report store.json --balance-sheet
 call jaba report store.json --income-statement
-call jaba report store.json --trial-balance
 
-call jaba balances store.json list --json
+call jaba balances store.json list --skip-zero --json
 
-call jaba balances store.json list cash
+call jaba balances store.json list goods --json
+call jaba balances store.json list goods
 
+call jaba balances store.json assert cash 781
+call jaba balances store.json assert ar 241
+call jaba balances store.json assert goods 50
+call jaba balances store.json assert equity 1000
 call jaba balances store.json assert re 80
+
+call jaba balances store.json end > end_balances.json
 
