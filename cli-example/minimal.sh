@@ -8,10 +8,9 @@ jaba chart chart.json set --income sales
 jaba chart chart.json set --expenses cogs sga
 jaba chart chart.json offset ppe depreciation
 jaba chart chart.json offset sales discounts cashback
-jaba chart chart.json validate
-jaba chart chart.json list
+jaba chart chart.json list --validate
 
-jaba chart chart.json create store.json
+jaba store store.json init chart.json
 jaba store store.json post --dr cash --cr equity --amount 1000
 jaba store store.json post goods cash 300
 jaba store store.json post cogs goods 250
@@ -25,4 +24,9 @@ jaba store store.json list
 jaba report store.json --balance-sheet
 jaba report store.json --income-statement
 jaba report store.json --trial-balance
-jaba report store.json --account re --assert 80
+
+jaba balances store.json list --json
+
+jaba balances store.json list cash
+
+jaba balances store.json assert re 80

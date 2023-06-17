@@ -48,8 +48,12 @@ def test_close_contra_accounts_with_netting():
 
 
 def test_closing_entries():
-    from abacus.closing import CloseExpense, CloseIncome, CloseISA
-    from abacus.closing_types import CloseContraIncome
+    from abacus.closing_types import (
+        CloseContraIncome,
+        CloseExpense,
+        CloseIncome,
+        CloseISA,
+    )
 
     assert closing_entries(ledger, dict(sales=["discount", "returns"])) == [
         CloseContraIncome(

@@ -2,19 +2,17 @@
 Base classes for a minimal accounting framework.
 """
 
-# pylint: disable=no-member, missing-docstring, pointless-string-statement, invalid-name, redefined-outer-name
-
 from collections import UserDict
+from typing import Dict
 
 from pydantic.dataclasses import dataclass
 
-Amount = int
-AccountName = str
-
 __all__ = ["Entry", "AbacusError"]
 
-
+Amount = int
+AccountName = str
 Netting = dict[AccountName, list[AccountName]]
+Balances = Dict[AccountName, Amount]
 
 
 class AccountBalancesDict(UserDict[AccountName, Amount]):
@@ -24,9 +22,6 @@ class AccountBalancesDict(UserDict[AccountName, Amount]):
 
     def total(self) -> Amount:
         return sum(self.values())
-
-
-TrialBalance = AccountBalancesDict
 
 
 class AbacusError(Exception):

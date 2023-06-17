@@ -1,10 +1,12 @@
 """Closing accounts at period end"""
 
+from dataclasses import field
+from itertools import chain
 from typing import List, Type
 
 from pydantic.dataclasses import dataclass
+
 from abacus.accounting_types import AccountName, Netting
-from abacus.closing_types import ClosingEntry
 from abacus.accounts import (
     Account,
     Asset,
@@ -24,21 +26,17 @@ from abacus.closing_types import (
     CloseContraExpense,
     CloseContraIncome,
     CloseContraLiability,
-    CloseExpense,
-    CloseIncome,
-    CloseISA,
+    ClosingEntry,
 )
 from abacus.ledger import Ledger, LedgerWithNetting
 
 __all__ = ["make_closing_entries", "make_closing_entries_for_permanent_contra_accounts"]  # type: ignore
 
-from itertools import chain
-from dataclasses import field
 
 @dataclass
 class ClosingEntries:
-    contra_income: List[ClosingEntry] =  field(default_factory=list)
-    contra_expense: List[ClosingEntry] =  field(default_factory=list)
+    contra_income: List[ClosingEntry] = field(default_factory=list)
+    contra_expense: List[ClosingEntry] = field(default_factory=list)
     income: List[ClosingEntry] = field(default_factory=list)
     expense: List[ClosingEntry] = field(default_factory=list)
     isa: ClosingEntry | None = None

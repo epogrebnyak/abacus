@@ -15,15 +15,15 @@ from abacus.accounting_types import (
     MultipleEntry,
 )
 from abacus.chart import Chart
-from abacus.closing import (
+from abacus.closing import closing_entries
+from abacus.closing_types import (
     CloseContraExpense,
     CloseContraIncome,
     CloseExpense,
     CloseIncome,
     CloseISA,
-    closing_entries,
+    ClosingEntry,
 )
-from abacus.closing_types import ClosingEntry
 from abacus.ledger import Ledger, process_postings
 
 

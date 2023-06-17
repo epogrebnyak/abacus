@@ -1,17 +1,16 @@
 """General ledger."""
 
 from collections import UserDict
+from dataclasses import dataclass
 from typing import List, Tuple, Type
 
 from abacus.accounting_types import AccountBalancesDict, Netting
+from abacus.accounts import Account, RegularAccount, Unique
 from abacus.closing_types import ClosingEntry
-from abacus.accounts import Account, Unique, RegularAccount, CreditAccount, DebitAccount
-from dataclasses import dataclass
 
 from .accounting_types import (
     AbacusError,
     AccountName,
-    BaseEntry,
     CreditEntry,
     DebitEntry,
     Entry,

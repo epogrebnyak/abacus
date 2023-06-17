@@ -10,7 +10,7 @@ A minimal, yet valid double-entry accounting system, provided as `abacus` Python
 
 ## Workflow
 
-`abacus` allows to specify a chart of accounts, create a ledger with starting balances, 
+`abacus` allows to specify a chart of accounts, create a ledger with starting balances,
 post entries through accounting period, close accounts at period end and produce financial reports.
 
 ```mermaid
@@ -20,10 +20,10 @@ flowchart LR
   B --> C
   subgraph "Accounting Period"
     C["List[BusinessEntry]"]
-  end 
+  end
   C --> F
   subgraph "Period Closing"
-     F["List[AdjustmentEntry]"] 
+     F["List[AdjustmentEntry]"]
      D["List[ClosingEntry]"]
   end
   F --> D
@@ -37,7 +37,6 @@ flowchart LR
     R3("AccountBalances\n(end of period)")
   end
 ```
-
 
 ## Quotes about `abacus`
 
@@ -63,7 +62,7 @@ This will install both `abacus` package and `jaba` command line tool.
 
 1. Define a chart of accounts of five types (assets, equity, liabilities, income and expenses).
 
-   Retained earnings account name must be specified in the chart, so that we can close accounts at period end. 
+   Retained earnings account name must be specified in the chart, so that we can close accounts at period end.
 
 ```python
 from abacus import Chart, Entry, BalanceSheet, IncomeStatement
@@ -76,7 +75,7 @@ chart = Chart(
     liabilities=["dividend_due", "ap"],
     income=["sales"]
 )
-```  
+```
 
 2.  Optionally specify contra accounts. Some contra account examples are the following:
     - depreciation which offsets `ppe` (property, plant, equipment) account;
@@ -195,14 +194,13 @@ jaba chart chart.json set --income sales
 jaba chart chart.json set --expenses cogs sga
 jaba chart chart.json offset ppe depreciation
 jaba chart chart.json offset sales discounts cashback
-jaba chart chart.json validate
-jaba chart chart.json list
+jaba chart chart.json list --validate
 ```
 
 ### Post entries to ledger and close
 
 ```bash
-jaba chart chart.json create store.json
+jaba store store.json init chart.json
 jaba store store.json post --dr cash --cr equity --amount 1000
 jaba store store.json post goods cash 300
 jaba store store.json post cogs goods 250
@@ -220,30 +218,33 @@ jaba store store.json list
 jaba report store.json --balance-sheet
 jaba report store.json --income-statement
 jaba report store.json --trial-balance
-jaba report store.json --balances
+```
+
+### Account balances
+
+```bash
+jaba balances store.json list --json
+```
+
+You may also query balance of a specific account:
+
+```bash
+jaba balances store.json list cash
 ```
 
 ### Check
 
-You may also query balance of a specific account and introduce a check.
+The command below will complain if retained earnings account balance
+is not equal to 80 and pass without an error otherwise.
 
-This will show the retained earnings account balance value:
-
-```
-jaba report store.json --account re 
-```
-
-The command below will complain if retained earnings account balance 
-is not equal to 80 and pass without an error otherwise (it is useful for testing). 
-
-```
-jaba report store.json --account re --assert 80
+```bash
+jaba balances store.json assert re 80
 ```
 
 ## Feedback
 
 Anything missing in `abacus`?
-Got a good use case for `abacus`? 
+Got a good use case for `abacus`?
 Used `abacus` for teaching?
 
 Feel free to contact `abacus` author
