@@ -10,8 +10,8 @@ A minimal, yet valid double-entry accounting system, provided as `abacus` Python
 
 ## Workflow
 
-`abacus` allows to specify a chart of accounts, create a ledger with account starting balances, 
-post accounting entries, close accounts at period end and produce financial reports.
+`abacus` allows to specify a chart of accounts, create a ledger with starting balances, 
+post entries through accounting period, close accounts at period end and produce financial reports.
 
 ```mermaid
 flowchart LR
