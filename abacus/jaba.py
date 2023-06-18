@@ -22,12 +22,12 @@ Usage:
   jaba chart <chart_file> list [--validate] --json 
   jaba ledger <ledger_file> init <chart_file> [<starting_balances_file>] [--quiet]
   jaba ledger <ledger_file> post <dr_account> <cr_account> <amount> [--adjust] [--post-close] [--quiet]
-  jaba ledger <ledger_file> post --dr <dr_account> --cr <cr_account> --amount <amount> [--adjust] [--post-close] [--quiet]
   jaba ledger <ledger_file> close [--quiet]
-  jaba ledger <ledger_file> list [--start | --business | --adjust | --close | --post-close | --all] [--json]
-  jaba balances <ledger_file> account <account_name> [--assert <amount>] [--net] [--json]
-  jaba balances <ledger_file> trial [(--credit | --debit) [--sum]] [--json]
-  jaba balances <ledger_file> list [--skip-zero] [--json]
+  jaba ledger <ledger_file> list [--start | --business | --adjust | --close | --post-close ] [--json]
+  jaba balances <ledger_file> show (--all | --skip-zero) [--json]
+  jaba balances <ledger_file> show <account_name> [--net] [--json]
+  jaba balances <ledger_file> assert <account_name> <amount> [--net] [--json]
+  jaba balances <ledger_file> trial [(--credit | --debit) [--sum]] [--json] 
   jaba names <name_file> touch
   jaba names <name_file> set <account_name> <title>
   jaba names <name_file> list [--json]
@@ -217,33 +217,34 @@ def main():
         path = arguments["<ledger_file>"]
         book = Book.load(path)
         account_name = arguments["<account_name>"]
-        if arguments["account"] and arguments["--assert"]:
+        if arguments["assert"]:
             actual = book.balances().data[account_name]
             amount = Amount(arguments["<amount>"])
             if actual != amount:
                 sys.exit(
-                    f"abacus assert (failed): Account <{account_name}> expected {amount}, got {actual}"
+                    "abacus assert (failed): "
+                    f"Account <{account_name}> expected {amount}, got {actual}"
                 )
-            echo("abacus assert (passed):")
-            print(account_info(account_name, amount))
-        if arguments["account"] and not arguments["--assert"]:
+            print("abacus assert (passed):", account_info(account_name, amount))
+        if arguments["show"] and account_name:
             amount = book.balances().data[account_name]
             if arguments["--json"]:
                 print(json.dumps({account_name: amount}))
             else:
                 echo("abacus balances:")
                 print(account_info(account_name, amount))
-        elif arguments["list"]:
+        elif arguments["show"] and (arguments["--skip-zero"] or arguments["--all"]):
             path = arguments["<ledger_file>"]
             book = Book.load(path)
             if arguments["--skip-zero"]:
+                print("abacus balances: showing accounts with non-zero balances")
                 data = book.nonzero_balances().data
             else:
+                print("abacus balances: showing all accounts")
                 data = book.balances().data
             if arguments["--json"]:
                 print(json.dumps(data))
             else:
-                print("abacus balances: ")
                 n1 = max(map(len, data.keys()))
                 n2 = max(map(lambda x: len(str(x)), data.values()))
                 for k, v in data.items():

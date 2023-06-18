@@ -201,7 +201,7 @@ jaba chart chart.json list --validate
 
 ```bash
 jaba ledger store.json init chart.json
-jaba ledger store.json post --dr cash --cr equity --amount 1000
+jaba ledger store.json post cash equity 1000
 jaba ledger store.json post goods cash 300
 jaba ledger store.json post cogs goods 250
 jaba ledger store.json post ar sales 440
@@ -222,33 +222,28 @@ jaba report store.json --income-statement
 
 ### Account information
 
-Show balance of a specific account:
+Show balances of all accounts or balance of a specific account:
 
 ```bash
-jaba balances store.json account cash
+jaba balances store.json show --skip-zero
+jaba balances store.json show cash
 ```
-
-With `--assert` flag the program will complain if account balance
-is not equal to provided value. This is useful for testing.
-
-```bash
-jaba balances store.json account cash --assert 781
-jaba balances store.json account ar --assert 241
-jaba balances store.json account goods --assert 50
-jaba balances store.json account equity --assert 1000
-jaba balances store.json account re --assert 80
-```
-
-Show all account balances:
+`assert` command will make the program complain 
+if account balance is not equal to provided value. 
+This is useful for testing.
 
 ```bash
-jaba balances store.json list --skip-zero
+jaba balances store.json assert cash 781
+jaba balances store.json assert ar 241
+jaba balances store.json assert goods 50
+jaba balances store.json assert equity 1000
+jaba balances store.json assert re 80
 ```
 
 You can save end balances to a file to initialize next period.
 
 ```bash
-jaba balances store.json list --skip-zero --json > end_balances.json
+jaba balances store.json show --skip-zero --json > end_balances.json
 ```
 
 ## Feedback

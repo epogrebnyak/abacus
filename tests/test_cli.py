@@ -1,5 +1,7 @@
 import json
 import subprocess
+import os
+
 
 import pytest
 
@@ -14,7 +16,7 @@ jaba chart chart.json set --retained-earnings re
 jaba ledger store.json init chart.json
 jaba ledger store.json post cash equity 1000
 jaba ledger store.json post goods cash 300
-jaba balances store.json list --skip-zero --json
+jaba balances store.json show --skip-zero --json
 """.strip()
 
 
@@ -44,10 +46,13 @@ def test_few_commands(commands, tmpdir):
             make_args(line), shell=True, capture_output=True, text=True, cwd=tmpdir
         )
         assert result.returncode == 0
-    # FIXME: does not caputre output on linux
-    # assert result.stdout == 1
-    # assert json.loads(result.stdout) == {
-    #    "cash": 700,
-    #    "goods": 300,
-    #    "equity": 1000,
-    # }
+    if os.name == "nt":
+        assert json.loads(result.stdout) == {
+            "cash": 700,
+            "goods": 300,
+            "equity": 1000,
+        }
+    else:
+        # FIXME: can a similar check be performed on a linux system?
+        #       so far result.stdout is empty string.
+        pass
