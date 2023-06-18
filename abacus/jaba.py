@@ -200,6 +200,7 @@ def main():
         book = Book.load(path)
         if arguments["-i"] or arguments["--income-statement"]:
             from abacus.book import ledger_for_income_statement
+
             pprint(ledger_for_income_statement(book).balances().data)
             if arguments["--json"]:
                 pprint(book.income_statement().__dict__)
@@ -217,15 +218,15 @@ def main():
         book = Book.load(path)
         account_name = arguments["<account_name>"]
         if arguments["account"] and arguments["--assert"]:
-                actual = book.balances().data[account_name]
-                amount = Amount(arguments["<amount>"])
-                if actual != amount:
-                    sys.exit(
-                        f"abacus assert (failed): Account <{account_name}> expected {amount}, got {actual}"
-                    )
-                echo("abacus assert (passed):")
-                print(account_info(account_name, amount))
-        if arguments["account"] and not arguments["--assert"]:   
+            actual = book.balances().data[account_name]
+            amount = Amount(arguments["<amount>"])
+            if actual != amount:
+                sys.exit(
+                    f"abacus assert (failed): Account <{account_name}> expected {amount}, got {actual}"
+                )
+            echo("abacus assert (passed):")
+            print(account_info(account_name, amount))
+        if arguments["account"] and not arguments["--assert"]:
             amount = book.balances().data[account_name]
             if arguments["--json"]:
                 print(json.dumps({account_name: amount}))
@@ -235,12 +236,18 @@ def main():
         elif arguments["list"]:
             path = arguments["<ledger_file>"]
             book = Book.load(path)
-            if not arguments["--json"]:
-                    print("abacus balances: list account balances")
             if arguments["--skip-zero"]:
-                print(json.dumps(book.nonzero_balances().data))
+                data = book.nonzero_balances().data
             else:
-                print(json.dumps(book.balances().data))
+                data = book.balances().data
+            if arguments["--json"]:    
+                print(json.dumps(data))
+            else:
+               print("abacus balances: ")
+               n1 = max(map(len, data.keys()))
+               n2 = max(map(lambda x: len(str(x)), data.values()))
+               for k, v in data.items():
+                    print(" ", k.ljust(n1," "), str(v).rjust(n2, " ")) 
             if arguments["trial"]:
                 raise NotImplementedError  # yet
     elif arguments["names"]:

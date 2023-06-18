@@ -242,7 +242,7 @@ jaba balances store.json account re --assert 80
 Show all account balances:
 
 ```bash
-jaba balances store.json list
+jaba balances store.json list --skip-zero
 ```
 
 You can save end balances to a file to initialize next period.

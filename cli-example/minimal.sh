@@ -33,6 +33,6 @@ jaba balances store.json account goods --assert 50
 jaba balances store.json account equity --assert 1000
 jaba balances store.json account re --assert 80
 
-jaba balances store.json list
+jaba balances store.json list --skip-zero
 
 jaba balances store.json list --skip-zero --json > end_balances.json

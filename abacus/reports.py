@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from abacus.accounting_types import AccountBalancesDict, Amount, Netting
 from abacus.accounts import Asset, Capital, Expense, Income, Liability
-from abacus.closing import closing_entries_for_permanent_contra_accounts
+from abacus.closing import make_closing_entries_for_permanent_contra_accounts
 from abacus.ledger import Ledger
 
 __all__ = ["BalanceSheet", "IncomeStatement"]
@@ -38,7 +38,7 @@ def balance_sheet(ledger: Ledger, netting: Netting) -> BalanceSheet:
     # accounts in the balance sheet report.
     # This may change if we have a more complicated balance sheet report
     # with net.. = gross... - less...
-    entries = closing_entries_for_permanent_contra_accounts(ledger, netting)
+    entries = make_closing_entries_for_permanent_contra_accounts(ledger, netting)
     _ledger = ledger.process_postings(list(entries))
     return BalanceSheet(
         assets=_ledger.subset(Asset).balances(),

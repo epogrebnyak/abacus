@@ -76,6 +76,11 @@ class Entry:
 
 
 @dataclass
+class ClosingEntry(Entry):
+    pass
+
+
+@dataclass
 class BaseEntry(Entry):
     """Represent various types of entries and serializable."""
 

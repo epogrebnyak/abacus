@@ -1,7 +1,7 @@
 from abacus.accounting_types import Entry
 from abacus.book import Book, Entries
 from abacus.chart import Chart
-from abacus.closing_types import CloseExpense, CloseIncome, CloseISA
+from abacus.closing import ClosingEntries
 
 
 def test_post_many():
@@ -38,23 +38,12 @@ def test_book():
         starting_balance={},
         entries=Entries(
             business=[
-                Entry(dr="rent", cr="cash", amount=200, action="post"),
-                Entry(dr="cash", cr="services", amount=800, action="post"),
-                Entry(dr="salaries", cr="cash", amount=400, action="post"),
+                Entry(dr="rent", cr="cash", amount=200),
+                Entry(dr="cash", cr="services", amount=800),
+                Entry(dr="salaries", cr="cash", amount=400),
             ],
             adjustment=[],
-            closing=[
-                CloseExpense(
-                    dr="_profit", cr="salaries", amount=400, action="close_expense"
-                ),
-                CloseExpense(
-                    dr="_profit", cr="rent", amount=200, action="close_expense"
-                ),
-                CloseIncome(
-                    dr="services", cr="_profit", amount=800, action="close_income"
-                ),
-                CloseISA(dr="_profit", cr="re", amount=200, action="close_isa"),
-            ],
+            closing=ClosingEntries(),
             post_close=[],
         ),
     )

@@ -15,15 +15,7 @@ from abacus.accounting_types import (
     MultipleEntry,
 )
 from abacus.chart import Chart
-from abacus.closing import closing_entries
-from abacus.closing_types import (
-    CloseContraExpense,
-    CloseContraIncome,
-    CloseExpense,
-    CloseIncome,
-    CloseISA,
-    ClosingEntry,
-)
+from abacus.closing import ClosingEntries, make_closing_entries
 from abacus.ledger import Ledger, process_postings
 
 
@@ -46,32 +38,18 @@ def to_multiple_entry(ledger, starting_balances: dict) -> MultipleEntry:
     return me
 
 
-def is_closing_temporary_contra_account(
-    closing_entry: ClosingEntry,
-):
-    """Filter contra income and close contra expense closing entries.
-    Used to construct income statement."""
-    return (
-        isinstance(closing_entry, CloseContraExpense)
-        or isinstance(closing_entry, CloseContraIncome)
-        or closing_entry.action in ["close_contra_expense", "close_contra_income"]
-    )
-
-
 @dataclass
 class Entries:
     business: List[Entry] = field(default_factory=list)
     adjustment: List[Entry] = field(default_factory=list)
-    closing: List[
-        CloseContraIncome | CloseContraExpense | CloseIncome | CloseExpense | CloseISA
-    ] = field(default_factory=list)
+    closing: ClosingEntries = ClosingEntries()
     post_close: List[Entry] = field(default_factory=list)
 
     def yield_for_income_statement(self):
         return chain(
             self.business,
             self.adjustment,
-            filter(is_closing_temporary_contra_account, self.closing),
+            self.closing.contra_expense_contra_income(),
             self.post_close,
         )
 
@@ -79,7 +57,7 @@ class Entries:
         return chain(
             self.business,
             self.adjustment,
-            self.closing,
+            self.closing.all(),
             self.post_close,
         )
 
@@ -126,7 +104,9 @@ class Book(BaseModel):
     def close(self):
         if self.is_closed:
             raise AbacusError("Ledger already closed, cannot close again.")
-        self.entries.closing = closing_entries(self.ledger(), self.chart.contra_accounts)  # type: ignore
+        self.entries.closing = make_closing_entries(
+            self.ledger(), self.chart.contra_accounts
+        )  # type: ignore
         return self
 
     def ledger(self):

@@ -4,9 +4,8 @@ from collections import UserDict
 from dataclasses import dataclass
 from typing import List, Tuple, Type
 
-from abacus.accounting_types import AccountBalancesDict, Netting
+from abacus.accounting_types import AccountBalancesDict, ClosingEntry, Netting
 from abacus.accounts import Account, RegularAccount, Unique
-from abacus.closing_types import ClosingEntry
 
 from .accounting_types import (
     AbacusError,

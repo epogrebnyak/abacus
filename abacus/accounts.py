@@ -23,18 +23,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List
 
-from abacus.accounting_types import Amount
-from abacus.closing_types import (
-    CloseContraAsset,
-    CloseContraCapital,
-    CloseContraExpense,
-    CloseContraIncome,
-    CloseContraLiability,
-    CloseExpense,
-    CloseIncome,
-    CloseISA,
-    ClosingEntry,
-)
+from abacus.accounting_types import Amount, ClosingEntry
 
 __all__ = ["Account"]
 
@@ -102,23 +91,23 @@ class ContraAccount(ClosableAccount):
 
 
 class ContraAsset(CreditAccount, ContraAccount):
-    closing_entry_constructor = CloseContraAsset
+    closing_entry_constructor = ClosingEntry
 
 
 class ContraExpense(CreditAccount, ContraAccount):
-    closing_entry_constructor = CloseContraExpense
+    closing_entry_constructor = ClosingEntry
 
 
 class ContraCapital(DebitAccount, ContraAccount):
-    closing_entry_constructor = CloseContraCapital
+    closing_entry_constructor = ClosingEntry
 
 
 class ContraLiability(DebitAccount, ContraAccount):
-    closing_entry_constructor = CloseContraLiability
+    closing_entry_constructor = ClosingEntry
 
 
 class ContraIncome(DebitAccount, ContraAccount):
-    closing_entry_constructor = CloseContraIncome
+    closing_entry_constructor = ClosingEntry
 
 
 class RegularAccount:
@@ -130,7 +119,7 @@ class Asset(DebitAccount, RegularAccount):
 
 
 class Expense(DebitAccount, RegularAccount, ClosableAccount):
-    closing_entry_constructor = CloseExpense
+    closing_entry_constructor = ClosingEntry
     contra_account_constructor = ContraExpense
 
 
@@ -143,7 +132,7 @@ class Liability(CreditAccount, RegularAccount):
 
 
 class Income(CreditAccount, RegularAccount, ClosableAccount):
-    closing_entry_constructor = CloseIncome
+    closing_entry_constructor = ClosingEntry
     contra_account_constructor = ContraIncome
 
 
@@ -154,7 +143,7 @@ class Unique:
 
 
 class IncomeSummaryAccount(CreditAccount, Unique, ClosableAccount):
-    closing_entry_constructor = CloseISA
+    closing_entry_constructor = ClosingEntry
 
 
 class RetainedEarnings(Capital, Unique):

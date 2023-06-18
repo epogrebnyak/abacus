@@ -1,6 +1,5 @@
 from abacus import BalanceSheet, Chart, IncomeStatement
-from abacus.accounting_types import Entry
-from abacus.closing_types import CloseContraIncome, CloseExpense, CloseIncome, CloseISA
+from abacus.accounting_types import ClosingEntry, Entry
 
 # Create chart of accounts
 chart = Chart(
@@ -60,15 +59,17 @@ def test_adjustment_entries():
 
 
 def test_closing_entries():
-    assert book.entries.closing == [
-        CloseContraIncome(
-            dr="services", cr="cashback", amount=25, action="close_contra_income"
-        ),
-        CloseIncome(dr="services", cr="_profit", amount=800, action="close_income"),
-        CloseExpense(dr="_profit", cr="salaries", amount=400, action="close_expense"),
-        CloseExpense(dr="_profit", cr="rent", amount=200, action="close_expense"),
-        CloseISA(dr="_profit", cr="re", amount=200, action="close_isa"),
+    assert book.entries.closing.contra_income == [
+        ClosingEntry(dr="services", cr="cashback", amount=25)
     ]
+    assert book.entries.closing.income == [
+        ClosingEntry(dr="services", cr="_profit", amount=800)
+    ]
+    assert book.entries.closing.expense == [
+        ClosingEntry(dr="_profit", cr="salaries", amount=400),
+        ClosingEntry(dr="_profit", cr="rent", amount=200),
+    ]
+    assert book.entries.closing.isa == ClosingEntry(dr="_profit", cr="re", amount=200)
 
 
 def test_post_close_entries():
