@@ -41,10 +41,10 @@ def test_run_one(tmpdir):
 def test_few_commands(commands, tmpdir):
     for line in commands.split("\n"):
         result = subprocess.run(
-            make_args(line), shell=True, capture_output=True, cwd=tmpdir
+            make_args(line), shell=True, capture_output=True, text=True, cwd=tmpdir
         )
         assert result.returncode == 0
-    assert json.loads(result.stdout.decode()) == {
+    assert json.loads(result.stdout) == {
         "cash": 700,
         "goods": 300,
         "equity": 1000,
