@@ -15,9 +15,9 @@ grill:
   just md
   just readme
 
-# Run pytest (up to first error)
+# Run pytest (up to first error) and print slowest test times 
 test:
-  poetry run pytest -x
+  poetry run pytest -x --durations=5
 
 # Type check
 mypy:
