@@ -240,14 +240,14 @@ def main():
                 data = book.nonzero_balances().data
             else:
                 data = book.balances().data
-            if arguments["--json"]:    
+            if arguments["--json"]:
                 print(json.dumps(data))
             else:
-               print("abacus balances: ")
-               n1 = max(map(len, data.keys()))
-               n2 = max(map(lambda x: len(str(x)), data.values()))
-               for k, v in data.items():
-                    print(" ", k.ljust(n1," "), str(v).rjust(n2, " ")) 
+                print("abacus balances: ")
+                n1 = max(map(len, data.keys()))
+                n2 = max(map(lambda x: len(str(x)), data.values()))
+                for k, v in data.items():
+                    print(" ", k.ljust(n1, " "), str(v).rjust(n2, " "))
             if arguments["trial"]:
                 raise NotImplementedError  # yet
     elif arguments["names"]:

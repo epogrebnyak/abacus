@@ -82,32 +82,28 @@ class CreditAccount(Account):
         return True
 
 
-class ClosableAccount:
-    closing_entry_constructor = ClosingEntry
-
-
-class ContraAccount(ClosableAccount):
+class ContraAccount:
     pass
 
 
 class ContraAsset(CreditAccount, ContraAccount):
-    closing_entry_constructor = ClosingEntry
+    pass
 
 
 class ContraExpense(CreditAccount, ContraAccount):
-    closing_entry_constructor = ClosingEntry
+    pass
 
 
 class ContraCapital(DebitAccount, ContraAccount):
-    closing_entry_constructor = ClosingEntry
+    pass
 
 
 class ContraLiability(DebitAccount, ContraAccount):
-    closing_entry_constructor = ClosingEntry
+    pass
 
 
 class ContraIncome(DebitAccount, ContraAccount):
-    closing_entry_constructor = ClosingEntry
+    pass
 
 
 class RegularAccount:
@@ -118,8 +114,7 @@ class Asset(DebitAccount, RegularAccount):
     contra_account_constructor = ContraAsset
 
 
-class Expense(DebitAccount, RegularAccount, ClosableAccount):
-    closing_entry_constructor = ClosingEntry
+class Expense(DebitAccount, RegularAccount):
     contra_account_constructor = ContraExpense
 
 
@@ -131,8 +126,7 @@ class Liability(CreditAccount, RegularAccount):
     contra_account_constructor = ContraLiability
 
 
-class Income(CreditAccount, RegularAccount, ClosableAccount):
-    closing_entry_constructor = ClosingEntry
+class Income(CreditAccount, RegularAccount):
     contra_account_constructor = ContraIncome
 
 
@@ -142,8 +136,8 @@ class Unique:
     """
 
 
-class IncomeSummaryAccount(CreditAccount, Unique, ClosableAccount):
-    closing_entry_constructor = ClosingEntry
+class IncomeSummaryAccount(CreditAccount, Unique):
+    pass
 
 
 class RetainedEarnings(Capital, Unique):
