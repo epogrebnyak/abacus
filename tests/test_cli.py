@@ -11,10 +11,10 @@ jaba chart chart.json touch
 jaba chart chart.json set --assets cash goods
 jaba chart chart.json set --capital equity
 jaba chart chart.json set --retained-earnings re
-jaba store store.json init chart.json
-jaba store store.json post cash equity 1000
-jaba store store.json post goods cash 300
-jaba balances store.json end
+jaba ledger store.json init chart.json
+jaba ledger store.json post cash equity 1000
+jaba ledger store.json post goods cash 300
+jaba balances store.json list --skip-zero --json
 """.strip()
 
 
