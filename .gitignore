@@ -3,6 +3,7 @@ store.json
 cli-example/chart.json
 cli-example/store.json
 docs/site/
+.env-cli/
 
 # more hidden folders
 .venv/
