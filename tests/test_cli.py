@@ -13,11 +13,10 @@ jaba chart chart.json touch
 jaba chart chart.json set --assets cash goods
 jaba chart chart.json set --capital equity
 jaba chart chart.json set --retained-earnings re
-jaba ledger store.json init chart.json
+jaba chart chart.json make store.json
 jaba ledger store.json post cash equity 1000
 jaba ledger store.json post goods cash 300
-jaba balances store.json show --skip-zero --json
-""".strip()
+jaba balances store.json show --skip-zero --json""".strip()
 
 
 def make_args(command: str) -> list[str]:
@@ -55,4 +54,8 @@ def test_few_commands(commands, tmpdir):
     else:
         # FIXME: can a similar check be performed on a linux system?
         #       so far result.stdout is empty string.
-        pass
+        assert json.loads(result.stdout) == {
+            "cash": 700,
+            "goods": 300,
+            "equity": 1000,
+        }

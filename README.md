@@ -62,7 +62,7 @@ This will install both `abacus` package and `jaba` command line tool.
 
 1. Define a chart of accounts of five types (assets, equity, liabilities, income and expenses).
 
-   Retained earnings account name must be specified in the chart, so that we can close accounts at period end.
+   Retained earnings account name must be in chart, so that we can close accounts at period end.
 
 ```python
 from abacus import Chart, Entry, BalanceSheet, IncomeStatement
@@ -77,15 +77,28 @@ chart = Chart(
 )
 ```
 
-2.  Optionally specify contra accounts. Some contra account examples are the following:
-    - depreciation which offsets `ppe` (property, plant, equipment) account;
-    - discounts and cashback which offset `sales` account.
+2.  You can also specify contra accounts.
+
+In example below `depreciation` contra account offsets
+`ppe` (property, plant, equipment) account
+and discounts and cashback contra accounts
+offset `sales` account.
+
+You can do the same at once when creating `Chart`:
 
 ```python
-chart.contra_accounts = {
-  "ppe": ["depreciation"],
-  "sales": ["discounts", "cashback"]
-}
+chart = Chart(
+    assets=["cash", "ar", "goods", "ppe"],
+    expenses=["cogs", "sga"],
+    equity=["equity"],
+    retained_earnings_account="re",
+    liabilities=["dividend_due", "ap"],
+    income=["sales"],
+    contra_accounts = {
+      "ppe": ["depreciation"],
+      "sales": ["discounts", "cashback"]
+    }
+)
 ```
 
 3. Next create a general ledger (book) based on the chart of accounts.
@@ -124,24 +137,22 @@ book = (chart.book()
 )
 ```
 
-6. Make income statement.
+6. Make income statement and balance sheet.
 
 ```python
-from abacus import IncomeStatement
-
 income_statement = book.income_statement()
+balance_sheet = book.balance_sheet()
+```
+
+Check:
+
+```python
+from abacus import IncomeStatement, BalanceSheet
+
 assert income_statement == IncomeStatement(
     income={'sales': 400},
     expenses={'cogs': 200, 'sga': 50}
 )
-```
-
-7. Make balance sheet.
-
-```python
-from abacus import BalanceSheet
-
-balance_sheet = book.balance_sheet()
 assert balance_sheet == BalanceSheet(
     assets={"cash": 1100, "ar": 0, "goods": 50, "ppe": 0},
     capital={"equity": 1000, "re": 150},
@@ -149,7 +160,7 @@ assert balance_sheet == BalanceSheet(
 )
 ```
 
-8. Print balance sheet and income statement to screen
+7. Print balance sheet and income statement to screen
    with verbose account names and rich formatting.
 
 ```python
@@ -169,7 +180,7 @@ rv.print(balance_sheet)
 rv.print(income_statement)
 ```
 
-9. Use end balances from current period to initialize book at the start of next accounting period.
+8. Use end balances from current period to initialize book at the start of next accounting period.
 
 ```python
 end_balances = book.nonzero_balances()
@@ -195,12 +206,12 @@ jaba chart chart.json set --expenses cogs sga
 jaba chart chart.json offset ppe depreciation
 jaba chart chart.json offset sales discounts cashback
 jaba chart chart.json list --validate
+jaba chart chart.json make store.json
 ```
 
 ### Post entries to ledger and close
 
 ```bash
-jaba ledger store.json init chart.json
 jaba ledger store.json post cash equity 1000
 jaba ledger store.json post goods cash 300
 jaba ledger store.json post cogs goods 250
@@ -228,8 +239,9 @@ Show balances of all accounts or balance of a specific account:
 jaba balances store.json show --skip-zero
 jaba balances store.json show cash
 ```
-`assert` command will make the program complain 
-if account balance is not equal to provided value. 
+
+`assert` command will make the program complain
+if account balance is not equal to provided value.
 This is useful for testing.
 
 ```bash

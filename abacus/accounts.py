@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List
 
-from abacus.accounting_types import Amount, ClosingEntry
+from abacus.accounting_types import Amount
 
 __all__ = ["Account"]
 

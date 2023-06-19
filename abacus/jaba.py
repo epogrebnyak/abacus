@@ -2,15 +2,15 @@
 *jaba* is a double entry accounting manager.
 
 Commands: 
-  jaba chart    Define a chart of accounts.
-  jaba ledger   Post entries and close accounting period.
-  jaba names    Use longer account names.
+  jaba chart    Define a chart of accounts and make ledger.
+  jaba ledger   Post entries to ledger and close accounting period.
+  jaba balances Show trail balance and account balances.
+  jaba names    Define verbose account names.
   jaba report   Produce financial reports.
-  jaba balances Show account balances.
 
 Usage:
   jaba chart <chart_file> unlink
-  jaba chart <chart_file> touch
+  jaba chart <chart_file> touch [--overwrite]
   jaba chart <chart_file> set --assets <account_names>... [--quiet]
   jaba chart <chart_file> set --expenses <account_names>... [--quiet]
   jaba chart <chart_file> set --capital <account_names>... [--quiet]
@@ -18,8 +18,8 @@ Usage:
   jaba chart <chart_file> set --liabilities <account_names>... [--quiet]
   jaba chart <chart_file> set --income <account_names>... [--quiet]
   jaba chart <chart_file> offset <account_name> <contra_account_names>... [--quiet]
-  jaba chart <chart_file> list [--validate] [--quiet] 
-  jaba chart <chart_file> list [--validate] --json 
+  jaba chart <chart_file> list [--validate [--quiet]] [--json]
+  jaba chart <chart_file> make <ledger_file> [--start-balances <starting_balances_file>] [--quiet]
   jaba ledger <ledger_file> init <chart_file> [<starting_balances_file>] [--quiet]
   jaba ledger <ledger_file> post <dr_account> <cr_account> <amount> [--adjust] [--post-close] [--quiet]
   jaba ledger <ledger_file> close [--quiet]
@@ -28,12 +28,12 @@ Usage:
   jaba balances <ledger_file> show <account_name> [--net] [--json]
   jaba balances <ledger_file> assert <account_name> <amount> [--net] [--json]
   jaba balances <ledger_file> trial [(--credit | --debit) [--sum]] [--json] 
-  jaba names <name_file> touch
+  jaba names <name_file> touch [--overwrite]
   jaba names <name_file> set <account_name> <title>
   jaba names <name_file> list [--json]
   jaba report <ledger_file> (-i | --income-statement) [--names <name_file>] [--rich] [--json]
   jaba report <ledger_file> (-b | --balance-sheet) [--names <name_file>] [--rich] [--json]
-  jaba --args
+  jaba debug --args
 
 Options:
   -h --help     Show this screen.
@@ -151,10 +151,7 @@ def main():
             chart.contra_accounts[key] = names
             chart.save(path)
             print("abacus chart:", contra_phrase(key, names))
-    elif arguments["names"]:
-        pass
-    elif arguments["ledger"]:
-        if arguments["init"]:
+        if arguments["make"]:
             chart = Chart.load(arguments["<chart_file>"])
             start_file = arguments["<starting_balances_file>"]
             # FIXME: does not work due to JSON issues
@@ -166,6 +163,9 @@ def main():
             book.save(arguments["<ledger_file>"])
             print("abacus ledger: Initialized data ledger (ledger).")
             sys.exit(0)
+    elif arguments["names"]:
+        pass
+    elif arguments["ledger"]:
         path = arguments["<ledger_file>"]
         book = Book.load(path)
         if arguments["post"]:
@@ -237,14 +237,17 @@ def main():
             path = arguments["<ledger_file>"]
             book = Book.load(path)
             if arguments["--skip-zero"]:
-                print("abacus balances: showing accounts with non-zero balances")
+                if not arguments["--json"]:
+                    print("abacus balances: showing accounts with non-zero balances")
                 data = book.nonzero_balances().data
             else:
-                print("abacus balances: showing all accounts")
+                if not arguments["--json"]:
+                    print("abacus balances: showing all accounts")
                 data = book.balances().data
             if arguments["--json"]:
                 print(json.dumps(data))
             else:
+                # n1 and n2 are column widths
                 n1 = max(map(len, data.keys()))
                 n2 = max(map(lambda x: len(str(x)), data.values()))
                 for k, v in data.items():
