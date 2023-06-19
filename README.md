@@ -206,6 +206,7 @@ jaba chart chart.json set --expenses cogs sga
 jaba chart chart.json offset ppe depreciation
 jaba chart chart.json offset sales discounts cashback
 jaba chart chart.json list --validate
+echo {"cash": 700, "equity": 1000, "goods": 300} > start_balances.json 
 jaba chart chart.json make store.json
 ```
 

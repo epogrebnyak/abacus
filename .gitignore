@@ -2,6 +2,8 @@ chart.json
 store.json
 cli-example/chart.json
 cli-example/store.json
+cli-example/start_balances.json
+cli-example/end_balances.json
 docs/site/
 .env-cli/
 

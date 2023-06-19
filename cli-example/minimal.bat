@@ -9,8 +9,8 @@ call jaba chart chart.json set --expenses cogs sga
 call jaba chart chart.json offset ppe depreciation
 call jaba chart chart.json offset sales discounts cashback
 call jaba chart chart.json list --validate
+call jaba chart chart.json make store.json
 
-call jaba ledger store.json init chart.json
 call jaba ledger store.json post cash equity 1000
 call jaba ledger store.json post goods cash 300
 call jaba ledger store.json post cogs goods 250
