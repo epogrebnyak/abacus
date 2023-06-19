@@ -16,8 +16,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
 
-      - name: Install dependencies
+      - name: Install poetry
         uses: Gr1N/setup-poetry@v8
+        with:
+          poetry-version: "1.5.1"
 
       - name: Install pytest
         run: poetry install
