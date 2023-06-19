@@ -19,9 +19,6 @@ jaba ledger store.json post goods cash 300
 jaba balances store.json show --skip-zero --json""".strip()
 
 
-def make_args(command: str) -> list[str]:
-    return command.replace("jaba", "python -m abacus.jaba").split()
-
 
 def test_n_commands(commands):
     assert len(commands.split("\n")) == 8
@@ -40,25 +37,18 @@ def test_run_one(tmpdir):
 
 
 def test_few_commands(commands, tmpdir):
-    if os.name == "nt":
-        for line in commands.split("\n"):
-            result = subprocess.run(
-                make_args(line), shell=True, capture_output=True, text=True, cwd=tmpdir
-            )
-            assert result.returncode == 0
-        assert json.loads(result.stdout) == {
-            "cash": 700,
-            "goods": 300,
-            "equity": 1000,
-        }
-    else:
-        for line in commands.split("\n"):
-            result = subprocess.run(
-                line, shell=True, capture_output=True, text=True, cwd=tmpdir
-            )
-            assert result.returncode == 0
-        assert json.loads(result.stdout) == {
-            "cash": 700,
-            "goods": 300,
-            "equity": 1000,
-        }
+    for line in commands.split("\n"):
+        if os.name == "nt":
+            command = line.replace("jaba", "python -m abacus.jaba").split()
+        else:
+            command = line
+        result = subprocess.run(
+            command, shell=True, capture_output=True, text=True, cwd=tmpdir
+        )
+        assert result.returncode == 0
+    # final check
+    assert json.loads(result.stdout) == {
+        "cash": 700,
+        "goods": 300,
+        "equity": 1000,
+    }
