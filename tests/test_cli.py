@@ -19,7 +19,6 @@ jaba ledger store.json post goods cash 300
 jaba balances store.json show --skip-zero --json""".strip()
 
 
-
 def test_n_commands(commands):
     assert len(commands.split("\n")) == 8
 
