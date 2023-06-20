@@ -39,32 +39,32 @@ def init():
     pass
 
 
-def chart_set_assets():
+def chart_set_assets(account_names):
     # Implementation for "bx chart set"
     pass
 
 
-def chart_set_capital():
+def chart_set_capital(account_names):
     # Implementation for "bx chart set"
     pass
 
 
-def chart_set_liabilities():
+def chart_set_liabilities(account_names):
     # Implementation for "bx chart set"
     pass
 
 
-def chart_set_income():
+def chart_set_income(account_names):
     # Implementation for "bx chart set"
     pass
 
 
-def chart_set_expenses():
+def chart_set_expenses(account_names):
     # Implementation for "bx chart set"
     pass
 
 
-def chart_set_retained_earnings():
+def chart_set_retained_earnings(account_name):
     # Implementation for "bx chart set --retained_earnings"
     pass
 
