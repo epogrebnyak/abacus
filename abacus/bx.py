@@ -1,7 +1,7 @@
 """Double entry accounting manager.
 
 Usage:
-  bx init
+  bx init [--force]
   bx chart set --assets <account_names>...
   bx chart set --capital <account_names>...
   bx chart set --retained-earnings <account_name>
@@ -10,7 +10,7 @@ Usage:
   bx chart set --expenses <account_names>... 
   bx chart offset <account> (--contra-accounts <contra_accounts>...)
   bx chart offset <account> <contra_accounts>...
-  bx chart show
+  bx chart show [--json]
   bx ledger start [--file <balances_file>] [--dry-run]
   bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--post-close]
   bx ledger post --dr <dr> --cr <cr> --amount <amount> [--adjust] [--post-close]
@@ -31,12 +31,99 @@ Options:
   --version     Show version.
 """
 
+#test with below:
+"""
+bx init 
+bx init --force
+bx chart show 
+bx chart show --json    
+"""
+import os
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
 from docopt import docopt
 
+from abacus import Chart
+from abacus.chart import Chart
 
-def init():
+def cwd() -> Path:
+    return Path(os.getcwd())
+
+@dataclass
+class Location:
+    directory: Path
+
+    @property 
+    def chart(self, filename: str = "chart.json"):
+        return self.directory / filename
+
+    @property 
+    def entries(self, filename: str = "entries.json"):
+        return self.directory / filename
+
+    @property 
+    def names(self, filename: str = "names.json"):
+        return self.directory / filename
+
+
+def init(force: bool = False, directory = cwd()):
     # Implementation for "bx init"
-    pass
+    loc = Location(directory)
+    create_chart(loc.chart, force)
+
+def echo(s):
+    print(s, end=" ")
+
+def create_chart(path: Path, force: bool):
+    if path.exists() and not force:
+        sys.exit(f"Cannot create {path}, file already exists.")
+    Chart.empty().save(path)
+    print(f"Created chart of accounts at {path}.")
+
+def safe_load(load_func, path):
+        try:
+            res = load_func(path)
+        except FileNotFoundError:
+            sys.exit(f"File not found: {path}")
+        return res   
+
+import json 
+
+def comma(xs):
+    if xs:
+        return ", ".join(xs)
+    else:
+        return "not specified"
+
+
+def contra_phrase(key, names):
+    return " ".join([key, "is offset by", comma(names)])
+
+
+def print_chart(chart):
+    re = chart.retained_earnings_account
+    print("Chart of accounts")
+    print("  Assets:     ", comma(chart.assets))
+    print("  Capital:    ", comma(chart.equity + [re] if re else []))
+    print("  Liabilities:", comma(chart.liabilities))
+    print("  Income:     ", comma(chart.income))
+    print("  Expenses:   ", comma(chart.expenses))
+    if chart.contra_accounts:
+        print("  Contra accounts:")
+        for key, names in chart.contra_accounts.items():
+            print("   ", contra_phrase(key, names))
+    print("  Retained earnings account:", re or "not specified")
+    print("  Income summary account:   ", chart.income_summary_account)
+
+
+def chart_show(path: Path, json_flag: bool):
+    chart = safe_load(Chart.parse_file, path)
+    if json_flag:
+        print(json.dumps(chart.dict()))
+    else:    
+        print_chart(chart)
 
 
 def chart_set_assets(account_names):
@@ -73,8 +160,6 @@ def chart_offset(account, contra_accounts):
     # Implementation for "bx chart offset"
     pass
 
-def chart_show():
-    pass
 
 
 def ledger_start(file, dry_run):
@@ -139,7 +224,7 @@ def main():
 
     # Call the corresponding functions based on the command and options
     if arguments["init"]:
-        init()
+        init(arguments["--force"])
     elif arguments["debug"]:
         debug(arguments)
     elif arguments["chart"] and arguments["set"]:
@@ -159,7 +244,8 @@ def main():
     elif arguments["chart"] and arguments["offset"]:
         chart_offset(arguments["<account>"], arguments["<contra_accounts>"])
     elif arguments["chart"] and arguments["show"]:
-        chart_show()
+        path = Location(directory=cwd()).chart
+        chart_show(path, arguments["--json"])
     elif arguments["ledger"] and arguments["start"]:
         ledger_start(arguments["--file"], arguments["--dry-run"])
     elif arguments["ledger"] and arguments["post"]:
