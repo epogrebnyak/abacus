@@ -3,13 +3,12 @@
 Usage:
   bx init [--force]
   bx chart set --assets <account_names>...
-  bx chart set --capital <account_names>...
+  bx chart set (--capital | --equity) <account_names>...
   bx chart set --retained-earnings <account_name>
   bx chart set --liabilities <account_names>...
   bx chart set --income <account_names>...
-  bx chart set --expenses <account_names>... 
-  bx chart offset <account> (--contra-accounts <contra_accounts>...)
-  bx chart offset <account> <contra_accounts>...
+  bx chart set --expenses <account_names>...
+  bx chart offset <account_name> (--contra-accounts <contra_account_names>...)
   bx chart show [--json]
   bx ledger start [--file <balances_file>] [--dry-run]
   bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--post-close]
@@ -31,13 +30,6 @@ Options:
   --version     Show version.
 """
 
-#test with below:
-"""
-bx init 
-bx init --force
-bx chart show 
-bx chart show --json    
-"""
 import os
 import sys
 from dataclasses import dataclass
@@ -48,33 +40,37 @@ from docopt import docopt
 from abacus import Chart
 from abacus.chart import Chart
 
+
 def cwd() -> Path:
     return Path(os.getcwd())
+
 
 @dataclass
 class Location:
     directory: Path
 
-    @property 
+    @property
     def chart(self, filename: str = "chart.json"):
         return self.directory / filename
 
-    @property 
+    @property
     def entries(self, filename: str = "entries.json"):
         return self.directory / filename
 
-    @property 
+    @property
     def names(self, filename: str = "names.json"):
         return self.directory / filename
 
 
-def init(force: bool = False, directory = cwd()):
+def init(force: bool = False, directory=cwd()):
     # Implementation for "bx init"
     loc = Location(directory)
     create_chart(loc.chart, force)
 
+
 def echo(s):
     print(s, end=" ")
+
 
 def create_chart(path: Path, force: bool):
     if path.exists() and not force:
@@ -82,14 +78,17 @@ def create_chart(path: Path, force: bool):
     Chart.empty().save(path)
     print(f"Created chart of accounts at {path}.")
 
-def safe_load(load_func, path):
-        try:
-            res = load_func(path)
-        except FileNotFoundError:
-            sys.exit(f"File not found: {path}")
-        return res   
 
-import json 
+def safe_load(load_func, path):
+    try:
+        res = load_func(path)
+    except FileNotFoundError:
+        sys.exit(f"File not found: {path}")
+    return res
+
+
+import json
+
 
 def comma(xs):
     if xs:
@@ -99,7 +98,7 @@ def comma(xs):
 
 
 def contra_phrase(key, names):
-    return " ".join([key, "is offset by", comma(names)])
+    return " ".join([key, "account is offset by", comma(names)])
 
 
 def print_chart(chart):
@@ -113,53 +112,16 @@ def print_chart(chart):
     if chart.contra_accounts:
         print("  Contra accounts:")
         for key, names in chart.contra_accounts.items():
-            print("   ", contra_phrase(key, names))
+            print("    -", contra_phrase(key, names))
     print("  Retained earnings account:", re or "not specified")
     print("  Income summary account:   ", chart.income_summary_account)
 
 
-def chart_show(path: Path, json_flag: bool):
-    chart = safe_load(Chart.parse_file, path)
+def chart_show(chart: Chart, json_flag: bool):
     if json_flag:
         print(json.dumps(chart.dict()))
-    else:    
+    else:
         print_chart(chart)
-
-
-def chart_set_assets(account_names):
-    # Implementation for "bx chart set"
-    pass
-
-
-def chart_set_capital(account_names):
-    # Implementation for "bx chart set"
-    pass
-
-
-def chart_set_liabilities(account_names):
-    # Implementation for "bx chart set"
-    pass
-
-
-def chart_set_income(account_names):
-    # Implementation for "bx chart set"
-    pass
-
-
-def chart_set_expenses(account_names):
-    # Implementation for "bx chart set"
-    pass
-
-
-def chart_set_retained_earnings(account_name):
-    # Implementation for "bx chart set --retained_earnings"
-    pass
-
-
-def chart_offset(account, contra_accounts):
-    # Implementation for "bx chart offset"
-    pass
-
 
 
 def ledger_start(file, dry_run):
@@ -215,37 +177,67 @@ def end():
 
 
 def debug(arguments):
-    # Implementation for "bx debug"
     print(arguments)
+
+
+def get_chart():
+    path = Location(directory=cwd()).chart
+    return safe_load(Chart.parse_file, path)
+
+
+def chart_command(arguments):
+    path = Location(directory=cwd()).chart
+    chart = safe_load(Chart.parse_file, path)
+    if arguments["set"]:
+        account_names = arguments["<account_names>"]
+        field = ""
+        if arguments["--assets"]:
+            chart.assets = account_names
+            field = "assets"
+        elif arguments["--capital"] or arguments["--equity"]:
+            chart.equity = account_names
+            field = "equity (capital)"
+        elif arguments["--liabilities"]:
+            chart.liabilities = account_names
+            field = "liabilities"
+        elif arguments["--income"]:
+            chart.income = account_names
+            field = "income"
+        elif arguments["--expenses"]:
+            chart.expenses = account_names
+            field = "expenses"
+        if field:
+            print(
+                "Assigned",
+                comma(account_names),
+                "as",
+                field,
+                "accounts." if len(account_names) > 1 else "account.",
+            )
+        if arguments["--retained-earnings"]:
+            account_name = arguments["<account_name>"]
+            chart.retained_earnings_account = account_name
+            print("Assigned", account_name, "as retained earnings account.")
+        chart.save(path)
+    elif arguments["offset"]:
+        key = arguments["<account_name>"]
+        names = arguments["<contra_account_names>"]
+        chart.contra_accounts[key] = names
+        chart.save(path)
+        print("Modified chart,", contra_phrase(key, names) + ".")
+    elif arguments["show"]:
+        chart_show(chart, arguments["--json"])
 
 
 def main():
     arguments = docopt(__doc__, version="0.4.13")
 
-    # Call the corresponding functions based on the command and options
     if arguments["init"]:
         init(arguments["--force"])
     elif arguments["debug"]:
         debug(arguments)
-    elif arguments["chart"] and arguments["set"]:
-        account_names = arguments["<account_names>"]
-        if arguments["--assets"]:
-            chart_set_assets(account_names)
-        elif arguments["--capital"]:
-            chart_set_capital(account_names)
-        elif arguments["--liabilities"]:
-            chart_set_liabilities(account_names)
-        elif arguments["--income"]:
-            chart_set_income(account_names)
-        elif arguments["--expenses"]:
-            chart_set_expenses(account_names)
-        elif arguments["--retained-earnings"]:
-            chart_set_retained_earnings(arguments["account_name"])
-    elif arguments["chart"] and arguments["offset"]:
-        chart_offset(arguments["<account>"], arguments["<contra_accounts>"])
-    elif arguments["chart"] and arguments["show"]:
-        path = Location(directory=cwd()).chart
-        chart_show(path, arguments["--json"])
+    elif arguments["chart"]:
+        chart_command(arguments)
     elif arguments["ledger"] and arguments["start"]:
         ledger_start(arguments["--file"], arguments["--dry-run"])
     elif arguments["ledger"] and arguments["post"]:
