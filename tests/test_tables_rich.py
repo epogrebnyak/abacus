@@ -1,18 +1,16 @@
-from abacus.reports import AccountBalancesDict, BalanceSheet, IncomeStatement
+from abacus.reports import BalanceSheet, IncomeStatement
 from abacus.tables import RichViewer
 
 
 def test_cv():
     bs = BalanceSheet(
-        assets=AccountBalancesDict(
-            {"cash": 1130, "receivables": 25, "goods_for_sale": 45}
-        ),
-        capital=AccountBalancesDict({"equity": 1000, "re": 75}),
-        liabilities=AccountBalancesDict({"payables": 50, "divp": 75}),
+        assets=({"cash": 1130, "receivables": 25, "goods_for_sale": 45}),
+        capital=({"equity": 1000, "re": 75}),
+        liabilities=({"payables": 50, "divp": 75}),
     )
     inc = IncomeStatement(
-        income=AccountBalancesDict({"sales": 760}),
-        expenses=AccountBalancesDict({"cogs": 440, "sga": 400}),
+        income=({"sales": 760}),
+        expenses=({"cogs": 440, "sga": 400}),
     )
 
     rename_dict = {

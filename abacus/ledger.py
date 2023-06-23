@@ -77,9 +77,10 @@ def transfer_balance(account, from_: AccountName, to_: AccountName) -> ClosingEn
 
 
 def balances(ledger: Ledger) -> AccountBalancesDict:
-    return AccountBalancesDict(
-        {account_name: account.balance() for account_name, account in ledger.items()}
-    )
+    d: AccountBalancesDict = {
+        account_name: account.balance() for account_name, account in ledger.items()
+    }
+    return d
 
 
 def subset_by_class(ledger: Ledger, cls: Type):

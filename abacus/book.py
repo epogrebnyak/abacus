@@ -116,7 +116,8 @@ class Book(BaseModel):
         return self.ledger().balances()
 
     def nonzero_balances(self) -> AccountBalancesDict:
-        return AccountBalancesDict({k: v for k, v in self.balances().items() if v != 0})
+        d: AccountBalancesDict = {k: v for k, v in self.balances().items() if v != 0}
+        return d
 
     def balance_sheet(self):
         from .reports import balance_sheet

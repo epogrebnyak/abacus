@@ -1,14 +1,14 @@
 from abacus import PlainTextViewer
-from abacus.reports import AccountBalancesDict, BalanceSheet, IncomeStatement
+from abacus.reports import BalanceSheet, IncomeStatement
 
 r2 = IncomeStatement(
-    income=AccountBalancesDict({"sales": 400}),
-    expenses=AccountBalancesDict({"cogs": 200, "sga": 50}),
+    income={"sales": 400},
+    expenses={"cogs": 200, "sga": 50},
 )
 r1 = BalanceSheet(
-    assets=AccountBalancesDict({"cash": 1100, "receivables": 0, "goods_for_sale": 50}),
-    capital=AccountBalancesDict({"equity": 1000, "re": 75}),
-    liabilities=AccountBalancesDict({"divp": 75, "payables": 0}),
+    assets={"cash": 1100, "receivables": 0, "goods_for_sale": 50},
+    capital={"equity": 1000, "re": 75},
+    liabilities={"divp": 75, "payables": 0},
 )
 rename_dict = {
     "re": "Retained earnings",

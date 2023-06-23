@@ -1,16 +1,4 @@
-from abacus.reports import AccountBalancesDict, BalanceSheet, IncomeStatement
-
-
-def test_AccountBalanceDict():
-    assert (
-        AccountBalancesDict(
-            [
-                ("a", 3),
-                ("b", -1),
-            ]
-        ).total()
-        == 2
-    )
+from abacus.reports import BalanceSheet, IncomeStatement
 
 
 def test_income_statement(chart0, entries0):

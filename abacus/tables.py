@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from abacus.accounting_types import Amount
+from abacus.accounting_types import Amount, total
 from abacus.reports import BalanceSheet, IncomeStatement, Report
 
 __all__ = ["PlainTextViewer", "RichViewer"]
@@ -34,7 +34,7 @@ def yield_lines(report: Report, parts: List[str]):
     for part in parts:
         items = getattr(report, part)
         # The header line shows sum of the items
-        yield HeaderLine(part, items.total())
+        yield HeaderLine(part, total(items))
         for name, value in items.items():
             yield AccountLine(name, value)
 
@@ -105,8 +105,8 @@ def balance_sheet_lines(
     left += [empty_line()] * (n - len(left))
     right += [empty_line()] * (n - len(right))
     # Add end line
-    left.append(HeaderLine(end_line, bs.assets.total()))
-    right.append(HeaderLine(end_line, bs.capital.total() + bs.liabilities.total()))
+    left.append(HeaderLine(end_line, total(bs.assets)))
+    right.append(HeaderLine(end_line, total(bs.capital) + total(bs.liabilities)))
     # Rename using rename_dict
     return rename_lines(rename_dict, left), rename_lines(rename_dict, right)
 

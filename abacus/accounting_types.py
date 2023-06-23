@@ -2,7 +2,6 @@
 Base classes for a minimal accounting framework.
 """
 
-from collections import UserDict
 from typing import Dict
 
 from pydantic.dataclasses import dataclass
@@ -13,15 +12,11 @@ Amount = int
 AccountName = str
 Netting = dict[AccountName, list[AccountName]]
 Balances = Dict[AccountName, Amount]
+AccountBalancesDict = Dict[AccountName, Amount]
 
 
-class AccountBalancesDict(UserDict[AccountName, Amount]):
-    """Dictionary with account names and balances, example:
-    AccountBalancesDict({'cash': 100})
-    """
-
-    def total(self) -> Amount:
-        return sum(self.values())
+def total(dict_) -> Amount:
+    return sum(dict_.values())
 
 
 class AbacusError(Exception):

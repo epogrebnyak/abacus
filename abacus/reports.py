@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from abacus.accounting_types import AccountBalancesDict, Amount, Netting
+from abacus.accounting_types import AccountBalancesDict, Amount, Netting, total
 from abacus.accounts import Asset, Capital, Expense, Income, Liability
 from abacus.closing import make_closing_entries_for_permanent_contra_accounts
 from abacus.ledger import Ledger
@@ -27,7 +27,7 @@ class IncomeStatement(Report):
     expenses: AccountBalancesDict
 
     def current_profit(self):
-        return self.income.total() - self.expenses.total()
+        return total(self.income) - total(self.expenses)
 
 
 def balance_sheet(ledger: Ledger, netting: Netting) -> BalanceSheet:

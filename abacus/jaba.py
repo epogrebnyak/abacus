@@ -201,7 +201,7 @@ def main():
         if arguments["-i"] or arguments["--income-statement"]:
             from abacus.book import ledger_for_income_statement
 
-            pprint(ledger_for_income_statement(book).balances().data)
+            pprint(ledger_for_income_statement(book).balances())
             if arguments["--json"]:
                 pprint(book.income_statement().__dict__)
             else:
@@ -218,7 +218,7 @@ def main():
         book = Book.load(path)
         account_name = arguments["<account_name>"]
         if arguments["assert"]:
-            actual = book.balances().data[account_name]
+            actual = book.balances()[account_name]
             amount = Amount(arguments["<amount>"])
             if actual != amount:
                 sys.exit(
@@ -227,7 +227,7 @@ def main():
                 )
             print("abacus assert (passed):", account_info(account_name, amount))
         if arguments["show"] and account_name:
-            amount = book.balances().data[account_name]
+            amount = book.balances()[account_name]
             if arguments["--json"]:
                 print(json.dumps({account_name: amount}))
             else:
@@ -239,11 +239,11 @@ def main():
             if arguments["--skip-zero"]:
                 if not arguments["--json"]:
                     print("abacus balances: showing accounts with non-zero balances")
-                data = book.nonzero_balances().data
+                data = book.nonzero_balances()
             else:
                 if not arguments["--json"]:
                     print("abacus balances: showing all accounts")
-                data = book.balances().data
+                data = book.balances()
             if arguments["--json"]:
                 print(json.dumps(data))
             else:

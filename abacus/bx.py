@@ -3,33 +3,31 @@
 Usage:
   bx init [--force]
   bx chart set --assets <account_names>...
-  bx chart set (--capital | --equity) <account_names>...
-  bx chart set --retained-earnings <account_name>
+  bx chart set --equity <account_names>...
+  bx chart set --retained-earnings <re_account_name>
   bx chart set --liabilities <account_names>...
   bx chart set --income <account_names>...
   bx chart set --expenses <account_names>...
   bx chart offset <account_name> (--contra-accounts <contra_account_names>...)
   bx chart show [--json]
-  bx ledger start [--file <balances_file>] [--dry-run]
+  bx ledger start [--file <balances_file> | --empty] [--dry-run]
   bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--post-close]
-  bx ledger post --dr <dr> --cr <cr> --amount <amount> [--adjust] [--post-close]
   bx ledger post <dr> <cr> <amount> [--adjust] [--post-close]
   bx ledger close
-  bx name <account_name> <title>
-  bx name <account_name> ((-t | --title) <title>)
-  bx report (-i | --income-statement) 
-  bx report (-b | --balance-sheet) 
-  bx report (-t | --trial-balance)
-  bx balances (--nonzero | --all)
-  bx balances <account_name> [--assert <amount>]
+  bx name <account_name> --title <title>
+  bx report --income-statement [--json] 
+  bx report --balance-sheet [--json] 
+  bx balances (--nonzero | --all) [--json]
+  bx account <account_name> [--assert-balance <amount>]
   bx end
-  bx debug --args
+  bx debug
 
 Options:
   -h --help     Show this help message.
   --version     Show version.
 """
 
+import json
 import os
 import sys
 from dataclasses import dataclass
@@ -37,8 +35,8 @@ from pathlib import Path
 
 from docopt import docopt
 
-from abacus import Chart
-from abacus.chart import Chart
+from abacus import Book, Chart, PlainTextViewer
+from abacus.accounting_types import Amount
 
 
 def cwd() -> Path:
@@ -87,9 +85,6 @@ def safe_load(load_func, path):
     return res
 
 
-import json
-
-
 def comma(xs):
     if xs:
         return ", ".join(xs)
@@ -124,100 +119,46 @@ def chart_show(chart: Chart, json_flag: bool):
         print_chart(chart)
 
 
-def ledger_start(file, dry_run):
-    # Implementation for "bx ledger start"
-    pass
-
-
-def ledger_post(dr, cr, amount, adjust, post_close):
-    # Implementation for "bx ledger post"
-    pass
-
-
-def ledger_close():
-    # Implementation for "bx ledger close"
-    pass
-
-
 def name(account_name, title):
     # Implementation for "bx name"
     pass
 
 
-def report_income_statement():
-    """Implementation for 'bx report -i'"""
-    print("i")
-
-
-def report_balance_sheet():
-    """Implementation for 'bx report -b'"""
-    print("b")
-
-
-def report_trial_balance():
-    """Implementation for 'bx report -t'"""
-    print("t")
-
-
-def account_balance(account_name: str):
-    print(account_name)
-
-
-def assert_account_balance(account_name: str, assert_amount: str):
-    print(account_name, assert_amount)
-
-
-def balances(all_flag: bool, nonzero_flag: bool, json: bool = False):
-    print(all_flag, nonzero_flag)
-
-
 def end():
     # Implementation for "bx end"
-    pass
+    print("This is an alias.")
 
 
 def debug(arguments):
     print(arguments)
 
 
-def get_chart():
-    path = Location(directory=cwd()).chart
-    return safe_load(Chart.parse_file, path)
+def load_chart(directory=cwd()):
+    path = Location(directory).chart
+    return safe_load(Chart.parse_file, path), path
 
 
 def chart_command(arguments):
-    path = Location(directory=cwd()).chart
-    chart = safe_load(Chart.parse_file, path)
+    chart, path = load_chart()
     if arguments["set"]:
-        account_names = arguments["<account_names>"]
-        field = ""
-        if arguments["--assets"]:
-            chart.assets = account_names
-            field = "assets"
-        elif arguments["--capital"] or arguments["--equity"]:
-            chart.equity = account_names
-            field = "equity (capital)"
-        elif arguments["--liabilities"]:
-            chart.liabilities = account_names
-            field = "liabilities"
-        elif arguments["--income"]:
-            chart.income = account_names
-            field = "income"
-        elif arguments["--expenses"]:
-            chart.expenses = account_names
-            field = "expenses"
-        if field:
-            print(
-                "Assigned",
-                comma(account_names),
-                "as",
-                field,
-                "accounts." if len(account_names) > 1 else "account.",
-            )
         if arguments["--retained-earnings"]:
-            account_name = arguments["<account_name>"]
-            chart.retained_earnings_account = account_name
-            print("Assigned", account_name, "as retained earnings account.")
+            re_account_name = arguments["<re_account_name>"]
+            chart.retained_earnings_account = re_account_name
+            print("Set", re_account_name, "as retained earnings account.")
+            chart.save(path)
+            sys.exit(0)
+        account_names = arguments["<account_names>"]
+        for attribute in ["assets", "equity", "liabilities", "income", "expenses"]:
+            if arguments["--" + attribute]:
+                setattr(chart, attribute, account_names)
+                break
+        print(
+            "Set",
+            comma(account_names),
+            "as",
+            attribute,
+            "accounts." if len(account_names) > 1 else "account.",
+        )
         chart.save(path)
     elif arguments["offset"]:
         key = arguments["<account_name>"]
@@ -229,6 +170,115 @@ def chart_command(arguments):
         chart_show(chart, arguments["--json"])
 
 
+def read_json(path):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def ledger_command(arguments):
+    path = Location(directory=cwd()).entries
+    if arguments["start"]:
+        chart, _ = load_chart()
+        if arguments["--file"]:
+            starting_balances = read_json(arguments["<balances_file>"])
+        else:
+            starting_balances = {}
+        book = chart.book(starting_balances)
+        if not arguments["--dry-run"]:
+            book.save(path)
+            print("Created ledger.")
+        sys.exit(0)
+    book = safe_load(Book.parse_file, path)
+    if arguments["post"]:
+        dr, cr, amount = arguments["<dr>"], arguments["<cr>"], arguments["<amount>"]
+        if arguments["--adjust"]:
+            raise NotImplementedError
+        elif arguments["--post-close"]:
+            raise NotImplementedError
+        else:
+            book.post(dr, cr, amount)
+        book.save(path)
+        print(f"Posted entry to ledger: debit {dr}, credit {cr}, amount {amount}).")
+    if arguments["close"]:
+        book.close()
+        print("Added closing entries to ledger.")
+    book.save(path)
+
+
+def report_command(arguments):
+    path = Location(directory=cwd()).entries
+    book = Book.load(path)
+    if arguments["--income-statement"]:
+        if arguments["--json"]:
+            print(json.dumps(book.income_statement().__dict__))
+        else:
+            print("Income statement")
+            print(PlainTextViewer(rename_dict={}).show(book.income_statement()))
+    if arguments["--balance-sheet"]:
+        if arguments["--json"]:
+            print(json.dumps(book.balance_sheet().__dict__))
+        else:
+            print("Balance sheet")
+            print(PlainTextViewer(rename_dict={}).show(book.balance_sheet()))
+
+
+def account_info(account_name: str, amount: Amount):
+    return f"account <{account_name}> balance is {amount}."
+
+
+def print_account_balance(account_name: str):
+    path = Location(directory=cwd()).entries
+    amount = Book.load(path).balances()[account_name]
+    print(account_info(account_name, amount).capitalize())
+
+
+def assert_account_balance(account_name: str, assert_amount: str):
+    path = Location(directory=cwd()).entries
+    amount = Book.load(path).balances()[account_name]
+    expected_amount = Amount(assert_amount)
+    if amount != expected_amount:
+        sys.exit(
+            f"Check (failed): expected {expected_amount}, got {amount}"
+            f" for account {account_name}."
+        )
+    print("Check (passed):", account_info(account_name, amount))
+
+
+def print_two_columns(data: dict):
+    def maxlen(xs):
+        return max(map(len, map(str, xs)))
+
+    # n1 and n2 are column widths
+    n1 = maxlen(data.keys())
+    n2 = maxlen(data.values())
+    for k, v in data.items():
+        print(" ", k.ljust(n1, " "), str(v).rjust(n2, " "))
+
+
+def account_command(arguments):
+    # bx account <account_name> [--assert-balance <amount>]
+    account_name = arguments["<account_name>"]
+    if account_name:
+        if arguments["--assert-balance"]:
+            assert_account_balance(account_name, arguments["<amount>"])
+        else:
+            print_account_balance(account_name)
+
+
+def balances_command(arguments):
+    # bx balances (--nonzero | --all)
+    path = Location(directory=cwd()).entries
+    book = Book.load(path)
+    if arguments["--all"]:
+        data = book.balances()
+    elif arguments["--nonzero"]:
+        data = book.nonzero_balances()
+    print("Account balances")
+    if arguments["--json"]:
+        print(json.dumps(data))
+    else:
+        print_two_columns(data)
+
+
 def main():
     arguments = docopt(__doc__, version="0.4.13")
 
@@ -238,36 +288,16 @@ def main():
         debug(arguments)
     elif arguments["chart"]:
         chart_command(arguments)
-    elif arguments["ledger"] and arguments["start"]:
-        ledger_start(arguments["--file"], arguments["--dry-run"])
-    elif arguments["ledger"] and arguments["post"]:
-        ledger_post(
-            arguments["<dr>"],
-            arguments["<cr>"],
-            arguments["<amount>"],
-            arguments["--adjust"],
-            arguments["--post-close"],
-        )
-    elif arguments["ledger"] and arguments["close"]:
-        ledger_close()
+    elif arguments["ledger"]:
+        ledger_command(arguments)
     elif arguments["name"]:
         name(arguments["<account_name>"], arguments["<title>"])
     elif arguments["report"]:
-        if arguments["-i"] or arguments["--income-statement"]:
-            report_income_statement()
-        elif arguments["-b"] or arguments["--balance-sheet"]:
-            report_balance_sheet()
-        elif arguments["-t"] or arguments["--trail-balance"]:
-            report_trial_balance()
+        report_command(arguments)
     elif arguments["balances"]:
-        if (name := arguments["<account_name>"]) and not arguments["--assert"]:
-            account_balance(name)
-        if (name := arguments["bx ledger post <account_name>"]) and (
-            amount := arguments["<amount>"]
-        ):
-            assert_account_balance(name, amount)
-        if (is_all := arguments["--all"]) or (is_nonzero := arguments["--nonzero"]):
-            balances(is_all, is_nonzero)
+        balances_command(arguments)
+    elif arguments["account"]:
+        account_command(arguments)
     elif arguments["end"]:
         end()
 
