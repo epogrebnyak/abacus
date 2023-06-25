@@ -1,14 +1,32 @@
 {
   "chart": {
-    "assets": ["cash", "ar", "goods"],
-    "expenses": ["cogs", "sga"],
-    "equity": ["equity"],
+    "assets": [
+      "cash",
+      "ar",
+      "goods"
+    ],
+    "expenses": [
+      "cogs",
+      "sga"
+    ],
+    "equity": [
+      "equity"
+    ],
     "retained_earnings_account": "re",
-    "liabilities": ["ap"],
-    "income": ["sales"],
+    "liabilities": [
+      "ap"
+    ],
+    "income": [
+      "sales"
+    ],
     "contra_accounts": {
-      "sales": ["discounts", "refunds"],
-      "equity": ["treasury_stock"]
+      "sales": [
+        "discounts",
+        "refunds"
+      ],
+      "equity": [
+        "treasury_stock"
+      ]
     },
     "income_summary_account": "_profit"
   },
@@ -32,7 +50,7 @@
       {
         "dr": "sales",
         "cr": "discounts",
-        "amount": 9
+        "amount": 8
       },
       {
         "dr": "cogs",
@@ -42,12 +60,12 @@
       {
         "dr": "sga",
         "cr": "ap",
-        "amount": 15
+        "amount": 24
       },
       {
         "dr": "ap",
         "cr": "cash",
-        "amount": 10
+        "amount": 12
       }
     ],
     "adjustment": [],
@@ -56,7 +74,7 @@
         {
           "dr": "sales",
           "cr": "discounts",
-          "amount": -9
+          "amount": -8
         },
         {
           "dr": "sales",
@@ -81,13 +99,13 @@
         {
           "dr": "_profit",
           "cr": "sga",
-          "amount": 15
+          "amount": 24
         }
       ],
       "isa": {
         "dr": "_profit",
         "cr": "re",
-        "amount": 59
+        "amount": 50
       }
     },
     "post_close": []

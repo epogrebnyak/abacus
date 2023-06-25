@@ -1,0 +1,11 @@
+{
+  "names": {
+    "re": "Retained earnings",
+    "ar": "Accounts receivable",
+    "ap": "Accounts payable",
+    "ppe": "Fixed assets",
+    "goods": "Inventory (goods for sale)",
+    "cogs": "Cost of goods sold",
+    "sga": "Selling, general and adm. expenses"
+  }
+}

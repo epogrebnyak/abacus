@@ -14,6 +14,7 @@ Usage:
   bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--post-close]
   bx ledger post <dr> <cr> <amount> [--adjust] [--post-close]
   bx ledger close
+  bx ledger show (--start | --business | --adjust | --close | --post-close) [--json]
   bx name <account_name> --title <title>
   bx report --income-statement [--json] 
   bx report --balance-sheet [--json] 
@@ -32,11 +33,11 @@ import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Union
 
 from docopt import docopt
 
-from abacus import Book, Chart, PlainTextViewer
-from abacus.accounting_types import Amount
+from abacus import Amount, Book, Chart, Names, PlainTextViewer
 
 
 def cwd() -> Path:
@@ -61,28 +62,24 @@ class Location:
 
 
 def init(force: bool = False, directory=cwd()):
-    # Implementation for "bx init"
     loc = Location(directory)
-    create_chart(loc.chart, force)
+    create_object(loc.chart, force, Chart.empty())
+    create_object(loc.names, force, Names())
 
 
-def echo(s):
-    print(s, end=" ")
-
-
-def create_chart(path: Path, force: bool):
+def create_object(path: Path, force: bool, default_object: Union[Chart, Names]):
     if path.exists() and not force:
         sys.exit(f"Cannot create {path}, file already exists.")
-    Chart.empty().save(path)
-    print(f"Created chart of accounts at {path}.")
+    default_object.save(path)
+    name = default_object.__class__.__name__.lower()
+    print(f"Created {name} at {path}.")
 
 
-def safe_load(load_func, path):
+def safe_load(cls, path):
     try:
-        res = load_func(path)
+        return cls.parse_file(path)
     except FileNotFoundError:
         sys.exit(f"File not found: {path}")
-    return res
 
 
 def comma(xs):
@@ -119,9 +116,15 @@ def chart_show(chart: Chart, json_flag: bool):
         print_chart(chart)
 
 
-def name(account_name, title):
-    # Implementation for "bx name"
-    pass
+def name_command(account_name, title):
+    path = Location(directory=cwd()).names
+    if path.exists():
+        names = safe_load(Names, path)
+    else:
+        names = Names()
+    names.names[account_name] = title
+    print("Long name for", account_name, "is", title + ".")
+    names.save(path)
 
 
 def end():
@@ -133,13 +136,17 @@ def debug(arguments):
     print(arguments)
 
 
-def load_chart(directory=cwd()):
+def load_chart(directory):
     path = Location(directory).chart
-    return safe_load(Chart.parse_file, path), path
+    if path.exists():
+        chart = safe_load(Chart, path)
+    else:
+        chart = Chart.empty()
+    return chart, path
 
 
-def chart_command(arguments):
-    chart, path = load_chart()
+def chart_command(arguments, directory=cwd()):
+    chart, path = load_chart(directory)
     if arguments["set"]:
         if arguments["--retained-earnings"]:
             re_account_name = arguments["<re_account_name>"]
@@ -174,20 +181,24 @@ def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def ledger_command(arguments):
-    path = Location(directory=cwd()).entries
+def ledger_command(arguments, directory=cwd()):
+    ledger_path = Location(directory).entries
     if arguments["start"]:
-        chart, _ = load_chart()
+        chart, _ = load_chart(directory)
         if arguments["--file"]:
             starting_balances = read_json(arguments["<balances_file>"])
         else:
             starting_balances = {}
         book = chart.book(starting_balances)
-        if not arguments["--dry-run"]:
-            book.save(path)
+        if arguments["--dry-run"]:
+            print("Created ledger in memory only, did not save (`--dry-run` mode).")
+        else:
+            book.save(ledger_path)
             print("Created ledger.")
         sys.exit(0)
-    book = safe_load(Book.parse_file, path)
+    if arguments["show"]:
+        show_command(arguments)
+    book = safe_load(Book, ledger_path)
     if arguments["post"]:
         dr, cr, amount = arguments["<dr>"], arguments["<cr>"], arguments["<amount>"]
         if arguments["--adjust"]:
@@ -196,44 +207,52 @@ def ledger_command(arguments):
             raise NotImplementedError
         else:
             book.post(dr, cr, amount)
-        book.save(path)
-        print(f"Posted entry to ledger: debit {dr}, credit {cr}, amount {amount}).")
+        print(f"Posted to ledger: debit {dr}, credit {cr}, amount {amount}).")
     if arguments["close"]:
         book.close()
         print("Added closing entries to ledger.")
-    book.save(path)
+    book.save(ledger_path)
 
 
-def report_command(arguments):
-    path = Location(directory=cwd()).entries
-    book = Book.load(path)
+def report_command(arguments, directory=cwd()):
+    ledger_path = Location(directory).entries
+    book = safe_load(Book, ledger_path)
+    names_path = Location(directory).names
+    rename_dict = safe_load(Names, names_path).names
+    viewer = PlainTextViewer(rename_dict)
     if arguments["--income-statement"]:
+        report = book.income_statement()
         if arguments["--json"]:
-            print(json.dumps(book.income_statement().__dict__))
+            print(json.dumps(report.__dict__))
         else:
             print("Income statement")
-            print(PlainTextViewer(rename_dict={}).show(book.income_statement()))
+            print(viewer.show(report))
     if arguments["--balance-sheet"]:
+        report = book.balance_sheet()
         if arguments["--json"]:
-            print(json.dumps(book.balance_sheet().__dict__))
+            print(json.dumps(report.__dict__))
         else:
             print("Balance sheet")
-            print(PlainTextViewer(rename_dict={}).show(book.balance_sheet()))
+            print(viewer.show(report))
 
 
 def account_info(account_name: str, amount: Amount):
     return f"account <{account_name}> balance is {amount}."
 
 
-def print_account_balance(account_name: str):
-    path = Location(directory=cwd()).entries
-    amount = Book.load(path).balances()[account_name]
-    print(account_info(account_name, amount).capitalize())
+def print_account_balance(account_name: str, directory=cwd()):
+    path = Location(directory).entries
+    account = safe_load(Book, path).ledger()[account_name]
+    print("Account", account_name)
+    print("  Account type:", account.__class__.__name__)
+    print("  Debits:", account.debits)
+    print("  Credits:", account.credits)
+    print("  Balance:", account.balance())
 
 
 def assert_account_balance(account_name: str, assert_amount: str):
     path = Location(directory=cwd()).entries
-    amount = Book.load(path).balances()[account_name]
+    amount = safe_load(Book, path).balances()[account_name]
     expected_amount = Amount(assert_amount)
     if amount != expected_amount:
         sys.exit(
@@ -267,16 +286,35 @@ def account_command(arguments):
 def balances_command(arguments):
     # bx balances (--nonzero | --all)
     path = Location(directory=cwd()).entries
-    book = Book.load(path)
+    book = safe_load(Book, path)
     if arguments["--all"]:
         data = book.balances()
     elif arguments["--nonzero"]:
         data = book.nonzero_balances()
-    print("Account balances")
     if arguments["--json"]:
         print(json.dumps(data))
     else:
+        print("Account balances")
         print_two_columns(data)
+
+
+def show_command(arguments, directory=cwd()):
+    path = Location(directory).entries
+    book = safe_load(Book, path)
+    if arguments["--start"]:
+        show = book.starting_balances
+    elif arguments["--business"]:
+        show = book.entries.business
+    elif arguments["--adjust"]:
+        show = book.entries.adjustment
+    elif arguments["--close"]:
+        show = list(book.entries.closing.all())
+    elif arguments["--post-close"]:
+        show = book.entries.post_close
+    if arguments["--json"]:
+        print(show)
+    else:
+        print(show)
 
 
 def main():
@@ -291,7 +329,7 @@ def main():
     elif arguments["ledger"]:
         ledger_command(arguments)
     elif arguments["name"]:
-        name(arguments["<account_name>"], arguments["<title>"])
+        name_command(arguments["<account_name>"], arguments["<title>"])
     elif arguments["report"]:
         report_command(arguments)
     elif arguments["balances"]:

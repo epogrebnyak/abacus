@@ -72,6 +72,7 @@ class Chart(BaseModel):
     def empty(cls):
         return empty_chart()
 
+    # FIXME: this is sugaring, may depreciate
     @classmethod
     def load(cls, path):
         return cls.parse_file(path)

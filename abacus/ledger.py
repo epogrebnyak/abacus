@@ -66,7 +66,21 @@ class LedgerWithNetting:
             )
         ]
 
+#FIXME with test: This works wrong:
+# bx account sales   || exit /b
+# Account sales
+#   Account type: Income
+#   Debits: [10, 8, -8, -10, 99]
+#   Credits: [99]
+#   Balance: 0
 
+# bx account refunds   || exit /b
+# Account refunds
+#   Account type: ContraIncome
+#   Debits: []
+#   Credits: [10, -10]
+#   Balance: 0
+ 
 def transfer_balance(account, from_: AccountName, to_: AccountName) -> ClosingEntry:
     amount = account.balance()
     if account.is_debit_account():
