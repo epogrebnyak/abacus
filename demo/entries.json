@@ -1,32 +1,14 @@
 {
   "chart": {
-    "assets": [
-      "cash",
-      "ar",
-      "goods"
-    ],
-    "expenses": [
-      "cogs",
-      "sga"
-    ],
-    "equity": [
-      "equity"
-    ],
+    "assets": ["cash", "ar", "goods"],
+    "expenses": ["cogs", "sga"],
+    "equity": ["equity"],
     "retained_earnings_account": "re",
-    "liabilities": [
-      "ap"
-    ],
-    "income": [
-      "sales"
-    ],
+    "liabilities": ["ap"],
+    "income": ["sales"],
     "contra_accounts": {
-      "sales": [
-        "discounts",
-        "refunds"
-      ],
-      "equity": [
-        "treasury_stock"
-      ]
+      "sales": ["discounts", "refunds"],
+      "equity": ["treasury_stock"]
     },
     "income_summary_account": "_profit"
   },
