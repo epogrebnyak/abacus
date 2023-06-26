@@ -2,7 +2,7 @@
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
-A minimal, yet valid double-entry accounting system, provided as `abacus` Python package and `jaba` command line tool.
+A minimal, yet valid double-entry accounting system, provided as a Python package and a command line tool.
 
 ## Documentation
 
@@ -28,10 +28,13 @@ This will install both `abacus` package and `jaba` command line tool.
 
 ## Usage
 
-### Step by step code example: chart to ledger to reports.
+In a step by step code example we create a chart or accounts, then populate
+general ledger and produce financial reports (balance sheet and income statement).
 
-1. Define a chart of accounts of five types (assets, equity, liabilities, income and expenses),
-   specify retained earnings account name, and contra accounts if needed.
+### 1. Chart
+
+Define a chart of accounts of five types (assets, equity, liabilities, income and expenses),
+specify retained earnings account name and contra accounts.
 
 ```python
 from abacus import Chart
@@ -49,8 +52,10 @@ chart = Chart(
 )
 ```
 
-2. Create a general ledger (book) based on the chart of accounts,
-   add entries and close accounts at accounting period end.
+### 2. Ledger
+
+Create a general ledger ("book") based on the chart of accounts,
+add entries and close accounts at accounting period end.
 
 ```python
 book = (chart.book()
@@ -63,8 +68,10 @@ book = (chart.book()
 )
 ```
 
-3. Make income statement and balance sheet and print them to screen
-   with verbose account names and rich formatting.
+### 3. Reports
+
+Make income statement and balance sheet and print them to screen
+with verbose account names and rich formatting.
 
 ```python
 from abacus import RichViewer
@@ -84,9 +91,12 @@ rv = RichViewer(rename_dict, width=60)
 rv.print(balance_sheet)
 rv.print(income_statement)
 ```
+
 <details>
 
-Check values in reports:
+<summary> Details about correctness checks and end balances here.</summary>
+
+Check values in reports. As a reminder `assert` statement in Python will raise exception if provided wrong comparison.
 
 ```python
 from abacus import IncomeStatement, BalanceSheet
@@ -101,16 +111,16 @@ assert balance_sheet == BalanceSheet(
     liabilities={"dividend_due": 0, "ap": 0}
 )
 ```
-</details>
 
-4. Use end balances from current period to initialize ledger 
-   at the start of next accounting period.
+You can also use end balances from current period to initialize ledger at the start of next accounting period.
 
 ```python
-end_balances = book.nonzero_balances()
-assert end_balances == {'cash': 1100, 'goods': 50, 'equity': 1000, 're': 150}
-next_book = chart.book(starting_balances=end_balances)
+end_balances_q2 = book.nonzero_balances()
+assert end_balances_q2  == {'cash': 1100, 'goods': 50, 'equity': 1000, 're': 150}
+book_q3 = chart.book(starting_balances=end_balances_q2)
 ```
+
+</details>
 
 ## Command line
 
@@ -185,8 +195,7 @@ jaba balances store.json show --skip-zero --json > end_balances.json
 ## Feedback
 
 Anything missing in `abacus`?
-Got a good use case for `abacus`?
-Used `abacus` for teaching?
+Got a good use case for `abacus` or used `abacus` for teaching?
 
 Feel free to contact `abacus` author
 in [issues](https://github.com/epogrebnyak/abacus/issues),
