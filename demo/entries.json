@@ -43,14 +43,19 @@
         "amount": 99
       },
       {
-        "dr": "sales",
-        "cr": "refunds",
+        "dr": "refunds",
+        "cr": "ar",
         "amount": 10
       },
       {
-        "dr": "sales",
-        "cr": "discounts",
+        "dr": "discounts",
+        "cr": "ar",
         "amount": 8
+      },
+      {
+        "dr": "cash",
+        "cr": "ar",
+        "amount": 50
       },
       {
         "dr": "cogs",
@@ -74,12 +79,12 @@
         {
           "dr": "sales",
           "cr": "discounts",
-          "amount": -8
+          "amount": 8
         },
         {
           "dr": "sales",
           "cr": "refunds",
-          "amount": -10
+          "amount": 10
         }
       ],
       "contra_expense": [],
@@ -87,7 +92,7 @@
         {
           "dr": "sales",
           "cr": "_profit",
-          "amount": 99
+          "amount": 81
         }
       ],
       "expense": [
@@ -105,7 +110,7 @@
       "isa": {
         "dr": "_profit",
         "cr": "re",
-        "amount": 50
+        "amount": 32
       }
     },
     "post_close": []

@@ -208,7 +208,7 @@ def ledger_command(arguments, directory=cwd()):
             raise NotImplementedError
         else:
             book.post(dr, cr, amount)
-        print(f"Posted to ledger: debit {dr}, credit {cr}, amount {amount}).")
+        print(f"Posted entry: debit {dr}, credit {cr}, amount {amount}.")
     if arguments["close"]:
         book.close()
         print("Added closing entries to ledger.")

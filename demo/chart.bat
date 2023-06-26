@@ -23,8 +23,9 @@ echo {"cash": 70, "goods": 30, "equity": 100} > start.json
 bx ledger start --file start.json --dry-run || exit /b
 bx ledger start --file start.json || exit /b
 bx ledger post --debit ar --credit sales --amount 99 || exit /b
-bx ledger post --debit sales --credit refunds --amount 10 || exit /b
-bx ledger post --debit sales --credit discounts --amount 8 || exit /b
+bx ledger post --debit refunds --credit ar --amount 10 || exit /b
+bx ledger post --debit discounts --credit ar --amount 8 || exit /b
+bx ledger post cash ar 50 || exit /b
 bx ledger post cogs goods 25 || exit /b
 bx ledger post sga ap 24 || exit /b
 bx ledger post ap cash 12 || exit /b
@@ -43,8 +44,15 @@ bx balances --all || exit /b
 bx balances --nonzero --json || exit /b
 bx balances --nonzero || exit /b 
 bx account cash || exit /b
+bx account goods || exit /b
 bx account sales || exit /b
+bx account sales --assert-balance 0 || exit /b
 bx account refunds || exit /b
+bx account refunds --assert-balance 0 || exit /b
+bx account discounts || exit /b
+bx account discounts --assert-balance 0 || exit /b
+bx account cogs || exit /b
+bx account sga || exit /b
 bx account re || exit /b
 bx account re --assert-balance 50 || exit /b
 
