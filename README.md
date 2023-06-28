@@ -59,7 +59,7 @@ chart = Chart(
 
 ### 2. Ledger
 
-Create a general ledger (`book`) based on the chart of accounts,
+Create a general ledger based on the chart of accounts,
 post entries and close accounts at accounting period end.
 
 ```python
