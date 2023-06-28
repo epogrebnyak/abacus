@@ -4,7 +4,7 @@
 
 A minimal, yet valid double-entry accounting system, provided as a Python package and a command line tool.
 
-Features chart of accounts, general ledger, accounting entries and reports (trail balance, income statement and balance sheet).
+Features chart of accounts, ledger, entries and several end-of-period reports (trail balance, income statement and balance sheet).
 
 ## Documentation
 
