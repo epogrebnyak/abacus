@@ -4,6 +4,8 @@
 
 A minimal, yet valid double-entry accounting system, provided as a Python package and a command line tool.
 
+Features chart of accounts, general ledger, accounting entries and reports (trail balance, income statement and balance sheet).
+
 ## Documentation
 
 <https://epogrebnyak.github.io/abacus/>
@@ -28,13 +30,16 @@ This will install both `abacus` package and `jaba` command line tool.
 
 ## Usage
 
-In a step by step code example we create a chart or accounts, then populate
-general ledger and produce financial reports (balance sheet and income statement).
+There are three steps in using `abacus`:
+
+1. create a chart of accounts,
+2. create general ledger and post entries, 
+3. produce trial balance, balance sheet and income statement reports.
 
 ### 1. Chart
 
 Define a chart of accounts of five types (assets, equity, liabilities, income and expenses),
-specify retained earnings account name and contra accounts.
+specify retained earnings account name and add contra accounts if you need to use them.
 
 ```python
 from abacus import Chart
@@ -54,8 +59,8 @@ chart = Chart(
 
 ### 2. Ledger
 
-Create a general ledger ("book") based on the chart of accounts,
-add entries and close accounts at accounting period end.
+Create a general ledger (`book`) based on the chart of accounts,
+post entries and close accounts at accounting period end.
 
 ```python
 book = (chart.book()
@@ -70,8 +75,8 @@ book = (chart.book()
 
 ### 3. Reports
 
-Make income statement and balance sheet and print them to screen
-with verbose account names and rich formatting.
+Make trail balance, income statement and balance sheet and print them to screen
+with verbose account names and rich or regular formatting.
 
 ```python
 from abacus import RichViewer
@@ -87,16 +92,19 @@ rename_dict = {
     "cogs": "Cost of goods sold",
     "sga": "Selling, general and adm. expenses",
 }
-rv = RichViewer(rename_dict, width=60)
+rv = RichViewer(rename_dict, width=80)
 rv.print(balance_sheet)
 rv.print(income_statement)
 ```
 
 <details>
+<summary> Details about correctness checks and end balances.
+</summary>
 
-<summary> Details about correctness checks and end balances here.</summary>
+### Check values
 
-Check values in reports. As a reminder `assert` statement in Python will raise exception if provided wrong comparison.
+As a reminder `assert` statement in Python will raise exception if provided wrong comparison.
+These checks will execute and this way we will know the code in README is up to date and correct.  
 
 ```python
 from abacus import IncomeStatement, BalanceSheet
@@ -112,19 +120,22 @@ assert balance_sheet == BalanceSheet(
 )
 ```
 
-You can also use end balances from current period to initialize ledger at the start of next accounting period.
+### End balances 
+
+You can use end balances from current period to initialize ledger at the start of next accounting period.
 
 ```python
-end_balances_q2 = book.nonzero_balances()
-assert end_balances_q2  == {'cash': 1100, 'goods': 50, 'equity': 1000, 're': 150}
-book_q3 = chart.book(starting_balances=end_balances_q2)
+end_balances = book.nonzero_balances()
+assert end_balances  == {'cash': 1100, 'goods': 50, 'equity': 1000, 're': 150}
+book2 = chart.book(starting_balances=end_balances)
 ```
-
 </details>
 
 ## Command line
 
-Similar operations with chart and ledger can be performed on the command line.
+Similar operations with chart, ledger and reports can be performed on the command line.
+
+Note: `jaba` tool will be replaced with more concise `bx` tool at version 0.5.0 release.
 
 ### Create chart of accounts
 
