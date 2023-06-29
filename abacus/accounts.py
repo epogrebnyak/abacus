@@ -144,6 +144,14 @@ class RetainedEarnings(Capital, Unique):
     pass
 
 
+allocation = dict(
+    assets=(Asset, ContraAsset),
+    expenses=(Expense, ContraExpense),
+    equity=(Capital, ContraCapital),
+    liabilities=(Liability, ContraLiability),
+    income=(Income, ContraIncome),
+)
+
 all_account_classes = (
     Asset,
     ContraAsset,

@@ -34,6 +34,21 @@ def is_unique(xs):
     return len(set(xs)) == len(xs)
 
 
+class BaseChart(BaseModel):
+    assets: List[str]
+    expenses: List[str]
+    equity: List[str]
+    liabilities: List[str]
+    income: List[str]
+
+
+class QualifiedChart(BaseModel):
+    base: BaseChart
+    contra_accounts: Dict[str, List[str]]
+    retained_earnings_account: str
+    income_summary_account: str
+
+
 class Chart(BaseModel):
     """Chart of accounts."""
 
