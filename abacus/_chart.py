@@ -1,13 +1,35 @@
-from pydantic import BaseModel
-from typing import List, Dict
-from abacus.accounts import IncomeSummaryAccount, allocation, RetainedEarnings
-from abacus.accounts import Account as TAccount
 from itertools import chain
+from typing import Dict, List
+
+from pydantic import BaseModel
+
+from abacus.accounting_types import AbacusError
+from abacus.accounts import Account as TAccount
+from abacus.accounts import (
+    Asset,
+    Capital,
+    ContraAsset,
+    ContraIncome,
+    Expense,
+    Income,
+    IncomeSummaryAccount,
+    RetainedEarnings,
+    allocation,
+)
 
 
 class Account(BaseModel):
     name: str
     cls: TAccount | None = None
+
+
+def is_unique(xs):
+    return len(set(xs)) == len(xs)
+
+
+def assert_unique(xs):
+    if not is_unique(xs):
+        raise AbacusError("Account names must be unique")
 
 
 class BaseChart(BaseModel):
@@ -17,10 +39,14 @@ class BaseChart(BaseModel):
     liabilities: List[str] = []
     income: List[str] = []
 
+    @property
+    def attributes(self):
+        return list(allocation.keys())
+
     def account_names(self):
         return [
             account_name
-            for (attr, _) in allocation.items()
+            for attr in self.attributes
             for account_name in getattr(self, attr)
         ]
 
@@ -32,11 +58,8 @@ class BaseChart(BaseModel):
     def set_retained_earnings(self, account_name):
         if account_name in self.equity:
             self.equity.remove(account_name)
-        # assert names are unique
-        return Chart(
-            base=self,
-            retained_earnings_account=account_name
-        )
+        assert_unique(self.account_names() + [account_name])
+        return Chart(base=self, retained_earnings_account=account_name)
 
 
 class Chart(BaseModel):
@@ -45,14 +68,29 @@ class Chart(BaseModel):
     income_summary_account: str = "_profit"
     contra_accounts: Dict[str, List[str]] = {}
 
+    @classmethod
+    def empty(self):
+        return Chart(BaseChart(), "")
+
+    def account_names(self):
+        return (
+            self.base.account_names()
+            + [n for n, _ in self.yield_contra_accounts()]
+            + [self.retained_earnings_account, self.income_summary_account]
+        )
+
+    def set_retained_earnings(self, account_name):
+        self.base = self.base.set_retained_earnings(account_name).base
+        self.retained_earnings_account = account_name
+
     def set_isa(self, account_name):
         self.income_summary_account = account_name
-        # assert names are unique, alos at construction
+        assert_unique(self.account_names())
         return self
 
     def offset(self, account_name: str, contra_account_names: List[str]):
         self.contra_accounts[account_name] = contra_account_names
-        # assert names are unique
+        assert_unique(self.account_names())
         return self
 
     def yield_contra_accounts(self):
@@ -91,8 +129,6 @@ class Chart(BaseModel):
         )
 
 
-from abacus.accounts import Asset, Expense, ContraAsset, ContraIncome, Capital, Income
-
 print(
     BaseChart(
         assets=["cash", "goods", "ppe"],
@@ -113,7 +149,7 @@ print(
         "equity": Capital(debits=[], credits=[]),
         "sales": Income(debits=[], credits=[]),
         "re": RetainedEarnings(debits=[], credits=[]),
-        "current_profit": IncomeSummaryAccount(debits=[], credits=[]),
+        "_profit": IncomeSummaryAccount(debits=[], credits=[]),
         "depreciation": ContraAsset(debits=[], credits=[]),
         "refunds": ContraIncome(debits=[], credits=[]),
         "voids": ContraIncome(debits=[], credits=[]),
