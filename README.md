@@ -175,13 +175,13 @@ bx chart list
 
 ```bash
 bx ledger start
-bx ledger post --debit cash --credit equity --amount 1000
-bx ledger post --debit goods --credit cash --amount 800
-bx ledger post --debit ar --credit sales --amount 465
-bx ledger post --debit discounts --credit ar --amount 65
-bx ledger post --debit cogs --credit goods --amount 200
-bx ledger post --debit sga --credit cash --amount 100
-bx ledger post --debit cash --credit ar --amount 360
+bx ledger post --debit cash      --credit equity --amount 1000
+bx ledger post --debit goods     --credit cash   --amount 800
+bx ledger post --debit ar        --credit sales  --amount 465
+bx ledger post --debit discounts --credit ar     --amount 65
+bx ledger post --debit cogs      --credit goods  --amount 200
+bx ledger post --debit sga       --credit cash   --amount 100
+bx ledger post --debit cash      --credit ar     --amount 360
 bx ledger close
 bx ledger post --debit re --credit dividend_due --amount 50 --after-close
 ```
