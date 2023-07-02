@@ -112,9 +112,28 @@ rv.print(balance_sheet)
 rv.print(income_statement)
 ```
 
-The output should look similar to screenshot below.
+The output should look similar to text and a screenshot below.
 
+```
+Assets                        1100  Capital              1050
+- Cash                        460   - Equity             1000
+- Accounts receivable         40    - Retained earnings    50
+- Inventory (goods for sale)  600   Liabilities            50
+                                    - Dividend due         50
+Total                         1100  Total                1100
+
+Income                                400
+- Sales                               400
+Expenses                              300
+- Cost of goods sold                  200
+- Selling, general and adm. expenses  100
+Profit                                100
+```
+<details>
+<summary> Screenshot (outdated).
+</summary>
 ![](https://user-images.githubusercontent.com/9265326/249445794-7def0fc2-934b-49fa-a3ad-9137072a2900.png)
+</details>
 
 <details>
 <summary> Details about correctness checks and end balances.
