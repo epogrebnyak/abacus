@@ -47,9 +47,10 @@ chart = Chart(
     expenses=["cogs", "sga"],
     equity=["equity"],
     liabilities=["dividend_due", "ap"],
-    income=["sales"]
-    ).set_retained_earnings("re"
-    ).offset("sales", ["discounts", "refunds"])
+    income=["sales"],
+)
+chart.set_retained_earnings("re")
+chart.offset("sales", ["discounts", "refunds"])
 ```
 
 ### 2. Ledger
