@@ -46,6 +46,6 @@ def test_book():
             ],
             adjustment=[],
             closing=ClosingEntries(),
-            post_close=[],
+            after_close=[],
         ),
     )

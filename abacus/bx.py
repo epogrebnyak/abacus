@@ -12,10 +12,10 @@ Usage:
   bx chart name <account_name> --title <title>
   bx chart list [--json]
   bx ledger start [--file <balances_file>] [--dry-run]
-  bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--post-close]
-  bx ledger post <dr> <cr> <amount> [--adjust] [--post-close]
+  bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--after-close]
+  bx ledger post <dr> <cr> <amount> [--adjust] [--after-close]
   bx ledger close
-  bx ledger list [--start | --business | --adjust | --close | --post-close] [--json]
+  bx ledger list [--start | --business | --adjust | --close | --after-close] [--json]
   bx show report --income-statement [--json] 
   bx show report --balance-sheet [--json] 
   bx show balances [--all] [--trial] [--json]
@@ -123,11 +123,6 @@ def name_command(account_name, title):
     chart.save(path)
 
 
-def end():
-    # Implementation for "bx end"
-    print("This is an alias.")
-
-
 def debug(arguments):
     print(arguments)
 
@@ -193,10 +188,10 @@ def ledger_command(arguments, directory=cwd()):
             starting_balances = {}
         book = chart.book(starting_balances)
         if arguments["--dry-run"]:
-            print("Created ledger in memory only, did not save (`--dry-run` mode).")
+            print("Using --dry-run` mode: created ledger in memory only, did not save.")
         else:
             book.save(ledger_path)
-            print("Created ledger.")
+            print(f"Saved ledger at {ledger_path}.")
         sys.exit(0)
     if arguments["list"]:
         show_command(arguments)
@@ -204,16 +199,26 @@ def ledger_command(arguments, directory=cwd()):
     if arguments["post"]:
         dr, cr, amount = arguments["<dr>"], arguments["<cr>"], arguments["<amount>"]
         if arguments["--adjust"]:
-            raise NotImplementedError
-        elif arguments["--post-close"]:
-            raise NotImplementedError
+            book.adjust(dr, cr, amount)
+        elif arguments["--after-close"]:
+            book.after_close(dr, cr, amount)
         else:
             book.post(dr, cr, amount)
-        print(f"Posted entry: debit {dr}, credit {cr}, amount {amount}.")
+        dr_account = account_name(book, dr)
+        cr_account = account_name(book, cr)
+        print("Posted entry")
+        print(f"  Debit: {dr_account}\n  Credit: {cr_account}\n  Amount: {amount}")
     if arguments["close"]:
         book.close()
         print("Added closing entries to ledger.")
     book.save(ledger_path)
+
+
+def account_name(book, account_name):
+    try:
+        return book.chart.names[account_name] + f"({account_name})"
+    except KeyError:
+        return f"<{account_name}>"
 
 
 def report_command(arguments, directory=cwd()):
@@ -244,7 +249,7 @@ def account_info(account_name: str, amount: Amount):
 def human_name(account):
     return account.__class__.__name__
     # must return 'Сontra income' and 'Retained earnings'
-    # split on caps 
+    # split on caps
 
 
 def print_account_balance(account_name: str, directory=cwd()):
@@ -306,8 +311,8 @@ def show_command(arguments, directory=cwd()):
         show = book.entries.adjustment
     elif arguments["--close"]:
         show = list(book.entries.closing.all())
-    elif arguments["--post-close"]:
-        show = book.entries.post_close
+    elif arguments["--after-close"]:
+        show = book.entries.after_close
     if arguments["--json"]:
         # FIXME
         print(show)
@@ -340,7 +345,7 @@ def main():
         account_name, amount = arguments["<account_name>"], arguments["<amount>"]
         assert_account_balance(account_name, amount)
     else:
-        sys.exit("Command not recognized. Use bx --help for reference.")     
+        sys.exit("Command not recognized. Use bx --help for reference.")
 
 
 if __name__ == "__main__":

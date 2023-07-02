@@ -43,14 +43,14 @@ class Entries:
     business: List[Entry] = field(default_factory=list)
     adjustment: List[Entry] = field(default_factory=list)
     closing: ClosingEntries = ClosingEntries()
-    post_close: List[Entry] = field(default_factory=list)
+    after_close: List[Entry] = field(default_factory=list)
 
     def yield_for_income_statement(self):
         return chain(
             self.business,
             self.adjustment,
             self.closing.contra_expense_contra_income(),
-            self.post_close,
+            self.after_close,
         )
 
     def yield_all(self):
@@ -58,7 +58,7 @@ class Entries:
             self.business,
             self.adjustment,
             self.closing.all(),
-            self.post_close,
+            self.after_close,
         )
 
 
@@ -96,9 +96,9 @@ class Book(BaseModel):
         self.entries.adjustment.append(entry)
         return self
 
-    def post_close(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Book":
+    def after_close(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Book":
         entry = Entry(dr, cr, amount)
-        self.entries.post_close.append(entry)
+        self.entries.after_close.append(entry)
         return self
 
     def close(self):

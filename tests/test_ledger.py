@@ -10,7 +10,6 @@ from abacus.accounts import (
     IncomeSummaryAccount,
     RetainedEarnings,
 )
-from abacus.chart import Chart
 from abacus.ledger import Ledger, safe_process_postings
 
 

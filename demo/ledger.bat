@@ -18,4 +18,4 @@ bx ledger list --start --json || exit /b
 bx ledger list --business --json || exit /b
 bx ledger list --adjust --json || exit /b
 bx ledger list --close --json || exit /b
-bx ledger list --post-close --json || exit /b
+bx ledger list --after-close --json || exit /b

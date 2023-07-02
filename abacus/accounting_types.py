@@ -94,4 +94,4 @@ class AdjustmentEntry(BaseEntry):
 
 @dataclass
 class PostCloseEntry(BaseEntry):
-    action: str = "post_close"
+    action: str = "after_close"

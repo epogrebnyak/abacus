@@ -72,8 +72,8 @@ def test_closing_entries():
     assert book.entries.closing.isa == ClosingEntry(dr="_profit", cr="re", amount=200)
 
 
-def test_post_close_entries():
-    assert book.entries.post_close == []
+def test_after_close_entries():
+    assert book.entries.after_close == []
 
 
 def test_post_is_closed():

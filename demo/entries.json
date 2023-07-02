@@ -39,6 +39,6 @@
       "expense": [],
       "isa": null
     },
-    "post_close": []
+    "after_close": []
   }
 }
