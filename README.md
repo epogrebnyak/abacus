@@ -4,6 +4,9 @@
 
 A minimal, yet valid double-entry accounting system, provided as a Python package and a command line tool.
 
+Using `abacus` you can define a chart of accounts, create a general ledger, post
+entries and produce balance sheet and income statement at accounting period end.
+
 ## Documentation
 
 <https://epogrebnyak.github.io/abacus/>
@@ -28,26 +31,29 @@ This will install both `abacus` package and the `bx` command line tool.
 
 ## Minimal example
 
-A freshly created trading Klondike Trading Company (KTC) have recorded the following transactions.
+A freshly created trading Klondike Trading Company (KTC) has recorded the following transactions.
 
 |     | Transaction Title                            |        Debit        |       Credit        | Amount |
 | --- | -------------------------------------------- | :-----------------: | :-----------------: | -----: |
 | 1   | Shareholders paid up capital contribution    |        Cash         |       Equity        |   1000 |
 | 2   | Purchased goods for resale                   |      Inventory      |        Cash         |    800 |
 | 3   | Invoiced client on contract #2023-001        | Accounts Receivable |       Revenue       |    965 |
-| 4   | Provided discount on contract #2023-001      |      Discounts      | Accounts Receivable |     30 |
+| 4   | Provided discount on contract #2023-001      |      Discounts      | Accounts Receivable |     65 |
 | 5   | Recorded cost of sales on contract #2023-001 |        COGS         |      Inventory      |    600 |
-| 6   | Paid salary to contract manager              |    SG&A Expenses    |        Cash         |    185 |
-| 7   | Accepted payment on contract #2023-001       | Accounts Receivable |        Cash         |    725 |
-| 8   | Accrued dividend after announcement          |  Retained Earnings  |    Dividend Due     |     60 |
+| 6   | Paid salary to contract manager              |    SG&A Expenses    |        Cash         |    150 |
+| 7   | Accepted payment on contract #2023-001       |        Cash         | Accounts Receivable |    750 |
 
-Using `abacus` you can define a chart of accounts for KTC, create a general ledger, post
-entries and produce balance sheet and income statement at accounting period end.
+After closing accounts at period the company announced dividend.
+
+|     | Transaction Title                            |        Debit        |       Credit        | Amount |
+| --- | -------------------------------------------- | :-----------------: | :-----------------: | -----: |
+| 8   | Accrued dividend after announcement          |  Retained Earnings  |    Dividend Due     |     50 |
+
 
 ### 1. Chart
 
 Define a chart of accounts of five types (assets, equity, liabilities, income and expenses),
-specify retained earnings account name and optionally add contra accounts.
+specify retained earnings account name and, optionally, add contra accounts.
 
 ```python
 from abacus import Chart
@@ -73,12 +79,12 @@ book = (chart.book()
   .post(dr="cash", cr="equity", amount=1000)
   .post(dr="goods", cr="cash", amount=800)
   .post(dr="ar", cr="sales", amount=965)
-  .post(dr="discounts", cr="ar", amount=30)
+  .post(dr="discounts", cr="ar", amount=65)
   .post(dr="cogs", cr="goods", amount=600)
-  .post(dr="sga", cr="cash", amount=185)
-  .post(dr="cash", cr="ar", amount=725)
+  .post(dr="sga", cr="cash", amount=150)
+  .post(dr="cash", cr="ar", amount=750)
   .close()
-  .after_close(dr="re", cr="dividend_due", amount=60)
+  .after_close(dr="re", cr="dividend_due", amount=50)
 )
 ```
 
@@ -127,14 +133,14 @@ from abacus import IncomeStatement, BalanceSheet
 
 print(income_statement)
 assert income_statement == IncomeStatement(
-    income={'sales': 935},
-    expenses={'cogs': 600, 'sga': 185}
+    income={'sales': 900},
+    expenses={'cogs': 600, 'sga': 150}
 )
 print(balance_sheet)
 assert balance_sheet == BalanceSheet(
-    assets={"cash": 740, "ar": 210, "goods": 200},
-    capital={"equity": 1000, "re": 90},
-    liabilities={"dividend_due": 60}
+    assets={'cash': 800, 'ar': 150, 'goods': 200}, 
+    capital={'equity': 1000, 're': 100}, 
+    liabilities={'dividend_due': 50}
 )
 ```
 
@@ -175,12 +181,12 @@ bx ledger start
 bx ledger post --debit cash --credit equity --amount 1000
 bx ledger post --debit goods --credit cash --amount 800
 bx ledger post --debit ar --credit sales --amount 965
-bx ledger post --debit discounts --credit ar --amount 30
+bx ledger post --debit discounts --credit ar --amount 65
 bx ledger post --debit cogs --credit goods --amount 600
-bx ledger post --debit sga --credit cash --amount 185
-bx ledger post --debit cash --credit ar --amount 725
+bx ledger post --debit sga --credit cash --amount 150
+bx ledger post --debit cash --credit ar --amount 750
 bx ledger close
-bx ledger post --debit re --credit dividend_due --amount 60 --after-close
+bx ledger post --debit re --credit dividend_due --amount 50 --after-close
 ```
 
 ### Report
@@ -211,7 +217,7 @@ if account balance is not equal to provided value.
 This is useful for testing.
 
 ```bash
-bx assert cash 740
+bx assert cash 800
 ```
 
 ## Feedback

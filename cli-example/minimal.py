@@ -1,25 +1,28 @@
 from abacus import Chart
 
-chart = (Chart(
-    assets=["cash", "ar", "goods"],
-    expenses=["cogs", "sga"],
-    equity=["equity"],
-    liabilities=["dividend_due"],
-    income=["sales"])
-  .set_retained_earnings("re")
-  .offset("sales", ["discounts"])
+chart = (
+    Chart(
+        assets=["cash", "ar", "goods"],
+        expenses=["cogs", "sga"],
+        equity=["equity"],
+        liabilities=["dividend_due"],
+        income=["sales"],
+    )
+    .set_retained_earnings("re")
+    .offset("sales", ["discounts"])
 )
 
-book = (chart.book()
-  .post(dr="cash", cr="equity", amount=1000)
-  .post(dr="goods", cr="cash", amount=800)
-  .post(dr="ar", cr="sales", amount=965)
-  .post(dr="discounts", cr="ar", amount=30)
-  .post(dr="cogs", cr="goods", amount=600)
-  .post(dr="sga", cr="cash", amount=185)
-  .post(dr="cash", cr="ar", amount=725)
-  .close()
-  .after_close(dr="re", cr="dividend_due", amount=60)
+book = (
+    chart.book()
+    .post(dr="cash", cr="equity", amount=1000)
+    .post(dr="goods", cr="cash", amount=800)
+    .post(dr="ar", cr="sales", amount=965)
+    .post(dr="discounts", cr="ar", amount=65)
+    .post(dr="cogs", cr="goods", amount=600)
+    .post(dr="sga", cr="cash", amount=150)
+    .post(dr="cash", cr="ar", amount=750)
+    .close()
+    .after_close(dr="re", cr="dividend_due", amount=50)
 )
 
 from abacus import RichViewer, PlainTextViewer
@@ -46,14 +49,13 @@ from abacus import IncomeStatement, BalanceSheet
 
 print(income_statement)
 assert income_statement == IncomeStatement(
-    income={'sales': 935},
-    expenses={'cogs': 600, 'sga': 185}
+    income={"sales": 900}, expenses={"cogs": 600, "sga": 150}
 )
 print(balance_sheet)
 assert balance_sheet == BalanceSheet(
-    assets={"cash": 740, "ar": 210, "goods": 200},
-    capital={"equity": 1000, "re": 90},
-    liabilities={"dividend_due": 60}
+    assets={"cash": 800, "ar": 150, "goods": 200},
+    capital={"equity": 1000, "re": 100},
+    liabilities={"dividend_due": 50},
 )
 
 end_balances = book.nonzero_balances()
