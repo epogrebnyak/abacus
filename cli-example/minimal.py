@@ -1,4 +1,4 @@
-from abacus import Chart
+from abacus import BalanceSheet, Chart, IncomeStatement, RichViewer
 
 chart = (
     Chart(
@@ -22,7 +22,6 @@ book = (
     .close()
 )
 
-from abacus import RichViewer
 
 income_statement = book.income_statement()
 balance_sheet = book.balance_sheet()
@@ -39,7 +38,6 @@ rv = RichViewer(rename_dict, width=80)
 rv.print(balance_sheet)
 rv.print(income_statement)
 
-from abacus import IncomeStatement, BalanceSheet
 
 assert income_statement == IncomeStatement(
     income={"sales": 400}, expenses={"cogs": 200, "sga": 50}
