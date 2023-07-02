@@ -1,28 +1,25 @@
 from abacus import Chart
 
-chart = (
-    Chart(
-        assets=["cash", "ar", "goods"],
-        expenses=["cogs", "sga"],
-        equity=["equity"],
-        liabilities=["dividend_due"],
-        income=["sales"],
-    )
-    .set_retained_earnings("re")
-    .offset("sales", ["discounts"])
+chart = Chart(
+    assets=["cash", "ar", "goods"],
+    expenses=["cogs", "sga"],
+    equity=["equity"],
+    liabilities=["dividend_due"],
+    income=["sales"],
 )
+chart = chart.set_retained_earnings("re").offset("sales", ["discounts"])
 
 book = (
     chart.book()
-    .post(dr="cash", cr="equity", amount=1000)
-    .post(dr="goods", cr="cash", amount=800)
-    .post(dr="ar", cr="sales", amount=965)
-    .post(dr="discounts", cr="ar", amount=65)
-    .post(dr="cogs", cr="goods", amount=600)
-    .post(dr="sga", cr="cash", amount=150)
-    .post(dr="cash", cr="ar", amount=750)
+    .post(debit="cash", credit="equity", amount=1000)
+    .post(debit="goods", credit="cash", amount=800)
+    .post(debit="ar", credit="sales", amount=465)
+    .post(debit="discounts", credit="ar", amount=65)
+    .post(debit="cogs", credit="goods", amount=200)
+    .post(debit="sga", credit="cash", amount=100)
+    .post(debit="cash", credit="ar", amount=360)
     .close()
-    .after_close(dr="re", cr="dividend_due", amount=50)
+    .after_close(debit="re", credit="dividend_due", amount=50)
 )
 
 from abacus import RichViewer, PlainTextViewer
@@ -49,12 +46,12 @@ from abacus import IncomeStatement, BalanceSheet
 
 print(income_statement)
 assert income_statement == IncomeStatement(
-    income={"sales": 900}, expenses={"cogs": 600, "sga": 150}
+    income={"sales": 400}, expenses={"cogs": 200, "sga": 100}
 )
 print(balance_sheet)
 assert balance_sheet == BalanceSheet(
-    assets={"cash": 800, "ar": 150, "goods": 200},
-    capital={"equity": 1000, "re": 100},
+    assets={"cash": 460, "ar": 40, "goods": 600},
+    capital={"equity": 1000, "re": 50},
     liabilities={"dividend_due": 50},
 )
 

@@ -37,11 +37,11 @@ A freshly created trading Klondike Trading Company (KTC) has recorded the follow
 | --- | ----------------------------------------- | :-----------------: | :-----------------: | -----: |
 | 1   | Shareholders paid up capital contribution |        Cash         |       Equity        |   1000 |
 | 2   | Purchased goods for resale                |      Inventory      |        Cash         |    800 |
-| 3   | Invoiced client on sales contract         | Accounts Receivable |       Revenue       |    965 |
+| 3   | Invoiced client on sales contract         | Accounts Receivable |       Revenue       |    465 |
 | 4   | Provided discount to client               |      Discounts      | Accounts Receivable |     65 |
-| 5   | Recorded cost of sales                    |        COGS         |      Inventory      |    600 |
-| 6   | Paid salary to contract manager           |    SG&A Expenses    |        Cash         |    150 |
-| 7   | Accepted payment on sales contract        |        Cash         | Accounts Receivable |    750 |
+| 5   | Recorded cost of sales                    |        COGS         |      Inventory      |    200 |
+| 6   | Paid salary to contract manager           |    SG&A Expenses    |        Cash         |    100 |
+| 7   | Accepted payment on sales contract        |        Cash         | Accounts Receivable |    360 |
 
 After closing accounts the company announced, but has not paid dividend.
 
@@ -57,15 +57,13 @@ specify retained earnings account name and, optionally, add contra accounts.
 ```python
 from abacus import Chart
 
-chart = (Chart(
+chart = Chart(
     assets=["cash", "ar", "goods"],
     expenses=["cogs", "sga"],
     equity=["equity"],
     liabilities=["dividend_due"],
     income=["sales"])
-  .set_retained_earnings("re")
-  .offset("sales", ["discounts"])
-)
+chart = chart.set_retained_earnings("re").offset("sales", ["discounts"])
 ```
 
 ### 2. Ledger
@@ -75,15 +73,15 @@ post entries and close accounts at accounting period end.
 
 ```python
 book = (chart.book()
-  .post(dr="cash", cr="equity", amount=1000)
-  .post(dr="goods", cr="cash", amount=800)
-  .post(dr="ar", cr="sales", amount=965)
-  .post(dr="discounts", cr="ar", amount=65)
-  .post(dr="cogs", cr="goods", amount=600)
-  .post(dr="sga", cr="cash", amount=150)
-  .post(dr="cash", cr="ar", amount=750)
+  .post(debit="cash", credit="equity", amount=1000)
+  .post(debit="goods", credit="cash", amount=800)
+  .post(debit="ar", credit="sales", amount=465)
+  .post(debit="discounts", credit="ar", amount=65)
+  .post(debit="cogs", credit="goods", amount=200)
+  .post(debit="sga", credit="cash", amount=100)
+  .post(debit="cash", credit="ar", amount=360)
   .close()
-  .after_close(dr="re", cr="dividend_due", amount=50)
+  .after_close(debit="re", credit="dividend_due", amount=50)
 )
 ```
 
@@ -132,15 +130,15 @@ from abacus import IncomeStatement, BalanceSheet
 
 print(income_statement)
 assert income_statement == IncomeStatement(
-    income={'sales': 900},
-    expenses={'cogs': 600, 'sga': 150}
+    income={'sales': 400},
+    expenses={'cogs': 200, 'sga': 100}
 )
 print(balance_sheet)
 assert balance_sheet == BalanceSheet(
-    assets={'cash': 800, 'ar': 150, 'goods': 200},
-    capital={'equity': 1000, 're': 100},
-    liabilities={'dividend_due': 50}
-)
+  assets={'cash': 460, 'ar': 40, 'goods': 600}, 
+  capital={'equity': 1000, 're': 50}, 
+  liabilities={'dividend_due': 50}
+) 
 ```
 
 ### End balances
@@ -179,11 +177,11 @@ bx chart list
 bx ledger start
 bx ledger post --debit cash --credit equity --amount 1000
 bx ledger post --debit goods --credit cash --amount 800
-bx ledger post --debit ar --credit sales --amount 965
+bx ledger post --debit ar --credit sales --amount 465
 bx ledger post --debit discounts --credit ar --amount 65
-bx ledger post --debit cogs --credit goods --amount 600
-bx ledger post --debit sga --credit cash --amount 150
-bx ledger post --debit cash --credit ar --amount 750
+bx ledger post --debit cogs --credit goods --amount 200
+bx ledger post --debit sga --credit cash --amount 100
+bx ledger post --debit cash --credit ar --amount 360
 bx ledger close
 bx ledger post --debit re --credit dividend_due --amount 50 --after-close
 ```
@@ -216,7 +214,7 @@ if account balance is not equal to provided value.
 This is useful for testing.
 
 ```bash
-bx assert cash 800
+bx assert cash 460
 ```
 
 ## Feedback

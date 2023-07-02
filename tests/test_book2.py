@@ -21,10 +21,10 @@ starting_balances = {"cash": 1400, "equity": 1500, "re": -100}
 # Create general ledger and post new entries
 book = (
     chart.book(starting_balances)
-    .post(dr="rent", cr="cash", amount=200)
-    .post(dr="cash", cr="services", amount=825)
-    .post(dr="cashback", cr="cash", amount=25)
-    .post(dr="salaries", cr="cash", amount=400)
+    .post(debit="rent", credit="cash", amount=200)
+    .post(debit="cash", credit="services", amount=825)
+    .post(debit="cashback", credit="cash", amount=25)
+    .post(debit="salaries", credit="cash", amount=400)
     .close()
 )
 

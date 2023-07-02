@@ -12,11 +12,11 @@ call bx chart list || exit /b
 call bx ledger start || exit /b
 call bx ledger post --debit cash --credit equity --amount 1000 || exit /b
 call bx ledger post --debit goods --credit cash --amount 800 || exit /b
-call bx ledger post --debit ar --credit sales --amount 965 || exit /b
+call bx ledger post --debit ar --credit sales --amount 465 || exit /b
 call bx ledger post --debit discounts --credit ar --amount 65 || exit /b
-call bx ledger post --debit cogs --credit goods --amount 600 || exit /b
-call bx ledger post --debit sga --credit cash --amount 150 || exit /b
-call bx ledger post --debit cash --credit ar --amount 750 || exit /b
+call bx ledger post --debit cogs --credit goods --amount 200 || exit /b
+call bx ledger post --debit sga --credit cash --amount 100 || exit /b
+call bx ledger post --debit cash --credit ar --amount 360 || exit /b
 call bx ledger close || exit /b
 call bx ledger post --debit re --credit dividend_due --amount 50 --after-close || exit /b
 
@@ -35,4 +35,4 @@ call bx show account goods || exit /b
 call bx show account sales || exit /b
 
 
-call bx assert cash 800 || exit /b
+call bx assert cash 460 || exit /b

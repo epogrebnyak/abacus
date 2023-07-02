@@ -47,7 +47,7 @@ def is_credit_account(chart, account_name):
 
 
 def balance(chart, ledger, account_name):
-    account = ledger[account_name] 
+    account = ledger[account_name]
     if is_debit_account(chart, account_name):
         return sum(account[0]) - sum(account[1])
     if is_credit_account(chart, account_name):

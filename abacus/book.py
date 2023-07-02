@@ -86,18 +86,20 @@ class Book(BaseModel):
         self.entries.business.extend(entries)
         return self
 
-    def post(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Book":
-        entry = Entry(dr, cr, amount)
+    def post(self, debit: AccountName, credit: AccountName, amount: Amount) -> "Book":
+        entry = Entry(debit, credit, amount)
         self.entries.business.append(entry)
         return self
 
-    def adjust(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Book":
-        entry = Entry(dr, cr, amount)
+    def adjust(self, debit: AccountName, credit: AccountName, amount: Amount) -> "Book":
+        entry = Entry(debit, credit, amount)
         self.entries.adjustment.append(entry)
         return self
 
-    def after_close(self, dr: AccountName, cr: AccountName, amount: Amount) -> "Book":
-        entry = Entry(dr, cr, amount)
+    def after_close(
+        self, debit: AccountName, credit: AccountName, amount: Amount
+    ) -> "Book":
+        entry = Entry(debit, credit, amount)
         self.entries.after_close.append(entry)
         return self
 
