@@ -308,8 +308,10 @@ def show_command(arguments, directory=cwd()):
     elif arguments["--post-close"]:
         show = book.entries.post_close
     if arguments["--json"]:
+        # FIXME
         print(show)
     else:
+        # FIXME
         print(show)
 
 
@@ -324,19 +326,20 @@ def main():
         chart_command(arguments)
     elif arguments["ledger"]:
         ledger_command(arguments)
-    elif arguments["name"]:
-        name_command(arguments["<account_name>"], arguments["<title>"])
-    elif arguments["report"]:
+    elif arguments["report"] and arguments["show"]:
+        # bx show report
         report_command(arguments)
-    elif arguments["balances"]:
+    elif arguments["balances"] and arguments["show"]:
+        # bx show balances
         balances_command(arguments)
-    elif arguments["account"]:
+    elif arguments["account"] and arguments["show"]:
         # bx show account <account_name>
-        account_name = arguments["<account_name>"]
-        print_account_balance(account_name)
+        print_account_balance(account_name=arguments["<account_name>"])
     elif arguments["assert"]:
         account_name, amount = arguments["<account_name>"], arguments["<amount>"]
         assert_account_balance(account_name, amount)
+    else:
+        sys.exit("Command not recognized. Use bx --help for reference.")     
 
 
 if __name__ == "__main__":
