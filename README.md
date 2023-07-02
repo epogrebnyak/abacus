@@ -5,7 +5,7 @@
 A minimal, yet valid double-entry accounting system, provided as a Python package and a command line tool.
 
 Using `abacus` you can define a chart of accounts, create a general ledger, post
-entries and produce balance sheet and income statement at accounting period end.
+entries, close accounts at period end and produce trial balance, balance sheet and income statement.
 
 ## Documentation
 
