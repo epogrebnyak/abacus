@@ -244,6 +244,7 @@ def account_info(account_name: str, amount: Amount):
 def human_name(account):
     return account.__class__.__name__
     # must return 'Сontra income' and 'Retained earnings'
+    # split on caps 
 
 
 def print_account_balance(account_name: str, directory=cwd()):
