@@ -3,18 +3,22 @@ from pprint import pprint
 
 
 def empty_account():
+    """Account is a tuple of two lists."""
     return ([], [])
 
 
 def debit(account, amount):
+    """Debit operation on account adds to amount first list."""
     return (account[0] + [amount]), account[1]
 
 
 def credit(account, amount):
+    """Credit operation on account adds to amount second list."""
     return account[0], (account[1] + [amount])
 
 
 def process_entry(ledger, entry):
+    """Given an entry, update ledger."""
     dr, cr, amount = entry
     _ledger = deepcopy(ledger)
     _ledger[dr] = debit(ledger[dr], amount)
@@ -42,7 +46,8 @@ def is_credit_account(chart, account_name):
     return account_name in credit_accounts(chart)
 
 
-def balance(chart, account_name, account):
+def balance(chart, ledger, account_name):
+    account = ledger[account_name] 
     if is_debit_account(chart, account_name):
         return sum(account[0]) - sum(account[1])
     if is_credit_account(chart, account_name):
@@ -59,8 +64,8 @@ def make_ledger(chart):
 
 def get_balances(chart, ledger):
     return {
-        account_name: balance(chart, account_name, account)
-        for account_name, account in ledger.items()
+        account_name: balance(chart, ledger, account_name)
+        for account_name in ledger.keys()
     }
 
 
@@ -100,11 +105,11 @@ ledger_ = make_ledger(chart_)
 entries = [
     ("cash", "equity", 299),
     ("cash", "equity", 301),
-    ("cash", "services", 870),
+    ("cash", "loan", 500),
     ("payroll", "cash", 355),
     ("rent", "cash", 200),
-    ("cash", "loan", 500),
     ("interest", "cash", 15),
+    ("cash", "services", 870),
 ]
 for entry in entries:
     ledger_ = process_entry(ledger_, entry)
@@ -167,13 +172,12 @@ def to_number(x):
     return str(x).rjust(5, " ")
 
 
-def print_statement(report, title=""):
-    print()
+def print_statement(report, title="", n=25):
     print(title)
     for key, xs in report.items():
-        print(to_line(key).ljust(25, "."), to_number(sum_dict(xs)))
+        print(to_line(key).ljust(n, "."), to_number(sum_dict(xs)))
         for account_name, amount in xs.items():
-            print(("  " + to_line(account_name)).ljust(25, "."), to_number(amount))
+            print(("  " + to_line(account_name)).ljust(n, "."), to_number(amount))
 
 
 print_statement(inc, "Income statement")
