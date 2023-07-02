@@ -209,8 +209,7 @@ bx show account goods
 bx show account sales
 ```
 
-`assert` command will make the program complain
-if account balance is not equal to provided value.
+`assert` command will complain if account balance is not equal to provided value.
 This is useful for testing.
 
 ```bash
