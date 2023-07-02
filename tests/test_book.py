@@ -5,15 +5,18 @@ from abacus.closing import ClosingEntries
 
 
 def test_post_many():
-    chart = Chart(
-        assets=["cash", "goods_for_sale"],
-        expenses=["cogs", "sga"],
-        equity=["equity"],
-        retained_earnings_account="re",
-        income=["sales"],
-        liabilities=[],
-        contra_accounts={"sales": ["discounts", "cashback"]},
+    chart = (
+        Chart(
+            assets=["cash", "goods_for_sale"],
+            expenses=["cogs", "sga"],
+            equity=["equity"],
+            income=["sales"],
+            liabilities=[],
+        )
+        .set_retained_earnings("re")
+        .offset("sales", ["discounts", "cashback"])
     )
+
     starting_balances = {"cash": 10, "goods_for_sale": 10, "equity": 20}
     book = chart.book(starting_balances)
     e1 = Entry(dr="cash", cr="equity", amount=1000)  # pay in capital
@@ -33,8 +36,7 @@ def test_book():
             equity=["equity"],
             liabilities=["divp", "payables"],
             income=["sales"],
-            retained_earnings_account="re",
-        ),
+        ).set_retained_earnings("re"),
         starting_balance={},
         entries=Entries(
             business=[

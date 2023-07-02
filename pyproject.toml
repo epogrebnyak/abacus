@@ -7,14 +7,13 @@ extend-exclude=["minimal.py"]
 
 [tool.poetry]
 name = "abacus"
-version = "0.4.14"
+version = "0.4.15"
 description = "A minimal, yet valid double-entry accounting system in Python."
 authors = ["Evgeniy Pogrebnyak <e.pogrebnyak@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.scripts]
 bx = 'abacus.bx:main'
-jaba = "abacus.jaba:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"

@@ -2,15 +2,18 @@ from abacus import BalanceSheet, Chart, IncomeStatement
 from abacus.accounting_types import ClosingEntry, Entry
 
 # Create chart of accounts
-chart = Chart(
-    assets=["cash"],
-    equity=["equity"],
-    retained_earnings_account="re",
-    expenses=["salaries", "rent"],
-    liabilities=[],
-    income=["services"],
-    contra_accounts={"services": ["cashback"]},
+chart = (
+    Chart(
+        assets=["cash"],
+        equity=["equity"],
+        expenses=["salaries", "rent"],
+        liabilities=[],
+        income=["services"],
+    )
+    .set_retained_earnings("re")
+    .offset("services", ["cashback"])
 )
+
 
 # Account balances are known from previous period end
 starting_balances = {"cash": 1400, "equity": 1500, "re": -100}
@@ -30,13 +33,10 @@ def test_open_accounts():
     assert book.chart == Chart(
         assets=["cash"],
         expenses=["salaries", "rent"],
-        equity=["equity"],
-        retained_earnings_account="re",
+        equity=["equity", "re"],
         liabilities=[],
         income=["services"],
-        contra_accounts={"services": ["cashback"]},
-        income_summary_account="_profit",
-    )
+    ).set_retained_earnings("re").offset("services", ["cashback"])._set_isa("_profit")
 
 
 def test_start_entry():

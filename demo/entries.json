@@ -1,99 +1,43 @@
 {
   "chart": {
-    "assets": ["cash", "ar", "goods"],
-    "expenses": ["cogs", "sga"],
-    "equity": ["equity"],
-    "retained_earnings_account": "re",
-    "liabilities": ["ap"],
-    "income": ["sales"],
-    "contra_accounts": {
-      "sales": ["discounts", "refunds"],
-      "equity": ["treasury_stock"]
+    "base": {
+      "assets": [
+        "cash",
+        "goods"
+      ],
+      "expenses": [],
+      "equity": [
+        "equity"
+      ],
+      "liabilities": [],
+      "income": []
     },
-    "income_summary_account": "_profit"
+    "retained_earnings_account": "re",
+    "income_summary_account": "_profit",
+    "contra_accounts": {},
+    "names": {}
   },
-  "starting_balances": {
-    "cash": 70,
-    "goods": 30,
-    "equity": 100
-  },
+  "starting_balances": {},
   "entries": {
     "business": [
       {
-        "dr": "ar",
-        "cr": "sales",
-        "amount": 99
-      },
-      {
-        "dr": "refunds",
-        "cr": "ar",
-        "amount": 10
-      },
-      {
-        "dr": "discounts",
-        "cr": "ar",
-        "amount": 8
-      },
-      {
         "dr": "cash",
-        "cr": "ar",
-        "amount": 50
+        "cr": "equity",
+        "amount": 1000
       },
       {
-        "dr": "cogs",
-        "cr": "goods",
-        "amount": 25
-      },
-      {
-        "dr": "sga",
-        "cr": "ap",
-        "amount": 24
-      },
-      {
-        "dr": "ap",
+        "dr": "goods",
         "cr": "cash",
-        "amount": 12
+        "amount": 800
       }
     ],
     "adjustment": [],
     "closing": {
-      "contra_income": [
-        {
-          "dr": "sales",
-          "cr": "discounts",
-          "amount": 8
-        },
-        {
-          "dr": "sales",
-          "cr": "refunds",
-          "amount": 10
-        }
-      ],
+      "contra_income": [],
       "contra_expense": [],
-      "income": [
-        {
-          "dr": "sales",
-          "cr": "_profit",
-          "amount": 81
-        }
-      ],
-      "expense": [
-        {
-          "dr": "_profit",
-          "cr": "cogs",
-          "amount": 25
-        },
-        {
-          "dr": "_profit",
-          "cr": "sga",
-          "amount": 24
-        }
-      ],
-      "isa": {
-        "dr": "_profit",
-        "cr": "re",
-        "amount": 32
-      }
+      "income": [],
+      "expense": [],
+      "isa": null
     },
     "post_close": []
   }

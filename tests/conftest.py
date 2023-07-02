@@ -12,8 +12,7 @@ def chart0():
         equity=["equity"],
         liabilities=["divp", "payables"],
         income=["sales"],
-        retained_earnings_account="re",
-    )
+    ).set_retained_earnings("re")
 
 
 @pytest.fixture

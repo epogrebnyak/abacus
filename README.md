@@ -4,8 +4,6 @@
 
 A minimal, yet valid double-entry accounting system, provided as a Python package and a command line tool.
 
-Features chart of accounts, ledger, entries and several end-of-period reports (trail balance, income statement and balance sheet).
-
 ## Documentation
 
 <https://epogrebnyak.github.io/abacus/>
@@ -26,15 +24,15 @@ Features chart of accounts, ledger, entries and several end-of-period reports (t
 pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 
-This will install both `abacus` package and `jaba` command line tool.
+This will install both `abacus` package and the `bx` command line tool.
 
 ## Usage
 
 There are three steps in using `abacus`:
 
 1. create a chart of accounts,
-2. create general ledger and post entries, 
-3. produce trial balance, balance sheet and income statement reports.
+2. create general ledger and post entries,
+3. make trial balance, balance sheet and income statement reports.
 
 ### 1. Chart
 
@@ -48,13 +46,10 @@ chart = Chart(
     assets=["cash", "ar", "goods"],
     expenses=["cogs", "sga"],
     equity=["equity"],
-    retained_earnings_account="re",
     liabilities=["dividend_due", "ap"],
-    income=["sales"],
-    contra_accounts = {
-      "sales": ["discounts", "refunds"]
-    }
-)
+    income=["sales"]
+    ).set_retained_earnings("re"
+    ).offset("sales", ["discounts", "refunds"])
 ```
 
 ### 2. Ledger
@@ -98,7 +93,7 @@ rv.print(income_statement)
 ```
 
 The result should look like screenshot below.
-   
+
 ![](https://user-images.githubusercontent.com/9265326/249445794-7def0fc2-934b-49fa-a3ad-9137072a2900.png)
 
 <details>
@@ -108,7 +103,7 @@ The result should look like screenshot below.
 ### Check values
 
 As a reminder `assert` statement in Python will raise exception if provided wrong comparison.
-These checks will execute and this way we will know the code in README is up to date and correct.  
+These checks will execute and this way we will know the code in README is up to date and correct.
 
 ```python
 from abacus import IncomeStatement, BalanceSheet
@@ -124,69 +119,74 @@ assert balance_sheet == BalanceSheet(
 )
 ```
 
-### End balances 
+### End balances
 
 You can use end balances from current period to initialize ledger at the start of next accounting period.
 
 ```python
 end_balances = book.nonzero_balances()
 assert end_balances  == {'cash': 1100, 'goods': 50, 'equity': 1000, 're': 150}
-book2 = chart.book(starting_balances=end_balances)
+next_book = chart.book(starting_balances=end_balances)
 ```
+
 </details>
 
 ## Command line
 
 Similar operations with chart, ledger and reports can be performed on the command line.
 
-Note: `jaba` tool will be replaced with more concise `bx` tool at version 0.5.0 release.
-
 ### Create chart of accounts
 
 ```bash
-jaba chart chart.json unlink
-jaba chart chart.json touch
-jaba chart chart.json set --assets cash ar goods
-jaba chart chart.json set --capital equity
-jaba chart chart.json set --retained-earnings re
-jaba chart chart.json set --liabilities ap
-jaba chart chart.json set --income sales
-jaba chart chart.json set --expenses cogs sga
-jaba chart chart.json offset sales discounts cashback
-jaba chart chart.json list --validate
-echo {"cash": 700, "equity": 1000, "goods": 300} > start_balances.json
-jaba chart chart.json make store.json
+bx init --force
+bx chart set --assets cash ar goods
+bx chart set --equity equity
+bx chart set --retained-earnings re
+bx chart set --liabilities ap
+bx chart set --income sales
+bx chart set --expenses cogs sga
+bx chart offset sales --contra-accounts discounts cashback
+bx chart list
 ```
 
 ### Post entries to ledger and close
 
 ```bash
-jaba ledger store.json post cash equity 1000
-jaba ledger store.json post goods cash 300
-jaba ledger store.json post cogs goods 250
-jaba ledger store.json post ar sales 440
-jaba ledger store.json post discounts ar 41
-jaba ledger store.json post cash ar 150
-jaba ledger store.json post sga cash 69
-jaba ledger store.json close
-jaba ledger store.json list --business
-jaba ledger store.json list --close
+bx ledger start
+bx ledger post cash equity 1000
+bx ledger post goods cash 300
+bx ledger post cogs goods 250
+bx ledger post ar sales 440
+bx ledger post discounts ar 41
+bx ledger post cash ar 150
+bx ledger post sga cash 69
+bx ledger close
+bx ledger list --business
+bx ledger list --close
 ```
 
 ### Report
 
 ```bash
-jaba report store.json --balance-sheet
-jaba report store.json --income-statement
+bx show report --balance-sheet
+bx show report --income-statement
+bx show balances
+```
+
+You can save end balances to a file to initialize next period ledger.
+
+```bash
+bx show balances --json > end_balances.json
 ```
 
 ### Account information
 
-Show balances of all accounts or balance of a specific account:
-
 ```bash
-jaba balances store.json show --skip-zero
-jaba balances store.json show cash
+bx show account cash
+bx show account ar
+bx show account goods
+bx show account equity
+bx show account re
 ```
 
 `assert` command will make the program complain
@@ -194,17 +194,11 @@ if account balance is not equal to provided value.
 This is useful for testing.
 
 ```bash
-jaba balances store.json assert cash 781
-jaba balances store.json assert ar 241
-jaba balances store.json assert goods 50
-jaba balances store.json assert equity 1000
-jaba balances store.json assert re 80
-```
-
-You can save end balances to a file to initialize next period.
-
-```bash
-jaba balances store.json show --skip-zero --json > end_balances.json
+bx assert cash 781
+bx assert ar 249
+bx assert goods 50
+bx assert equity 1000
+bx assert re 80
 ```
 
 ## Feedback

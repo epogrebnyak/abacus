@@ -1,5 +1,8 @@
 package := "abacus"
 readme_command := if os_family() == "windows" { "readme-console-win" } else { "readme-console-linux" }
+# use cmd.exe instead of sh
+set shell := ["cmd.exe", "/c"]
+
 
 # List all commands
 list:
@@ -14,10 +17,17 @@ grill:
   just ruff
   just md
   just readme
+  just test-bat
 
 # Run pytest (up to first error) and print slowest test times 
 test:
   poetry run pytest -x --durations=5
+
+test-bat:
+  cd demo && call chart.bat
+  cd demo && call ledger.bat
+  cd demo && call show.bat
+  cd demo && call cli.bat
 
 # Type check
 mypy:

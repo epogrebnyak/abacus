@@ -14,7 +14,7 @@ from abacus.accounting_types import (
     Entry,
     MultipleEntry,
 )
-from abacus.chart import Chart
+from abacus.chart import QualifiedChart
 from abacus.closing import ClosingEntries, make_closing_entries
 from abacus.ledger import Ledger, process_postings
 
@@ -63,7 +63,7 @@ class Entries:
 
 
 class Book(BaseModel):
-    chart: Chart = Chart.empty()
+    chart: QualifiedChart = QualifiedChart.empty()
     starting_balances: Dict[AccountName, Amount] = {}
     entries: Entries = Entries()
 

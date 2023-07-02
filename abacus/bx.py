@@ -9,19 +9,19 @@ Usage:
   bx chart set --income <account_names>...
   bx chart set --expenses <account_names>...
   bx chart offset <account_name> (--contra-accounts <contra_account_names>...)
-  bx chart show [--json]
-  bx ledger start [--file <balances_file> | --empty] [--dry-run]
+  bx chart name <account_name> --title <title>
+  bx chart list [--json]
+  bx ledger start [--file <balances_file>] [--dry-run]
   bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--post-close]
   bx ledger post <dr> <cr> <amount> [--adjust] [--post-close]
   bx ledger close
-  bx ledger show (--start | --business | --adjust | --close | --post-close) [--json]
-  bx name <account_name> --title <title>
-  bx report --income-statement [--json] 
-  bx report --balance-sheet [--json] 
-  bx balances (--nonzero | --all) [--json]
-  bx account <account_name> [--assert-balance <amount>]
-  bx end
-  bx debug
+  bx ledger list (--start | --business | --adjust | --close | --post-close) [--json]
+  bx show report --income-statement [--json] 
+  bx show report --balance-sheet [--json] 
+  bx show balances [--all] [--json]
+  bx show account <account_name>
+  bx assert <account_name> <amount>
+  bx debug 
 
 Options:
   -h --help     Show this help message.
@@ -33,11 +33,11 @@ import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
 
 from docopt import docopt
 
-from abacus import Amount, Book, Chart, Names, PlainTextViewer
+from abacus import Amount, Book, PlainTextViewer
+from abacus.chart import QualifiedChart
 
 
 def cwd() -> Path:
@@ -56,22 +56,22 @@ class Location:
     def entries(self, filename: str = "entries.json"):
         return self.directory / filename
 
-    @property
-    def names(self, filename: str = "names.json"):
-        return self.directory / filename
-
 
 def init(force: bool = False, directory=cwd()):
+    # FIXME: change this command to creating abacus.toml
     loc = Location(directory)
-    create_object(loc.chart, force, Chart.empty())
-    create_object(loc.names, force, Names())
+    create_object(loc.chart, force, QualifiedChart.empty())
 
 
-def create_object(path: Path, force: bool, default_object: Union[Chart, Names]):
+def create_object(path: Path, force: bool, default_object: QualifiedChart):
     if path.exists() and not force:
         sys.exit(f"Cannot create {path}, file already exists.")
     default_object.save(path)
-    name = default_object.__class__.__name__.lower()
+    name = (
+        "chart"
+        if isinstance(default_object, QualifiedChart)
+        else default_object.__class__.__name__.lower()
+    )
     print(f"Created {name} at {path}.")
 
 
@@ -96,11 +96,11 @@ def contra_phrase(key, names):
 def print_chart(chart):
     re = chart.retained_earnings_account
     print("Chart of accounts")
-    print("  Assets:     ", comma(chart.assets))
-    print("  Capital:    ", comma(chart.equity + [re] if re else []))
-    print("  Liabilities:", comma(chart.liabilities))
-    print("  Income:     ", comma(chart.income))
-    print("  Expenses:   ", comma(chart.expenses))
+    print("  Assets:     ", comma(chart.base.assets))
+    print("  Capital:    ", comma(chart.base.equity))
+    print("  Liabilities:", comma(chart.base.liabilities))
+    print("  Income:     ", comma(chart.base.income))
+    print("  Expenses:   ", comma(chart.base.expenses))
     if chart.contra_accounts:
         print("  Contra accounts:")
         for key, names in chart.contra_accounts.items():
@@ -109,7 +109,7 @@ def print_chart(chart):
     print("  Income summary account:   ", chart.income_summary_account)
 
 
-def chart_show(chart: Chart, json_flag: bool):
+def chart_show(chart: QualifiedChart, json_flag: bool):
     if json_flag:
         print(json.dumps(chart.dict()))
     else:
@@ -117,14 +117,10 @@ def chart_show(chart: Chart, json_flag: bool):
 
 
 def name_command(account_name, title):
-    path = Location(directory=cwd()).names
-    if path.exists():
-        names = safe_load(Names, path)
-    else:
-        names = Names()
-    names.names[account_name] = title
+    chart, path = load_chart(directory=cwd())
+    chart.set_name(account_name, title)
     print("Long name for", account_name, "is", title + ".")
-    names.save(path)
+    chart.save(path)
 
 
 def end():
@@ -139,9 +135,9 @@ def debug(arguments):
 def load_chart(directory):
     path = Location(directory).chart
     if path.exists():
-        chart = safe_load(Chart, path)
+        chart = safe_load(QualifiedChart, path)
     else:
-        chart = Chart.empty()
+        chart = QualifiedChart.empty()
     return chart, path
 
 
@@ -149,16 +145,17 @@ def chart_command(arguments, directory=cwd()):
     chart, path = load_chart(directory)
     if arguments["set"]:
         if arguments["--retained-earnings"]:
-            re_account_name = arguments["<re_account_name>"]
-            chart.retained_earnings_account = re_account_name
-            print("Set", re_account_name, "as retained earnings account.")
+            re = arguments["<re_account_name>"]
+            chart.set_retained_earnings(account_name=re)
             chart.save(path)
+            print("Set", re, "as retained earnings account.")
             sys.exit(0)
         account_names = arguments["<account_names>"]
         for attribute in ["assets", "equity", "liabilities", "income", "expenses"]:
             if arguments["--" + attribute]:
-                setattr(chart, attribute, account_names)
+                setattr(chart.base, attribute, account_names)
                 break
+        chart.save(path)
         print(
             "Set",
             comma(account_names),
@@ -166,14 +163,18 @@ def chart_command(arguments, directory=cwd()):
             attribute,
             "accounts." if len(account_names) > 1 else "account.",
         )
-        chart.save(path)
     elif arguments["offset"]:
         key = arguments["<account_name>"]
         names = arguments["<contra_account_names>"]
-        chart.contra_accounts[key] = names
+        chart.offset(key, names)
         chart.save(path)
         print("Modified chart,", contra_phrase(key, names) + ".")
-    elif arguments["show"]:
+    elif arguments["name"]:
+        account_name, title = arguments["<account_name>"], arguments["<title>"]
+        chart.set_name(account_name, title)
+        chart.save(path)
+        print("Long name for", account_name, "is", title + ".")
+    elif arguments["list"]:
         chart_show(chart, arguments["--json"])
 
 
@@ -185,7 +186,7 @@ def ledger_command(arguments, directory=cwd()):
     ledger_path = Location(directory).entries
     if arguments["start"]:
         chart, _ = load_chart(directory)
-        chart.strong_validate()
+        chart.qualify()
         if arguments["--file"]:
             starting_balances = read_json(arguments["<balances_file>"])
         else:
@@ -197,7 +198,7 @@ def ledger_command(arguments, directory=cwd()):
             book.save(ledger_path)
             print("Created ledger.")
         sys.exit(0)
-    if arguments["show"]:
+    if arguments["list"]:
         show_command(arguments)
     book = safe_load(Book, ledger_path)
     if arguments["post"]:
@@ -218,8 +219,7 @@ def ledger_command(arguments, directory=cwd()):
 def report_command(arguments, directory=cwd()):
     ledger_path = Location(directory).entries
     book = safe_load(Book, ledger_path)
-    names_path = Location(directory).names
-    rename_dict = safe_load(Names, names_path).names
+    rename_dict = book.chart.names
     viewer = PlainTextViewer(rename_dict)
     if arguments["--income-statement"]:
         report = book.income_statement()
@@ -279,23 +279,13 @@ def print_two_columns(data: dict):
         print(" ", k.ljust(n1, " "), str(v).rjust(n2, " "))
 
 
-def account_command(arguments):
-    # bx account <account_name> [--assert-balance <amount>]
-    account_name = arguments["<account_name>"]
-    if account_name:
-        if arguments["--assert-balance"]:
-            assert_account_balance(account_name, arguments["<amount>"])
-        else:
-            print_account_balance(account_name)
-
-
 def balances_command(arguments):
-    # bx balances (--nonzero | --all)
+    # bx balances [--all]
     path = Location(directory=cwd()).entries
     book = safe_load(Book, path)
     if arguments["--all"]:
         data = book.balances()
-    elif arguments["--nonzero"]:
+    else:
         data = book.nonzero_balances()
     if arguments["--json"]:
         print(json.dumps(data))
@@ -341,9 +331,12 @@ def main():
     elif arguments["balances"]:
         balances_command(arguments)
     elif arguments["account"]:
-        account_command(arguments)
-    elif arguments["end"]:
-        end()
+        # bx show account <account_name>
+        account_name = arguments["<account_name>"]
+        print_account_balance(account_name)
+    elif arguments["assert"]:
+        account_name, amount = arguments["<account_name>"], arguments["<amount>"]
+        assert_account_balance(account_name, amount)
 
 
 if __name__ == "__main__":

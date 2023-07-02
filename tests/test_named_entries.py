@@ -49,10 +49,9 @@ _chart = Chart(
     assets=["cash", "receivables", "goods_for_sale"],
     expenses=["cogs", "sga"],
     equity=["equity"],
-    retained_earnings_account="re",
     liabilities=["divp", "payables"],
     income=["sales"],
-)
+).set_retained_earnings("re")
 
 
 @pytest.fixture

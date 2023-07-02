@@ -1,38 +1,39 @@
-jaba chart chart.json unlink
-jaba chart chart.json touch
-jaba chart chart.json set --assets cash ar goods ppe
-jaba chart chart.json set --capital equity
-jaba chart chart.json set --retained-earnings re
-jaba chart chart.json set --liabilities ap dividend_due
-jaba chart chart.json set --income sales
-jaba chart chart.json set --expenses cogs sga
-jaba chart chart.json offset ppe depreciation
-jaba chart chart.json offset sales discounts cashback
-jaba chart chart.json list --validate
-echo {"cash": 700, "equity": 1000, "goods": 300} > start_balances.json
-jaba chart chart.json make store.json
+bx init --force
+bx chart set --assets cash ar goods
+bx chart set --equity equity
+bx chart set --retained-earnings re
+bx chart set --liabilities ap
+bx chart set --income sales
+bx chart set --expenses cogs sga
+bx chart offset sales --contra-accounts discounts cashback
+bx chart list
 
-jaba ledger store.json post cash equity 1000
-jaba ledger store.json post goods cash 300
-jaba ledger store.json post cogs goods 250
-jaba ledger store.json post ar sales 440
-jaba ledger store.json post discounts ar 41
-jaba ledger store.json post cash ar 150
-jaba ledger store.json post sga cash 69
-jaba ledger store.json close
-jaba ledger store.json list --business
-jaba ledger store.json list --close
+bx ledger start
+bx ledger post cash equity 1000
+bx ledger post goods cash 300
+bx ledger post cogs goods 250
+bx ledger post ar sales 440
+bx ledger post discounts ar 41
+bx ledger post cash ar 150
+bx ledger post sga cash 69
+bx ledger close
+bx ledger list --business
+bx ledger list --close
 
-jaba report store.json --balance-sheet
-jaba report store.json --income-statement
+bx show report --balance-sheet
+bx show report --income-statement
+bx show balances
 
-jaba balances store.json show --skip-zero
-jaba balances store.json show cash
+bx show balances --json > end_balances.json
 
-jaba balances store.json assert cash 781
-jaba balances store.json assert ar 241
-jaba balances store.json assert goods 50
-jaba balances store.json assert equity 1000
-jaba balances store.json assert re 80
+bx show account cash
+bx show account ar
+bx show account goods
+bx show account equity
+bx show account re
 
-jaba balances store.json show --skip-zero --json > end_balances.json
+bx assert cash 781
+bx assert ar 249
+bx assert goods 50
+bx assert equity 1000
+bx assert re 80

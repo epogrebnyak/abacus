@@ -1,165 +1,131 @@
-"""Chart of accounts."""
-
+from itertools import chain
 from pathlib import Path
-from typing import Dict, List, Type
+from typing import Dict, List
 
-from pydantic import BaseModel  # type: ignore
+from pydantic import BaseModel
 
 from abacus.accounting_types import AbacusError, AccountName
-from abacus.accounts import (
-    Asset,
-    Capital,
-    Expense,
-    Income,
-    IncomeSummaryAccount,
-    Liability,
-    RetainedEarnings,
-)
-
-__all__ = ["Chart"]
+from abacus.accounts import Account as TAccount
+from abacus.accounts import IncomeSummaryAccount, RetainedEarnings, allocation
 
 
-def empty_chart():
-    return Chart(
-        assets=[],
-        expenses=[],
-        equity=[],
-        retained_earnings_account="",
-        liabilities=[],
-        income=[],
-    )
+class Account(BaseModel):
+    name: str
+    cls: TAccount | None = None
 
 
 def is_unique(xs):
     return len(set(xs)) == len(xs)
 
 
-class BaseChart(BaseModel):
-    assets: List[str]
-    expenses: List[str]
-    equity: List[str]
-    liabilities: List[str]
-    income: List[str]
-
-
-class QualifiedChart(BaseModel):
-    base: BaseChart
-    contra_accounts: Dict[str, List[str]]
-    retained_earnings_account: str
-    income_summary_account: str
+def assert_unique(xs):
+    if not is_unique(xs):
+        raise AbacusError("Account names must be unique")
 
 
 class Chart(BaseModel):
-    """Chart of accounts."""
+    assets: List[str] = []
+    expenses: List[str] = []
+    equity: List[str] = []
+    liabilities: List[str] = []
+    income: List[str] = []
 
-    assets: List[str]
-    expenses: List[str]
-    equity: List[str]
+    @property
+    def attributes(self):
+        return list(allocation.keys())
+
+    def account_names(self):
+        return [
+            account_name
+            for attr in self.attributes
+            for account_name in getattr(self, attr)
+        ]
+
+    def yield_accounts(self):
+        for attr, classes in allocation.items():
+            for account in getattr(self, attr):
+                yield account, classes[0]
+
+    def set_retained_earnings(self, account_name):
+        if account_name in self.equity:
+            self.equity.remove(account_name)
+        assert_unique(self.account_names() + [account_name])
+        return QualifiedChart(base=self, retained_earnings_account=account_name)
+
+
+class QualifiedChart(BaseModel):
+    base: Chart
     retained_earnings_account: str
-    liabilities: List[str]
-    income: List[str]
-    contra_accounts: Dict[str, List[str]] = {}
     income_summary_account: str = "_profit"
-
-    def __init__(self, **kw):
-        super().__init__(**kw)
-        self.assert_unique_account_names()
-        self.assert_contra_account_names_match_regular_accounts()
-
-    def weak_validate(self):
-        self.assert_unique_account_names()
-        self.assert_contra_account_names_match_regular_accounts()
-        return self
-
-    def strong_validate(self):
-        self.weak_validate()
-        if not self.retained_earnings_account:
-            raise AbacusError("Must set retained earnings attribute")
-        return self
-
-    def pprint(self):
-        from pprint import pprint
-
-        pprint(self.dict())
-        return self
+    contra_accounts: Dict[str, List[str]] = {}
+    names: Dict[AccountName, str] = {}
 
     @classmethod
-    def empty(cls):
-        return empty_chart()
-
-    # FIXME: this is sugaring, may depreciate
-    @classmethod
-    def load(cls, path):
-        return cls.parse_file(path)
+    def empty(self):
+        return QualifiedChart(base=Chart(), retained_earnings_account="")
 
     def save(self, path):
         Path(path).write_text(self.json(indent=2), encoding="utf-8")
 
-    @property
-    def input_names(self):
+    def set_name(self, account_name: AccountName, title: str):
+        self.names[account_name] = title
+        return self
+
+    def account_names(self):
         return (
-            [self.income_summary_account]
-            + [self.retained_earnings_account]
-            + self.assets
-            + self.expenses
-            + self.equity
-            + self.liabilities
-            + self.income
-            + [name for names in self.contra_accounts.values() for name in names]
+            self.base.account_names()
+            + [n for n, _ in self.yield_contra_accounts()]
+            + [self.retained_earnings_account, self.income_summary_account]
         )
 
-    def assert_unique_account_names(self):
-        if not is_unique(self.input_names):
-            raise AbacusError("Account names must be unique")
+    def set_retained_earnings(self, account_name):
+        self.base = self.base.set_retained_earnings(account_name).base
+        self.retained_earnings_account = account_name
+        return self
 
-    def assert_contra_account_names_match_regular_accounts(self):
-        for account_name in self.contra_accounts.keys():
-            if account_name not in self.input_names:
-                raise AbacusError(f"{account_name} must be specified in chart")
+    def _set_isa(self, account_name):
+        # Would be rarely used, income_summary_account is a hidden name
+        self.income_summary_account = account_name
+        assert_unique(self.account_names())
+        return self
 
-    def _yield_regular_accounts(self):
-        for account_name in self.assets:
-            yield account_name, Asset
-        for account_name in self.expenses:
-            yield account_name, Expense
-        for account_name in self.equity:
-            yield account_name, Capital
-        yield self.retained_earnings_account, RetainedEarnings
-        for account_name in self.liabilities:
-            yield account_name, Liability
-        for account_name in self.income:
-            yield account_name, Income
-        yield self.income_summary_account, IncomeSummaryAccount
+    def offset(self, account_name: str, contra_account_names: List[str]):
+        if account_name not in self.account_names():
+            raise AbacusError(f"{account_name} must be specified in chart")
+        self.contra_accounts[account_name] = contra_account_names
+        assert_unique(self.account_names())
+        return self
 
-    def get_type(self, account_name: AccountName) -> Type:
-        """Return account class for *account_name*."""
-        return dict(self._yield_regular_accounts())[account_name]
-
-    def _yield_contra_accounts(self):
-        for linked_account_name, contra_account_names in self.contra_accounts.items():
-            cls = self.get_type(linked_account_name).contra_account_constructor
-            for contra_account in contra_account_names:
-                yield contra_account, cls
+    def yield_contra_accounts(self):
+        for attr, classes in allocation.items():
+            account_names = getattr(self.base, attr)
+            for nets_with, contra_account_names in self.contra_accounts.items():
+                if nets_with in account_names:
+                    for contra_account_name in contra_account_names:
+                        yield contra_account_name, classes[1]
 
     def yield_accounts(self):
-        from itertools import chain
+        more = iter(
+            [
+                (self.retained_earnings_account, RetainedEarnings),
+                (self.income_summary_account, IncomeSummaryAccount),
+            ]
+        )
+        return chain(self.base.yield_accounts(), more, self.yield_contra_accounts())
 
-        a = self._yield_regular_accounts()
-        b = self._yield_contra_accounts()
-        return chain(a, b)
-
-    @property
-    def account_names(self) -> List[AccountName]:
-        """List all account names in chart."""
-        return [a[0] for a in self.yield_accounts()]
-
-    def book(self, starting_balances: dict | None = None):
-        from abacus.book import Book
-
-        if starting_balances is None:
-            starting_balances = {}
-        self.strong_validate()
-        return Book(chart=self, starting_balances=starting_balances)
+    def qualify(self) -> "QualifiedChart":
+        assert_unique(self.account_names())
+        if not self.retained_earnings_account:
+            raise AbacusError(
+                "Must set retained earnings account before creating ledger."
+            )
+        for account_name in self.contra_accounts.keys():
+            if account_name not in self.account_names():
+                raise AbacusError(
+                    f"{account_name} used for contra accounts "
+                    + "but not specified in chart."
+                )
+        return self
 
     def ledger(self):
         """Create empty ledger based on this chart."""
@@ -168,3 +134,10 @@ class Chart(BaseModel):
         return Ledger(
             (account_name, cls()) for account_name, cls in self.yield_accounts()
         )
+
+    def book(self, starting_balances: dict | None = None):
+        from abacus.book import Book
+
+        if starting_balances is None:
+            starting_balances = {}
+        return Book(chart=self.qualify(), starting_balances=starting_balances)
