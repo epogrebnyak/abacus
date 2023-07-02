@@ -18,7 +18,7 @@ Usage:
   bx ledger list [--start | --business | --adjust | --close | --post-close] [--json]
   bx show report --income-statement [--json] 
   bx show report --balance-sheet [--json] 
-  bx show balances [--all] [--json]
+  bx show balances [--all] [--trial] [--json]
   bx show account <account_name>
   bx assert <account_name> <amount>
   bx debug 
