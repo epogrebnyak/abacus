@@ -1,14 +1,9 @@
 {
   "chart": {
     "base": {
-      "assets": [
-        "cash",
-        "goods"
-      ],
+      "assets": ["cash", "goods"],
       "expenses": [],
-      "equity": [
-        "equity"
-      ],
+      "equity": ["equity"],
       "liabilities": [],
       "income": []
     },

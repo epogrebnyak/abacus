@@ -18,6 +18,7 @@ Unsure about:
 - if we have book, why need chart.json?
 
 Wont fix:
+
 - [ ] --title for entry
 - [ ] testing of a multiline string `pytest-console-plugin`
 - [ ] golden tests
