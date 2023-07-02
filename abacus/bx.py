@@ -15,7 +15,7 @@ Usage:
   bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--post-close]
   bx ledger post <dr> <cr> <amount> [--adjust] [--post-close]
   bx ledger close
-  bx ledger list (--start | --business | --adjust | --close | --post-close) [--json]
+  bx ledger list [--start | --business | --adjust | --close | --post-close] [--json]
   bx show report --income-statement [--json] 
   bx show report --balance-sheet [--json] 
   bx show balances [--all] [--json]
