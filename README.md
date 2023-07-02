@@ -132,7 +132,9 @@ Profit                                100
 <details>
 <summary> Screenshot (outdated).
 </summary>
+
 ![](https://user-images.githubusercontent.com/9265326/249445794-7def0fc2-934b-49fa-a3ad-9137072a2900.png)
+
 </details>
 
 <details>
