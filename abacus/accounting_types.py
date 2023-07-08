@@ -4,8 +4,8 @@ Base classes for a minimal accounting framework.
 
 from typing import Dict
 
-from pydantic.dataclasses import dataclass
 from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
 
 __all__ = ["Entry", "AbacusError"]
 

@@ -65,9 +65,10 @@ class Location:
 def erase(arguments, directory=cwd()):
     loc = Location(directory)
     if arguments["--chart"]:
-      loc.chart.unlink(missing_ok=True)
+        loc.chart.unlink(missing_ok=True)
     if arguments["--entries"]:
-      loc.entries.unlink(missing_ok=True)
+        loc.entries.unlink(missing_ok=True)
+
 
 # def init(force: bool = False, directory=cwd()):
 #     # FIXME: change this command to creating abacus.toml
@@ -260,7 +261,9 @@ def post_command(arguments, directory=cwd()):
             book.post(dr, cr, amount)
         print_entry(book.chart, dr, cr, amount)
     else:
-        for operation_name, amount in zip(arguments["<operations>"], arguments["<amounts>"]):
+        for operation_name, amount in zip(
+            arguments["<operations>"], arguments["<amounts>"]
+        ):
             book.post_operation(operation_name, amount)
             op = book.chart.get_operation(operation_name)
             print_entry(book.chart, op.debit, op.credit, amount)
