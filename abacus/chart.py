@@ -60,6 +60,15 @@ class QualifiedChart(BaseModel):
     contra_accounts: Dict[str, List[str]] = {}
     names: Dict[AccountName, str] = {}
 
+    def get_long_name(self, account_name):
+        try:
+            return self.names[account_name]
+        except KeyError:
+            return account_name.capitalize().replace("_", " ")
+
+    def get_name(self, account_name):
+        return f"{self.get_long_name(account_name)} <{account_name}>"
+
     @classmethod
     def empty(self):
         return QualifiedChart(base=Chart(), retained_earnings_account="")

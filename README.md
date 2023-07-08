@@ -129,6 +129,7 @@ Expenses                              300
 - Selling, general and adm. expenses  100
 Profit                                100
 ```
+
 <details>
 <summary> Screenshot (outdated).
 </summary>
@@ -156,10 +157,10 @@ assert income_statement == IncomeStatement(
 )
 print(balance_sheet)
 assert balance_sheet == BalanceSheet(
-  assets={'cash': 460, 'ar': 40, 'goods': 600}, 
-  capital={'equity': 1000, 're': 50}, 
+  assets={'cash': 460, 'ar': 40, 'goods': 600},
+  capital={'equity': 1000, 're': 50},
   liabilities={'dividend_due': 50}
-) 
+)
 ```
 
 ### End balances
@@ -181,15 +182,17 @@ Similar operations with chart, ledger and reports can be performed on the comman
 ### Create chart of accounts
 
 ```bash
-bx init --force
-bx chart set --assets cash ar goods
-bx chart set --equity equity
+bx chart set --asset cash
+bx chart set --asset ar --title "Accounts receivable"
+bx chart set --asset goods --title "Inventory (good for sale)"
+bx chart set --capital equity
 bx chart set --retained-earnings re
-bx chart set --liabilities dividend_due
+bx chart set --liability dividend_due
 bx chart set --income sales
-bx chart set --expenses cogs sga
-bx chart offset sales --contra-accounts discounts
-bx chart list
+bx chart set --expense cogs --title "Cost of sales"
+bx chart set --expense sga --title "Selling expenses"
+bx chart offset sales discounts
+bx chart show
 ```
 
 ### Post entries to ledger and close

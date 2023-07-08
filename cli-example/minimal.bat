@@ -1,22 +1,24 @@
-call bx init --force || exit /b
-call bx chart set --assets cash ar goods || exit /b
-call bx chart set --equity equity || exit /b
+call bx chart set --asset cash || exit /b
+call bx chart set --asset ar --title "Accounts receivable" || exit /b
+call bx chart set --asset goods --title "Inventory (good for sale)" || exit /b
+call bx chart set --capital equity || exit /b
 call bx chart set --retained-earnings re || exit /b
-call bx chart set --liabilities dividend_due || exit /b
+call bx chart set --liability dividend_due || exit /b
 call bx chart set --income sales || exit /b
-call bx chart set --expenses cogs sga || exit /b
-call bx chart offset sales --contra-accounts discounts || exit /b
-call bx chart list || exit /b
+call bx chart set --expense cogs --title "Cost of sales" || exit /b
+call bx chart set --expense sga --title "Selling expenses" || exit /b
+call bx chart offset sales discounts || exit /b
+call bx chart show || exit /b
 
 
 call bx ledger start || exit /b
-call bx ledger post --debit cash --credit equity --amount 1000 || exit /b
-call bx ledger post --debit goods --credit cash --amount 800 || exit /b
-call bx ledger post --debit ar --credit sales --amount 465 || exit /b
-call bx ledger post --debit discounts --credit ar --amount 65 || exit /b
-call bx ledger post --debit cogs --credit goods --amount 200 || exit /b
-call bx ledger post --debit sga --credit cash --amount 100 || exit /b
-call bx ledger post --debit cash --credit ar --amount 360 || exit /b
+call bx ledger post --debit cash      --credit equity --amount 1000 || exit /b
+call bx ledger post --debit goods     --credit cash   --amount 800 || exit /b
+call bx ledger post --debit ar        --credit sales  --amount 465 || exit /b
+call bx ledger post --debit discounts --credit ar     --amount 65 || exit /b
+call bx ledger post --debit cogs      --credit goods  --amount 200 || exit /b
+call bx ledger post --debit sga       --credit cash   --amount 100 || exit /b
+call bx ledger post --debit cash      --credit ar     --amount 360 || exit /b
 call bx ledger close || exit /b
 call bx ledger post --debit re --credit dividend_due --amount 50 --after-close || exit /b
 

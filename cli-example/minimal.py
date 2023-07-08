@@ -49,10 +49,10 @@ assert income_statement == IncomeStatement(
 )
 print(balance_sheet)
 assert balance_sheet == BalanceSheet(
-  assets={'cash': 460, 'ar': 40, 'goods': 600}, 
-  capital={'equity': 1000, 're': 50}, 
+  assets={'cash': 460, 'ar': 40, 'goods': 600},
+  capital={'equity': 1000, 're': 50},
   liabilities={'dividend_due': 50}
-) 
+)
 
 end_balances = book.nonzero_balances()
 print(end_balances)

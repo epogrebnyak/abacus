@@ -1,19 +1,17 @@
 """Double entry accounting manager.
 
 Usage:
-  bx init [--force]
-  bx chart set --assets <account_names>...
-  bx chart set --equity <account_names>...
-  bx chart set --retained-earnings <re_account_name>
-  bx chart set --liabilities <account_names>...
-  bx chart set --income <account_names>...
-  bx chart set --expenses <account_names>...
-  bx chart offset <account_name> (--contra-accounts <contra_account_names>...)
-  bx chart name <account_name> --title <title>
-  bx chart list [--json]
+  bx chart set --asset <account_name> [--title <title>] [--code <code>] 
+  bx chart set --expense <account_name> [--title <title>] [--code <code>]
+  bx chart set --capital <account_name> [--title <title>] [--code <code>]
+  bx chart set --retained-earnings <account_name>
+  bx chart set --liability <account_name> [--title <title>] [--code <code>]
+  bx chart set --income <account_name> [--title <title>] [--code <code>]
+  bx chart offset <account_name> <contra_account_names>...
+  bx chart name <account_name> --title <title> [--code <code>] 
+  bx chart show [--json]
   bx ledger start [--file <balances_file>] [--dry-run]
   bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--after-close]
-  bx ledger post <dr> <cr> <amount> [--adjust] [--after-close]
   bx ledger close
   bx ledger list [--start | --business | --adjust | --close | --after-close] [--json]
   bx show report --income-statement [--json] 
@@ -82,31 +80,50 @@ def safe_load(cls, path):
         sys.exit(f"File not found: {path}")
 
 
-def comma(xs):
+def comma(chart, xs, fill=", "):
     if xs:
-        return ", ".join(xs)
+        return fill.join([chart.get_name(x) for x in xs])
     else:
         return "not specified"
 
 
-def contra_phrase(key, names):
-    return " ".join([key, "account is offset by", comma(names)])
+def contra_phrase(chart, account_name, contra_account_names):
+    return (
+        chart.get_name(account_name)
+        + " account is offset by "
+        + comma(chart, contra_account_names)
+    )
+
+
+def ina(s):
+    return f"<{s}>"
+
+
+def step_print(chart, items):
+    print(" ", comma(chart, items, "\n  "))
 
 
 def print_chart(chart):
-    re = chart.retained_earnings_account
-    print("Chart of accounts")
-    print("  Assets:     ", comma(chart.base.assets))
-    print("  Capital:    ", comma(chart.base.equity))
-    print("  Liabilities:", comma(chart.base.liabilities))
-    print("  Income:     ", comma(chart.base.income))
-    print("  Expenses:   ", comma(chart.base.expenses))
+    def step_print(items):
+        print(" ", comma(chart, items, "\n  "))
+
+    print("Assets")
+    step_print(chart.base.assets)
+    print("Capital")
+    step_print(chart.base.equity)
+    print("Liabilities")
+    step_print(chart.base.liabilities)
+    print("Income")
+    step_print(chart.base.income)
+    print("Expenses")
+    step_print(chart.base.expenses)
     if chart.contra_accounts:
-        print("  Contra accounts:")
+        print("Contra accounts")
         for key, names in chart.contra_accounts.items():
-            print("    -", contra_phrase(key, names))
-    print("  Retained earnings account:", re or "not specified")
-    print("  Income summary account:   ", chart.income_summary_account)
+            print("  -", contra_phrase(chart, key, names))
+    re = chart.retained_earnings_account
+    print("Retained earnings account:", ina(re) or "not specified")
+    print("Income summary account:", ina(chart.income_summary_account))
 
 
 def chart_show(chart: QualifiedChart, json_flag: bool):
@@ -116,11 +133,9 @@ def chart_show(chart: QualifiedChart, json_flag: bool):
         print_chart(chart)
 
 
-def name_command(account_name, title):
-    chart, path = load_chart(directory=cwd())
+def name_subcommand(chart, account_name, title):
     chart.set_name(account_name, title)
     print("Long name for", account_name, "is", title + ".")
-    chart.save(path)
 
 
 def debug(arguments):
@@ -138,38 +153,69 @@ def load_chart(directory):
 
 def chart_command(arguments, directory=cwd()):
     chart, path = load_chart(directory)
+    if arguments["set"] and arguments["--retained-earnings"]:
+        re_account_name = arguments["<account_name>"]
+        chart.set_retained_earnings(re_account_name)
+        title = arguments["<title>"] or "Retained earnings"
+        chart.set_name(re_account_name, title)
+        chart.save(path)
+        print("Retained earnings account:", chart.get_name(re_account_name))
+        sys.exit(0)
     if arguments["set"]:
-        if arguments["--retained-earnings"]:
-            re = arguments["<re_account_name>"]
-            chart.set_retained_earnings(account_name=re)
-            chart.save(path)
-            print("Set", re, "as retained earnings account.")
-            sys.exit(0)
-        account_names = arguments["<account_names>"]
-        for attribute in ["assets", "equity", "liabilities", "income", "expenses"]:
-            if arguments["--" + attribute]:
+        account_name = arguments["<account_name>"]
+        mapping = dict(
+            [
+                ("asset", "assets"),
+                ("capital", "equity"),
+                ("liability", "liabilities"),
+                ("income", "income"),
+                ("expense", "expenses"),
+            ]
+        )
+        for flag in mapping.keys():
+            if arguments["--" + flag]:
+                attribute = mapping[flag]
+                account_names = getattr(chart.base, attribute)
+                account_names.append(account_name)
                 setattr(chart.base, attribute, account_names)
                 break
+        if arguments["--title"]:
+            title = arguments["<title>"]
+            name_subcommand(chart, account_name, title)
+        if arguments["--code"]:
+            raise NotImplementedError
+        if len(account_names) > 1:
+            print(
+                "Modified chart:",
+                comma(chart, account_names),
+                "are",
+                attribute,
+                "accounts.",
+            )
+        else:
+            print(
+                "Modified chart:",
+                chart.get_name(account_name),
+                "is",
+                attribute,
+                "account.",
+            )
         chart.save(path)
-        print(
-            "Set",
-            comma(account_names),
-            "as",
-            attribute,
-            "accounts." if len(account_names) > 1 else "account.",
-        )
-    elif arguments["offset"]:
-        key = arguments["<account_name>"]
-        names = arguments["<contra_account_names>"]
-        chart.offset(key, names)
-        chart.save(path)
-        print("Modified chart,", contra_phrase(key, names) + ".")
     elif arguments["name"]:
-        account_name, title = arguments["<account_name>"], arguments["<title>"]
-        chart.set_name(account_name, title)
+        account_name = arguments["<account_name>"]
+        title = arguments["<title>"]
+        name_subcommand(chart, account_name, title)
         chart.save(path)
-        print("Long name for", account_name, "is", title + ".")
-    elif arguments["list"]:
+    elif arguments["offset"]:
+        account_name = arguments["<account_name>"]
+        contra_account_names = arguments["<contra_account_names>"]
+        chart.offset(account_name, contra_account_names)
+        print(
+            "Modified chart,",
+            contra_phrase(chart, account_name, contra_account_names) + ".",
+        )
+        chart.save(path)
+    elif arguments["show"]:
         chart_show(chart, arguments["--json"])
 
 
@@ -204,21 +250,14 @@ def ledger_command(arguments, directory=cwd()):
             book.after_close(dr, cr, amount)
         else:
             book.post(dr, cr, amount)
-        dr_account = account_name(book, dr)
-        cr_account = account_name(book, cr)
+        dr_account = book.chart.get_name(dr)
+        cr_account = book.chart.get_name(cr)
         print("Posted entry")
         print(f"  Debit: {dr_account}\n  Credit: {cr_account}\n  Amount: {amount}")
     if arguments["close"]:
         book.close()
         print("Added closing entries to ledger.")
     book.save(ledger_path)
-
-
-def account_name(book, account_name):
-    try:
-        return book.chart.names[account_name] + f"({account_name})"
-    except KeyError:
-        return f"<{account_name}>"
 
 
 def report_command(arguments, directory=cwd()):
@@ -248,18 +287,20 @@ def account_info(account_name: str, amount: Amount):
 
 def human_name(account):
     return account.__class__.__name__
-    # must return 'Сontra income' and 'Retained earnings'
-    # split on caps
+    # split on caps - must return 'Сontra income' and 'Retained earnings'
 
 
 def print_account_balance(account_name: str, directory=cwd()):
     path = Location(directory).entries
-    account = safe_load(Book, path).ledger()[account_name]
-    print("Account", account_name)
-    print("  Account type:", human_name(account))
-    print("  Debits:", account.debits)
-    print("  Credits:", account.credits)
-    print("  Balance:", account.balance())
+    book = safe_load(Book, path)
+    account = book.ledger()[account_name]
+    print("Account:", book.chart.get_long_name(account_name))
+    print("Short name:", account_name)
+    # print("Code:")
+    print("Type:", human_name(account))
+    print("Debits:", account.debits)
+    print("Credits:", account.credits)
+    print("Balance:", account.balance())
 
 
 def assert_account_balance(account_name: str, assert_amount: str):
@@ -282,7 +323,7 @@ def print_two_columns(data: dict):
     n1 = maxlen(data.keys())
     n2 = maxlen(data.values())
     for k, v in data.items():
-        print(" ", k.ljust(n1, " "), str(v).rjust(n2, " "))
+        print(k.ljust(n1, " "), str(v).rjust(n2, " "))
 
 
 def balances_command(arguments):
@@ -296,8 +337,7 @@ def balances_command(arguments):
     if arguments["--json"]:
         print(json.dumps(data))
     else:
-        print("Account balances")
-        print_two_columns(data)
+        print_two_columns({book.chart.get_name(k): v for k, v in data.items()})
 
 
 def show_command(arguments, directory=cwd()):
@@ -322,13 +362,8 @@ def show_command(arguments, directory=cwd()):
 
 
 def main():
-    arguments = docopt(__doc__, version="0.4.13")
-
-    if arguments["init"]:
-        init(arguments["--force"])
-    elif arguments["debug"]:
-        debug(arguments)
-    elif arguments["chart"]:
+    arguments = docopt(__doc__, version="0.5.1")
+    if arguments["chart"]:
         chart_command(arguments)
     elif arguments["ledger"]:
         ledger_command(arguments)

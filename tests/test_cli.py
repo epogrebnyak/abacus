@@ -7,9 +7,9 @@ import pytest
 @pytest.fixture
 def commands():
     return """
-bx init --force
-bx chart set --assets cash goods
-bx chart set --equity equity
+bx chart set --asset cash 
+bx chart set --asset goods
+bx chart set --capital equity
 bx chart set --retained-earnings re
 bx ledger start
 bx ledger post --debit cash --credit equity --amount 1000

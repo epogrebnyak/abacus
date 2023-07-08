@@ -1,31 +1,49 @@
 {
   "chart": {
     "base": {
-      "assets": ["cash", "goods"],
-      "expenses": [],
-      "equity": ["equity"],
+      "assets": [
+        "cash",
+        "ar",
+        "inventory"
+      ],
+      "expenses": [
+        "cogs",
+        "sga"
+      ],
+      "equity": [
+        "equity"
+      ],
       "liabilities": [],
-      "income": []
+      "income": [
+        "sales"
+      ]
     },
     "retained_earnings_account": "re",
     "income_summary_account": "_profit",
-    "contra_accounts": {},
-    "names": {}
+    "contra_accounts": {
+      "ar": [
+        "bad_debt"
+      ],
+      "sales": [
+        "discounts",
+        "voids"
+      ]
+    },
+    "names": {
+      "ar": "Accounts receivable",
+      "bad_debt": "Allowance for bad debts",
+      "cogs": "Cost of goods sold",
+      "sga": "Selling expenses",
+      "re": "Retained earnings"
+    }
   },
-  "starting_balances": {},
+  "starting_balances": {
+    "cash": 70,
+    "goods": 30,
+    "equity": 100
+  },
   "entries": {
-    "business": [
-      {
-        "dr": "cash",
-        "cr": "equity",
-        "amount": 1000
-      },
-      {
-        "dr": "goods",
-        "cr": "cash",
-        "amount": 800
-      }
-    ],
+    "business": [],
     "adjustment": [],
     "closing": {
       "contra_income": [],

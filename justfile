@@ -19,11 +19,16 @@ grill:
   just readme
   just test-bat
 
+demo-win:
+  rm -f demo/chart.json demo/entries.json demo/start.json 
+  cd demo && call chart.bat
+
 # Run pytest (up to first error) and print slowest test times 
 test:
   poetry run pytest -x --durations=5
 
 test-bat:
+  rm -f demo/chart.json demo/entries.json demo/start.json 
   cd demo && call chart.bat
   cd demo && call ledger.bat
   cd demo && call show.bat
@@ -56,17 +61,17 @@ readme:
 
 # Run console examples from README.md
 readme-console:
+  rm -f cli-example/chart.json cli-example/entries.json
+  cat README.md | npx codedown bash > cli-example/minimal.sh
   just {{ readme_command }}
 
 # Run console examples from README.md (Windows):
 readme-console-win:
-  cat README.md | npx codedown bash > cli-example/minimal.sh
   cat cli-example/minimal.sh | python cli-example/call.py > cli-example/minimal.bat
   cd cli-example && poetry run call minimal.bat
 
 # Run console examples from README.md (Linux):
 readme-console-linux:
-  cat README.md | npx codedown bash > cli-example/minimal.sh
   poetry run bash -c "cd cli-example && source minimal.sh"
 
 # Run Python code from README.md
