@@ -5,6 +5,7 @@ Base classes for a minimal accounting framework.
 from typing import Dict
 
 from pydantic.dataclasses import dataclass
+from pydantic import BaseModel
 
 __all__ = ["Entry", "AbacusError"]
 
@@ -13,6 +14,12 @@ AccountName = str
 Netting = dict[AccountName, list[AccountName]]
 Balances = Dict[AccountName, Amount]
 AccountBalancesDict = Dict[AccountName, Amount]
+
+
+class Operation(BaseModel):
+    debit: AccountName
+    credit: AccountName
+    title: str
 
 
 def total(dict_) -> Amount:

@@ -1,4 +1,4 @@
-bx operation set capitalize --debit cash --credit equity --title "shareholder funds"
+bx operation set capitalize --debit cash --credit equity --title "shareholder funds" || exit /b
 bx operation set acquire-goods --debit inventory --credit cash --title "acquired goods for cash"
 bx operation set invoice --debit ar --credit sales --title "invoice" --requires cost
 bx operation set cost --debit cogs --credit inventory --title "cost of sales"

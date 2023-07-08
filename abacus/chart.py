@@ -4,7 +4,7 @@ from typing import Dict, List
 
 from pydantic import BaseModel
 
-from abacus.accounting_types import AbacusError, AccountName
+from abacus.accounting_types import AbacusError, AccountName, Operation
 from abacus.accounts import Account as TAccount
 from abacus.accounts import IncomeSummaryAccount, RetainedEarnings, allocation
 
@@ -59,6 +59,16 @@ class QualifiedChart(BaseModel):
     income_summary_account: str = "_profit"
     contra_accounts: Dict[str, List[str]] = {}
     names: Dict[AccountName, str] = {}
+    operations: Dict[str, Operation] = {}
+
+    def set_operation(
+        self, op_name: str, debit: AccountName, credit: AccountName, title: str
+    ):
+        self.operations[op_name] = Operation(debit=debit, credit=credit, title=title)
+        return self
+
+    def get_operation(self, op_name: str):
+        return self.operations.get(op_name, None)
 
     def get_long_name(self, account_name):
         try:

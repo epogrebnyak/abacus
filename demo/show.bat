@@ -10,8 +10,8 @@ bx show account cash || exit /b
 bx show account goods || exit /b
 bx show account sales || exit /b
 bx assert sales 0 || exit /b
-bx show account refunds || exit /b
-bx assert refunds 0 || exit /b
+bx show account voids || exit /b
+bx assert voids 0 || exit /b
 bx show account discounts || exit /b
 bx assert discounts 0 || exit /b
 bx show account cogs || exit /b

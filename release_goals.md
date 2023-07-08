@@ -1,3 +1,8 @@
+# FIXME
+
+> TypeError: Object of type Operation is not JSON serializable
+> PS Q:\abacus\demo> bx chart show --json
+
 # Release target: 0.5.0 CLI app
 
 Done:
@@ -21,7 +26,6 @@ Wont fix:
 
 - [ ] --title for entry
 - [ ] testing of a multiline string `pytest-console-plugin`
-- [ ] golden tests
 - [ ] configuration: write to abacus.toml
 - [ ] write to and read from Excel file
 - [ ] colored output with --rich flag

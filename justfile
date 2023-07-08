@@ -19,20 +19,17 @@ grill:
   just readme
   just test-bat
 
-demo-win:
-  rm -f demo/chart.json demo/entries.json demo/start.json 
-  cd demo && call chart.bat
 
 # Run pytest (up to first error) and print slowest test times 
 test:
   poetry run pytest -x --durations=5
 
 test-bat:
-  rm -f demo/chart.json demo/entries.json demo/start.json 
   cd demo && call chart.bat
+  cd demo && call operations.bat
   cd demo && call ledger.bat
   cd demo && call show.bat
-  cd demo && call cli.bat
+  cd tests && call small.bat
 
 # Type check
 mypy:
