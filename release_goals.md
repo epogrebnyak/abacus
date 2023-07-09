@@ -1,10 +1,16 @@
-# FIXME
+# CLI app notes
 
 - change readme
 - consolidate at /example folder
 - minor appearances of text
-
-# Release target: 0.5.0 CLI app
+- `--reference` or `--refer`
+- adjustment example (with trial balance)
+- post-close example
+- add operation title to entry title
+- add small hash for entry
+- `--cash` asset type
+- `--current-asset`, `--non-current-asset` asset type
+- `--current-liability`, `--long-term-liability`
 
 Done:
 
