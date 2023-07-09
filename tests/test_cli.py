@@ -7,12 +7,12 @@ import pytest
 
 @pytest.fixture
 def commands():
-    path = pathlib.Path(__file__).parent / "small.bat"
+    path = pathlib.Path(__file__).parent / "test_cli.bat"
     return path.read_text().replace("|| exit /b", "").strip()
 
 
 def test_n_commands(commands):
-    assert len(commands.split("\n")) == 13
+    assert len(commands.split("\n")) == 16
 
 
 def test_runner(tmpdir):

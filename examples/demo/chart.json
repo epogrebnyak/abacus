@@ -1,0 +1,86 @@
+{
+  "base": {
+    "assets": [
+      "cash",
+      "ar",
+      "goods"
+    ],
+    "expenses": [
+      "cogs",
+      "sga"
+    ],
+    "equity": [
+      "equity"
+    ],
+    "liabilities": [
+      "ap"
+    ],
+    "income": [
+      "sales"
+    ]
+  },
+  "retained_earnings_account": "re",
+  "income_summary_account": "_profit",
+  "contra_accounts": {
+    "ar": [
+      "bad_debt"
+    ],
+    "sales": [
+      "discounts",
+      "voids"
+    ]
+  },
+  "names": {
+    "ar": "Accounts receivable",
+    "bad_debt": "Allowance for bad debts",
+    "goods": "Inventory",
+    "cogs": "Cost of goods sold",
+    "sga": "Selling expenses",
+    "ap": "Accounts payable",
+    "re": "Retained earnings"
+  },
+  "operations": {
+    "capitalize": {
+      "debit": "cash",
+      "credit": "equity",
+      "description": "shareholder funds",
+      "requires": null
+    },
+    "acquire-goods": {
+      "debit": "goods",
+      "credit": "cash",
+      "description": "acquired goods for cash",
+      "requires": null
+    },
+    "invoice": {
+      "debit": "ar",
+      "credit": "sales",
+      "description": "invoice",
+      "requires": "cost"
+    },
+    "cost": {
+      "debit": "cogs",
+      "credit": "goods",
+      "description": "cost of sales",
+      "requires": null
+    },
+    "discount": {
+      "debit": "discounts",
+      "credit": "ar",
+      "description": "provided discount",
+      "requires": null
+    },
+    "accept-payment": {
+      "debit": "cash",
+      "credit": "ar",
+      "description": "accepted cash payment",
+      "requires": null
+    },
+    "salary": {
+      "debit": "sga",
+      "credit": "cash",
+      "description": "paid salary in cash",
+      "requires": null
+    }
+  }
+}

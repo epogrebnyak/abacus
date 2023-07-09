@@ -19,7 +19,8 @@ AccountBalancesDict = Dict[AccountName, Amount]
 class Operation(BaseModel):
     debit: AccountName
     credit: AccountName
-    title: str
+    description: str = ""
+    requires: AccountName | None = None
 
 
 def total(dict_) -> Amount:

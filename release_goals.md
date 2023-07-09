@@ -1,7 +1,8 @@
 # FIXME
 
-> TypeError: Object of type Operation is not JSON serializable
-> PS Q:\abacus\demo> bx chart show --json
+- change readme
+- consolidate at /example folder
+- minor appearances of text
 
 # Release target: 0.5.0 CLI app
 

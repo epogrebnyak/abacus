@@ -1,10 +1,10 @@
 {
   "chart": {
     "base": {
-      "assets": ["cash", "ar", "goods"],
+      "assets": ["cash", "ar", "inventory"],
       "expenses": ["cogs", "sga"],
       "equity": ["equity"],
-      "liabilities": ["ap"],
+      "liabilities": [],
       "income": ["sales"]
     },
     "retained_earnings_account": "re",
@@ -16,96 +16,112 @@
     "names": {
       "ar": "Accounts receivable",
       "bad_debt": "Allowance for bad debts",
-      "goods": "Inventory",
       "cogs": "Cost of goods sold",
       "sga": "Selling expenses",
-      "ap": "Accounts payable",
       "re": "Retained earnings"
     },
     "operations": {
       "capitalize": {
         "debit": "cash",
         "credit": "equity",
-        "title": "shareholder funds"
+        "description": "shareholder funds",
+        "requires": null
       },
       "acquire-goods": {
         "debit": "inventory",
         "credit": "cash",
-        "title": "acquired goods for cash"
+        "description": "acquired goods for cash",
+        "requires": null
       },
       "invoice": {
         "debit": "ar",
         "credit": "sales",
-        "title": "invoice"
+        "description": "invoice",
+        "requires": "cost"
       },
       "cost": {
         "debit": "cogs",
         "credit": "inventory",
-        "title": "cost of sales"
+        "description": "cost of sales",
+        "requires": null
       },
       "discount": {
         "debit": "discounts",
         "credit": "ar",
-        "title": "provided discount"
+        "description": "provided discount",
+        "requires": null
       },
       "accept-payment": {
         "debit": "cash",
         "credit": "ar",
-        "title": "accepted cash payment"
+        "description": "accepted cash payment",
+        "requires": null
       },
       "salary": {
         "debit": "sga",
         "credit": "cash",
-        "title": "paid salary in cash"
+        "description": "paid salary in cash",
+        "requires": null
       }
     }
   },
-  "starting_balances": {
-    "cash": 70,
-    "goods": 30,
-    "equity": 100
-  },
+  "starting_balances": {},
   "entries": {
     "business": [
       {
         "dr": "cash",
         "cr": "equity",
-        "amount": 50
+        "amount": 1000
+      },
+      {
+        "dr": "inventory",
+        "cr": "cash",
+        "amount": 500
       },
       {
         "dr": "ar",
         "cr": "sales",
-        "amount": 99
-      },
-      {
-        "dr": "voids",
-        "cr": "ar",
-        "amount": 10
+        "amount": 440
       },
       {
         "dr": "discounts",
         "cr": "ar",
-        "amount": 8
+        "amount": 40
+      },
+      {
+        "dr": "cogs",
+        "cr": "inventory",
+        "amount": 250
       },
       {
         "dr": "cash",
         "cr": "ar",
-        "amount": 50
+        "amount": 200
+      },
+      {
+        "dr": "ar",
+        "cr": "sales",
+        "amount": 300
       },
       {
         "dr": "cogs",
-        "cr": "goods",
-        "amount": 25
+        "cr": "inventory",
+        "amount": 120
+      },
+      {
+        "dr": "cash",
+        "cr": "ar",
+        "amount": 300
       },
       {
         "dr": "sga",
-        "cr": "ap",
-        "amount": 24
+        "cr": "cash",
+        "amount": 150
       },
       {
-        "dr": "ap",
-        "cr": "cash",
-        "amount": 12
+        "dr": "ar",
+        "cr": "bad_debt",
+        "amount": 100
       }
     ],
     "adjustment": [],
@@ -114,12 +130,12 @@
         {
           "dr": "sales",
           "cr": "discounts",
-          "amount": 8
+          "amount": 40
         },
         {
           "dr": "sales",
           "cr": "voids",
-          "amount": 10
+          "amount": 0
         }
       ],
       "contra_expense": [],
@@ -127,25 +143,25 @@
         {
           "dr": "sales",
           "cr": "_profit",
-          "amount": 81
+          "amount": 700
         }
       ],
       "expense": [
         {
           "dr": "_profit",
           "cr": "cogs",
-          "amount": 25
+          "amount": 370
         },
         {
           "dr": "_profit",
           "cr": "sga",
-          "amount": 24
+          "amount": 150
         }
       ],
       "isa": {
         "dr": "_profit",
         "cr": "re",
-        "amount": 32
+        "amount": 180
       }
     },
     "after_close": []

@@ -24,13 +24,6 @@ grill:
 test:
   poetry run pytest -x --durations=5
 
-test-bat:
-  cd demo && call chart.bat
-  cd demo && call operations.bat
-  cd demo && call ledger.bat
-  cd demo && call show.bat
-  cd tests && call small.bat
-
 # Type check
 mypy:
   poetry run mypy {{ package }}
@@ -58,25 +51,32 @@ readme:
 
 # Run console examples from README.md
 readme-console:
-  rm -f cli-example/chart.json cli-example/entries.json
-  cat README.md | npx codedown bash > cli-example/minimal.sh
+  cat README.md | npx codedown bash > examples/readme/minimal.sh
   just {{ readme_command }}
 
 # Run console examples from README.md (Windows):
 readme-console-win:
-  cat cli-example/minimal.sh | python cli-example/call.py > cli-example/minimal.bat
-  cd cli-example && poetry run call minimal.bat
+  cp examples/readme/minimal.sh examples/readme/minimal.bat
+  cd examples/readme && call minimal.bat
 
 # Run console examples from README.md (Linux):
 readme-console-linux:
-  poetry run bash -c "cd cli-example && source minimal.sh"
+  poetry run bash -c "cd examples/readme && source minimal.sh"
+
+# Demo command line example and test_cli.bat (Windows)
+test-bat:
+  cd examples/demo && call chart.bat
+  cd examples/demo && call operations.bat
+  cd examples/demo && call ledger.bat
+  cd examples/demo && call show.bat
+  cd tests && call test_cli.bat
+
 
 # Run Python code from README.md
 readme-py:
-  cat README.md | npx codedown python > cli-example/minimal.py
-  poetry run python cli-example/minimal.py
+  cat README.md | npx codedown python > examples/readme/minimal.py
+  poetry run python examples/readme/minimal.py
   
-
 # Build and serve docs
 docs:
   poetry run mkdocs serve 

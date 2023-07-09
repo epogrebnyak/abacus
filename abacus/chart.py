@@ -62,21 +62,28 @@ class QualifiedChart(BaseModel):
     operations: Dict[str, Operation] = {}
 
     def set_operation(
-        self, op_name: str, debit: AccountName, credit: AccountName, title: str
+        self,
+        name: str,
+        debit: AccountName,
+        credit: AccountName,
+        text: str,
+        requires: AccountName | None,
     ):
-        self.operations[op_name] = Operation(debit=debit, credit=credit, title=title)
+        self.operations[name] = Operation(
+            debit=debit, credit=credit, description=text, requires=requires
+        )
         return self
 
-    def get_operation(self, op_name: str):
+    def get_operation(self, op_name: str) -> Operation | None:
         return self.operations.get(op_name, None)
 
-    def get_long_name(self, account_name):
+    def get_long_name(self, account_name) -> str:
         try:
             return self.names[account_name]
         except KeyError:
             return account_name.capitalize().replace("_", " ")
 
-    def get_name(self, account_name):
+    def get_name(self, account_name) -> str:
         return f"{self.get_long_name(account_name)} <{account_name}>"
 
     @classmethod
