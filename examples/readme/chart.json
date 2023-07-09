@@ -1,0 +1,37 @@
+{
+  "base": {
+    "assets": [
+      "cash",
+      "ar",
+      "goods"
+    ],
+    "expenses": [
+      "cogs",
+      "sga"
+    ],
+    "equity": [
+      "equity"
+    ],
+    "liabilities": [
+      "dividend_due"
+    ],
+    "income": [
+      "sales"
+    ]
+  },
+  "retained_earnings_account": "re",
+  "income_summary_account": "_profit",
+  "contra_accounts": {
+    "sales": [
+      "discounts"
+    ]
+  },
+  "names": {
+    "ar": "Accounts receivable",
+    "goods": "Inventory (good for sale)",
+    "re": "Retained earnings",
+    "cogs": "Cost of sales",
+    "sga": "Selling expenses"
+  },
+  "operations": {}
+}

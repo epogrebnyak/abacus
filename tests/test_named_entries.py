@@ -1,3 +1,5 @@
+# FIXME: convert this test to chart.set_operation() and book.post_operation()
+
 import pytest  # pylint: disable=import-error
 
 from abacus import Chart, Entry

@@ -91,6 +91,12 @@ class Book(BaseModel):
         self.entries.business.append(entry)
         return self
 
+    def post_operation(self, operation_name: str, amount: Amount):
+        op = self.chart.get_operation(operation_name)
+        if not op:
+            raise AbacusError(op)
+        return self.post(op.debit, op.credit, amount)
+
     def adjust(self, debit: AccountName, credit: AccountName, amount: Amount) -> "Book":
         entry = Entry(debit, credit, amount)
         self.entries.adjustment.append(entry)

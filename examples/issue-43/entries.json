@@ -1,0 +1,169 @@
+{
+  "chart": {
+    "base": {
+      "assets": ["cash", "ar", "inventory"],
+      "expenses": ["cogs", "sga"],
+      "equity": ["equity"],
+      "liabilities": [],
+      "income": ["sales"]
+    },
+    "retained_earnings_account": "re",
+    "income_summary_account": "_profit",
+    "contra_accounts": {
+      "ar": ["bad_debt"],
+      "sales": ["discounts", "voids"]
+    },
+    "names": {
+      "ar": "Accounts receivable",
+      "bad_debt": "Allowance for bad debts",
+      "cogs": "Cost of goods sold",
+      "sga": "Selling expenses",
+      "re": "Retained earnings"
+    },
+    "operations": {
+      "capitalize": {
+        "debit": "cash",
+        "credit": "equity",
+        "description": "shareholder funds",
+        "requires": null
+      },
+      "acquire-goods": {
+        "debit": "inventory",
+        "credit": "cash",
+        "description": "acquired goods for cash",
+        "requires": null
+      },
+      "invoice": {
+        "debit": "ar",
+        "credit": "sales",
+        "description": "invoice",
+        "requires": "cost"
+      },
+      "cost": {
+        "debit": "cogs",
+        "credit": "inventory",
+        "description": "cost of sales",
+        "requires": null
+      },
+      "discount": {
+        "debit": "discounts",
+        "credit": "ar",
+        "description": "provided discount",
+        "requires": null
+      },
+      "accept-payment": {
+        "debit": "cash",
+        "credit": "ar",
+        "description": "accepted cash payment",
+        "requires": null
+      },
+      "salary": {
+        "debit": "sga",
+        "credit": "cash",
+        "description": "paid salary in cash",
+        "requires": null
+      }
+    }
+  },
+  "starting_balances": {},
+  "entries": {
+    "business": [
+      {
+        "dr": "cash",
+        "cr": "equity",
+        "amount": 1000
+      },
+      {
+        "dr": "inventory",
+        "cr": "cash",
+        "amount": 500
+      },
+      {
+        "dr": "ar",
+        "cr": "sales",
+        "amount": 440
+      },
+      {
+        "dr": "discounts",
+        "cr": "ar",
+        "amount": 40
+      },
+      {
+        "dr": "cogs",
+        "cr": "inventory",
+        "amount": 250
+      },
+      {
+        "dr": "cash",
+        "cr": "ar",
+        "amount": 200
+      },
+      {
+        "dr": "ar",
+        "cr": "sales",
+        "amount": 300
+      },
+      {
+        "dr": "cogs",
+        "cr": "inventory",
+        "amount": 120
+      },
+      {
+        "dr": "cash",
+        "cr": "ar",
+        "amount": 300
+      },
+      {
+        "dr": "sga",
+        "cr": "cash",
+        "amount": 150
+      },
+      {
+        "dr": "ar",
+        "cr": "bad_debt",
+        "amount": 100
+      }
+    ],
+    "adjustment": [],
+    "closing": {
+      "contra_income": [
+        {
+          "dr": "sales",
+          "cr": "discounts",
+          "amount": 40
+        },
+        {
+          "dr": "sales",
+          "cr": "voids",
+          "amount": 0
+        }
+      ],
+      "contra_expense": [],
+      "income": [
+        {
+          "dr": "sales",
+          "cr": "_profit",
+          "amount": 700
+        }
+      ],
+      "expense": [
+        {
+          "dr": "_profit",
+          "cr": "cogs",
+          "amount": 370
+        },
+        {
+          "dr": "_profit",
+          "cr": "sga",
+          "amount": 150
+        }
+      ],
+      "isa": {
+        "dr": "_profit",
+        "cr": "re",
+        "amount": 180
+      }
+    },
+    "after_close": []
+  }
+}

@@ -1,31 +1,38 @@
 """Double entry accounting manager.
 
 Usage:
-  bx init [--force]
-  bx chart set --assets <account_names>...
-  bx chart set --equity <account_names>...
-  bx chart set --retained-earnings <re_account_name>
-  bx chart set --liabilities <account_names>...
-  bx chart set --income <account_names>...
-  bx chart set --expenses <account_names>...
-  bx chart offset <account_name> (--contra-accounts <contra_account_names>...)
-  bx chart name <account_name> --title <title>
-  bx chart list [--json]
+  bx chart set --asset <account_name> [--title <title>] [--code <code>] 
+  bx chart set --expense <account_name> [--title <title>] [--code <code>]
+  bx chart set --capital <account_name> [--title <title>] [--code <code>]
+  bx chart set --retained-earnings <account_name>
+  bx chart set --liability <account_name> [--title <title>] [--code <code>]
+  bx chart set --income <account_name> [--title <title>] [--code <code>]
+  bx chart offset <account_name> <contra_account_names>...
+  bx chart title <account_name> <title> 
+  bx chart show [--json]
+  bx operation set <name> --debit <dr_account> --credit <cr_account> [--describe <text>] [--requires <matched_name>]
+  bx operation show
   bx ledger start [--file <balances_file>] [--dry-run]
-  bx ledger post --debit <dr> --credit <cr> --amount <amount> [--adjust] [--after-close]
-  bx ledger post <dr> <cr> <amount> [--adjust] [--after-close]
+  bx post operation (<operations> <amounts>)... 
+  bx post operation -t <title> (<operations> <amounts>)... 
+  bx post entry --debit <dr> --credit <cr> --amount <amount> [--adjust] [--after-close]
+  bx post entry -t <title> --debit <dr> --credit <cr> --amount <amount> [--adjust] [--after-close]
   bx ledger close
   bx ledger list [--start | --business | --adjust | --close | --after-close] [--json]
-  bx show report --income-statement [--json] 
-  bx show report --balance-sheet [--json] 
-  bx show balances [--all] [--trial] [--json]
-  bx show account <account_name>
+  bx report --trial-balance [--json]
+  bx report --income-statement [--json] 
+  bx report --balance-sheet [--json] 
+  bx accounts [--all] [--json]
+  bx account <account_name>
   bx assert <account_name> <amount>
-  bx debug 
+  bx erase (--chart | --ledger)
 
 Options:
   -h --help     Show this help message.
   --version     Show version.
+  --silent      Do not print to screen.
+  -q --quiet    Same as --silent.
+  -t --title    Entry or operation title.
 """
 
 import json
@@ -44,6 +51,10 @@ def cwd() -> Path:
     return Path(os.getcwd())
 
 
+def read_json(path):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
 @dataclass
 class Location:
     directory: Path
@@ -57,22 +68,21 @@ class Location:
         return self.directory / filename
 
 
-def init(force: bool = False, directory=cwd()):
-    # FIXME: change this command to creating abacus.toml
+def erase_chart(directory=cwd()):
     loc = Location(directory)
-    create_object(loc.chart, force, QualifiedChart.empty())
+    loc.chart.unlink(missing_ok=True)
 
 
-def create_object(path: Path, force: bool, default_object: QualifiedChart):
-    if path.exists() and not force:
-        sys.exit(f"Cannot create {path}, file already exists.")
-    default_object.save(path)
-    name = (
-        "chart"
-        if isinstance(default_object, QualifiedChart)
-        else default_object.__class__.__name__.lower()
-    )
-    print(f"Created {name} at {path}.")
+def erase_entries(directory=cwd()):
+    loc = Location(directory)
+    loc.entries.unlink(missing_ok=True)
+
+
+def erase(arguments, directory=cwd()):
+    if arguments["--chart"]:
+        erase_chart(directory)
+    if arguments["--ledger"]:
+        erase_entries(directory)
 
 
 def safe_load(cls, path):
@@ -82,31 +92,48 @@ def safe_load(cls, path):
         sys.exit(f"File not found: {path}")
 
 
-def comma(xs):
+def comma(chart, xs, fill=", "):
     if xs:
-        return ", ".join(xs)
+        return fill.join([chart.get_name(x) for x in xs])
     else:
         return "not specified"
 
 
-def contra_phrase(key, names):
-    return " ".join([key, "account is offset by", comma(names)])
+def contra_phrase(chart, account_name, contra_account_names):
+    return (
+        chart.get_name(account_name)
+        + " account is offset by "
+        + comma(chart, contra_account_names)
+    )
+
+
+def ina(s):
+    return f"<{s}>"
+
+
+def step_print(chart, items):
+    print(" ", comma(chart, items, "\n  "))
+
+
+def step_print_factory(chart):
+    def step_print(attribute):
+        print(mapping()[attribute].capitalize())
+        print(" ", comma(chart, getattr(chart.base, mapping()[attribute]), "\n  "))
+
+    return step_print
 
 
 def print_chart(chart):
-    re = chart.retained_earnings_account
-    print("Chart of accounts")
-    print("  Assets:     ", comma(chart.base.assets))
-    print("  Capital:    ", comma(chart.base.equity))
-    print("  Liabilities:", comma(chart.base.liabilities))
-    print("  Income:     ", comma(chart.base.income))
-    print("  Expenses:   ", comma(chart.base.expenses))
+    step_print = step_print_factory(chart)
+    for key in mapping().keys():
+        step_print(key)
     if chart.contra_accounts:
-        print("  Contra accounts:")
+        print("Contra accounts")
         for key, names in chart.contra_accounts.items():
-            print("    -", contra_phrase(key, names))
-    print("  Retained earnings account:", re or "not specified")
-    print("  Income summary account:   ", chart.income_summary_account)
+            print("  -", contra_phrase(chart, key, names) + ".")
+    re = chart.retained_earnings_account
+    print("Retained earnings account:", ina(re) or "not specified")
+    print("Income summary account:", ina(chart.income_summary_account))
 
 
 def chart_show(chart: QualifiedChart, json_flag: bool):
@@ -116,11 +143,11 @@ def chart_show(chart: QualifiedChart, json_flag: bool):
         print_chart(chart)
 
 
-def name_command(account_name, title):
-    chart, path = load_chart(directory=cwd())
+def name_subcommand(chart, account_name, title):
     chart.set_name(account_name, title)
-    print("Long name for", account_name, "is", title + ".")
-    chart.save(path)
+    print("Changed title for", ina(account_name), "account.")
+    print("Account:", ina(account_name))
+    print("  Title:", title)
 
 
 def debug(arguments):
@@ -136,45 +163,127 @@ def load_chart(directory):
     return chart, path
 
 
+def mapping():
+    """This is a mapping from command line flags to Chart attributes.
+    Using this mapping we will know that '--asset cash' will added to chart.assets."""
+    return dict(
+        [
+            ("asset", "assets"),
+            ("capital", "equity"),
+            ("liability", "liabilities"),
+            ("income", "income"),
+            ("expense", "expenses"),
+        ]
+    )
+
+
 def chart_command(arguments, directory=cwd()):
     chart, path = load_chart(directory)
+    if arguments["set"] and arguments["--retained-earnings"]:
+        re_account_name = arguments["<account_name>"]
+        chart.set_retained_earnings(re_account_name)
+        title = arguments["<title>"] or "Retained earnings"
+        chart.set_name(re_account_name, title)
+        chart.save(path)
+        print("Retained earnings account:", chart.get_name(re_account_name))
+        sys.exit(0)
     if arguments["set"]:
-        if arguments["--retained-earnings"]:
-            re = arguments["<re_account_name>"]
-            chart.set_retained_earnings(account_name=re)
-            chart.save(path)
-            print("Set", re, "as retained earnings account.")
-            sys.exit(0)
-        account_names = arguments["<account_names>"]
-        for attribute in ["assets", "equity", "liabilities", "income", "expenses"]:
-            if arguments["--" + attribute]:
+        account_name = arguments["<account_name>"]
+        for flag in mapping().keys():
+            if arguments["--" + flag]:
+                attribute = mapping()[flag]
+                account_names = getattr(chart.base, attribute)
+                account_names.append(account_name)
                 setattr(chart.base, attribute, account_names)
                 break
+        if arguments["--title"]:
+            title = arguments["<title>"]
+            name_subcommand(chart, account_name, title)
+        if arguments["--code"]:
+            raise NotImplementedError
+        print("Added", ina(account_name), "account to chart.")
+        step_print_factory(chart)(flag)
         chart.save(path)
-        print(
-            "Set",
-            comma(account_names),
-            "as",
-            attribute,
-            "accounts." if len(account_names) > 1 else "account.",
-        )
+    elif arguments["title"]:
+        account_name = arguments["<account_name>"]
+        title = arguments["<title>"]
+        name_subcommand(chart, account_name, title)
+        chart.save(path)
     elif arguments["offset"]:
-        key = arguments["<account_name>"]
-        names = arguments["<contra_account_names>"]
-        chart.offset(key, names)
+        account_name = arguments["<account_name>"]
+        contra_account_names = arguments["<contra_account_names>"]
+        chart.offset(account_name, contra_account_names)
+        print(
+            "Modified chart,",
+            contra_phrase(chart, account_name, contra_account_names) + ".",
+        )
         chart.save(path)
-        print("Modified chart,", contra_phrase(key, names) + ".")
-    elif arguments["name"]:
-        account_name, title = arguments["<account_name>"], arguments["<title>"]
-        chart.set_name(account_name, title)
-        chart.save(path)
-        print("Long name for", account_name, "is", title + ".")
-    elif arguments["list"]:
+    elif arguments["show"]:
         chart_show(chart, arguments["--json"])
 
 
-def read_json(path):
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+def operations_command(arguments, directory=cwd()):
+    chart, path = load_chart(directory)
+    if arguments["set"]:
+        name = arguments["<name>"]
+        debit = arguments["<dr_account>"]
+        credit = arguments["<cr_account>"]
+        text = arguments["<text>"] or ""
+        requires = arguments["<matched_name>"]
+        print("  Operation:", name)
+        print("Description:", text.capitalize())
+        print("      Debit:", chart.get_name(debit))
+        print("     Credit:", chart.get_name(credit))
+        if requires:
+            print("   Requires:", requires)
+        chart.set_operation(name, debit, credit, text, requires)
+        chart.save(path)
+    elif arguments["show"]:
+        print("Operations (put in table)")
+        # FIXME: use table from table.py + add headers
+        for name, op in chart.operations.items():
+            print(
+                name, op.debit, op.credit, op.description, op.requires or "", sep="\t| "
+            )
+
+
+def print_entry(chart, dr, cr, amount):
+    print("Posted entry")
+    print("   Debit:", chart.get_name(dr))
+    print("  Credit:", chart.get_name(cr))
+    print("  Amount:", amount)
+
+
+def exit_requires(operation_name, requires):
+    sys.exit(f"<{operation_name}> must be used with <{requires}> in one command call.")
+
+
+def post_command2(arguments, directory=cwd()):
+    ledger_path = Location(directory).entries
+    book = safe_load(Book, ledger_path)
+    if arguments["entry"]:
+        dr = arguments["<dr>"]
+        cr = arguments["<cr>"]
+        amount = Amount(arguments["<amount>"])
+        if arguments["--adjust"]:
+            book.adjust(dr, cr, amount)
+        elif arguments["--after-close"]:
+            book.after_close(dr, cr, amount)
+        else:
+            book.post(dr, cr, amount)
+        print_entry(book.chart, dr, cr, amount)
+    if arguments["operation"]:
+        operations = arguments["<operations>"]
+        amounts = arguments["<amounts>"]
+        for operation_name in operations:
+            op = book.chart.get_operation(operation_name)
+            if op.requires and op.requires not in operations:
+                exit_requires(operation_name, op.requires)
+        for operation_name, amount in zip(operations, amounts):
+            book.post_operation(operation_name, amount)
+            op = book.chart.get_operation(operation_name)
+            print_entry(book.chart, op.debit, op.credit, amount)
+    book.save(ledger_path)
 
 
 def ledger_command(arguments, directory=cwd()):
@@ -193,32 +302,13 @@ def ledger_command(arguments, directory=cwd()):
             book.save(ledger_path)
             print(f"Saved ledger at {ledger_path}.")
         sys.exit(0)
+    book = safe_load(Book, ledger_path)
     if arguments["list"]:
         show_command(arguments)
-    book = safe_load(Book, ledger_path)
-    if arguments["post"]:
-        dr, cr, amount = arguments["<dr>"], arguments["<cr>"], arguments["<amount>"]
-        if arguments["--adjust"]:
-            book.adjust(dr, cr, amount)
-        elif arguments["--after-close"]:
-            book.after_close(dr, cr, amount)
-        else:
-            book.post(dr, cr, amount)
-        dr_account = account_name(book, dr)
-        cr_account = account_name(book, cr)
-        print("Posted entry")
-        print(f"  Debit: {dr_account}\n  Credit: {cr_account}\n  Amount: {amount}")
     if arguments["close"]:
         book.close()
         print("Added closing entries to ledger.")
     book.save(ledger_path)
-
-
-def account_name(book, account_name):
-    try:
-        return book.chart.names[account_name] + f"({account_name})"
-    except KeyError:
-        return f"<{account_name}>"
 
 
 def report_command(arguments, directory=cwd()):
@@ -248,18 +338,19 @@ def account_info(account_name: str, amount: Amount):
 
 def human_name(account):
     return account.__class__.__name__
-    # must return 'Сontra income' and 'Retained earnings'
-    # split on caps
+    # split on caps - must return 'Сontra income' and 'Retained earnings'
 
 
 def print_account_balance(account_name: str, directory=cwd()):
     path = Location(directory).entries
-    account = safe_load(Book, path).ledger()[account_name]
-    print("Account", account_name)
-    print("  Account type:", human_name(account))
-    print("  Debits:", account.debits)
-    print("  Credits:", account.credits)
-    print("  Balance:", account.balance())
+    book = safe_load(Book, path)
+    account = book.ledger()[account_name]
+    print("   Account:", book.chart.get_long_name(account_name))
+    print("Short name:", ina(account_name))
+    print("      Type:", human_name(account))
+    print("    Debits:", account.debits)
+    print("   Credits:", account.credits)
+    print("   Balance:", account.balance())
 
 
 def assert_account_balance(account_name: str, assert_amount: str):
@@ -282,7 +373,7 @@ def print_two_columns(data: dict):
     n1 = maxlen(data.keys())
     n2 = maxlen(data.values())
     for k, v in data.items():
-        print(" ", k.ljust(n1, " "), str(v).rjust(n2, " "))
+        print(k.ljust(n1, " "), str(v).rjust(n2, " "))
 
 
 def balances_command(arguments):
@@ -296,13 +387,13 @@ def balances_command(arguments):
     if arguments["--json"]:
         print(json.dumps(data))
     else:
-        print("Account balances")
-        print_two_columns(data)
+        print_two_columns({book.chart.get_name(k): v for k, v in data.items()})
 
 
 def show_command(arguments, directory=cwd()):
     path = Location(directory).entries
     book = safe_load(Book, path)
+    show = ""  # FIXME
     if arguments["--start"]:
         show = book.starting_balances
     elif arguments["--business"]:
@@ -322,28 +413,26 @@ def show_command(arguments, directory=cwd()):
 
 
 def main():
-    arguments = docopt(__doc__, version="0.4.13")
-
-    if arguments["init"]:
-        init(arguments["--force"])
-    elif arguments["debug"]:
-        debug(arguments)
-    elif arguments["chart"]:
+    arguments = docopt(__doc__, version="0.5.1")
+    if arguments["chart"]:
         chart_command(arguments)
+    elif arguments["operation"] and (arguments["set"] or arguments["show"]):
+        operations_command(arguments)
     elif arguments["ledger"]:
         ledger_command(arguments)
-    elif arguments["report"] and arguments["show"]:
-        # bx show report
+    elif arguments["post"]:
+        post_command2(arguments)
+    elif arguments["report"]:
         report_command(arguments)
-    elif arguments["balances"] and arguments["show"]:
-        # bx show balances
+    elif arguments["accounts"]:
         balances_command(arguments)
-    elif arguments["account"] and arguments["show"]:
-        # bx show account <account_name>
+    elif arguments["account"]:
         print_account_balance(account_name=arguments["<account_name>"])
     elif arguments["assert"]:
         account_name, amount = arguments["<account_name>"], arguments["<amount>"]
         assert_account_balance(account_name, amount)
+    elif arguments["erase"]:
+        erase(arguments)
     else:
         sys.exit("Command not recognized. Use bx --help for reference.")
 
