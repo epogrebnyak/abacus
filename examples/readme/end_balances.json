@@ -1,1 +1,8 @@
-{"cash": 460, "ar": 40, "goods": 600, "equity": 1000, "dividend_due": 50, "re": 50}
+{
+  "cash": 460,
+  "ar": 40,
+  "goods": 600,
+  "equity": 1000,
+  "dividend_due": 50,
+  "re": 50
+}

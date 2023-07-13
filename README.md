@@ -4,7 +4,7 @@
 
 A minimal, yet valid double-entry accounting system, provided as `abacus-py` Python package and `bx` command line tool.
 
-Using `abacus` you can define a chart of accounts, create a general ledger, post entries, 
+Using `abacus` you can define a chart of accounts, create a general ledger, post entries,
 close accounts properly at accounting period end and produce trial balance, balance sheet and income statement.
 
 The very minimal example of using `abacus` at command line is the following:
@@ -12,14 +12,16 @@ The very minimal example of using `abacus` at command line is the following:
 ```bash
 pip install abacus-py
 mkdir abacus_demo && cd abacus_demo
-bx chart add --asset cash
-bx chart add --capital equity
-bx chart add --retained-earnings re
+bx chart start -f
+bx chart set --asset cash
+bx chart set --capital equity
+bx chart set --retained-earnings re
 bx ledger start
 bx post entry --title "Initial investment" --debit cash --credit equity --amount 5000
 bx ledger close
 bx report --balance-sheet
 ```
+
 <!-- TODO: add corresponding Python code -->
 
 ## Documentation
@@ -39,10 +41,18 @@ bx report --balance-sheet
 ## Install
 
 ```
+pip install abacus-py
+```
+
+For latest version install from github:
+
+```
 pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 
-This will install both `abacus` package and the `bx` command line tool.
+This will install both `abacus-py` package and the `bx` command line tool.
+
+`abacus-py` requires Python 3.10 or higher.
 
 ## Minimal example
 

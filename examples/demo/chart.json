@@ -1,34 +1,16 @@
 {
   "base": {
-    "assets": [
-      "cash",
-      "ar",
-      "goods"
-    ],
-    "expenses": [
-      "cogs",
-      "sga"
-    ],
-    "equity": [
-      "equity"
-    ],
-    "liabilities": [
-      "ap"
-    ],
-    "income": [
-      "sales"
-    ]
+    "assets": ["cash", "ar", "goods"],
+    "expenses": ["cogs", "sga"],
+    "equity": ["equity"],
+    "liabilities": ["ap"],
+    "income": ["sales"]
   },
   "retained_earnings_account": "re",
   "income_summary_account": "_profit",
   "contra_accounts": {
-    "ar": [
-      "bad_debt"
-    ],
-    "sales": [
-      "discounts",
-      "voids"
-    ]
+    "ar": ["bad_debt"],
+    "sales": ["discounts", "voids"]
   },
   "names": {
     "ar": "Accounts receivable",
