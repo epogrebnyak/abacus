@@ -13,7 +13,8 @@ Usage:
   bx chart set-code <account_name> <code>
   bx chart show [--json]
   bx operation set <name> --debit <dr_account> --credit <cr_account> [--describe <text>] [--requires <matched_name>]
-  bx operation show
+  bx operation show [<name>]
+  bx ledger start [--file <balances_file>] [--dry-run]
   bx post operation (<operations> <amounts>)... 
   bx post operation -t <title> (<operations> <amounts>)... 
   bx post operation --title <title> --name <operation> --amount <amount> 

@@ -6,11 +6,14 @@ ignore=['E501', 'E741']
 extend-exclude=["minimal.py"]
 
 [tool.poetry]
-name = "abacus"
-version = "0.5.1"
+name = "abacus-py"
+version = "0.5.2"
 description = "A minimal, yet valid double-entry accounting system in Python."
 authors = ["Evgeniy Pogrebnyak <e.pogrebnyak@gmail.com>"]
 readme = "README.md"
+packages = [
+    {include = "abacus"}
+]
 
 [tool.poetry.scripts]
 bx = 'abacus.bx:main'
