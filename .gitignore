@@ -2,6 +2,9 @@
 **/entries.json
 **/start.json
 **/end_balances.json
+examples/readme/chart.json
+examples/readme/entries.json
+examples/readme/end_balances.json
 docs/site/
 .env-cli/
 
@@ -134,4 +137,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
+examples/readme/chart.json
