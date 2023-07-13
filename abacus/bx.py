@@ -1,6 +1,7 @@
 """Double entry accounting manager.
 
 Usage:
+  bx chart start [-f | --force] [--chart-file <chart-file>]
   bx chart set --asset <account_name> [--title <title>] [--code <code>] 
   bx chart set --expense <account_name> [--title <title>] [--code <code>]
   bx chart set --capital <account_name> [--title <title>] [--code <code>]
