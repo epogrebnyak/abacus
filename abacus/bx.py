@@ -10,14 +10,13 @@ Usage:
   bx chart set --income <account_name> [--title <title>] [--code <code>]
   bx chart offset <account_name> <contra_account_names>...
   bx chart title <account_name> <title>
-  bx chart set-title <account_name> <title>
-  bx chart set-code <account_name> <code>
+  bx chart code <account_name> <code>
   bx chart show [--json]
   bx operation set <name> --debit <dr_account> --credit <cr_account> [--describe <text>] [--requires <matched_name>]
   bx operation show [<name>]
-  bx ledger start [--file <balances_file>] [--dry-run]
+  bx ledger start [--balances-file <balances_file>] [--dry-run]
   bx post operation (<operations> <amounts>)... 
-  bx post operation -t <title> (<operations> <amounts>)... 
+  bx post operation (--title <title>) (<operations> <amounts>)... 
   bx post operation --title <title> --name <operation> --amount <amount> 
   bx post entry --debit <dr> --credit <cr> --amount <amount> [--adjust] [--after-close]
   bx post entry -t <title> --debit <dr> --credit <cr> --amount <amount> [--adjust] [--after-close]
@@ -295,7 +294,7 @@ def ledger_command(arguments, directory=cwd()):
     if arguments["start"]:
         chart, _ = load_chart(directory)
         chart.qualify()
-        if arguments["--file"]:
+        if arguments["--balances-file"]:
             starting_balances = read_json(arguments["<balances_file>"])
         else:
             starting_balances = {}

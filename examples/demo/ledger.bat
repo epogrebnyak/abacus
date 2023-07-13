@@ -2,8 +2,8 @@ bx erase --ledger
 bx ledger start --dry-run || exit /b
 bx ledger start || exit /b
 echo {"cash": 70, "goods": 30, "equity": 100} > start.json 
-bx ledger start --file start.json --dry-run || exit /b
-bx ledger start --file start.json || exit /b
+bx ledger start --balances-file start.json --dry-run || exit /b
+bx ledger start --balances-file start.json || exit /b
 del start.json
 bx assert cash 70 || exit /b
 bx assert goods 30 || exit /b

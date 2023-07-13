@@ -89,7 +89,7 @@ chart = Chart(
     equity=["equity"],
     liabilities=["dividend_due"],
     income=["sales"])
-chart = chart.set_retained_earnings("re").offset("sales", ["discounts"])
+chart = chart.set_retained_earnings("re").offset("sales", "discounts")
 ```
 
 ### 2. Ledger
