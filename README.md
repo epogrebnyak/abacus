@@ -1,6 +1,7 @@
 # abacus
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
+![PyPI](https://img.shields.io/pypi/v/abacus-py?color=blue)
 
 A minimal, yet valid double-entry accounting system, provided as `abacus-py` Python package and `bx` command line tool.
 
@@ -10,9 +11,9 @@ close accounts properly at accounting period end and produce trial balance, bala
 The very minimal example of using `abacus` at command line is the following:
 
 ```bash
-pip install abacus-py
+pip install -U abacus-py
 mkdir abacus_demo && cd abacus_demo
-bx chart start -f
+bx erase --chart
 bx chart set --asset cash
 bx chart set --capital equity
 bx chart set --retained-earnings re

@@ -1,6 +1,7 @@
-*/chart.json
-*/entries.json
-*/start.json
+**/chart.json
+**/entries.json
+**/start.json
+**/end_balances.json
 docs/site/
 .env-cli/
 

@@ -1,3 +1,14 @@
+pip install -U abacus-py
+mkdir abacus_demo && cd abacus_demo
+bx erase --chart
+bx chart set --asset cash
+bx chart set --capital equity
+bx chart set --retained-earnings re
+bx ledger start
+bx post entry --title "Initial investment" --debit cash --credit equity --amount 5000
+bx ledger close
+bx report --balance-sheet
+
 bx erase --chart
 bx chart set --asset cash
 bx chart set --asset ar --title "Accounts receivable"
