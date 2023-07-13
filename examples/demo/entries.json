@@ -101,72 +101,15 @@
         "dr": "cogs",
         "cr": "goods",
         "amount": 25
-      },
-      {
-        "dr": "voids",
-        "cr": "ar",
-        "amount": 10
-      },
-      {
-        "dr": "discounts",
-        "cr": "ar",
-        "amount": 8
-      },
-      {
-        "dr": "cash",
-        "cr": "ar",
-        "amount": 50
-      },
-      {
-        "dr": "sga",
-        "cr": "ap",
-        "amount": 24
-      },
-      {
-        "dr": "ap",
-        "cr": "cash",
-        "amount": 12
       }
     ],
     "adjustment": [],
     "closing": {
-      "contra_income": [
-        {
-          "dr": "sales",
-          "cr": "discounts",
-          "amount": 8
-        },
-        {
-          "dr": "sales",
-          "cr": "voids",
-          "amount": 10
-        }
-      ],
+      "contra_income": [],
       "contra_expense": [],
-      "income": [
-        {
-          "dr": "sales",
-          "cr": "_profit",
-          "amount": 81
-        }
-      ],
-      "expense": [
-        {
-          "dr": "_profit",
-          "cr": "cogs",
-          "amount": 25
-        },
-        {
-          "dr": "_profit",
-          "cr": "sga",
-          "amount": 24
-        }
-      ],
-      "isa": {
-        "dr": "_profit",
-        "cr": "re",
-        "amount": 32
-      }
+      "income": [],
+      "expense": [],
+      "isa": null
     },
     "after_close": []
   }

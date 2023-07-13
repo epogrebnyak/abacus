@@ -115,11 +115,22 @@ class QualifiedChart(BaseModel):
         assert_unique(self.account_names())
         return self
 
-    def offset(self, account_name: str, contra_account_names: List[str]):
+    def _offset(self, account_name: str, contra_account_name: str):
         if account_name not in self.account_names():
             raise AbacusError(f"{account_name} must be specified in chart")
-        self.contra_accounts[account_name] = contra_account_names
+        try:
+            self.contra_accounts[account_name].append(contra_account_name)
+        except KeyError:
+            self.contra_accounts[account_name] = [contra_account_name]
         assert_unique(self.account_names())
+        return self
+
+    def offset(self, account_name: str, contra_account: str | List[str]):
+        if isinstance(contra_account, str):
+            self._offset(account_name, contra_account)
+        elif isinstance(contra_account, list):
+            for contra_account_name in contra_account:
+                self._offset(account_name, contra_account_name)
         return self
 
     def yield_contra_accounts(self):

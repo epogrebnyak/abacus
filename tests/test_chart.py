@@ -21,6 +21,20 @@ def test_is_debit_account():
     )
 
 
+def test_offset():
+    chart = Chart(
+        assets=[],
+        equity=[],
+        expenses=[],
+        liabilities=[],
+        income=["sales"],
+    ).set_retained_earnings("re")
+    chart.offset("sales", "refund")
+    assert chart.contra_accounts == {"sales": ["refund"]}
+    chart.offset("sales", "voids")
+    assert chart.contra_accounts == {"sales": ["refund", "voids"]}
+
+
 def test_journal_with_starting_balance():
     chart = Chart(
         assets=["cash"],

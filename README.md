@@ -55,7 +55,7 @@ This will install both `abacus-py` package and the `bx` command line tool.
 
 `abacus-py` requires Python 3.10 or higher.
 
-## Minimal example
+## Example
 
 A freshly created trading Klondike Trading Company (KTC) has recorded the following transactions.
 
