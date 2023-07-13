@@ -101,6 +101,26 @@
         "dr": "cogs",
         "cr": "goods",
         "amount": 25
+      },
+      {
+        "dr": "voids",
+        "cr": "ar",
+        "amount": 10
+      },
+      {
+        "dr": "discounts",
+        "cr": "ar",
+        "amount": 8
+      },
+      {
+        "dr": "cash",
+        "cr": "ar",
+        "amount": 50
+      },
+      {
+        "dr": "sga",
+        "cr": "ap",
+        "amount": 24
       }
     ],
     "adjustment": [],
