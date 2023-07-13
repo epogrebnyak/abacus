@@ -2,10 +2,25 @@
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 
-A minimal, yet valid double-entry accounting system, provided as a Python package and a command line tool.
+A minimal, yet valid double-entry accounting system, provided as `abacus-py` Python package and `bx` command line tool.
 
-Using `abacus` you can define a chart of accounts, create a general ledger, post
-entries, close accounts at period end and produce trial balance, balance sheet and income statement.
+Using `abacus` you can define a chart of accounts, create a general ledger, post entries, 
+close accounts properly at accounting period end and produce trial balance, balance sheet and income statement.
+
+The very minimal example of using `abacus` at command line is the following:
+
+```bash
+pip install abacus-py
+mkdir abacus_demo && cd abacus_demo
+bx chart add --asset cash
+bx chart add --capital equity
+bx chart add --retained-earnings re
+bx ledger start
+bx post entry --title "Initial investment" --debit cash --credit equity --amount 5000
+bx ledger close
+bx report --balance-sheet
+```
+<!-- TODO: add corresponding Python code -->
 
 ## Documentation
 
