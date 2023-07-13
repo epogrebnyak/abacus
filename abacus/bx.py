@@ -8,20 +8,22 @@ Usage:
   bx chart set --liability <account_name> [--title <title>] [--code <code>]
   bx chart set --income <account_name> [--title <title>] [--code <code>]
   bx chart offset <account_name> <contra_account_names>...
-  bx chart title <account_name> <title> 
+  bx chart title <account_name> <title>
+  bx chart set-title <account_name> <title>
+  bx chart set-code <account_name> <code>
   bx chart show [--json]
   bx operation set <name> --debit <dr_account> --credit <cr_account> [--describe <text>] [--requires <matched_name>]
   bx operation show
-  bx ledger start [--file <balances_file>] [--dry-run]
   bx post operation (<operations> <amounts>)... 
   bx post operation -t <title> (<operations> <amounts>)... 
+  bx post operation --title <title> --name <operation> --amount <amount> 
   bx post entry --debit <dr> --credit <cr> --amount <amount> [--adjust] [--after-close]
   bx post entry -t <title> --debit <dr> --credit <cr> --amount <amount> [--adjust] [--after-close]
   bx ledger close
-  bx ledger list [--start | --business | --adjust | --close | --after-close] [--json]
-  bx report --trial-balance [--json]
-  bx report --income-statement [--json] 
-  bx report --balance-sheet [--json] 
+  bx ledger list (--start | --business | --adjust | --close | --after-close | --all) [--json]
+  bx report (-t | --trial-balance) [--json]
+  bx report (-i | --income-statement) [--json] 
+  bx report (-b | --balance-sheet) [--json] 
   bx accounts [--all] [--json]
   bx account <account_name>
   bx assert <account_name> <amount>
