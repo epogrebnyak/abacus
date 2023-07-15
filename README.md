@@ -28,7 +28,7 @@ bx ledger start
 bx post entry --title "Initial investment" --debit cash --credit equity --amount 5000
 bx post entry --title "Acquire goods" --debit goods --credit cash --amount 4000
 bx post entry --title "Invoice sales" --debit ar --credit sales --amount 3500
-bx post entry --title "Register cost os sales" --debit cogs --credit goods --amount 2000
+bx post entry --title "Register cost of sales" --debit cogs --credit goods --amount 2000
 bx post entry --title "Accept payment" --debit cash --credit cash --amount 3500
 bx ledger close
 bx report --balance-sheet
