@@ -12,18 +12,27 @@ Using `abacus` you can:
 - close accounts at accounting period end, 
 - produce trial balance, balance sheet and income statement.
 
-The very minimal example of using `abacus` at command line is the following:
+A  minimal example of using `abacus` at command line is the following:
 
 ```bash
 pip install -U abacus-py
 mkdir try_abacus && cd try_abacus
 bx chart set --asset cash
+bx chart set --asset ar --title "Accounts receivable"
+bx chart set --asset goods --title "Inventory (goods for resale)"
 bx chart set --capital equity
 bx chart set --retained-earnings re
+bx chart set --income sales
+bx chart set --expense cogs
 bx ledger start
 bx post entry --title "Initial investment" --debit cash --credit equity --amount 5000
+bx post entry --title "Acquire goods" --debit goods --credit cash --amount 4000
+bx post entry --title "Invoice sales" --debit ar --credit sales --amount 3500
+bx post entry --title "Register cost os sales" --debit cogs --credit goods --amount 2000
+bx post entry --title "Accept payment" --debit cash --credit cash --amount 3500
 bx ledger close
 bx report --balance-sheet
+bx report --income-statement
 ```
 
 <detail>
