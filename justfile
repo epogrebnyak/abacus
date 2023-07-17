@@ -52,6 +52,7 @@ readme:
 # Run console examples from README.md
 readme-console:
   cat README.md | npx codedown bash > examples/readme/minimal.sh
+  rm -rf examples/readme/try_abacus
   just {{ readme_command }}
 
 # Run console examples from README.md (Windows):

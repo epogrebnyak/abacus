@@ -6,13 +6,14 @@
 A minimal, yet valid double-entry accounting system, provided as `abacus-py` Python package and `bx` command line tool.
 
 Using `abacus` you can:
+
 - define a chart of accounts, 
 - create general ledger,
-- post entries,
-- close accounts at accounting period end, 
+- post accounting entries,
+- close accounts at period end, 
 - produce trial balance, balance sheet and income statement.
 
-A  minimal example of using `abacus` at command line is the following:
+A minimal command line example is below:
 
 ```bash
 pip install -U abacus-py
@@ -23,38 +24,33 @@ bx chart set --asset goods --title "Inventory (goods for resale)"
 bx chart set --capital equity
 bx chart set --retained-earnings re
 bx chart set --income sales
-bx chart set --expense cogs
+bx chart set --expense cogs --title "Cost fo goods sold"
+bx chart set --expense sga --title "Selling, general and adm. expenses"
 bx ledger start
-bx post entry --title "Initial investment" --debit cash --credit equity --amount 5000
-bx post entry --title "Acquire goods" --debit goods --credit cash --amount 4000
-bx post entry --title "Invoice sales" --debit ar --credit sales --amount 3500
-bx post entry --title "Register cost of sales" --debit cogs --credit goods --amount 2000
-bx post entry --title "Accept payment" --debit cash --credit cash --amount 3500
+bx post entry --title "Initial investment"     --debit cash  --credit equity --amount 5000
+bx post entry --title "Acquire goods for cash" --debit goods --credit cash   --amount 4000
+bx post entry --title "Register cost of sales" --debit cogs  --credit goods  --amount 2500
+bx post entry --title "Issue invoice"          --debit ar    --credit sales  --amount 3500
+bx post entry --title "Accept payment"         --debit cash  --credit ar     --amount 2000
+bx post entry --title "Paid sales team salary" --debit sga   --credit cash   --amount  500
 bx ledger close
 bx report --balance-sheet
 bx report --income-statement
 ```
 
-<detail>
-    <summary>Code for cleanup
-    </summary>
-    
-We automatically run code from README to ensure it is up to date, so we need to clean up the directory before next run.
-You do not need to this on your computer.
+Additional features include contra accounts (`offset` command) 
+and entry templates (`operation` command).
 
-```bash
-rm -rf try_abacus
-``    
-</detail>
-
-<detail>
+<details>
     <summary>Python code
     </summary>
 
+
 ```python 
 import abacus
-``    
-</detail>
+# Add Python code here
+```    
+</details>
 
 
 ## Documentation
