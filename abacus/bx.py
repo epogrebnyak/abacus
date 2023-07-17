@@ -9,6 +9,7 @@ Usage:
   bx chart set --liability <account_name> [--title <title>] [--code <code>]
   bx chart set --income <account_name> [--title <title>] [--code <code>]
   bx chart offset <account_name> <contra_account_names>...
+  bx chart offset --account <account_name> --contra-accounts [--] <contra_account_names>...
   bx chart title <account_name> <title>
   bx chart code <account_name> <code>
   bx chart show [--json]

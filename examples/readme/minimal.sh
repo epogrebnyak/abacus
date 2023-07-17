@@ -1,48 +1,23 @@
 pip install -U abacus-py
-mkdir abacus_demo && cd abacus_demo
-bx erase --chart
-bx chart set --asset cash
-bx chart set --capital equity
-bx chart set --retained-earnings re
-bx ledger start
-bx post entry --title "Initial investment" --debit cash --credit equity --amount 5000
-bx ledger close
-bx report --balance-sheet
-
-bx erase --chart
+mkdir try_abacus && cd try_abacus
 bx chart set --asset cash
 bx chart set --asset ar --title "Accounts receivable"
-bx chart set --asset goods --title "Inventory (good for sale)"
+bx chart set --asset goods --title "Inventory (goods for resale)"
 bx chart set --capital equity
 bx chart set --retained-earnings re
-bx chart set --liability dividend_due
 bx chart set --income sales
-bx chart set --expense cogs --title "Cost of sales"
-bx chart set --expense sga --title "Selling expenses"
-bx chart offset sales discounts
+bx chart offset --account sales --contra-accounts discounts
+bx chart set --expense cogs --title "Cost of goods sold"
+bx chart set --expense sga --title "Selling, general and adm. expenses"
 bx chart show
-
-bx erase --ledger
 bx ledger start
-bx post entry --debit cash      --credit equity --amount 1000
-bx post entry --debit goods     --credit cash   --amount 800
-bx post entry --debit ar        --credit sales  --amount 465
-bx post entry --debit discounts --credit ar     --amount 65
-bx post entry --debit cogs      --credit goods  --amount 200
-bx post entry --debit sga       --credit cash   --amount 100
-bx post entry --debit cash      --credit ar     --amount 360
+bx post entry --title "Initial investment"     --debit cash  --credit equity --amount 5000
+bx post entry --title "Acquire goods for cash" --debit goods --credit cash   --amount 4000
+bx post entry --title "Register cost of sales" --debit cogs  --credit goods  --amount 2700
+bx post entry --title "Issue invoice"          --debit ar    --credit sales  --amount 3900
+bx post entry --title "Provide discount"       --debit discounts --credit ar --amount  400
+bx post entry --title "Accept payment"         --debit cash  --credit ar     --amount 2000
+bx post entry --title "Paid sales team salary" --debit sga   --credit cash   --amount  300
 bx ledger close
-bx post entry --debit re --credit dividend_due --amount 50 --after-close
-
 bx report --balance-sheet
 bx report --income-statement
-
-bx account cash
-bx account ar
-bx account goods
-bx account sales
-bx accounts
-
-bx accounts --json > end_balances.json
-
-bx assert cash 460
