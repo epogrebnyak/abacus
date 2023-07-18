@@ -13,6 +13,32 @@ Using `abacus` you can:
 - close accounts at period end,
 - produce trial balance, balance sheet and income statement.
 
+## Quotes about `abacus`
+
+[![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
+
+> I think it's a great idea to mock-up a mini GL ERP to really get a foundational understanding of how the accounting in ERP works!
+
+> I teach accounting information systems... I'd be tempted to use abacus as a way of simply showing the structure of a simple AIS.
+
+> Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
+
+## Install
+
+```
+pip install abacus-py
+```
+
+For latest version install from github:
+
+```
+pip install git+https://github.com/epogrebnyak/abacus.git
+```
+
+This will install both `abacus-py` package and the `bx` command line tool.
+
+`abacus-py` requires Python 3.10 or higher.
+
 ## Minimal command line example
 
 Install package and create temporary directory:
@@ -21,7 +47,6 @@ Install package and create temporary directory:
 pip install -U abacus-py
 mkdir try_abacus && cd try_abacus
 ```
-
 Create chart of accounts:
 
 ```bash
@@ -94,32 +119,6 @@ import abacus
 ## Documentation
 
 <https://epogrebnyak.github.io/abacus/>
-
-## Quotes about `abacus`
-
-[![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
-
-> I think it's a great idea to mock-up a mini GL ERP to really get a foundational understanding of how the accounting in ERP works!
-
-> I teach accounting information systems... I'd be tempted to use abacus as a way of simply showing the structure of a simple AIS.
-
-> Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
-
-## Install
-
-```
-pip install abacus-py
-```
-
-For latest version install from github:
-
-```
-pip install git+https://github.com/epogrebnyak/abacus.git
-```
-
-This will install both `abacus-py` package and the `bx` command line tool.
-
-`abacus-py` requires Python 3.10 or higher.
 
 ## Feedback
 
