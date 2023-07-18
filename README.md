@@ -58,7 +58,7 @@ bx report --balance-sheet
 bx report --income-statement
 ```
 
-The resulting reports should look similar to this:
+The results should look similar to this:
 
 ```
 Balance sheet
