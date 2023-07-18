@@ -47,7 +47,7 @@ bx post entry --title "Register cost of sales" --debit cogs  --credit goods  --a
 bx post entry --title "Issue invoice"          --debit ar    --credit sales  --amount 3900
 bx post entry --title "Provide discount"       --debit discounts --credit ar --amount  400
 bx post entry --title "Accept payment"         --debit cash  --credit ar     --amount 2000
-bx post entry --title "Paid sales team salary" --debit sga   --credit cash   --amount  300
+bx post entry --title "Reimburse sales team"   --debit sga   --credit cash   --amount  300
 bx ledger close
 ```
 
