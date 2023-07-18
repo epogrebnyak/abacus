@@ -13,11 +13,18 @@ Using `abacus` you can:
 - close accounts at period end,
 - produce trial balance, balance sheet and income statement.
 
-A minimal command line example is below:
+## Minimal command line example
+
+Install package and create temporary directory:
 
 ```bash
 pip install -U abacus-py
 mkdir try_abacus && cd try_abacus
+```
+
+Create chart of accounts:
+
+```bash
 bx chart set --asset cash
 bx chart set --asset ar --title "Accounts receivable"
 bx chart set --asset goods --title "Inventory (goods for resale)"
@@ -28,6 +35,11 @@ bx chart offset --account sales --contra-accounts discounts
 bx chart set --expense cogs --title "Cost of goods sold"
 bx chart set --expense sga --title "Selling, general and adm. expenses"
 bx chart show
+```
+
+Start ledger, post entries and close accounts at period end:
+
+```bash
 bx ledger start
 bx post entry --title "Initial investment"     --debit cash  --credit equity --amount 5000
 bx post entry --title "Acquire goods for cash" --debit goods --credit cash   --amount 4000
@@ -37,6 +49,11 @@ bx post entry --title "Provide discount"       --debit discounts --credit ar --a
 bx post entry --title "Accept payment"         --debit cash  --credit ar     --amount 2000
 bx post entry --title "Paid sales team salary" --debit sga   --credit cash   --amount  300
 bx ledger close
+```
+
+Make reports:
+
+```bash
 bx report --balance-sheet
 bx report --income-statement
 ```
@@ -52,12 +69,12 @@ Assets                          5500  Capital              5500
 Total                           5500  Total                5500
 
 Income statement
-Income                                3500
-- Sales                               3500
-Expenses                              3000
-- Cost of goods sold                  2700
-- Selling, general and adm. expenses   300
-Profit                                 500
+Income                                                     3500
+- Sales                                                    3500
+Expenses                                                   3000
+- Cost of goods sold                                       2700
+- Selling, general and adm. expenses                        300
+Profit                                                      500
 ```
 
 Additional features include entry templates (`operation` command), adjustment
