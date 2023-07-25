@@ -1,0 +1,96 @@
+{
+  "chart": {
+    "assets": ["cash", "ar", "goods", "ppe"],
+    "expenses": ["cogs", "sga"],
+    "equity": ["equity"],
+    "retained_earnings_account": "re",
+    "liabilities": ["ap", "dividend_due"],
+    "income": ["sales"],
+    "contra_accounts": {
+      "ppe": ["depreciation"],
+      "sales": ["discounts", "cashback"]
+    },
+    "income_summary_account": "_profit"
+  },
+  "starting_balances": {},
+  "entries": {
+    "business": [
+      {
+        "dr": "cash",
+        "cr": "equity",
+        "amount": 1000
+      },
+      {
+        "dr": "goods",
+        "cr": "cash",
+        "amount": 300
+      },
+      {
+        "dr": "cogs",
+        "cr": "goods",
+        "amount": 250
+      },
+      {
+        "dr": "ar",
+        "cr": "sales",
+        "amount": 440
+      },
+      {
+        "dr": "discounts",
+        "cr": "ar",
+        "amount": 41
+      },
+      {
+        "dr": "cash",
+        "cr": "ar",
+        "amount": 150
+      },
+      {
+        "dr": "sga",
+        "cr": "cash",
+        "amount": 69
+      }
+    ],
+    "adjustment": [],
+    "closing": {
+      "contra_income": [
+        {
+          "dr": "sales",
+          "cr": "discounts",
+          "amount": 41
+        },
+        {
+          "dr": "sales",
+          "cr": "cashback",
+          "amount": 0
+        }
+      ],
+      "contra_expense": [],
+      "income": [
+        {
+          "dr": "sales",
+          "cr": "_profit",
+          "amount": 399
+        }
+      ],
+      "expense": [
+        {
+          "dr": "_profit",
+          "cr": "cogs",
+          "amount": 250
+        },
+        {
+          "dr": "_profit",
+          "cr": "sga",
+          "amount": 69
+        }
+      ],
+      "isa": {
+        "dr": "_profit",
+        "cr": "re",
+        "amount": 80
+      }
+    },
+    "post_close": []
+  }
+}

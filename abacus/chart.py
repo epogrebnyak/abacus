@@ -1,3 +1,4 @@
+from collections import Counter
 from itertools import chain
 from pathlib import Path
 from typing import Dict, List
@@ -14,13 +15,19 @@ class Account(BaseModel):
     cls: TAccount | None = None
 
 
-def is_unique(xs):
-    return len(set(xs)) == len(xs)
+def repeated_names(xs):
+    return [k for k, v in Counter(xs).items() if v > 1]
+
+
+def join(xs):
+    return ", ".join(xs)
 
 
 def assert_unique(xs):
-    if not is_unique(xs):
-        raise AbacusError("Account names must be unique")
+    if names := repeated_names(xs):
+        raise AbacusError(
+            f"Account names must be unique. Repeated names: {join(names)}."
+        )
 
 
 class Chart(BaseModel):
