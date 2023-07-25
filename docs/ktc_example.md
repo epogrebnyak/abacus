@@ -152,15 +152,15 @@ Similar operations with chart, ledger and reports can be performed on the comman
 
 ```bash
 bx erase --chart
-bx chart add--asset cash
-bx chart add--asset ar --title "Accounts receivable"
-bx chart add--asset goods --title "Inventory (good for sale)"
-bx chart add--capital equity
-bx chart add--retained-earnings re
-bx chart add--liability dividend_due
-bx chart add--income sales
-bx chart add--expense cogs --title "Cost of sales"
-bx chart add--expense sga --title "Selling expenses"
+bx chart add --asset cash
+bx chart add --asset ar --title "Accounts receivable"
+bx chart add --asset goods --title "Inventory (good for sale)"
+bx chart add --capital equity
+bx chart add --retained-earnings re
+bx chart add --liability dividend_due
+bx chart add --income sales
+bx chart add --expense cogs --title "Cost of sales"
+bx chart add --expense sga --title "Selling expenses"
 bx chart offset sales discounts
 bx chart show
 ```

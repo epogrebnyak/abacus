@@ -27,7 +27,6 @@ book = (
     .close()
 )
 
-
 income_statement = book.income_statement()
 balance_sheet = book.balance_sheet()
 tv = PlainTextViewer(rename_dict=chart.names)
@@ -37,7 +36,6 @@ tv.print(income_statement)
 rv = RichViewer(rename_dict=chart.names, width=80)
 rv.print(balance_sheet)
 rv.print(income_statement)
-
 
 print(income_statement)
 assert income_statement == IncomeStatement(
@@ -50,7 +48,7 @@ assert balance_sheet == BalanceSheet(
     liabilities={},
 )
 
-# create next period
+# Create next period
 end_balances = book.nonzero_balances()
 print(end_balances)
 next_book = chart.book(starting_balances=end_balances)

@@ -47,18 +47,19 @@ Install package and create temporary directory:
 pip install -U abacus-py
 mkdir try_abacus && cd try_abacus
 ```
+
 Create chart of accounts:
 
 ```bash
-bx chart add --asset cash
-bx chart add --asset ar --title "Accounts receivable"
-bx chart add --asset goods --title "Inventory (goods for resale)"
-bx chart add --capital equity
-bx chart add --retained-earnings re
-bx chart add --income sales
+bx chart add  --asset cash
+bx chart add  --asset ar --title "Accounts receivable"
+bx chart add  --asset goods --title "Inventory (goods for resale)"
+bx chart add  --capital equity
+bx chart add  --retained-earnings re
+bx chart add  --income sales
 bx chart offset sales discounts
-bx chart add --expense cogs --title "Cost of goods sold"
-bx chart add --expense sga --title "Selling, general and adm. expenses"
+bx chart add  --expense cogs --title "Cost of goods sold"
+bx chart add  --expense sga --title "Selling, general and adm. expenses"
 bx chart show
 ```
 
