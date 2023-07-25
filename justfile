@@ -1,5 +1,6 @@
 package := "abacus"
 readme_command := if os_family() == "windows" { "readme-console-win" } else { "readme-console-linux" }
+source_command := if os_family() == "windows" { "call" } else { "source" }
 # use cmd.exe instead of sh
 # set shell := ["cmd.exe", "/c"]
 
@@ -17,6 +18,7 @@ grill:
   just ruff
   just md
   just readme
+  just test-scripts
 
 # Run pytest (up to first error) and print slowest test times 
 test:
@@ -57,20 +59,18 @@ readme-console:
 readme-console-win:
   cp examples/readme/minimal.sh examples/readme/minimal.bat
   cd examples/readme && call minimal.bat
-  jsut test-bat
 
 # Run console examples from README.md (Linux):
 readme-console-linux:
   poetry run bash -c "cd examples/readme && source minimal.sh"
 
-# Demo command line example and test_cli.bat (Windows)
-test-bat:
-  cd examples/demo && call chart.bat
-  cd examples/demo && call operations.bat
-  cd examples/demo && call ledger.bat
-  cd examples/demo && call show.bat
-  cd tests && call test_cli.bat
-
+# Demo command line example and test_cli.bat (Windows and Linux)
+test-scripts:
+  cd examples/demo && {{ source_command }} chart.bat
+  cd examples/demo && {{ source_command }} operations.bat
+  cd examples/demo && {{ source_command }} ledger.bat
+  cd examples/demo && {{ source_command }} show.bat
+  cd tests && {{ source_command }} test_cli.bat
 
 # Run Python code from README.md
 readme-py:
