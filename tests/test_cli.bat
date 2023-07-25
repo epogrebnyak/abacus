@@ -1,9 +1,9 @@
 bx erase --chart || exit /b
 bx erase --ledger || exit /b
-bx chart set --asset cash || exit /b
-bx chart set --asset goods || exit /b
-bx chart set --capital equity || exit /b
-bx chart set --retained-earnings re || exit /b
+bx chart add--asset cash || exit /b
+bx chart add--asset goods || exit /b
+bx chart add--capital equity || exit /b
+bx chart add--retained-earnings re || exit /b
 bx operation set capitalize --debit cash --credit equity
 bx ledger start || exit /b
 bx post operation capitalize 500 || exit /b

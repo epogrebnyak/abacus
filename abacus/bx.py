@@ -2,14 +2,13 @@
 
 Usage:
   bx chart start [-f | --force] [--chart-file <chart-file>]
-  bx chart set --asset <account_name> [--title <title>] [--code <code>] 
-  bx chart set --expense <account_name> [--title <title>] [--code <code>]
-  bx chart set --capital <account_name> [--title <title>] [--code <code>]
-  bx chart set --retained-earnings <account_name>
-  bx chart set --liability <account_name> [--title <title>] [--code <code>]
-  bx chart set --income <account_name> [--title <title>] [--code <code>]
+  bx chart add --asset <account_name> [--title <title>] [--code <code>] 
+  bx chart add --expense <account_name> [--title <title>] [--code <code>]
+  bx chart add --capital <account_name> [--title <title>] [--code <code>]
+  bx chart add --retained-earnings <account_name>
+  bx chart add --liability <account_name> [--title <title>] [--code <code>]
+  bx chart add --income <account_name> [--title <title>] [--code <code>]
   bx chart offset <account_name> <contra_account_names>...
-  bx chart offset --account <account_name> --contra-accounts [--] <contra_account_names>...
   bx chart title <account_name> <title>
   bx chart code <account_name> <code>
   bx chart show [--json]
@@ -183,7 +182,7 @@ def mapping():
 
 def chart_command(arguments, directory=cwd()):
     chart, path = load_chart(directory)
-    if arguments["set"] and arguments["--retained-earnings"]:
+    if arguments["add"] and arguments["--retained-earnings"]:
         re_account_name = arguments["<account_name>"]
         chart.set_retained_earnings(re_account_name)
         title = arguments["<title>"] or "Retained earnings"
@@ -191,7 +190,7 @@ def chart_command(arguments, directory=cwd()):
         chart.save(path)
         print("Retained earnings account:", chart.get_name(re_account_name))
         sys.exit(0)
-    if arguments["set"]:
+    if arguments["add"]:
         account_name = arguments["<account_name>"]
         for flag in mapping().keys():
             if arguments["--" + flag]:

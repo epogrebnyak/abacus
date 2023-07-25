@@ -50,15 +50,15 @@ mkdir try_abacus && cd try_abacus
 Create chart of accounts:
 
 ```bash
-bx chart set --asset cash
-bx chart set --asset ar --title "Accounts receivable"
-bx chart set --asset goods --title "Inventory (goods for resale)"
-bx chart set --capital equity
-bx chart set --retained-earnings re
-bx chart set --income sales
-bx chart offset --account sales --contra-accounts discounts
-bx chart set --expense cogs --title "Cost of goods sold"
-bx chart set --expense sga --title "Selling, general and adm. expenses"
+bx chart add --asset cash
+bx chart add --asset ar --title "Accounts receivable"
+bx chart add --asset goods --title "Inventory (goods for resale)"
+bx chart add --capital equity
+bx chart add --retained-earnings re
+bx chart add --income sales
+bx chart offset sales discounts
+bx chart add --expense cogs --title "Cost of goods sold"
+bx chart add --expense sga --title "Selling, general and adm. expenses"
 bx chart show
 ```
 
