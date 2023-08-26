@@ -8,8 +8,8 @@ A minimal, yet valid double-entry accounting system, provided as `abacus-py` Pyt
 Using `abacus` you can:
 
 - define a chart of accounts,
-- create general ledger,
-- post accounting entries,
+- post regular and adjustment entries to ledger,
+- make trial balance, 
 - close accounts at period end,
 - produce balance sheet and income statement.
 
