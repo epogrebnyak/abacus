@@ -9,7 +9,7 @@ Using `abacus` you can:
 
 - define a chart of accounts,
 - post regular and adjustment entries to ledger,
-- make trial balance, 
+- make trial balance,
 - close accounts at period end,
 - produce balance sheet and income statement.
 
