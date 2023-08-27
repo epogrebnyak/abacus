@@ -1,3 +1,4 @@
+"""Income statement and balance sheet reports, created from ledger."""
 # pylint: disable=missing-docstring
 from typing import Dict
 

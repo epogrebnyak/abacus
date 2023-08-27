@@ -1,3 +1,4 @@
+"""Closing accounts at period end."""
 from dataclasses import dataclass
 from typing import List, Type
 

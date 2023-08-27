@@ -1,3 +1,4 @@
+"""Ledger data structure, can be created from chart, used to post entries and produce reports."""
 from collections import UserDict
 from typing import Dict, List, Type
 
@@ -16,7 +17,8 @@ from engine import (
 
 
 class Ledger(UserDict[AccountName, TAccount]):
-    """General ledger that holds all accounts where accounts can be referenced by name."""
+    """General ledger that holds all accounts. Accounts are referenced by name.
+    (No wonder - this is a dictionary.)"""
 
     @classmethod
     def new(cls, chart: Chart) -> "Ledger":
@@ -66,7 +68,7 @@ class Ledger(UserDict[AccountName, TAccount]):
         )
 
     def post(self, entries: Entry | List[Entry]) -> "Ledger":
-        # post mutates the existing data structure
+        # Note that post() mutates the existing data structure
         if isinstance(entries, list):
             post_entries(self, entries)
         elif isinstance(entries, Entry):
