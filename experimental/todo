@@ -1,0 +1,6 @@
+Create pytest tests based on assert statements. Files to be created:   
+- [ ] test_closing.py
+- [ ] test_engine.py
+- [ ] test_ledger.py
+- [ ] test_report.py
+
