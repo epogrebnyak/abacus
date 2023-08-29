@@ -109,7 +109,7 @@ class Transferable(TAccount):
                 raise TypeError
 
 
-# can equally be CreditAccount
+# does not have to be DebitAccount, can equally be CreditAccount
 class NullAccount(DebitAccount, Unique, Temporary):
     pass
 

@@ -61,7 +61,7 @@ class Chart(BaseModel):
         contra_account_names: AccountName | List[AccountName],
     ):
         """Add contra accounts to chart."""
-        if account_name not in self.all_account_names():
+        if account_name not in self.account_names_all():
             raise AbacusError(
                 f"{account_name} must be specified in chart before adding {contra_account_names}."
             )
