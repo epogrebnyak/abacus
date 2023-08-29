@@ -1,55 +1,44 @@
 """Ledger data structure, can be created from chart, used to post entries and produce reports."""
 from collections import UserDict
-from typing import Dict, List, Type
+from typing import List, Type
 
-from engine import (
-    AccountName,
-    Amount,
-    Asset,
-    Capital,
-    Chart,
-    ContraIncome,
-    Entry,
-    IncomeSummaryAccount,
-    RetainedEarnings,
-    TAccount,
-)
+from accounts import TAccount
+from base import AccountName, Entry
+from chart import Chart, make_ledger_dict
 
 
 class Ledger(UserDict[AccountName, TAccount]):
-    """General ledger that holds all accounts. Accounts are referenced by name.
-    (No wonder - this is a dictionary.)"""
+    """General ledger that holds all accounts. Accounts are referenced by name."""
 
     @classmethod
     def new(cls, chart: Chart) -> "Ledger":
         """Create an empty ledger from chart."""
-        return make_ledger(chart)
+        return Ledger(make_ledger_dict(chart))
 
-    def deep_copy(self) -> "Ledger":
-        """Return a copy of the ledger, taking care of copying the debit and credit lists in accounts."""
+    def apply(self, attribute: str):
         return Ledger(
             {
-                account_name: taccount.deep_copy()
+                account_name: getattr(taccount, attribute)()
                 for account_name, taccount in self.items()
             }
         )
+
+    def deep_copy(self) -> "Ledger":
+        """Return a copy of the ledger, taking care of copying the debit and credit lists in accounts."""
+        return self.apply("deep_copy")
 
     def condense(self) -> "Ledger":
         """Purge data from ledger leaving only account balances.
         Creates a copy of ledger."""
-        return Ledger(
-            {
-                account_name: taccount.condense()
-                for account_name, taccount in self.items()
-            }
-        )
+        return self.apply("condense")
 
-    def balances(self) -> Dict[AccountName, Amount]:
+    def empty(self) -> "Ledger":
+        """Purge data from ledger. Creates a copy of ledger."""
+        return self.apply("empty")
+
+    def balances(self):
         """Return account balances."""
-        return {
-            account_name: t_account.balance()
-            for account_name, t_account in self.items()
-        }
+        return self.apply("balance")
 
     def subset(self, classes: Type | List[Type]) -> "Ledger":
         """Filter ledger by account type."""
@@ -113,24 +102,6 @@ class Ledger(UserDict[AccountName, TAccount]):
         return BalanceSheet.new(ledger)
 
 
-def make_ledger(chart: Chart) -> Ledger:
-    """Create empty ledger from chart."""
-    ledger = Ledger()
-    for attribute, (Class, ContraClass) in chart.mapping():
-        for account_name in getattr(chart, attribute):
-            # create regular accounts
-            ledger[account_name] = Class()
-            try:
-                # create contra accounts if found
-                for contra_account_name in chart.contra_accounts[account_name]:
-                    ledger[contra_account_name] = ContraClass()
-            except KeyError:
-                pass
-    ledger[chart.retained_earnings_account] = RetainedEarnings()
-    ledger[chart.income_summary_account] = IncomeSummaryAccount()
-    return ledger
-
-
 def post_entry(ledger: Ledger, entry: Entry) -> None:
     ledger[entry.debit].debit(entry.amount)
     ledger[entry.credit].credit(entry.amount)
@@ -139,69 +110,3 @@ def post_entry(ledger: Ledger, entry: Entry) -> None:
 def post_entries(ledger: Ledger, entries: List[Entry]):
     for entry in entries:
         post_entry(ledger, entry)
-
-
-if __name__ == "__main__":
-    _chart = Chart(
-        assets=["cash", "ar"],
-        equity=["equity"],
-        income=["sales"],
-        expenses=[],
-        contra_accounts={"sales": ["refunds"]},
-    )
-
-    res = (
-        Ledger.new(_chart)
-        .post(
-            [
-                Entry("cash", "equity", 1000),
-                Entry("ar", "sales", 250),
-                Entry("refunds", "ar", 50),
-            ]
-        )
-        .subset(
-            [Asset, ContraIncome]
-        )  # arbitrary subset of account types, no real usecase
-        .deep_copy()
-        .condense()
-    )
-    assert res.balances() == {"cash": 1000, "ar": 200, "refunds": 50}
-
-    assert make_ledger(Chart(assets=["cash"], equity=["equity"])) == {
-        "cash": Asset(debits=[], credits=[]),
-        "equity": Capital(debits=[], credits=[]),
-        "re": RetainedEarnings(debits=[], credits=[]),
-        "current_profit": IncomeSummaryAccount(debits=[], credits=[]),
-    }
-
-    ledger1 = make_ledger(Chart(assets=["cash"], equity=["equity"]))
-    post_entry(ledger1, Entry(debit="cash", credit="equity", amount=799))
-    post_entry(ledger1, Entry(debit="cash", credit="equity", amount=201))
-    assert ledger1["cash"].debits == ledger1["equity"].credits == [799, 201]
-    assert ledger1["cash"].balance() == ledger1["equity"].balance() == 1000
-
-    # condense() also makes a copy, similar to deep_copy()
-    ledger2 = ledger1.condense()
-    post_entry(ledger2, Entry(debit="cash", credit="equity", amount=-1000))
-    # ledger1 not affected
-    assert ledger1["cash"].balance() == ledger1["equity"].balance() == 1000
-    # ledger2 not changed
-    assert ledger2["cash"].balance() == ledger2["equity"].balance() == 0
-
-    ledger_ = Ledger.new(_chart).post(
-        [
-            Entry("cash", "equity", 1000),
-            Entry("ar", "sales", 250),
-            Entry("refunds", "ar", 50),
-        ]
-    )
-
-    assert ledger_.balance_sheet(_chart).dict() == {
-        "assets": {"cash": 1000, "ar": 200},
-        "capital": {"equity": 1000, "re": 200},
-        "liabilities": {},
-    }
-    assert ledger_.income_statement(_chart).dict() == {
-        "income": {"sales": 200},
-        "expenses": {},
-    }

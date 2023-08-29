@@ -6,12 +6,16 @@ from engine import AccountName, Amount, Asset, Capital, Expense, Income, Liabili
 from pydantic import BaseModel  # pylint: disable=import-error # type: ignore
 
 
+class BalanceSheet3(BaseModel):
+    assets: Dict[str, int]
+
+    @classmethod
+    def _s(cls, ledger):
+        return cls(assets=ledger.subset(Asset).balances())
+
+
 class Report:
     pass
-
-
-def total(dict_) -> Amount:
-    return sum(dict_.values())
 
 
 class BalanceSheet(BaseModel, Report):
@@ -20,7 +24,7 @@ class BalanceSheet(BaseModel, Report):
     liabilities: Dict[AccountName, Amount]
 
     @classmethod
-    def new(cls, ledger) -> "BalanceSheet":
+    def new(cls, ledger):
         return BalanceSheet(
             assets=ledger.subset(Asset).balances(),
             capital=ledger.subset(Capital).balances(),
@@ -40,4 +44,4 @@ class IncomeStatement(BaseModel, Report):
         )
 
     def current_profit(self):
-        return total(self.income) - total(self.expenses)
+        return self.income.total() - self.expenses.total()
