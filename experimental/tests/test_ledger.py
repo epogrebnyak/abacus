@@ -1,4 +1,4 @@
-from accounts import (
+from engine.accounts import (
     Asset,
     Capital,
     ContraIncome,
@@ -7,9 +7,9 @@ from accounts import (
     NullAccount,
     RetainedEarnings,
 )
-from base import Entry, nonzero
-from ledger import Ledger
-from chart import Chart
+from engine.base import Entry, nonzero
+from engine.chart import Chart
+from engine.ledger import Ledger
 
 
 def test_ledger(ledger):
@@ -48,16 +48,16 @@ def test_ledger_deep_copy():
     assert ledger2["cash"].balance() == ledger2["equity"].balance() == 0
 
 
-def test_ledger_report_bs(chart, ledger):
-    assert ledger.balance_sheet(chart) == {
-        "assets": {"cash": 1000, "ar": 200},
+def test_ledger_report_balance_sheet(chart, ledger):
+    assert ledger.balance_sheet(chart).dict() == {
+        "assets": {"cash": 1000, "ar": 200, "goods": 0},
         "capital": {"equity": 1000, "re": 200},
         "liabilities": {},
     }
 
 
-def test_ledger_report_is(chart, ledger):
+def test_ledger_report_income_statement(chart, ledger):
     assert ledger.income_statement(chart).dict() == {
         "income": {"sales": 200},
-        "expenses": {},
+        "expenses": {"cogs": 0, "sga": 0},
     }

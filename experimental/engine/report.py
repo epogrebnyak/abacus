@@ -2,16 +2,9 @@
 # pylint: disable=missing-docstring
 from typing import Dict
 
-from engine import AccountName, Amount, Asset, Capital, Expense, Income, Liability
+from engine.accounts import Asset, Capital, Expense, Income, Liability
+from engine.base import AccountName, Amount, total
 from pydantic import BaseModel  # pylint: disable=import-error # type: ignore
-
-
-class BalanceSheet3(BaseModel):
-    assets: Dict[str, int]
-
-    @classmethod
-    def _s(cls, ledger):
-        return cls(assets=ledger.subset(Asset).balances())
 
 
 class Report:
@@ -44,4 +37,4 @@ class IncomeStatement(BaseModel, Report):
         )
 
     def current_profit(self):
-        return self.income.total() - self.expenses.total()
+        return total(self.income) - total(self.expenses.total)

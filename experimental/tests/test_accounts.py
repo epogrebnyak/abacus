@@ -1,4 +1,4 @@
-from accounts import Asset
+from engine.accounts import Asset
 
 
 def test_asset_topup():

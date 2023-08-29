@@ -1,4 +1,4 @@
-from chart import Chart
+from engine.chart import Chart
 
 
 def test_empty_chart_constructor():

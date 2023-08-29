@@ -2,9 +2,9 @@
 from collections import UserDict
 from typing import List, Type
 
-from accounts import TAccount
-from base import AccountName, Entry
-from chart import Chart, make_ledger_dict
+from engine.accounts import TAccount
+from engine.base import AccountName, Entry
+from engine.chart import Chart, make_ledger_dict
 
 
 class Ledger(UserDict[AccountName, TAccount]):
@@ -68,15 +68,16 @@ class Ledger(UserDict[AccountName, TAccount]):
 
     def close_some(self, chart: Chart) -> "Ledger":
         """Close contra accounts corresponding to income and expense.
-        Returns a copy of a ledger."""
-        from closing import close_contra_expense as ce
-        from closing import close_contra_income as ci
+        Returns a copy of a ledger.
+        """
+        from engine.closing import close_contra_expense as ce
+        from engine.closing import close_contra_income as ci
 
         closing_entries = ci(chart, self) + ce(chart, self)
         return self.condense().post(closing_entries)
 
     def income_statement(self, chart: Chart, post_close_entries=None):
-        from report import IncomeStatement
+        from engine.report import IncomeStatement
 
         if post_close_entries is None:
             post_close_entries = []
@@ -85,8 +86,9 @@ class Ledger(UserDict[AccountName, TAccount]):
 
     def close(self, chart: Chart) -> "Ledger":
         """Close all accounts related to retained earnings and to permanent accounts.
-        Returns a copy of a ledger."""
-        from closing import flush_permanent_accounts, make_closing_entries
+        Returns a copy of a ledger.
+        """
+        from engine.closing import flush_permanent_accounts, make_closing_entries
 
         closing_entries = make_closing_entries(
             chart, self
@@ -94,7 +96,7 @@ class Ledger(UserDict[AccountName, TAccount]):
         return self.condense().post(closing_entries)
 
     def balance_sheet(self, chart: Chart, post_close_entries=None):
-        from report import BalanceSheet
+        from engine.report import BalanceSheet
 
         if post_close_entries is None:
             post_close_entries = []

@@ -2,19 +2,10 @@
 from dataclasses import dataclass
 from typing import List, Type
 
-from engine import (
-    AccountName,
-    Amount,
-    Asset,
-    Capital,
-    Chart,
-    Entry,
-    Expense,
-    Income,
-    Liability,
-    RegularAccount,
-)
-from ledger import Ledger
+from engine.accounts import Asset, Capital, Expense, Income, Liability, RegularAccount
+from engine.base import AccountName, Entry
+from engine.chart import Chart
+from engine.ledger import Ledger
 
 __all__ = [
     "close_contra_income",
@@ -127,39 +118,3 @@ def close_isa(isa: AccountName, re: AccountName, ledger: Ledger) -> Entry:
     """Make entry to close income summary account ("isa") and move its balance to retained earnings."""
     amount = ledger[isa].balance()
     return Entry(isa, re, amount)
-
-
-if __name__ == "__main__":
-    doc_ = """
-    cash,equity,1000
-    goods,cash,800
-    cogs,goods,700
-    ar,sales,899
-    refunds,ar,89
-    cashback,ar,10
-    cash,ar,400
-    sga,cash,50
-    """
-
-    def to_entries(doc: str):
-        def make(line):
-            a, b, c = line.split(",")
-            return Entry(a.strip(), b.strip(), Amount(c))
-
-        return [make(line) for line in doc.strip().split("\n")]
-
-    chart_ = Chart(
-        assets=["cash", "goods", "ar"],
-        equity=["equity"],
-        income=["sales"],
-        expenses=["cogs", "sga"],
-        contra_accounts={"sales": ["refunds", "cashback"]},
-    )
-    ledger_ = Ledger.new(chart_).post(to_entries(doc_))
-    assert len(make_closing_entries(chart_, ledger_).all()) == 6
-    assert ledger_.close(chart_).balances()["re"] == 50
-    assert ledger_.close_some(chart_).subset([Income, Expense]).balances() == {
-        "cogs": 700,
-        "sga": 50,
-        "sales": 800,
-    }

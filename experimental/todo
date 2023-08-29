@@ -1,6 +1,0 @@
-Create pytest tests based on assert statements. Files to be created:   
-Создать тесты pytest на основе вызовов assert. Должны быть созданы файлы: 
-- [ ] test_closing.py
-- [ ] test_engine.py
-- [ ] test_ledger.py
-- [ ] test_report.py

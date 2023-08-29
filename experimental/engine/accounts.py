@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List
 
-from base import AccountName, Amount, Entry
+from engine.base import AccountName, Amount, Entry
 
 
 @dataclass
