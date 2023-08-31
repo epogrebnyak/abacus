@@ -1,7 +1,7 @@
-from engine.chart import Chart
-from engine.base import AbacusError
-from engine.accounts import Asset, Income
 import pytest
+from engine.accounts import Asset, Income
+from engine.base import AbacusError
+from engine.chart import Chart
 
 
 def test_empty_chart_constructor():

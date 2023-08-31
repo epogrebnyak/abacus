@@ -109,7 +109,7 @@ class ChartCommand:
         """
         pass
 
-    def _add(self, attribute, account_names: List[str]):
+    def _add(self, attribute: str, account_names: List[str]):
         cli_flags = ["assets", "capital", "liabilities", "income", "expenses"]
         attribute = "equity" if (attribute == "capital") else attribute
         try:
@@ -123,7 +123,7 @@ class ChartCommand:
         return self
 
     def add_capital(self, account_names):
-        # note: add_capital() will add to 'equity' attribute
+        # note: add_capital() will add account_names to 'equity' attribute
         self._add("equity", account_names)
         return self
 
@@ -155,7 +155,7 @@ class ChartCommand:
 # TODO: create test_api.py and code with asserts to test_api.py as pytest unit tests
 #      use nsames like test_add_tests(),
 #      the following command should run as a test: poetry run pytest experimental
-#       if you install
+#      if you install just command runner `just go` should also pass
 assert ChartCommand(Chart()).add_assets(["cash"]).chart.assets == ["cash"]
 assert ChartCommand(Chart()).add_capital(["equity"]).chart.equity == ["equity"]
 assert ChartCommand(Chart()).add_liabilities(["ap"]).chart.liabilities == ["ap"]
@@ -164,6 +164,8 @@ assert ChartCommand(Chart()).add_expenses(["cogs"]).chart.expenses == ["cogs"]
 
 with pytest.raises(AbacusError):
     ChartCommand(Chart())._add("no such attribute", [])
+
+# end of TODO here
 
 
 class LedgerCommand:
