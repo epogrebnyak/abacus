@@ -1,5 +1,5 @@
 import pytest
-from api import AbacusError, Chart, ChartCommand
+from api import Chart, ChartCommand
 
 # TODO: create test_api.py and code with asserts to test_api.py as pytest unit tests
 #      use nsames like test_add_tests(),
@@ -28,5 +28,5 @@ def test_add_expenses():
 
 
 def test_add_on_nonexistent_attribute():
-    with pytest.raises(AbacusError):
+    with pytest.raises(AttributeError):
         ChartCommand(Chart())._add("no such attribute", [])

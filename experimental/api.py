@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from docopt import docopt
-from engine.base import AbacusError, AccountName
+from engine.base import AbacusError
 from engine.chart import Chart
 from engine.ledger import Ledger
 
@@ -47,18 +47,44 @@ def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-# def write_json(path, content):
-#     return Path(path).write_text(
-#         json.dumps(content, ensure_ascii=True, indent=4), encoding="utf-8"
-#     )
-
-
 def init_chart(path: Path):
     """Write empty chart to *path* if does not file exist."""
     if not path.exists():
         ChartCommand(chart=Chart()).write(path)
     else:
         raise AbacusError
+
+
+def compose_name(chart, account_name):
+    """Produce name like 'cash (Cash)'."""
+    return account_name + " (" + chart.get_name(account_name) + ")"
+
+
+def print_chart(chart: Chart):
+    def name(account_name):
+        return compose_name(chart, account_name)
+
+    for attribute in chart.five_types_of_accounts():
+        account_names = getattr(chart, attribute)
+        if account_names:
+            print(attribute.capitalize() + ":")
+            print(" ", ", ".join(map(name, account_names)))
+    if chart.contra_accounts:
+        print("Contra accounts:")
+        for key, names in chart.contra_accounts.items():
+            print("  -", contra_phrase(name(key), map(name, names)))
+    print_re(chart)
+
+
+def print_re(chart):
+    print(
+        "Retained earnings account:",
+        compose_name(chart, chart.retained_earnings_account),
+    )
+
+
+def contra_phrase(account_name, contra_account_names):
+    return account_name + " is offset by " + ", ".join(contra_account_names)
 
 
 @dataclass
@@ -81,6 +107,8 @@ class ChartCommand:
         bx set --retained-earnings <account_name>
         ```
         """
+        self.chart.retained_earnings_account = account_name
+        return self
 
     def set_null_account(self, account_name):
         """Set name of null account (override default name).
@@ -99,18 +127,9 @@ class ChartCommand:
         bx set --income-summary-account <account_name>
         ```
         """
-        pass
 
     def _add(self, attribute: str, account_names: List[str]):
-        attributes = ["assets", "equity", "liabilities", "income", "expenses"]
-        try:
-            setattr(
-                self.chart, attribute, getattr(self.chart, attribute) + account_names
-            )
-        except AttributeError:
-            raise AbacusError(
-                f"Flag must be one of {attributes}, provided: {attribute}"
-            )
+        setattr(self.chart, attribute, getattr(self.chart, attribute) + account_names)
 
     def add_assets(self, account_names: List[str]):
         self._add("assets", account_names)
@@ -142,44 +161,16 @@ class ChartCommand:
             text = "Added contra account: "
         return text + contra_phrase(account_name, contra_account_names) + "."
 
-
-    def name(self, account_name, title) -> str:
+    def set_name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
-        return "Added account title: " + name_account(self.chart, account_name) + "."
-
-
-    def show(self, account: AccountName | None = None):
-        pass
-
-    def validate(self):
-        pass
-
-
-def name_account(chart, account_name):
-    return account_name + " (" + chart.get_name(account_name) + ")"
-
-
-def print_chart(chart: Chart):
-    def name(account_name):
-        return name_account(chart, account_name)
-
-    for attribute in chart.five_types_of_accounts():
-        account_names = getattr(chart, attribute)
-        if account_names:
-            print(attribute.capitalize() + ":")
-            print(" ", ", ".join(map(name, account_names)))
-    if chart.contra_accounts:
-        print("Contra accounts:")
-        for key, names in chart.contra_accounts.items():
-            print("  -", contra_phrase(name(key), map(name, names)))
-    print("Retained earnings account:\n  ", name(chart.retained_earnings_account))
+        return "Added account title: " + compose_name(self.chart, account_name) + "."
 
 
 def chart_command(arguments: Dict, chart_path: Path):
     if arguments["init"]:
         try:
             init_chart(chart_path)
-            print("Created chart file", chart_path)
+            print("Created", chart_path)
             sys.exit(0)
         except AbacusError:
             sys.exit(f"File already exists: {chart_path}")
@@ -190,11 +181,12 @@ def chart_command(arguments: Dict, chart_path: Path):
         sys.exit(
             f"File not found (expected {chart_path}).\nUse `bx chart init` to create chart file."
         )
+    # commands below assume chart file exists
     if arguments["set"] and arguments["--retained-earnings"]:
-        holder.set_retained_earnings(arguments["<account_name>"]).save(chart_path)
-        print("Retained earnings account name was set to:", arguments["<account_name>"])
-        sys.exit(0)
-    if arguments["add"]:
+        holder.set_retained_earnings(arguments["<account_name>"])
+        holder.write(chart_path)
+        print_re(holder.chart)
+    elif arguments["add"]:
         account_names = arguments["<account_names>"]
         if arguments["--assets"]:
             holder.add_assets(account_names)
@@ -208,33 +200,24 @@ def chart_command(arguments: Dict, chart_path: Path):
             holder.add_expenses(account_names)
         holder.write(chart_path)
         print("Added accounts to chart:", account_names)
-        sys.exit(0)
-    if arguments["offset"]:
-        # modify and save
-        msg = holder.offset(arguments["<account_name>"], arguments["<contra_account_names>"])
-        holder.write(chart_path)
-        # notify
-        print(msg)
-        sys.exit(0)
-    if arguments["name"]:
-        msg = holder.name(arguments["<account_name>"], arguments["<title>"])
+    elif arguments["offset"]:
+        msg = holder.offset(
+            arguments["<account_name>"], arguments["<contra_account_names>"]
+        )
         holder.write(chart_path)
         print(msg)
-        sys.exit(0)
-    if arguments["show"]:
+    elif arguments["name"]:
+        msg = holder.set_name(arguments["<account_name>"], arguments["<title>"])
+        holder.write(chart_path)
+        print(msg)
+    elif arguments["show"]:
         if arguments["--json"]:
             print(holder.chart.json())
         else:
             print_chart(holder.chart)
-        sys.exit(0)
-    if arguments["erase"] and arguments["--force"]:
+    elif arguments["erase"] and arguments["--force"]:
         chart_path.unlink(missing_ok=True)
         print("Deleted", chart_path)
-        sys.exit(0)
-
-
-def contra_phrase(account_name, contra_account_names):
-    return account_name + " is offset by " + ", ".join(contra_account_names)
 
 
 class LedgerCommand:
@@ -272,7 +255,7 @@ def main():
         #     ledger_command(arguments)
         # elif arguments["report"]:
         #     report_command(arguments)
-        # else:
+    else:
         sys.exit("Command not recognized. Use bx --help for reference.")
 
 
