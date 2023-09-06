@@ -17,6 +17,15 @@ Usage:
   bx chart code <account_name> <code>
   bx chart show [--json]
   bx chart erase --force
+  bx ledger open
+  bx ledger post <debit> <credit> <amount>
+  bx ledger close
+  bx ledger show
+  bx ledger erase --force
+  bx report --trial-balance
+  bx report --income-statement
+  bx report --balance-sheet
+  bx report --end-balances
 """
 import json
 import os
@@ -26,9 +35,11 @@ from pathlib import Path
 from typing import Dict, List
 
 from docopt import docopt
-from engine.base import AbacusError
+from engine.base import AbacusError, Amount, Entry
 from engine.chart import Chart
+from engine.closing import make_closing_entries
 from engine.ledger import Ledger
+from entries import CsvFile
 
 
 def cwd() -> Path:
@@ -220,17 +231,31 @@ def chart_command(arguments: Dict, chart_path: Path):
         print("Deleted", chart_path)
 
 
-class LedgerCommand:
-    ledger: Ledger
-
-    def start(self, filename: str | None = None):
-        pass
-
-    def post(self):
-        pass
-
-    def close(self):
-        pass
+def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
+    file = CsvFile(entries_path)
+    if arguments["erase"] and arguments["--force"]:
+        file.erase()
+    elif arguments["open"]:
+        file.touch()
+        print("Created", entries_path)
+    elif arguments["post"]:
+        entry = Entry(
+            debit=arguments["<debit>"],
+            credit=arguments["<credit>"],
+            amount=Amount(arguments["<amount>"]),
+        )
+        file.append(entry)
+        print("Posted entry:", entry)
+    elif arguments["close"]:
+        chart = Chart.parse_file(chart_path)
+        ledger = Ledger.new(chart)
+        ledger.post_many(entries=file.yield_entries())
+        closing_entries = make_closing_entries(chart, ledger).all()
+        file.append_many(entries=closing_entries)
+        print("Added closing entries:", closing_entries)
+    elif arguments["show"]:
+        for entry in file.yield_entries():
+            print(entry.debit, entry.credit, entry.amount, sep="\t")
 
 
 class ReportCommand:
@@ -247,14 +272,18 @@ class ReportCommand:
         pass
 
 
+def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
+    pass
+
+
 def main():
     arguments = docopt(__doc__, version="0.5.1")
     if arguments["chart"]:
         chart_command(arguments, chart_path())
-        # elif arguments["ledger"]:
-        #     ledger_command(arguments)
-        # elif arguments["report"]:
-        #     report_command(arguments)
+    elif arguments["ledger"]:
+        ledger_command(arguments, entries_path(), chart_path())
+    elif arguments["report"]:
+        report_command(arguments, entries_path(), chart_path())
     else:
         sys.exit("Command not recognized. Use bx --help for reference.")
 

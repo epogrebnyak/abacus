@@ -45,12 +45,12 @@ class ClosingEntries:
 
 
 def make_closing_entries(chart: Chart, ledger: Ledger) -> ClosingEntries:
-    """Create a data structure holding closing entries related to income and expense accounts.
+    """Create a data structure holding closing entries.
+
     Steps taken are the following:
     - close contra accounts to income and expense accounts
     - close income and expense accounts
-    - close iscome summary account to retained earnings.
-    Must post entries to ledger copy between these steps to obtain proper account balances.
+    - close income summary account to retained earnings.
     """
     dummy_ledger = ledger.condense()
     a = close_contra_income(chart, dummy_ledger)

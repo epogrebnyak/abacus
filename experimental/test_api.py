@@ -1,11 +1,6 @@
 import pytest
 from api import Chart, ChartCommand
 
-# TODO: create test_api.py and code with asserts to test_api.py as pytest unit tests
-#      use nsames like test_add_tests(),
-#      the following command should run as a test: poetry run pytest experimental
-#      if you install just command runner `just go` should also pass
-
 
 def test_add_assets():
     assert ChartCommand(Chart()).add_assets(["cash"]).chart.assets == ["cash"]
@@ -29,4 +24,4 @@ def test_add_expenses():
 
 def test_add_on_nonexistent_attribute():
     with pytest.raises(AttributeError):
-        ChartCommand(Chart())._add("no such attribute", [])
+        ChartCommand(chart=Chart())._add("no such attribute", [])

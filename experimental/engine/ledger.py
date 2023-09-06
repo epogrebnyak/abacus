@@ -66,6 +66,10 @@ class Ledger(UserDict[AccountName, TAccount]):
             raise TypeError(entries)
         return self
 
+    def post_many(self, entries: List[Entry]) -> "Ledger":
+        for entry in entries:
+            post_entry(self, entry)
+
     def close_some(self, chart: Chart) -> "Ledger":
         """Close contra accounts corresponding to income and expense.
         Returns a copy of a ledger.
