@@ -25,7 +25,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List
 
-import pytest
 from docopt import docopt
 from engine.base import AbacusError, AccountName
 from engine.chart import Chart
@@ -134,34 +133,26 @@ class ChartCommand:
         self._add("expenses", account_names)
         return self
 
-    def offset(self, account_name, contra_account_names):
+    def offset(self, account_name, contra_account_names) -> str:
         for contra_account_name in contra_account_names:
             self.chart.offset(account_name, contra_account_name)
+        if len(contra_account_names) > 1:
+            text = "Added countra accounts: "
+        else:
+            text = "Added contra account: "
+        return text + contra_phrase(account_name, contra_account_names) + "."
 
-    def name(self, account_name, title):
+
+    def name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
+        return "Added account title: " + name_account(self.chart, account_name) + "."
+
 
     def show(self, account: AccountName | None = None):
         pass
 
     def validate(self):
         pass
-
-
-# TODO: create test_api.py and code with asserts to test_api.py as pytest unit tests
-#      use nsames like test_add_tests(),
-#      the following command should run as a test: poetry run pytest experimental
-#      if you install just command runner `just go` should also pass
-assert ChartCommand(Chart()).add_assets(["cash"]).chart.assets == ["cash"]
-assert ChartCommand(Chart()).add_capital(["equity"]).chart.equity == ["equity"]
-assert ChartCommand(Chart()).add_liabilities(["ap"]).chart.liabilities == ["ap"]
-assert ChartCommand(Chart()).add_income(["sales"]).chart.income == ["sales"]
-assert ChartCommand(Chart()).add_expenses(["cogs"]).chart.expenses == ["cogs"]
-
-with pytest.raises(AbacusError):
-    ChartCommand(Chart())._add("no such attribute", [])
-
-# end of TODO here
 
 
 def name_account(chart, account_name):
@@ -220,28 +211,15 @@ def chart_command(arguments: Dict, chart_path: Path):
         sys.exit(0)
     if arguments["offset"]:
         # modify and save
-        holder.offset(arguments["<account_name>"], arguments["<contra_account_names>"])
+        msg = holder.offset(arguments["<account_name>"], arguments["<contra_account_names>"])
         holder.write(chart_path)
         # notify
-        if len(arguments["<contra_account_names>"]) > 1:
-            text = "Added countra accounts:"
-        else:
-            text = "Added contra account:"
-        print(
-            text,
-            contra_phrase(
-                arguments["<account_name>"], arguments["<contra_account_names>"]
-            )
-            + ".",
-        )
+        print(msg)
         sys.exit(0)
     if arguments["name"]:
-        holder.name(arguments["<account_name>"], arguments["<title>"])
+        msg = holder.name(arguments["<account_name>"], arguments["<title>"])
         holder.write(chart_path)
-        print(
-            "Added account title:",
-            name_account(holder.chart, arguments["<account_name>"]),
-        )
+        print(msg)
         sys.exit(0)
     if arguments["show"]:
         if arguments["--json"]:

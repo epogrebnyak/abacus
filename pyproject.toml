@@ -22,13 +22,11 @@ bx = 'abacus.bx:main'
 python = "^3.8"
 tabulate = "^0.9.0"
 rich = "^13.3.5"
-click = "^8.1.3"
 tomli = "^2.0.1"
 tomli-w = "^1.0.0"
 pydantic = "^1.10.8"
 docopt = "^0.6.2"
 types-docopt = "^0.6.11.3"
-click-option-group = "^0.5.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.0"
@@ -40,7 +38,6 @@ isort = "^5.12.0"
 black = "^23.3.0"
 pytest-console-scripts = "^1.4.0"
 mypy = "^1.3.0"
-vulture = "^2.7"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
