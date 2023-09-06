@@ -2,7 +2,7 @@
 from collections import UserDict
 from typing import Dict, List, Type
 
-from engine.accounts import TAccount
+from engine.accounts import TAccount, CreditAccount, DebitAccount
 from engine.base import AccountName, Amount, Entry
 from engine.chart import Chart, make_ledger_dict
 
@@ -25,7 +25,8 @@ class Ledger(UserDict[AccountName, TAccount]):
         )
 
     def deep_copy(self) -> "Ledger":
-        """Return a copy of the ledger, taking care of copying the debit and credit lists in accounts."""
+        """Return a copy of the ledger, taking care of copying 
+           debit and credit lists in accounts."""
         return self.apply("deep_copy")
 
     def condense(self) -> "Ledger":
@@ -109,6 +110,18 @@ class Ledger(UserDict[AccountName, TAccount]):
         ledger = self.close(chart).post_many(post_close_entries)
         return BalanceSheet.new(ledger)
 
+    def _yield_trial_balance(self):
+        for account_name, t_account in self.items():
+            if isinstance(t_account, DebitAccount):
+                yield account_name, t_account.balance(), 0
+        for account_name, t_account in self.items():
+            if isinstance(t_account, CreditAccount):
+                yield account_name, 0, t_account.balance()
+
+    def trial_balance(self, chart: Chart):
+        from engine.report import view_trial_balance
+
+        return view_trial_balance(self, chart)
 
 def post_entry(ledger: Ledger, entry: Entry) -> None:
     ledger[entry.debit].debit(entry.amount)

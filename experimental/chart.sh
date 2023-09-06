@@ -6,6 +6,7 @@ poetry run python api.py chart add --income sales
 poetry run python api.py chart add --expenses cogs sga
 poetry run python api.py chart set --retained-earnings "प्रतिधारित कमाई"
 poetry run python api.py chart set --retained-earnings re
+poetry run python api.py chart add --liabilities dividends_due
 poetry run python api.py chart offset sales voids refunds
 poetry run python api.py chart offset ppe depreciation
 poetry run python api.py chart name ar "Accounts receivable"

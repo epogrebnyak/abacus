@@ -47,6 +47,10 @@ class Chart(BaseModel):
         except KeyError:
             return account_name.replace("_", " ").strip().capitalize()
 
+    def compose_name(self, account_name):
+        """Produce name like 'cash (Cash)'."""
+        return account_name + " (" + self.get_name(account_name) + ")"
+
     @property
     def duplicates(self):
         return repeated_names(self.account_names_all())

@@ -102,8 +102,8 @@ def balance_sheet_lines(
     right = get_lines(bs, ["capital", "liabilities"])
     # make left and right same number of lines
     n = max(len(left), len(right))
-    left += [empty_line()] * (n - len(left))
-    right += [empty_line()] * (n - len(right))
+    left += [AccountLine("", "")] * (n - len(left))
+    right += [AccountLine("", "")] * (n - len(right))
     # Add end line
     left.append(HeaderLine(end_line, total(bs.assets)))
     right.append(HeaderLine(end_line, total(bs.capital) + total(bs.liabilities)))

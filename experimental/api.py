@@ -34,25 +34,25 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List
 
-from docopt import docopt
+# pylance: disable=import-error
+# pylint: disable=import-error
+from docopt import docopt  # type: ignore
 from engine.base import AbacusError, Amount, Entry
 from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger
 from entries import CsvFile
 
-from abacus.tables import PlainTextViewer
-
 
 def cwd() -> Path:
     return Path(os.getcwd())
 
 
-def chart_path() -> Path:
+def get_chart_path() -> Path:
     return cwd() / "chart.json"
 
 
-def entries_path() -> Path:
+def get_entries_path() -> Path:
     return cwd() / "entries.csv"
 
 
@@ -68,14 +68,9 @@ def init_chart(path: Path):
         raise AbacusError
 
 
-def compose_name(chart, account_name):
-    """Produce name like 'cash (Cash)'."""
-    return account_name + " (" + chart.get_name(account_name) + ")"
-
-
 def print_chart(chart: Chart):
     def name(account_name):
-        return compose_name(chart, account_name)
+        return chart.compose_name(account_name)
 
     for attribute in chart.five_types_of_accounts():
         account_names = getattr(chart, attribute)
@@ -92,7 +87,7 @@ def print_chart(chart: Chart):
 def print_re(chart):
     print(
         "Retained earnings account:",
-        compose_name(chart, chart.retained_earnings_account),
+        chart.compose_name(chart.retained_earnings_account),
     )
 
 
@@ -176,7 +171,7 @@ class ChartCommand:
 
     def set_name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
-        return "Added account title: " + compose_name(self.chart, account_name) + "."
+        return "Added account title: " + self.chart.compose_name(account_name) + "."
 
 
 def chart_command(arguments: Dict, chart_path: Path):
@@ -274,27 +269,13 @@ def filter_for_income_statement(entries: List[Entry], chart: Chart) -> List[Entr
 
     return filter(not_touches_isa, entries)
 
-from engine.accounts import DebitAccount, CreditAccount
-
-
-def trial_balance_account(ledger: Ledger):
-    for account_name, t_account in ledger.items():
-        if isinstance(t_account, DebitAccount):
-            yield account_name, t_account.balance(), 0
-    for account_name, t_account in ledger.items():
-        if isinstance(t_account, CreditAccount): 
-            yield account_name, 0, t_account.balance()
-
-
-# make a list of all debit account from ledger
 
 def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
     chart = Chart.parse_file(chart_path)
     if arguments["--trial-balance"]:
         entries = CsvFile(entries_path).yield_entries()
         ledger = Ledger.new(chart).post_many(entries)
-        for account_name, debit, credit in trial_balance_account(ledger):
-            print(account_name, debit, credit, sep="\t")
+        print(ledger.trial_balance(chart))
     elif arguments["--balance-sheet"]:
         entries = CsvFile(entries_path).yield_entries()
         ledger = Ledger.new(chart).post_many(entries)
@@ -304,10 +285,8 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         elif arguments["--rich"]:
             pass
         else:
-            viewer = PlainTextViewer(rename_dict=chart.names)
             print("Balance sheet")
-            # not working
-            print(viewer.show(statement))
+            print(statement.view(chart.names))
     elif arguments["--income-statement"]:
         entries = CsvFile(entries_path).yield_entries()
         entries = filter_for_income_statement(entries, chart)
@@ -318,10 +297,8 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         elif arguments["--rich"]:
             pass
         else:
-            viewer = PlainTextViewer(rename_dict=chart.names)
             print("Income statement")
-            # not working
-            print(viewer.show(statement))
+            print(statement.view(chart.names))
     elif arguments["--end-balances"]:
         entries = CsvFile(entries_path).yield_entries()
         balances = Ledger.new(chart).post_many(entries).balances()
@@ -334,11 +311,11 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
 def main():
     arguments = docopt(__doc__, version="0.5.1")
     if arguments["chart"]:
-        chart_command(arguments, chart_path())
+        chart_command(arguments, get_chart_path())
     elif arguments["ledger"]:
-        ledger_command(arguments, entries_path(), chart_path())
+        ledger_command(arguments, get_entries_path(), get_chart_path())
     elif arguments["report"]:
-        report_command(arguments, entries_path(), chart_path())
+        report_command(arguments, get_entries_path(), get_chart_path())
     else:
         sys.exit("Command not recognized. Use bx --help for reference.")
 
