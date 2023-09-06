@@ -175,7 +175,7 @@ class Column:
 
 
 def view_trial_balance(chart, ledger):
-    data = list(ledger.yield_trial_balance())
+    data = list(ledger._yield_tuples_for_trial_balance())
     col_1 = (
         Column([chart.compose_name(d[0]) for d in data])
         .align_left(".")
