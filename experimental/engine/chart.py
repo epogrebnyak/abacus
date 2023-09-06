@@ -11,7 +11,7 @@ from engine.accounts import (
     mapping,
 )
 from engine.base import AbacusError, AccountName
-from pydantic import BaseModel  # pylint: disable=import-error # type: ignore
+from pydantic import BaseModel  # type: ignore
 
 
 def repeated_names(xs):

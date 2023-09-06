@@ -5,7 +5,7 @@ from engine.base import Entry
 from engine.chart import Chart
 from engine.ledger import Ledger
 from engine.report import BalanceSheet
-from pydantic import BaseModel  # pylint: disable=import-error # type: ignore
+from pydantic import BaseModel  # type: ignore
 
 
 class BalanceSheet2(BaseModel):

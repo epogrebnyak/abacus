@@ -1,7 +1,7 @@
 from engine.base import Entry
 from engine.chart import Chart
 from engine.ledger import Ledger
-from pytest import fixture
+from pytest import fixture  # type: ignore
 
 
 @fixture

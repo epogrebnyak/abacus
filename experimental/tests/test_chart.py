@@ -1,4 +1,5 @@
-import pytest
+import pytest  # type: ignore
+
 from engine.accounts import Asset, Income
 from engine.base import AbacusError
 from engine.chart import Chart

@@ -283,7 +283,7 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         if arguments["--json"]:
             print(statement.json())
         elif arguments["--rich"]:
-            pass
+            statement.print_rich(chart.names)
         else:
             print("Balance sheet")
             print(statement.view(chart.names))
@@ -295,7 +295,7 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         if arguments["--json"]:
             print(statement.json())
         elif arguments["--rich"]:
-            pass
+            statement.print_rich(chart.names)
         else:
             print("Income statement")
             print(statement.view(chart.names))

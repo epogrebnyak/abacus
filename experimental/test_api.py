@@ -1,4 +1,5 @@
-import pytest
+import pytest  # type: ignore
+
 from api import Chart, ChartCommand
 
 

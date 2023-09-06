@@ -3,7 +3,7 @@ from engine.base import Amount, Entry
 from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger
-from pytest import fixture
+from pytest import fixture  # type: ignore
 
 
 @fixture

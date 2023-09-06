@@ -1,15 +1,21 @@
 """Income statement and balance sheet reports, created from ledger."""
 from dataclasses import dataclass
-
 from typing import Dict, List, Tuple
 
 from engine.accounts import Asset, Capital, Expense, Income, Liability
 from engine.base import AccountName, Amount, total
 from pydantic import BaseModel  # type: ignore
+from rich.console import Console  # type: ignore
+from rich.table import Table  # type: ignore
+from rich.text import Text  # type: ignore
 
 
 class Report:
     def lines(self, attributes: List[str]) -> List["Line"]:
+        """Return list of lines for a given subset attributes.
+        Allows to create a report with multiple columns,
+        for example capital and liabilities on the left side of
+        balance sheet."""
         lines: List[Line] = []
         for attr in attributes:
             dict_ = getattr(self, attr)
@@ -36,6 +42,15 @@ class BalanceSheet(BaseModel, Report):
     def view(self, rename_dict) -> str:
         return view_balance_sheet(self, rename_dict)
 
+    def print_rich(self, rename_dict: Dict[str, str]) -> None:
+        left, right = left_and_right(self, rename_dict)
+        table = make_table("Balance sheet", 80)
+        for line_1, line_2 in zip(left, right):
+            a, b = unpack(line_1)
+            c, d = unpack(line_2)
+            table.add_row(a, b, c, d)
+        Console().print(table)
+
 
 class IncomeStatement(BaseModel, Report):
     income: Dict[AccountName, Amount]
@@ -53,6 +68,9 @@ class IncomeStatement(BaseModel, Report):
 
     def view(self, rename_dict) -> str:
         return view_income_statement(self, rename_dict)
+
+    def print_rich(self, rename_dict: Dict[str, str]) -> None:
+        print_income_statement_rich(self, rename_dict)
 
 
 def clean(s: str, rename_dict: Dict) -> str:
@@ -81,7 +99,9 @@ class EmptyLine(Line):
     pass
 
 
-def view_balance_sheet(report: BalanceSheet, rename_dict: Dict[str, str]) -> str:
+def left_and_right(
+    report: BalanceSheet, rename_dict: Dict[str, str]
+) -> Tuple[List[Line], List[Line]]:
     left = report.lines(["assets"])
     right = report.lines(["capital", "liabilities"])
     # rename lines
@@ -96,6 +116,11 @@ def view_balance_sheet(report: BalanceSheet, rename_dict: Dict[str, str]) -> str
     left.append(h1)
     h2 = HeaderLine("Total:", str(total(report.capital) + total(report.liabilities)))
     right.append(h2)
+    return left, right
+
+
+def view_balance_sheet(report: BalanceSheet, rename_dict: Dict[str, str]) -> str:
+    left, right = left_and_right(report, rename_dict)
     a, b = to_columns(left)
     col1 = a.align_left(".").add_right("... ") + b.align_right()
     c, d = to_columns(right)
@@ -103,16 +128,62 @@ def view_balance_sheet(report: BalanceSheet, rename_dict: Dict[str, str]) -> str
     return (col1.add_space(2) + col2).printable()
 
 
-def view_income_statement(report: IncomeStatement, rename_dict: Dict[str, str]) -> str:
+def red(b: str) -> Text:
+    """Make digit red if negative."""
+    v = Amount(b)
+    if v and v < 0:
+        return Text(b, style="red")
+    else:
+        return Text(b)
+
+
+def bold(s: Text | str) -> Text:
+    if isinstance(s, Text):
+        s.stylize("bold")
+        return s
+    else:
+        return Text(str(s), style="bold")
+
+
+def unpack(line: Line) -> Tuple[Text, Text]:
+    """Convert Line to rich.Text tuple"""
+    match line:
+        case HeaderLine(a, b):
+            return bold(a), bold(red(b))
+        case AccountLine(a, b):
+            return ("  " + a, red(b))
+        case EmptyLine(a, b):
+            return ("", "")
+        case _:
+            raise ValueError(line)
+
+
+def income_statement_lines(report: IncomeStatement, rename_dict: Dict[str, str]):
     left = report.lines(["income", "expenses"])
     # rename lines
     left = [line.rename(rename_dict) for line in left]
     # add end line
     h1 = HeaderLine("Current profit:", report.current_profit())
     left.append(h1)
+    return left
+
+
+def view_income_statement(report: IncomeStatement, rename_dict: Dict[str, str]) -> str:
+    left = income_statement_lines(report, rename_dict)
     a, b = to_columns(left)
     col = a.align_left(fill_char=".").add_right("... ") + b.align_right(fill_char=" ")
     return col.printable()
+
+
+def print_income_statement_rich(report: IncomeStatement, rename_dict: Dict[str, str]):
+    left = income_statement_lines(report, rename_dict)
+    table = Table(title="Income Statement", box=None, width=80, show_header=False)
+    table.add_column("")
+    table.add_column("", justify="right", style="green")
+    for line in left:
+        a, b = unpack(line)
+        table.add_row(a, b)
+    Console().print(table)
 
 
 def offset(line: Line) -> str:
@@ -194,3 +265,12 @@ def view_trial_balance(chart, ledger):
         .header("Credit")
     )
     return (col_1 + col_2 + col_3).printable()
+
+
+def make_table(title, width) -> Table:
+    table = Table(title=title, box=None, width=width, show_header=False)
+    table.add_column("")
+    table.add_column("", justify="right", style="green")
+    table.add_column("")
+    table.add_column("", justify="right", style="green")
+    return table
