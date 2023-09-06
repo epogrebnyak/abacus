@@ -10,7 +10,7 @@ from engine.accounts import (
     RetainedEarnings,
     mapping,
 )
-from engine.base import AbacusError, AccountName
+from engine.base import AbacusError, AccountName, Pair
 from pydantic import BaseModel  # type: ignore
 
 
@@ -33,9 +33,14 @@ class Chart(BaseModel):
     )
     contra_accounts: Dict[AccountName, List[AccountName]] = {}
     names: Dict[AccountName, str] = {"re": "Retained earnings"}
+    operations: Dict[str, Pair] = {}
 
     def five_types_of_accounts(self):
         return ("assets", "equity", "liabilities", "income", "expenses")
+
+    def add_operation(self, name: str, debit: AccountName, credit: AccountName):
+        self.operations[name] = (debit, credit)
+        return self
 
     def set_name(self, account_name: AccountName, title: str):
         self.names[account_name] = title

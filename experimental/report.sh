@@ -6,3 +6,5 @@ poetry run python api.py report --balance-sheet
 poetry run python api.py report --balance-sheet --rich
 poetry run python api.py report --balance-sheet --json
 poetry run python api.py report --end-balances --json
+poetry run python api.py report cash
+poetry run python api.py assert cash 950

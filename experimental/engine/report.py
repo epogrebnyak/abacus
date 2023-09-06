@@ -44,7 +44,7 @@ class BalanceSheet(BaseModel, Report):
 
     def print_rich(self, rename_dict: Dict[str, str]) -> None:
         left, right = left_and_right(self, rename_dict)
-        table = make_table("Balance sheet", 80)
+        table = make_balance_sheet_table("Balance sheet", 80)
         for line_1, line_2 in zip(left, right):
             a, b = unpack(line_1)
             c, d = unpack(line_2)
@@ -163,7 +163,7 @@ def income_statement_lines(report: IncomeStatement, rename_dict: Dict[str, str])
     # rename lines
     left = [line.rename(rename_dict) for line in left]
     # add end line
-    h1 = HeaderLine("Current profit:", report.current_profit())
+    h1 = HeaderLine("Current profit:", str(report.current_profit()))
     left.append(h1)
     return left
 
@@ -267,7 +267,7 @@ def view_trial_balance(chart, ledger):
     return (col_1 + col_2 + col_3).printable()
 
 
-def make_table(title, width) -> Table:
+def make_balance_sheet_table(title, width) -> Table:
     table = Table(title=title, box=None, width=width, show_header=False)
     table.add_column("")
     table.add_column("", justify="right", style="green")

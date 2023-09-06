@@ -15,6 +15,7 @@ Usage:
   bx chart set --retained-earnings <account_name>
   bx chart name <account_name> <title>
   bx chart code <account_name> <code>
+  bx chart alias <name> <debit> <credit>
   bx chart show [--json]
   bx chart erase --force
   bx ledger open
@@ -22,10 +23,12 @@ Usage:
   bx ledger close
   bx ledger show
   bx ledger erase --force
+  bx report <account_name>
   bx report --trial-balance
   bx report --income-statement [--json] [--rich]
   bx report --balance-sheet [--json] [--rich]
   bx report --end-balances --json
+  bx assert <account_name> <balance>
 """
 import json
 import os
@@ -37,7 +40,7 @@ from typing import Dict, List
 # pylance: disable=import-error
 # pylint: disable=import-error
 from docopt import docopt  # type: ignore
-from engine.base import AbacusError, Amount, Entry
+from engine.base import AbacusError, Amount, Entry, AccountName
 from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger
@@ -168,6 +171,10 @@ class ChartCommand:
         else:
             text = "Added contra account: "
         return text + contra_phrase(account_name, contra_account_names) + "."
+    
+    def alias(self, name: str, debit: AccountName, credit: AccountName):
+        self.chart.add_operation(name, debit, credit)
+        return "Added operation: " + name + " (debit " + debit + ", credit " + credit + ")."
 
     def set_name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
@@ -218,6 +225,10 @@ def chart_command(arguments: Dict, chart_path: Path):
         msg = holder.set_name(arguments["<account_name>"], arguments["<title>"])
         holder.write(chart_path)
         print(msg)
+    elif arguments["code"]:
+        pass
+    elif arguments["alias"]:
+        pass
     elif arguments["show"]:
         if arguments["--json"]:
             print(holder.chart.json())
@@ -272,7 +283,11 @@ def filter_for_income_statement(entries: List[Entry], chart: Chart):
 
 def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
     chart = Chart.parse_file(chart_path)
-    if arguments["--trial-balance"]:
+    if arguments["<account_name>"]:
+        entries = CsvFile(entries_path).yield_entries()
+        ledger = Ledger.new(chart).post_many(entries)
+        print_account_info(ledger, chart, arguments["<account_name>"])
+    elif arguments["--trial-balance"]:
         entries = CsvFile(entries_path).yield_entries()
         ledger = Ledger.new(chart).post_many(entries)
         print(ledger.trial_balance(chart))
@@ -307,6 +322,34 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         else:
             sys.exit("Use --json flag to print account end balances.")
 
+def split_on_caps(account) -> str:
+    import re
+    return " ".join(re.findall('[A-Z][^A-Z]*', account.__class__.__name__))
+
+def print_account_info(ledger, chart, account_name: str):
+    account = ledger[account_name]
+    print("Account:", chart.compose_name(account_name))
+    print("   Type:", split_on_caps(account))
+    print(" Debits:", account.debits)
+    print("Credits:", account.credits)
+    print("Balance:", account.balance())
+
+def assert_command(arguments, entries_path, chart_path):
+    chart = Chart.parse_file(chart_path)
+    entries = CsvFile(entries_path).yield_entries()
+    ledger = Ledger.new(chart).post_many(entries)
+    assert_account_balance(ledger, arguments["<account_name>"], arguments["<balance>"])
+
+def assert_account_balance(ledger, account_name: str, assert_amount: str):
+    amount = ledger[account_name].balance()
+    expected_amount = Amount(assert_amount)
+    if amount != expected_amount:
+        sys.exit(
+            f"Check failed for {account_name}: expected balance is {expected_amount}, got {amount}."
+        )
+    print(f"Check passed for account {account_name}: account balance is {expected_amount}.")
+
+
 
 def main():
     arguments = docopt(__doc__, version="0.5.1")
@@ -316,6 +359,8 @@ def main():
         ledger_command(arguments, get_entries_path(), get_chart_path())
     elif arguments["report"]:
         report_command(arguments, get_entries_path(), get_chart_path())
+    elif arguments["assert"]:
+        assert_command(arguments, get_entries_path(), get_chart_path())
     else:
         sys.exit("Command not recognized. Use bx --help for reference.")
 
