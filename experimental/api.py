@@ -22,10 +22,10 @@ Usage:
   bx ledger close
   bx ledger show
   bx ledger erase --force
-  bx report --trial-balance [--json]
-  bx report --income-statement [--json]
-  bx report --balance-sheet [--json]
-  bx report --end-balances [--json]
+  bx report --trial-balance
+  bx report --income-statement [--json] [--rich]
+  bx report --balance-sheet [--json] [--rich]
+  bx report --end-balances --json
 """
 import json
 import os
@@ -301,6 +301,8 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         statement = ledger.balance_sheet(chart)
         if arguments["--json"]:
             print(statement.json())
+        elif arguments["--rich"]:
+            pass
         else:
             viewer = PlainTextViewer(rename_dict=chart.names)
             print("Balance sheet")
@@ -313,6 +315,8 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         statement = ledger.income_statement(chart)
         if arguments["--json"]:
             print(statement.json())
+        elif arguments["--rich"]:
+            pass
         else:
             viewer = PlainTextViewer(rename_dict=chart.names)
             print("Income statement")
