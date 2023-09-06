@@ -22,10 +22,10 @@ Usage:
   bx ledger close
   bx ledger show
   bx ledger erase --force
-  bx report --trial-balance
-  bx report --income-statement
-  bx report --balance-sheet
-  bx report --end-balances
+  bx report --trial-balance [--json]
+  bx report --income-statement [--json]
+  bx report --balance-sheet [--json]
+  bx report --end-balances [--json]
 """
 import json
 import os
@@ -40,6 +40,8 @@ from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger
 from entries import CsvFile
+
+from abacus.tables import PlainTextViewer
 
 
 def cwd() -> Path:
@@ -258,22 +260,71 @@ def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
             print(entry.debit, entry.credit, entry.amount, sep="\t")
 
 
-class ReportCommand:
-    def trial_balance(self):
-        pass
+def touches_isa(chart: Chart, entry: Entry) -> bool:
+    """True if entry touches income summary account."""
+    isa = chart.income_summary_account
+    return (entry.debit == isa) or (entry.credit == isa)
 
-    def balance_sheet(self, json: bool):
-        pass
 
-    def income_statement(self, json: bool):
-        pass
+def filter_for_income_statement(entries: List[Entry], chart: Chart) -> List[Entry]:
+    """Filter entries that do not close income accounts."""
 
-    def end_balances(self, json: bool):
-        pass
+    def not_touches_isa(entry):
+        return not touches_isa(chart, entry)
 
+    return filter(not_touches_isa, entries)
+
+from engine.accounts import DebitAccount, CreditAccount
+
+
+def trial_balance_account(ledger: Ledger):
+    for account_name, t_account in ledger.items():
+        if isinstance(t_account, DebitAccount):
+            yield account_name, t_account.balance(), 0
+    for account_name, t_account in ledger.items():
+        if isinstance(t_account, CreditAccount): 
+            yield account_name, 0, t_account.balance()
+
+
+# make a list of all debit account from ledger
 
 def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
-    pass
+    chart = Chart.parse_file(chart_path)
+    if arguments["--trial-balance"]:
+        entries = CsvFile(entries_path).yield_entries()
+        ledger = Ledger.new(chart).post_many(entries)
+        for account_name, debit, credit in trial_balance_account(ledger):
+            print(account_name, debit, credit, sep="\t")
+    elif arguments["--balance-sheet"]:
+        entries = CsvFile(entries_path).yield_entries()
+        ledger = Ledger.new(chart).post_many(entries)
+        statement = ledger.balance_sheet(chart)
+        if arguments["--json"]:
+            print(statement.json())
+        else:
+            viewer = PlainTextViewer(rename_dict=chart.names)
+            print("Balance sheet")
+            # not working
+            print(viewer.show(statement))
+    elif arguments["--income-statement"]:
+        entries = CsvFile(entries_path).yield_entries()
+        entries = filter_for_income_statement(entries, chart)
+        ledger = Ledger.new(chart).post_many(entries)
+        statement = ledger.income_statement(chart)
+        if arguments["--json"]:
+            print(statement.json())
+        else:
+            viewer = PlainTextViewer(rename_dict=chart.names)
+            print("Income statement")
+            # not working
+            print(viewer.show(statement))
+    elif arguments["--end-balances"]:
+        entries = CsvFile(entries_path).yield_entries()
+        balances = Ledger.new(chart).post_many(entries).balances()
+        if arguments["--json"]:
+            print(json.dumps(balances))
+        else:
+            sys.exit("Use --json flag to print account end balances.")
 
 
 def main():
