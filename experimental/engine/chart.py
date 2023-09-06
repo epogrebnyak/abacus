@@ -55,7 +55,7 @@ class Chart(BaseModel):
     def duplicates(self):
         return repeated_names(self.account_names_all())
 
-    def validate(self) -> True:
+    def validate(self):
         if self.duplicates:
             raise AbacusError(
                 f"Following account names were duplicated: {self.duplicates}"

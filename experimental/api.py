@@ -261,7 +261,7 @@ def touches_isa(chart: Chart, entry: Entry) -> bool:
     return (entry.debit == isa) or (entry.credit == isa)
 
 
-def filter_for_income_statement(entries: List[Entry], chart: Chart) -> List[Entry]:
+def filter_for_income_statement(entries: List[Entry], chart: Chart):
     """Filter entries that do not close income accounts."""
 
     def not_touches_isa(entry):

@@ -433,7 +433,8 @@ disable=raw-checker-failed,
         missing-class-docstring,
         invalid-name,
         import-outside-toplevel,
-        protected-access
+        protected-access,
+        import-error
 
 
 # Enable the message, report, category or checker with the given id(s). You can

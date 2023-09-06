@@ -1,21 +1,20 @@
 """Income statement and balance sheet reports, created from ledger."""
 from dataclasses import dataclass
 
-# pylint: disable=missing-docstring
 from typing import Dict, List, Tuple
 
 from engine.accounts import Asset, Capital, Expense, Income, Liability
 from engine.base import AccountName, Amount, total
-from pydantic import BaseModel  # pylint: disable=import-error # type: ignore
+from pydantic import BaseModel  # type: ignore
 
 
 class Report:
     def lines(self, attributes: List[str]) -> List["Line"]:
-        lines = []
+        lines: List[Line] = []
         for attr in attributes:
             dict_ = getattr(self, attr)
-            # The header line shows sum of the items
-            lines.append(HeaderLine(attr, total(dict_)))
+            # the header line shows sum of the items
+            lines.append(HeaderLine(text=attr, value=str(total(dict_))))
             for name, value in dict_.items():
                 lines.append(AccountLine(name, str(value)))
         return lines
@@ -56,7 +55,7 @@ class IncomeStatement(BaseModel, Report):
         return view_income_statement(self, rename_dict)
 
 
-def clean(s, rename_dict):
+def clean(s: str, rename_dict: Dict) -> str:
     return rename_dict.get(s, s).replace("_", " ").strip().capitalize()
 
 
@@ -92,10 +91,10 @@ def view_balance_sheet(report: BalanceSheet, rename_dict: Dict[str, str]) -> str
     n = max(len(left), len(right))
     left += [EmptyLine("", "")] * (n - len(left))
     right += [EmptyLine("", "")] * (n - len(right))
-    # Add end line
-    h1 = HeaderLine("Total:", total(report.assets))
+    # add end line
+    h1 = HeaderLine("Total:", str(total(report.assets)))
     left.append(h1)
-    h2 = HeaderLine("Total:", total(report.capital) + total(report.liabilities))
+    h2 = HeaderLine("Total:", str(total(report.capital) + total(report.liabilities)))
     right.append(h2)
     a, b = to_columns(left)
     col1 = a.align_left(".").add_right("... ") + b.align_right()
@@ -108,7 +107,7 @@ def view_income_statement(report: IncomeStatement, rename_dict: Dict[str, str]) 
     left = report.lines(["income", "expenses"])
     # rename lines
     left = [line.rename(rename_dict) for line in left]
-    # Add end line
+    # add end line
     h1 = HeaderLine("Current profit:", report.current_profit())
     left.append(h1)
     a, b = to_columns(left)
@@ -116,20 +115,19 @@ def view_income_statement(report: IncomeStatement, rename_dict: Dict[str, str]) 
     return col.printable()
 
 
-def offset(line: Line) -> Tuple[str, str]:
+def offset(line: Line) -> str:
     match line:
-        case HeaderLine(a, b):
-            return (a, str(b))
-        case AccountLine(a, b):
-            return ("  " + a, str(b))
+        case HeaderLine(a, _):
+            return a
+        case AccountLine(a, _):
+            return "  " + a
         case EmptyLine(_, _):
-            return ("", "")
+            return ""
+    raise TypeError  # mypy wanted it
 
 
-def to_columns(lines: List[Line]) -> Tuple[List[str], List[str]]:
-    return Column([offset(line)[0] for line in lines]), Column(
-        [offset(line)[1] for line in lines]
-    )
+def to_columns(lines: List[Line]) -> Tuple["Column", "Column"]:
+    return Column(list(map(offset, lines))), Column([line.value for line in lines])
 
 
 @dataclass
