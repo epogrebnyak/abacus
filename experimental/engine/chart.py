@@ -29,10 +29,13 @@ class Chart(BaseModel):
     retained_earnings_account: AccountName = "re"
     income_summary_account: AccountName = "current_profit"
     null_account = (
-        "null"  # corresponding account to add starting balances with signle entries
+        "null"  # corresponding account to add starting balances using signle entries
     )
     contra_accounts: Dict[AccountName, List[AccountName]] = {}
-    names: Dict[AccountName, str] = {}
+    names: Dict[AccountName, str] = {"re": "Retained earnings"}
+
+    def five_types_of_accounts(self):
+        return ("assets", "equity", "liabilities", "income", "expenses")
 
     def set_name(self, account_name: AccountName, title: str):
         self.names[account_name] = title

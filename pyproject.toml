@@ -28,6 +28,7 @@ tomli-w = "^1.0.0"
 pydantic = "^1.10.8"
 docopt = "^0.6.2"
 types-docopt = "^0.6.11.3"
+click-option-group = "^0.5.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.0"

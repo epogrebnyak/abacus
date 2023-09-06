@@ -15,7 +15,7 @@ def test_empty_chart_constructor():
         income_summary_account="current_profit",
         null_account="null",
         contra_accounts={},
-        names={},
+        names={"re": "Retained earnings"},
     )
 
 
