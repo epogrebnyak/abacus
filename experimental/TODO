@@ -2,10 +2,10 @@ FOR REVIEW:
 - [x] open ledger with starting balances
 - [x] single entry and multiple entry
 - [x] --rich or --json
+- [x] add command
+- [x] show operations in chart
 
 TODO:
-- [ ] adds command
-- [ ] show operations in chart
 - [ ] merge test suites 
 - [ ] --title for entry
 - [ ] memo + build-you-own-x

@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from docopt import docopt  # type: ignore
-from engine.base import AbacusError, AccountName, Amount, Entry, Pair
+from engine.base import AbacusError, AccountName, Amount, Entry
 from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger, to_multiple_entry
@@ -74,19 +74,22 @@ def print_chart(chart: Chart):
     for attribute in chart.five_types_of_accounts():
         account_names = getattr(chart, attribute)
         if account_names:
-            print(attribute.capitalize() + ":")
-            print(" ", ", ".join(map(name, account_names)))
+            print(attribute.capitalize() + ":", ", ".join(map(name, account_names)))
     if chart.contra_accounts:
         print("Contra accounts:")
         for key, names in chart.contra_accounts.items():
             print("  -", contra_phrase(name(key), map(name, names)))
     print_re(chart)
+    if chart.operations:
+        print("Operation aliases:")
+        for key, (debit, credit) in chart.operations.items():
+            print("  -", key, f"(debit is {debit}, credit is {credit})")
 
 
 def print_re(chart):
     print(
         "Retained earnings account:",
-        chart.compose_name(chart.retained_earnings_account),
+        chart.compose_name(chart.retained_earnings_account) + ".",
     )
 
 
@@ -175,7 +178,7 @@ class ChartCommand:
 
     def set_code(self, account_name, code: str) -> str:
         self.chart.set_code(account_name, code)
-        return "Added code {code} to {account_name}."
+        return f"Added code {code} to {account_name}."
 
 
 def chart_command(arguments: Dict, chart_path: Path):
@@ -206,16 +209,22 @@ def chart_command(arguments: Dict, chart_path: Path):
     account_name = arguments["<account_name>"]
     if arguments["set"] or arguments["add"]:
         if arguments["--title"]:
-            holder.set_name(account_name, arguments["<title>"])
+            msg = holder.set_name(arguments["<account_name>"], arguments["<title>"])
+            holder.write(chart_path)
+            print(msg)
         if arguments["--code"]:
-            holder.set_code(account_name, arguments["<code>"])
+            msg = holder.set_code(account_name, arguments["<code>"])
+            holder.write(chart_path)
+            print(msg)
         # set
         if arguments["--retained-earnings"]:
             holder.set_retained_earnings(account_name)
             print_re(holder.chart)
         elif arguments["--income-summary-account"]:
+            # will fail
             holder.set_isa(account_name)
         elif arguments["--null-account"]:
+            # will fail
             holder.set_null_account(account_name)
         # add
         if arguments["--asset"]:
@@ -229,7 +238,7 @@ def chart_command(arguments: Dict, chart_path: Path):
         elif arguments["--expense"]:
             holder.add_expense(account_name)
         holder.write(chart_path)
-        print("Added account to chart:", account_name)
+        print("Added account to chart:", account_name + ".")
     elif arguments["offset"]:
         msg = holder.offset(
             arguments["<account_name>"], arguments["<contra_account_names>"]
@@ -241,7 +250,9 @@ def chart_command(arguments: Dict, chart_path: Path):
         holder.write(chart_path)
         print(msg)
     elif arguments["code"]:
-        raise NotImplementedError
+        msg = holder.set_code(arguments["<account_name>"], arguments["<code>"])
+        holder.write(chart_path)
+        print(msg)
     elif arguments["alias"]:
         msg = holder.alias(
             arguments["<name>"], arguments["<debit>"], arguments["<credit>"]
