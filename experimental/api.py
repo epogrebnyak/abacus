@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from docopt import docopt  # type: ignore
-from engine.base import AbacusError, AccountName, Amount, Entry, nonzero
+from engine.base import AbacusError, AccountName, Amount, Entry
 from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger
@@ -405,7 +405,7 @@ def accounts_command(arguments, entries_path, chart_path):
     elif arguments["--balances"]:
         balances = ledger.balances()
         if arguments["--nonzero"]:
-            balances = nonzero(balances)
+            balances = {k:v for k, v in balances.items() if v}
         print(json.dumps(balances))
     elif arguments["--trial-balance"]:
         print(ledger.trial_balance(chart))

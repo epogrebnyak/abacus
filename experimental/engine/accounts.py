@@ -1,3 +1,4 @@
+"""Classes to different types of accounts, all based on TAccount."""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List
@@ -97,8 +98,8 @@ class Unique:
 
 class Transferable(TAccount):
     def transfer(self, my_name: AccountName, dest_name: AccountName) -> Entry:
-        """Make entry to transfer balances from *t_account* of named *this* to *destination* account.
-        The entry will differ depending on if *t_account* is debit or credit account."""
+        """Make entry to transfer balances from account of named *my_name* to *dest_name* account.
+        The entry will differ depending if *my_name* is debit or credit account."""
         amount = self.balance()
         match self:
             case DebitAccount(_, _):
@@ -109,7 +110,7 @@ class Transferable(TAccount):
                 raise TypeError
 
 
-# does not have to be DebitAccount, can equally be CreditAccount
+# Does not have to be DebitAccount, can equally be CreditAccount
 class NullAccount(DebitAccount, Unique, Temporary):
     pass
 
@@ -147,7 +148,7 @@ class ContraIncome(DebitAccount, ContraAccount, Temporary):
 
 
 def mapping():
-    """Relate Chart class attributes to actual classes."""
+    """Relate Chart class attributes (keys) to actual classes (values)."""
     return dict(
         assets=(Asset, ContraAsset),
         expenses=(Expense, ContraExpense),

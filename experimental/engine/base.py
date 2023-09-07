@@ -20,14 +20,6 @@ class AbacusError(Exception):
     """Custom error class."""
 
 
-def nonzero(self: dict) -> dict[AccountName, Amount]:
-    return {k: v for k, v in self.items() if v}
-
-
-def total(self: dict) -> Amount:
-    return sum(self.values())
-
-
 """Pair of debit and credit account names."""
 Pair = Tuple[AccountName, AccountName]
 
@@ -47,7 +39,7 @@ class MultipleEntry:
     debit_entries: list[tuple[AccountName, Amount]]
     credit_entries: list[tuple[AccountName, Amount]]
 
-    def __post_inti__(self):
+    def __post_init__(self):
         if sum(a for (_, a) in self.debit_entries) != sum(
             a for (_, a) in self.credit_entries
         ):

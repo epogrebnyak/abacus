@@ -3,19 +3,23 @@ from dataclasses import dataclass
 from typing import Dict, List, Tuple
 
 from engine.accounts import Asset, Capital, Expense, Income, Liability
-from engine.base import AccountName, Amount, total
+from engine.base import AccountName, Amount
 from pydantic import BaseModel  # type: ignore
 from rich.console import Console  # type: ignore
 from rich.table import Table  # type: ignore
 from rich.text import Text  # type: ignore
 
 
+def total(self: dict) -> Amount:
+    return sum(self.values())
+
+
 class Report:
     def lines(self, attributes: List[str]) -> List["Line"]:
         """Return list of lines for a given subset attributes.
-        Allows to create a report with multiple columns,
-        for example capital and liabilities on the left side of
-        balance sheet."""
+        
+        Allows to create a report with multiple columns, for example, 
+        capital and liabilities on the left side of balance sheet."""
         lines: List[Line] = []
         for attr in attributes:
             dict_ = getattr(self, attr)
@@ -189,7 +193,7 @@ def print_income_statement_rich(report: IncomeStatement, rename_dict: Dict[str, 
 def offset(line: Line) -> str:
     match line:
         case HeaderLine(a, _):
-            return a
+            return a.upper()
         case AccountLine(a, _):
             return "  " + a
         case EmptyLine(_, _):
