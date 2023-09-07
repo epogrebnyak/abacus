@@ -5,18 +5,21 @@ FOR REVIEW:
 
 TODO:
 - [ ] adds command
-- [ ] code for RAS
 - [ ] show operations in chart
 - [ ] merge test suites 
 - [ ] --title for entry
-- [ ] types of entries (S,B,A,C1,C2,C3,C4,P)
-- [ ] shorthand flags
-- [ ] help messgaes
 - [ ] memo + build-you-own-x
 - [ ] mount as bx
-- [ ] post with chart check
 
 WONTFIX:
+- [ ] help messages
+- [ ] types of entries (S,B,A,C1,C2,C3,C4,P)
+- [ ] post entry with chart check
+- [ ] shorthand flags
 - [ ] requires in alias 
 - [ ] cash in chart
 - [ ] textbook examples
+- [ ] --no-color
+- [ ] current profit can be income summary account name
+- [ ] add account types to trial balance
+- [ ] code (also for RAS)

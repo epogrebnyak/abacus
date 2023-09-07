@@ -1,3 +1,4 @@
+poetry run python api.py report --trial-balance
 poetry run python api.py report --income-statement
 poetry run python api.py report --income-statement --rich
 poetry run python api.py report --income-statement --json

@@ -7,14 +7,14 @@ Usage:
   bx chart add --income <account_names>...
   bx chart add --expenses <account_names>... 
   bx chart offset <account_name> <contra_account_names>...
-  bx chart adds --asset     <account_name> [--title <title>] [--code <code>] 
-  bx chart adds --capital   <account_name> [--title <title>] [--code <code>]
-  bx chart adds --liability <account_name> [--title <title>] [--code <code>]
-  bx chart adds --income    <account_name> [--title <title>] [--code <code>]
-  bx chart adds --expense   <account_name> [--title <title>] [--code <code>]
-  bx chart set --retained-earnings <account_name>
   bx chart name <account_name> <title>
   bx chart code <account_name> <code>
+  bx chart set --asset     <account_name> [--title <title>] [--code <code>] 
+  bx chart set --capital   <account_name> [--title <title>] [--code <code>]
+  bx chart set --liability <account_name> [--title <title>] [--code <code>]
+  bx chart set --income    <account_name> [--title <title>] [--code <code>]
+  bx chart set --expense   <account_name> [--title <title>] [--code <code>]
+  bx chart set --retained-earnings <account_name> [--title <title>] [--code <code>]
   bx chart alias --operation <name> --debit <debit> --credit <credit> [--requires <requires>]
   bx chart show [--json]
   bx chart erase --force
@@ -24,10 +24,10 @@ Usage:
   bx ledger close
   bx ledger show
   bx ledger erase --force
+  bx report --trial-balance
   bx report --income-statement [--json | --rich]
   bx report --balance-sheet [--json | --rich]
-  bx accounts show --trial-balance
-  bx accounts show <account_name> [--assert <balance> [--silent]]
+  bx accounts show <account_name> [--assert <balance>]
   bx accounts show --balances [--nonzero]
 """
 import json
@@ -43,6 +43,7 @@ from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger
 from entries import CsvFile
+from engine.base import Pair
 
 
 def cwd() -> Path:
@@ -172,15 +173,7 @@ class ChartCommand:
 
     def alias(self, name: str, debit: AccountName, credit: AccountName):
         self.chart.add_operation(name, debit, credit)
-        return (
-            "Added operation: "
-            + name
-            + " (debit "
-            + debit
-            + ", credit "
-            + credit
-            + ")."
-        )
+        return f"Added operation {name}, where debit is {debit} and credit is {credit}."
 
     def set_name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
@@ -316,17 +309,13 @@ def filter_for_income_statement(entries: List[Entry], chart: Chart):
 
 def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
     chart = Chart.parse_file(chart_path)
-    if arguments["<account_name>"]:
-        entries = CsvFile(entries_path).yield_entries()
-        ledger = Ledger.new(chart).post_many(entries)
-        print_account_info(ledger, chart, arguments["<account_name>"])
-    elif arguments["--trial-balance"]:
-        entries = CsvFile(entries_path).yield_entries()
-        ledger = Ledger.new(chart).post_many(entries)
+    entries = CsvFile(entries_path).yield_entries()
+    ledger = Ledger.new(chart)
+    if arguments["--trial-balance"]:
+        ledger.post_many(entries)
         print(ledger.trial_balance(chart))
     elif arguments["--balance-sheet"]:
-        entries = CsvFile(entries_path).yield_entries()
-        ledger = Ledger.new(chart).post_many(entries)
+        ledger.post_many(entries)
         statement = ledger.balance_sheet(chart)
         if arguments["--json"]:
             print(statement.json())
@@ -336,9 +325,8 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
             print("Balance sheet")
             print(statement.view(chart.names))
     elif arguments["--income-statement"]:
-        entries = CsvFile(entries_path).yield_entries()
         entries = filter_for_income_statement(entries, chart)
-        ledger = Ledger.new(chart).post_many(entries)
+        ledger.post_many(entries)
         statement = ledger.income_statement(chart)
         if arguments["--json"]:
             print(statement.json())
@@ -347,13 +335,6 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         else:
             print("Income statement")
             print(statement.view(chart.names))
-    elif arguments["--end-balances"]:
-        entries = CsvFile(entries_path).yield_entries()
-        balances = Ledger.new(chart).post_many(entries).balances()
-        if arguments["--json"]:
-            print(json.dumps(balances))
-        else:
-            sys.exit("Use --json flag to print account end balances.")
 
 
 def print_account_info(ledger, chart, account_name: str):
@@ -388,22 +369,21 @@ def accounts_command(arguments, entries_path, chart_path):
     """
     bx accounts show <account_name> [--assert <balance>]
     bx accounts show --balances [--nonzero]
-    bx accounts show --trial-balance"""
+    """
     chart = Chart.parse_file(chart_path)
     entries = CsvFile(entries_path).yield_entries()
     ledger = Ledger.new(chart).post_many(entries)
     if account_name := arguments["<account_name>"]:
-        print_account_info(ledger, chart, account_name)
         if arguments["--assert"]:
             assert_account_balance(ledger, account_name, arguments["<balance>"])
+        else:
+            print_account_info(ledger, chart, account_name)
     elif arguments["--balances"]:
+        # this command always returns a json, there is no --json flag
         balances = ledger.balances()
         if arguments["--nonzero"]:
             balances = {k: v for k, v in balances.items() if v}
         print(json.dumps(balances))
-    elif arguments["--trial-balance"]:
-        print(ledger.trial_balance(chart))
-
 
 def main():
     arguments = docopt(__doc__, version="0.5.1")

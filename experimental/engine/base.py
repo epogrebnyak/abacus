@@ -33,6 +33,8 @@ class NamedEntry:
         dr, cr = operation_dict[self.operation]
         return Entry(dr, cr, self.amount)
 
+def sum_second(xs):
+    return sum(x for _, x in xs)
 
 @dataclass
 class MultipleEntry:
@@ -40,9 +42,7 @@ class MultipleEntry:
     credit_entries: list[tuple[AccountName, Amount]]
 
     def __post_init__(self):
-        if sum(a for (_, a) in self.debit_entries) != sum(
-            a for (_, a) in self.credit_entries
-        ):
+        if sum_second(self.debit_entries) != sum_second(self.credit_entries):
             raise AbacusError(["Invalid multiple entry", self])
 
     def entries(self, null_account_name: AccountName):
