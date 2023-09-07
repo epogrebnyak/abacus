@@ -1,8 +1,8 @@
 """Classes to different types of accounts, all based on TAccount."""
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List
-import re
 
 from engine.base import AccountName, Amount, Entry
 

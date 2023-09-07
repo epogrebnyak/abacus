@@ -10,4 +10,4 @@ def test_asset_condense():
 
 
 def test_split_on_caps():
-    return DebitAccount([], []).split_on_caps() == "Debit Account"
+    assert DebitAccount([], []).split_on_caps() == "Debit Account"

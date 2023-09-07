@@ -1,21 +1,19 @@
 """
 Usage:
   bx chart init
-  bx chart add --assets <account_names>... 
-  bx chart add --capital <account_names>... 
-  bx chart add --liabilities <account_names>... 
-  bx chart add --income <account_names>...
-  bx chart add --expenses <account_names>... 
+  bx chart add --asset     <account_name> [--title <title>] [--code <code>] 
+  bx chart add --capital   <account_name> [--title <title>] [--code <code>]
+  bx chart add --liability <account_name> [--title <title>] [--code <code>]
+  bx chart add --income    <account_name> [--title <title>] [--code <code>]
+  bx chart add --expense   <account_name> [--title <title>] [--code <code>]
   bx chart offset <account_name> <contra_account_names>...
   bx chart name <account_name> <title>
   bx chart code <account_name> <code>
-  bx chart set --asset     <account_name> [--title <title>] [--code <code>] 
-  bx chart set --capital   <account_name> [--title <title>] [--code <code>]
-  bx chart set --liability <account_name> [--title <title>] [--code <code>]
-  bx chart set --income    <account_name> [--title <title>] [--code <code>]
-  bx chart set --expense   <account_name> [--title <title>] [--code <code>]
   bx chart set --retained-earnings <account_name> [--title <title>] [--code <code>]
+  bx chart set --income-summary-account <account_name> [--title <title>] [--code <code>]
+  bx chart set --null-account <account_name> [--title <title>] [--code <code>]
   bx chart alias --operation <name> --debit <debit> --credit <credit> [--requires <requires>]
+  bx chart define [-a <assets>] [-c <capital>] [-l <liabilities>] [-i <income>] [-e <expenses>] 
   bx chart show [--json]
   bx chart erase --force
   bx ledger open [--start <file>]
@@ -38,12 +36,11 @@ from pathlib import Path
 from typing import Dict, List
 
 from docopt import docopt  # type: ignore
-from engine.base import AbacusError, AccountName, Amount, Entry
+from engine.base import AbacusError, AccountName, Amount, Entry, Pair
 from engine.chart import Chart
 from engine.closing import make_closing_entries
-from engine.ledger import Ledger
+from engine.ledger import Ledger, to_multiple_entry
 from entries import CsvFile
-from engine.base import Pair
 
 
 def cwd() -> Path:
@@ -128,6 +125,7 @@ class ChartCommand:
         bx set --null-account <account_name>
         ```
         """
+        raise NotImplementedError
 
     def set_isa(self, account_name):
         """Set name of income summary account (override default name).
@@ -137,30 +135,26 @@ class ChartCommand:
         bx set --income-summary-account <account_name>
         ```
         """
+        raise NotImplementedError
 
-    def _add(self, attribute: str, account_names: List[str]):
-        setattr(self.chart, attribute, getattr(self.chart, attribute) + account_names)
+    def _add(self, attribute: str, account_name: str):
+        setattr(self.chart, attribute, getattr(self.chart, attribute) + [account_name])
 
-    def add_assets(self, account_names: List[str]):
-        self._add("assets", account_names)
-        return self
+    def add_asset(self, account_name: str):
+        self._add("assets", account_name)
 
-    def add_capital(self, account_names):
-        # add account_names to 'equity' attribute
-        self._add("equity", account_names)
-        return self
+    def add_capital(self, account_name: str):
+        # adding account_names to 'equity' attribute
+        self._add("equity", account_name)
 
-    def add_liabilities(self, account_names):
-        self._add("liabilities", account_names)
-        return self
+    def add_liability(self, account_name: str):
+        self._add("liabilities", account_name)
 
-    def add_income(self, account_names):
-        self._add("income", account_names)
-        return self
+    def add_income(self, account_name: str):
+        self._add("income", account_name)
 
-    def add_expenses(self, account_names):
-        self._add("expenses", account_names)
-        return self
+    def add_expense(self, account_name: str):
+        self._add("expenses", account_name)
 
     def offset(self, account_name, contra_account_names) -> str:
         for contra_account_name in contra_account_names:
@@ -173,14 +167,20 @@ class ChartCommand:
 
     def alias(self, name: str, debit: AccountName, credit: AccountName):
         self.chart.add_operation(name, debit, credit)
-        return f"Added operation {name}, where debit is {debit} and credit is {credit}."
+        return f"Added operation {name} (debit is {debit}, credit is {credit})."
 
     def set_name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
         return "Added account title: " + self.chart.compose_name(account_name) + "."
 
+    def set_code(self, account_name, code: str) -> str:
+        self.chart.set_code(account_name, code)
+        return "Added code {code} to {account_name}."
+
 
 def chart_command(arguments: Dict, chart_path: Path):
+    if arguments["define"]:
+        raise NotImplementedError
     if arguments["init"]:
         try:
             init_chart(chart_path)
@@ -188,6 +188,13 @@ def chart_command(arguments: Dict, chart_path: Path):
             sys.exit(0)
         except AbacusError:
             sys.exit(f"File already exists: {chart_path}")
+    if arguments["erase"] and arguments["--force"]:
+        if chart_path.exists():
+            chart_path.unlink(missing_ok=True)
+            print("Deleted", chart_path)
+        else:
+            print("File not found:", chart_path)
+        sys.exit(0)
     # load chart file
     try:
         holder = ChartCommand.read(chart_path)
@@ -196,24 +203,33 @@ def chart_command(arguments: Dict, chart_path: Path):
             f"File not found (expected {chart_path}).\nUse `bx chart init` to create chart file."
         )
     # commands below assume chart file exists
-    if arguments["set"] and arguments["--retained-earnings"]:
-        holder.set_retained_earnings(arguments["<account_name>"])
-        holder.write(chart_path)
-        print_re(holder.chart)
-    elif arguments["add"]:
-        account_names = arguments["<account_names>"]
-        if arguments["--assets"]:
-            holder.add_assets(account_names)
+    account_name = arguments["<account_name>"]
+    if arguments["set"] or arguments["add"]:
+        if arguments["--title"]:
+            holder.set_name(account_name, arguments["<title>"])
+        if arguments["--code"]:
+            holder.set_code(account_name, arguments["<code>"])
+        # set
+        if arguments["--retained-earnings"]:
+            holder.set_retained_earnings(account_name)
+            print_re(holder.chart)
+        elif arguments["--income-summary-account"]:
+            holder.set_isa(account_name)
+        elif arguments["--null-account"]:
+            holder.set_null_account(account_name)
+        # add
+        if arguments["--asset"]:
+            holder.add_asset(account_name)
         elif arguments["--capital"]:
-            holder.add_capital(account_names)
-        elif arguments["--liabilities"]:
-            holder.add_liabilities(account_names)
+            holder.add_capital(account_name)
+        elif arguments["--liability"]:
+            holder.add_liability(account_name)
         elif arguments["--income"]:
-            holder.add_income(account_names)
-        elif arguments["--expenses"]:
-            holder.add_expenses(account_names)
+            holder.add_income(account_name)
+        elif arguments["--expense"]:
+            holder.add_expense(account_name)
         holder.write(chart_path)
-        print("Added accounts to chart:", account_names)
+        print("Added account to chart:", account_name)
     elif arguments["offset"]:
         msg = holder.offset(
             arguments["<account_name>"], arguments["<contra_account_names>"]
@@ -225,7 +241,7 @@ def chart_command(arguments: Dict, chart_path: Path):
         holder.write(chart_path)
         print(msg)
     elif arguments["code"]:
-        pass
+        raise NotImplementedError
     elif arguments["alias"]:
         msg = holder.alias(
             arguments["<name>"], arguments["<debit>"], arguments["<credit>"]
@@ -237,12 +253,6 @@ def chart_command(arguments: Dict, chart_path: Path):
             print(holder.chart.json())
         else:
             print_chart(holder.chart)
-    elif arguments["erase"] and arguments["--force"]:
-        chart_path.unlink(missing_ok=True)
-        print("Deleted", chart_path)
-
-
-from engine.ledger import to_multiple_entry
 
 
 def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
@@ -384,6 +394,7 @@ def accounts_command(arguments, entries_path, chart_path):
         if arguments["--nonzero"]:
             balances = {k: v for k, v in balances.items() if v}
         print(json.dumps(balances))
+
 
 def main():
     arguments = docopt(__doc__, version="0.5.1")

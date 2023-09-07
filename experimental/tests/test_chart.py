@@ -17,6 +17,7 @@ def test_empty_chart_constructor():
         contra_accounts={},
         names={"re": "Retained earnings"},
         operations={},
+        codes={},
     )
 
 

@@ -33,6 +33,7 @@ class Chart(BaseModel):
     )
     contra_accounts: Dict[AccountName, List[AccountName]] = {}
     names: Dict[AccountName, str] = {"re": "Retained earnings"}
+    codes: Dict[AccountName, str] = {}
     operations: Dict[str, Pair] = {}
 
     def five_types_of_accounts(self):
@@ -40,6 +41,10 @@ class Chart(BaseModel):
 
     def add_operation(self, name: str, debit: AccountName, credit: AccountName):
         self.operations[name] = (debit, credit)
+        return self
+
+    def set_code(self, account_name: AccountName, code: str):
+        self.codes[account_name] = code
         return self
 
     def set_name(self, account_name: AccountName, title: str):

@@ -2,24 +2,34 @@ import pytest  # type: ignore
 from api import Chart, ChartCommand
 
 
-def test_add_assets():
-    assert ChartCommand(Chart()).add_assets(["cash"]).chart.assets == ["cash"]
+@pytest.fixture
+def chart():
+    return ChartCommand(Chart())
 
 
-def test_add_capital():
-    assert ChartCommand(Chart()).add_capital(["equity"]).chart.equity == ["equity"]
+def test_add_assets(chart):
+    chart.add_asset("cash")
+    assert chart.chart.assets == ["cash"]
 
 
-def test_add_liabilities():
-    assert ChartCommand(Chart()).add_liabilities(["ap"]).chart.liabilities == ["ap"]
+def test_add_capital(chart):
+    chart.add_capital("equity")
+    assert chart.chart.equity == ["equity"]
 
 
-def test_add_income():
-    assert ChartCommand(Chart()).add_income(["sales"]).chart.income == ["sales"]
+def test_add_liabilities(chart):
+    chart.add_liability("ap")
+    assert chart.chart.liabilities == ["ap"]
 
 
-def test_add_expenses():
-    assert ChartCommand(Chart()).add_expenses(["cogs"]).chart.expenses == ["cogs"]
+def test_add_income(chart):
+    chart.add_income("sales")
+    assert chart.chart.income == ["sales"]
+
+
+def test_add_expenses(chart):
+    chart.add_expense("cogs")
+    assert chart.chart.expenses == ["cogs"]
 
 
 def test_add_on_nonexistent_attribute():
