@@ -15,12 +15,12 @@ Usage:
   bx chart set --retained-earnings <account_name>
   bx chart name <account_name> <title>
   bx chart code <account_name> <code>
-  bx chart alias <name> --debit <debit> --credit <credit> [--requires <requires>]
+  bx chart alias --operation <name> --debit <debit> --credit <credit> [--requires <requires>]
   bx chart show [--json]
   bx chart erase --force
   bx ledger open
   bx ledger post <debit> <credit> <amount>
-  bx ledger post --operation (<operation> <amount>)...
+  bx ledger post --operation (<operations> <amounts>)...
   bx ledger close
   bx ledger show
   bx ledger erase --force
@@ -172,10 +172,18 @@ class ChartCommand:
         else:
             text = "Added contra account: "
         return text + contra_phrase(account_name, contra_account_names) + "."
-    
+
     def alias(self, name: str, debit: AccountName, credit: AccountName):
         self.chart.add_operation(name, debit, credit)
-        return "Added operation: " + name + " (debit " + debit + ", credit " + credit + ")."
+        return (
+            "Added operation: "
+            + name
+            + " (debit "
+            + debit
+            + ", credit "
+            + credit
+            + ")."
+        )
 
     def set_name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
@@ -229,7 +237,11 @@ def chart_command(arguments: Dict, chart_path: Path):
     elif arguments["code"]:
         pass
     elif arguments["alias"]:
-        pass
+        msg = holder.alias(
+            arguments["<name>"], arguments["<debit>"], arguments["<credit>"]
+        )
+        holder.write(chart_path)
+        print(msg)
     elif arguments["show"]:
         if arguments["--json"]:
             print(holder.chart.json())
@@ -242,19 +254,29 @@ def chart_command(arguments: Dict, chart_path: Path):
 
 def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
     file = CsvFile(entries_path)
+    chart = Chart.parse_file(chart_path)
     if arguments["erase"] and arguments["--force"]:
         file.erase()
     elif arguments["open"]:
         file.touch()
         print("Created", entries_path)
     elif arguments["post"]:
-        entry = Entry(
-            debit=arguments["<debit>"],
-            credit=arguments["<credit>"],
-            amount=Amount(arguments["<amount>"]),
-        )
-        file.append(entry)
-        print("Posted entry:", entry)
+        if arguments["--operation"]:
+            operations = arguments["<operations>"]
+            amounts = arguments["<amounts>"]
+            for operation, amount in zip(operations, amounts):
+                debit, credit = chart.operations[operation]
+                entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
+                file.append(entry)
+                print("Posted entry:", entry)
+        else:
+            entry = Entry(
+                debit=arguments["<debit>"],
+                credit=arguments["<credit>"],
+                amount=Amount(arguments["<amount>"]),
+            )
+            file.append(entry)
+            print("Posted entry:", entry)
     elif arguments["close"]:
         chart = Chart.parse_file(chart_path)
         ledger = Ledger.new(chart)
@@ -323,9 +345,12 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         else:
             sys.exit("Use --json flag to print account end balances.")
 
+
 def split_on_caps(account) -> str:
     import re
-    return " ".join(re.findall('[A-Z][^A-Z]*', account.__class__.__name__))
+
+    return " ".join(re.findall("[A-Z][^A-Z]*", account.__class__.__name__))
+
 
 def print_account_info(ledger, chart, account_name: str):
     account = ledger[account_name]
@@ -335,11 +360,13 @@ def print_account_info(ledger, chart, account_name: str):
     print("Credits:", account.credits)
     print("Balance:", account.balance())
 
+
 def assert_command(arguments, entries_path, chart_path):
     chart = Chart.parse_file(chart_path)
     entries = CsvFile(entries_path).yield_entries()
     ledger = Ledger.new(chart).post_many(entries)
     assert_account_balance(ledger, arguments["<account_name>"], arguments["<balance>"])
+
 
 def assert_account_balance(ledger, account_name: str, assert_amount: str):
     amount = ledger[account_name].balance()
@@ -348,8 +375,9 @@ def assert_account_balance(ledger, account_name: str, assert_amount: str):
         sys.exit(
             f"Check failed for {account_name}: expected balance is {expected_amount}, got {amount}."
         )
-    print(f"Check passed for account {account_name}: account balance is {expected_amount}.")
-
+    print(
+        f"Check passed for account {account_name}: account balance is {expected_amount}."
+    )
 
 
 def main():

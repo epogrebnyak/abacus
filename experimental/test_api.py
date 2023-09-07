@@ -27,8 +27,9 @@ def test_add_on_nonexistent_attribute():
     with pytest.raises(AttributeError):
         ChartCommand(chart=Chart())._add("no such attribute", [])
 
+
 def test_split_on_caps():
-    from engine.accounts import ContraIncome 
+    from engine.accounts import ContraIncome
     from api import split_on_caps
 
-    assert split_on_caps(ContraIncome([],[])) == 'Contra Income'
+    assert split_on_caps(ContraIncome([], [])) == "Contra Income"

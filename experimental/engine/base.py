@@ -31,6 +31,7 @@ def total(self: dict) -> Amount:
 """Pair of debit and credit account names."""
 Pair = Tuple[AccountName, AccountName]
 
+
 @dataclass
 class NamedEntry:
     operation: str
@@ -39,6 +40,3 @@ class NamedEntry:
     def to_entry(self, operation_dict: dict[str, Pair]) -> Entry:
         dr, cr = operation_dict[self.operation]
         return Entry(dr, cr, self.amount)
-
-
-

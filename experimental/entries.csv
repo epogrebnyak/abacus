@@ -3,7 +3,6 @@ goods,cash,700
 ar,sales,850
 cogs,goods,650
 cash,ar,400
-cash,ar,400
 sga,cash,150
 sales,voids,0
 sales,refunds,0
