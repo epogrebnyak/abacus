@@ -1,6 +1,7 @@
 """Baisc data types used across package."""
 
 from dataclasses import dataclass
+from typing import Tuple
 
 AccountName = str
 Amount = int  # Can be changed to Decimal
@@ -25,12 +26,6 @@ def nonzero(self: dict) -> dict[AccountName, Amount]:
 
 def total(self: dict) -> Amount:
     return sum(self.values())
-
-from collections import UserDict
-from dataclasses import dataclass
-from typing import List, Tuple
-
-from abacus.accounting_types import AccountName, Amount, Entry
 
 
 """Pair of debit and credit account names."""

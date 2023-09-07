@@ -15,11 +15,12 @@ Usage:
   bx chart set --retained-earnings <account_name>
   bx chart name <account_name> <title>
   bx chart code <account_name> <code>
-  bx chart alias <name> <debit> <credit>
+  bx chart alias <name> --debit <debit> --credit <credit> [--requires <requires>]
   bx chart show [--json]
   bx chart erase --force
   bx ledger open
   bx ledger post <debit> <credit> <amount>
+  bx ledger post --operation (<operation> <amount>)...
   bx ledger close
   bx ledger show
   bx ledger erase --force

@@ -9,6 +9,8 @@ poetry run python api.py chart set --retained-earnings re
 poetry run python api.py chart add --liabilities dividends_due
 poetry run python api.py chart offset sales voids refunds
 poetry run python api.py chart offset ppe depreciation
+poetry run python api.py chart alias invoice --debit ar --credit sales
+poetry run python api.py chart alias cost --debit cogs --credit goods
 poetry run python api.py chart name ar "Accounts receivable"
 poetry run python api.py chart name goods "Goods for resale"
 poetry run python api.py chart name cogs "Cost of goods sold"
