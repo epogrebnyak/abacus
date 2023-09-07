@@ -118,6 +118,9 @@ class Ledger(UserDict[AccountName, TAccount]):
             if isinstance(t_account, CreditAccount):
                 yield account_name, 0, t_account.balance()
 
+    def _yield_tuples_for_trial_balance__with_account_type_name(self):
+        pass
+
     def trial_balance(self, chart: Chart):
         from engine.report import view_trial_balance
 

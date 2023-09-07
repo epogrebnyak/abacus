@@ -17,8 +17,8 @@ def total(self: dict) -> Amount:
 class Report:
     def lines(self, attributes: List[str]) -> List["Line"]:
         """Return list of lines for a given subset attributes.
-        
-        Allows to create a report with multiple columns, for example, 
+
+        Allows to create a report with multiple columns, for example,
         capital and liabilities on the left side of balance sheet."""
         lines: List[Line] = []
         for attr in attributes:
@@ -237,7 +237,7 @@ class Column:
     def merge(self, column):
         return Column([a + b for a, b in zip(self.strings, column.strings)])
 
-    def __add__(self, column):
+    def __add__(self, column: "Column"):
         return self.merge(column)
 
     def header(self, text):
@@ -247,7 +247,7 @@ class Column:
         return "\n".join(self.strings)
 
 
-def view_trial_balance(chart, ledger):
+def view_trial_balance(chart, ledger) -> str:
     data = list(ledger._yield_tuples_for_trial_balance())
     col_1 = (
         Column([chart.compose_name(d[0]) for d in data])

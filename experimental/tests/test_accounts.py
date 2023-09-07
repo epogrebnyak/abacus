@@ -1,4 +1,4 @@
-from engine.accounts import Asset
+from engine.accounts import Asset, DebitAccount
 
 
 def test_asset_topup():
@@ -7,3 +7,7 @@ def test_asset_topup():
 
 def test_asset_condense():
     assert Asset([10, 10], []).condense() == Asset([20], [])
+
+
+def test_split_on_caps():
+    return DebitAccount([], []).split_on_caps() == "Debit Account"

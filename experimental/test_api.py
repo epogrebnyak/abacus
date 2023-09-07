@@ -28,7 +28,6 @@ def test_add_on_nonexistent_attribute():
 
 
 def test_split_on_caps():
-    from api import split_on_caps
     from engine.accounts import ContraIncome
 
-    assert split_on_caps(ContraIncome([], [])) == "Contra Income"
+    assert ContraIncome([], []).split_on_caps() == "Contra Income"

@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List
+import re
 
 from engine.base import AccountName, Amount, Entry
 
@@ -46,6 +47,9 @@ class TAccount(ABC):
                 return self.debit(balance)
             case CreditAccount(_, _):
                 return self.credit(balance)
+
+    def split_on_caps(self) -> str:
+        return " ".join(re.findall("[A-Z][^A-Z]*", self.__class__.__name__))
 
 
 class DebitAccount(TAccount):
@@ -110,8 +114,9 @@ class Transferable(TAccount):
                 raise TypeError
 
 
-# Does not have to be DebitAccount, can equally be CreditAccount
-class NullAccount(DebitAccount, Unique, Temporary):
+# Can equally be CreditAccount or DebitAccount, making it a ContraAccount
+# keeps null at the bottom of trail balance, so it is less distracting.
+class NullAccount(CreditAccount, Unique, Temporary):
     pass
 
 

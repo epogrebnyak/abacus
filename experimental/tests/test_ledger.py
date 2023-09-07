@@ -7,15 +7,21 @@ from engine.accounts import (
     NullAccount,
     RetainedEarnings,
 )
-from engine.base import Entry, nonzero
+from engine.base import Entry
 from engine.chart import Chart
 from engine.ledger import Ledger
 
 
 def test_ledger(ledger):
-    assert nonzero(
-        ledger.subset([Asset, Expense, ContraIncome]).deep_copy().condense().balances()
-    ) == {"cash": 1000, "ar": 200, "refunds": 50}
+    assert {
+        k: v
+        for k, v in ledger.subset([Asset, Expense, ContraIncome])
+        .deep_copy()
+        .condense()
+        .balances()
+        .items()
+        if v
+    } == {"cash": 1000, "ar": 200, "refunds": 50}
 
 
 def test_ledger_new():

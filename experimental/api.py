@@ -356,16 +356,10 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
             sys.exit("Use --json flag to print account end balances.")
 
 
-def split_on_caps(account) -> str:
-    import re
-
-    return " ".join(re.findall("[A-Z][^A-Z]*", account.__class__.__name__))
-
-
 def print_account_info(ledger, chart, account_name: str):
     account = ledger[account_name]
     print("Account:", chart.compose_name(account_name))
-    print("   Type:", split_on_caps(account))
+    print("   Type:", account.split_on_caps())
     print(" Debits:", account.debits)
     print("Credits:", account.credits)
     print("Balance:", account.balance())
@@ -405,7 +399,7 @@ def accounts_command(arguments, entries_path, chart_path):
     elif arguments["--balances"]:
         balances = ledger.balances()
         if arguments["--nonzero"]:
-            balances = {k:v for k, v in balances.items() if v}
+            balances = {k: v for k, v in balances.items() if v}
         print(json.dumps(balances))
     elif arguments["--trial-balance"]:
         print(ledger.trial_balance(chart))
