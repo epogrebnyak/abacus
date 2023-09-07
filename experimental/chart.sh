@@ -18,6 +18,3 @@ poetry run python api.py chart name sga "Selling, general, and adm. expenses"
 poetry run python api.py chart name ppe "Property, plant, equipment"
 poetry run python api.py chart show --json
 poetry run python api.py chart show
-
-
-

@@ -1,0 +1,17 @@
+- [ ] adds command
+- [ ] code for RAS
+- [ ] show operations in chart
+- [ ] merge test suites 
+- [ ] open ledger with starting balances
+- [ ] single entry and multiple entry
+- [ ] --title for entry
+- [ ] types of entries (S,B,A,C,P)
+- [x] --rich or --json
+- [ ] shorthand flags
+- [ ] help messgaes
+- [ ] memo + build-you-own-x
+
+WONTFIX:
+- [ ] requires in alias 
+- [ ] cash in chart
+- [ ] textbook examples

@@ -24,12 +24,11 @@ Usage:
   bx ledger close
   bx ledger show
   bx ledger erase --force
-  bx report <account_name>
-  bx report --trial-balance
-  bx report --income-statement [--json] [--rich]
-  bx report --balance-sheet [--json] [--rich]
-  bx report --end-balances --json
-  bx assert <account_name> <balance>
+  bx report --income-statement [--json | --rich]
+  bx report --balance-sheet [--json | --rich]
+  bx accounts show --trial-balance
+  bx accounts show <account_name> [--assert <balance> [--silent]]
+  bx accounts show --balances [--nonzero]
 """
 import json
 import os
@@ -41,7 +40,7 @@ from typing import Dict, List
 # pylance: disable=import-error
 # pylint: disable=import-error
 from docopt import docopt  # type: ignore
-from engine.base import AbacusError, Amount, Entry, AccountName
+from engine.base import AbacusError, AccountName, Amount, Entry, nonzero
 from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger
@@ -380,6 +379,27 @@ def assert_account_balance(ledger, account_name: str, assert_amount: str):
     )
 
 
+def accounts_command(arguments, entries_path, chart_path):
+    """
+    bx accounts show <account_name> [--assert <balance>]
+    bx accounts show --balances [--nonzero]
+    bx accounts show --trial-balance"""
+    chart = Chart.parse_file(chart_path)
+    entries = CsvFile(entries_path).yield_entries()
+    ledger = Ledger.new(chart).post_many(entries)
+    if account_name := arguments["<account_name>"]:
+        print_account_info(ledger, chart, account_name)
+        if arguments["--assert"]:
+            assert_account_balance(ledger, account_name, arguments["<balance>"])
+    elif arguments["--balances"]:
+        balances = ledger.balances()
+        if arguments["--nonzero"]:
+            balances = nonzero(balances)
+        print(json.dumps(balances))
+    elif arguments["--trial-balance"]:
+        print(ledger.trial_balance(chart))
+
+
 def main():
     arguments = docopt(__doc__, version="0.5.1")
     if arguments["chart"]:
@@ -388,8 +408,8 @@ def main():
         ledger_command(arguments, get_entries_path(), get_chart_path())
     elif arguments["report"]:
         report_command(arguments, get_entries_path(), get_chart_path())
-    elif arguments["assert"]:
-        assert_command(arguments, get_entries_path(), get_chart_path())
+    elif arguments["accounts"]:
+        accounts_command(arguments, get_entries_path(), get_chart_path())
     else:
         sys.exit("Command not recognized. Use bx --help for reference.")
 

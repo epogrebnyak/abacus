@@ -52,7 +52,7 @@ class Chart(BaseModel):
         except KeyError:
             return account_name.replace("_", " ").strip().capitalize()
 
-    def compose_name(self, account_name):
+    def compose_name(self, account_name: AccountName):
         """Produce name like 'cash (Cash)'."""
         return account_name + " (" + self.get_name(account_name) + ")"
 
@@ -85,15 +85,21 @@ class Chart(BaseModel):
             self.contra_accounts[account_name] = contra_account_names
         return self
 
+    def account_names_regular(self) -> List[AccountName]:
+        return [
+            account_name
+            for attribute, _ in mapping()
+            for account_name in getattr(self, attribute)
+        ]
+
+    def account_names_contra(self) -> List[AccountName]:
+        return [v for values in self.contra_accounts.values() for v in values]
+
     def account_names_all(self) -> List[AccountName]:
         """Names of all regular accounts, contra accounts and unique accounts."""
         return (
-            [
-                account_name
-                for attribute, _ in mapping()
-                for account_name in getattr(self, attribute)
-            ]
-            + [v for values in self.contra_accounts.values() for v in values]
+            self.account_names_regular()
+            + self.account_names_contra()
             + [
                 self.retained_earnings_account,
                 self.income_summary_account,
@@ -102,14 +108,15 @@ class Chart(BaseModel):
         )
 
     def account_names(self, cls: Type[RegularAccount]) -> List[AccountName]:
-        """Return account name list for account class *cls* or return all accounts."""
+        """Return account names for account class *cls*."""
         reverse_dict = {
             Class.__name__: attribute for attribute, (Class, _) in mapping()
         }
-        return getattr(self, reverse_dict[cls.__name__])
+        attribute = reverse_dict[cls.__name__]  # "assets" for example
+        return getattr(self, attribute)
 
     def contra_account_pairs(self, cls: Type[RegularAccount]):
-        """Yield pairs of regular and contra account names for given account type *cls*.
+        """Yield pairs of regular and contra account names for given regular account type *cls*.
         This action unpacks self.conta_accounts to a sequence of tuples, each tuple is
         a pair of account names."""
         for regular_account_name, contra_account_names in self.contra_accounts.items():

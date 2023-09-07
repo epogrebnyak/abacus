@@ -1,7 +1,6 @@
 # This is pytest unit test file for experimental/entries.py
 
 import pytest  # type: ignore
-
 from engine.base import Entry
 from entries import CsvFile
 
