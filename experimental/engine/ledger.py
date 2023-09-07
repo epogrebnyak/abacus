@@ -3,7 +3,7 @@ from collections import UserDict
 from typing import Dict, List, Type
 
 from engine.accounts import CreditAccount, DebitAccount, TAccount
-from engine.base import AccountName, Amount, Entry
+from engine.base import AccountName, Amount, Entry, MultipleEntry
 from engine.chart import Chart, make_ledger_dict
 
 
@@ -132,3 +132,16 @@ def post_entry(ledger: Ledger, entry: Entry) -> None:
 def post_entries(ledger: Ledger, entries: List[Entry]):
     for entry in entries:
         post_entry(ledger, entry)
+
+
+def to_multiple_entry(ledger: Ledger, starting_balances: dict) -> MultipleEntry:
+    me = MultipleEntry([], [])
+    for account_name, amount in starting_balances.items():
+        match ledger[account_name]:
+            case DebitAccount(_, _):
+                me.debit_entries.append((account_name, amount))
+            case CreditAccount(_, _):
+                me.credit_entries.append((account_name, amount))
+    return MultipleEntry(
+        me.debit_entries, me.credit_entries
+    )  # validate balance of entries

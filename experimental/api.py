@@ -18,7 +18,7 @@ Usage:
   bx chart alias --operation <name> --debit <debit> --credit <credit> [--requires <requires>]
   bx chart show [--json]
   bx chart erase --force
-  bx ledger open
+  bx ledger open [--start <file>]
   bx ledger post <debit> <credit> <amount>
   bx ledger post --operation (<operations> <amounts>)...
   bx ledger close
@@ -37,8 +37,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List
 
-# pylance: disable=import-error
-# pylint: disable=import-error
 from docopt import docopt  # type: ignore
 from engine.base import AbacusError, AccountName, Amount, Entry, nonzero
 from engine.chart import Chart
@@ -251,6 +249,9 @@ def chart_command(arguments: Dict, chart_path: Path):
         print("Deleted", chart_path)
 
 
+from engine.ledger import to_multiple_entry
+
+
 def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
     file = CsvFile(entries_path)
     chart = Chart.parse_file(chart_path)
@@ -259,6 +260,16 @@ def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
     elif arguments["open"]:
         file.touch()
         print("Created", entries_path)
+        if arguments["--start"]:
+            balances = read_starting_balances(arguments["<file>"])
+            print("Starting balances:", balances)
+            me = to_multiple_entry(Ledger.new(chart), balances)
+            entries = me.entries(chart.null_account)
+            x = Ledger.new(chart).post_many(entries)[chart.null_account].balance()
+            print("Balance of null account is", x, "(expected balance is 0).")
+            assert x == 0
+            file.append_many(entries)
+            print("Added entries", entries)
     elif arguments["post"]:
         if arguments["--operation"]:
             operations = arguments["<operations>"]
@@ -412,6 +423,11 @@ def main():
         accounts_command(arguments, get_entries_path(), get_chart_path())
     else:
         sys.exit("Command not recognized. Use bx --help for reference.")
+
+
+def read_starting_balances(path: str) -> Dict:
+    """Read starting balances from file *path*."""
+    return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

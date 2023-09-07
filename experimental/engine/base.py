@@ -40,3 +40,24 @@ class NamedEntry:
     def to_entry(self, operation_dict: dict[str, Pair]) -> Entry:
         dr, cr = operation_dict[self.operation]
         return Entry(dr, cr, self.amount)
+
+
+@dataclass
+class MultipleEntry:
+    debit_entries: list[tuple[AccountName, Amount]]
+    credit_entries: list[tuple[AccountName, Amount]]
+
+    def __post_inti__(self):
+        if sum(a for (_, a) in self.debit_entries) != sum(
+            a for (_, a) in self.credit_entries
+        ):
+            raise AbacusError(["Invalid multiple entry", self])
+
+    def entries(self, null_account_name: AccountName):
+        return [
+            Entry(account_name, null_account_name, amount)
+            for (account_name, amount) in self.debit_entries
+        ] + [
+            Entry(null_account_name, account_name, amount)
+            for (account_name, amount) in self.credit_entries
+        ]
