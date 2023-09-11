@@ -2,7 +2,15 @@
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
 
-from engine.accounts import Asset, Capital, Expense, Income, Liability
+from engine.accounts import (
+    Asset,
+    Capital,
+    Expense,
+    Income,
+    Liability,
+    DebitAccount,
+    CreditAccount,
+)
 from engine.base import AccountName, Amount
 from pydantic import BaseModel  # type: ignore
 from rich.console import Console  # type: ignore
@@ -219,6 +227,9 @@ class Column:
     def align_right(self, fill_char=" "):
         return Column([s.rjust(self.width, fill_char) for s in self.strings])
 
+    def align_center(self):
+        return Column([s.center(self.width) for s in self.strings])
+
     def empty(self, n: int = 1):
         return self.refill(" " * n)
 
@@ -247,27 +258,39 @@ class Column:
         return "\n".join(self.strings)
 
 
+from engine.chart import get_account_type
+
+
+# TODO: add account type as a column
+def yield_tuples_for_trial_balance(chart, ledger):
+    for account_name, t_account in ledger.items():
+        if isinstance(t_account, DebitAccount):
+            yield account_name, get_account_type(
+                chart, account_name
+            ).__name__, t_account.balance(), 0
+    for account_name, t_account in ledger.items():
+        if isinstance(t_account, CreditAccount):
+            yield account_name, get_account_type(
+                chart, account_name
+            ).__name__, 0, t_account.balance()
+
+
+def nth(data, n, f=lambda x: x):
+    return Column([f(d[n]) for d in data])
+
+
 def view_trial_balance(chart, ledger) -> str:
-    data = list(ledger._yield_tuples_for_trial_balance())
+    data = list(yield_tuples_for_trial_balance(chart, ledger))
     col_1 = (
-        Column([chart.compose_name(d[0]) for d in data])
+        Column([chart.compose_name_long(d[0]) for d in data])
         .align_left(".")
         .add_space(1)
         .header("Account")
     )
     col_2 = (
-        Column([str(d[1]) for d in data])
-        .align_right()
-        .add_space_left(2)
-        .header("Debit")
-        .add_space(2)
+        nth(data, 2, str).align_right().add_space_left(2).header("Debit").add_space(2)
     )
-    col_3 = (
-        Column([str(d[2]) for d in data])
-        .align_right()
-        .add_space_left(2)
-        .header("Credit")
-    )
+    col_3 = nth(data, 3, str).align_right().add_space_left(2).header("Credit")
     return (col_1 + col_2 + col_3).printable()
 
 

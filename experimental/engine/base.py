@@ -44,8 +44,12 @@ class MultipleEntry:
     credit_entries: list[tuple[AccountName, Amount]]
 
     def __post_init__(self):
+        self.validate()
+
+    def validate(self):
         if sum_second(self.debit_entries) != sum_second(self.credit_entries):
             raise AbacusError(["Invalid multiple entry", self])
+        return self
 
     def entries(self, null_account_name: AccountName):
         return [

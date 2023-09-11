@@ -61,6 +61,11 @@ class Chart(BaseModel):
         """Produce name like 'cash (Cash)'."""
         return account_name + " (" + self.get_name(account_name) + ")"
 
+    def compose_name_long(self, account_name: AccountName):
+        """Produce name like 'asset:cash (Cash)'."""
+        t = get_account_type(self, account_name).__name__
+        return t + ":" + account_name + " (" + self.get_name(account_name) + ")"
+
     @property
     def duplicates(self):
         return repeated_names(self.account_names_all())
@@ -130,20 +135,29 @@ class Chart(BaseModel):
                     yield regular_account_name, contra_account_name
 
 
+def yield_all_accounts(chart: Chart):
+    for attribute, (Class, ContraClass) in mapping():
+        for account_name in getattr(chart, attribute):
+            # regular accounts
+            yield account_name, Class
+            try:
+                # contra accounts if found
+                for contra_account_name in chart.contra_accounts[account_name]:
+                    yield contra_account_name, ContraClass
+            except KeyError:
+                pass
+    yield chart.retained_earnings_account, RetainedEarnings
+    yield chart.income_summary_account, IncomeSummaryAccount
+    yield chart.null_account, NullAccount
+
+
+def get_account_type(chart: Chart, account_name: AccountName) -> Type:
+    return dict(yield_all_accounts(chart))[account_name]
+
+
 def make_ledger_dict(chart: Chart) -> Dict:
     """Create ledger dictionary from chart. Used to create Ledger class."""
     ledger = {}
-    for attribute, (Class, ContraClass) in mapping():
-        for account_name in getattr(chart, attribute):
-            # create regular accounts
-            ledger[account_name] = Class()
-            try:
-                # create contra accounts if found
-                for contra_account_name in chart.contra_accounts[account_name]:
-                    ledger[contra_account_name] = ContraClass()
-            except KeyError:
-                pass
-    ledger[chart.retained_earnings_account] = RetainedEarnings()
-    ledger[chart.income_summary_account] = IncomeSummaryAccount()
-    ledger[chart.null_account] = NullAccount()
+    for account_name, cls in yield_all_accounts(chart):
+        ledger[account_name] = cls()
     return ledger

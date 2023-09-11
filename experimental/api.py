@@ -71,6 +71,7 @@ def print_chart(chart: Chart):
     def name(account_name):
         return chart.compose_name(account_name)
 
+    print("Accounts:")
     for attribute in chart.five_types_of_accounts():
         account_names = getattr(chart, attribute)
         if account_names:
@@ -128,7 +129,8 @@ class ChartCommand:
         bx set --null-account <account_name>
         ```
         """
-        raise NotImplementedError
+        self.chart.null_account = account_name
+        return self
 
     def set_isa(self, account_name):
         """Set name of income summary account (override default name).
@@ -138,7 +140,8 @@ class ChartCommand:
         bx set --income-summary-account <account_name>
         ```
         """
-        raise NotImplementedError
+        self.chart.income_summary_account = account_name
+        return self
 
     def _add(self, attribute: str, account_name: str):
         setattr(self.chart, attribute, getattr(self.chart, attribute) + [account_name])
@@ -219,10 +222,8 @@ def chart_command(arguments: Dict, chart_path: Path):
             holder.set_retained_earnings(account_name)
             print_re(holder.chart)
         elif arguments["--income-summary-account"]:
-            # will fail
             holder.set_isa(account_name)
         elif arguments["--null-account"]:
-            # will fail
             holder.set_null_account(account_name)
         # add
         if arguments["--asset"]:
@@ -421,6 +422,7 @@ def accounts_command(arguments, entries_path, chart_path):
         if arguments["--nonzero"]:
             balances = {k: v for k, v in balances.items() if v}
         print(json.dumps(balances))
+
 
 def main():
     arguments = docopt(__doc__, version="0.5.1")

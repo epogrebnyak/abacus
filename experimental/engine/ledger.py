@@ -1,9 +1,9 @@
 """Ledger data structure, can be created from chart, used to post entries and produce reports."""
 from collections import UserDict
-from typing import Dict, List, Type
+from typing import Dict, List, Type, Tuple
 
 from engine.accounts import CreditAccount, DebitAccount, TAccount
-from engine.base import AccountName, Amount, Entry, MultipleEntry
+from engine.base import AccountName, Amount, Entry, MultipleEntry, AbacusError
 from engine.chart import Chart, make_ledger_dict
 
 
@@ -69,8 +69,7 @@ class Ledger(UserDict[AccountName, TAccount]):
         return self
 
     def post_many(self, entries: List[Entry]) -> "Ledger":
-        for entry in entries:
-            post_entry(self, entry)
+        post_entries(self, entries)
         return self
 
     def close_some(self, chart: Chart) -> "Ledger":
@@ -110,17 +109,6 @@ class Ledger(UserDict[AccountName, TAccount]):
         ledger = self.close(chart).post_many(post_close_entries)
         return BalanceSheet.new(ledger)
 
-    def _yield_tuples_for_trial_balance(self):
-        for account_name, t_account in self.items():
-            if isinstance(t_account, DebitAccount):
-                yield account_name, t_account.balance(), 0
-        for account_name, t_account in self.items():
-            if isinstance(t_account, CreditAccount):
-                yield account_name, 0, t_account.balance()
-
-    def _yield_tuples_for_trial_balance__with_account_type_name(self):
-        pass
-
     def trial_balance(self, chart: Chart):
         from engine.report import view_trial_balance
 
@@ -133,18 +121,35 @@ def post_entry(ledger: Ledger, entry: Entry) -> None:
 
 
 def post_entries(ledger: Ledger, entries: List[Entry]):
+    ledger, failed_entries = unsafe_post_entries(ledger, entries)
+    if failed_entries:
+        raise AbacusError(failed_entries)
+
+
+def unsafe_post_entries(
+    ledger: Ledger, entries: List[Entry]
+) -> Tuple[Ledger, List[Entry]]:
+    failed = []
     for entry in entries:
-        post_entry(ledger, entry)
+        try:
+            post_entry(ledger, entry)
+        except KeyError:
+            failed.append(entry)
+    return ledger, failed
 
 
 def to_multiple_entry(ledger: Ledger, starting_balances: dict) -> MultipleEntry:
-    me = MultipleEntry([], [])
+    debit_entries = []
+    credit_entries = []
+    for account_name in starting_balances.keys():
+        try:
+            ledger[account_name]
+        except KeyError:
+            raise AbacusError(f"Account {account_name} does not exist in ledger.")
     for account_name, amount in starting_balances.items():
         match ledger[account_name]:
             case DebitAccount(_, _):
-                me.debit_entries.append((account_name, amount))
+                debit_entries.append((account_name, amount))
             case CreditAccount(_, _):
-                me.credit_entries.append((account_name, amount))
-    return MultipleEntry(
-        me.debit_entries, me.credit_entries
-    )  # validate balance of entries
+                credit_entries.append((account_name, amount))
+    return MultipleEntry(debit_entries, credit_entries).validate()

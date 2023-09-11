@@ -11,6 +11,8 @@ from engine.base import Amount, Entry
 
 @dataclass
 class CsvFile:
+    """File that stores accounting entries in CSV format."""
+
     path: Path
 
     def append(self, entry: Entry) -> None:
