@@ -13,11 +13,11 @@ Usage:
   bx chart set --income-summary-account <account_name> [--title <title>] [--code <code>]
   bx chart set --null-account <account_name> [--title <title>] [--code <code>]
   bx chart alias --operation <name> --debit <debit> --credit <credit> [--requires <requires>]
-  bx chart define [-a <assets>] [-c <capital>] [-l <liabilities>] [-i <income>] [-e <expenses>] 
   bx chart show [--json]
   bx chart erase --force
-  bx ledger open [--start <file>]
-  bx ledger post <debit> <credit> <amount>
+  bx ledger init [<file>]
+  bx ledger post <debit> <credit> <amount> [--title <title>]
+  bx ledger post --debit <debit> --credit <credit> --amount <amount> [--title <title>]
   bx ledger post --operation (<operations> <amounts>)...
   bx ledger close
   bx ledger show
@@ -25,8 +25,8 @@ Usage:
   bx report --trial-balance
   bx report --income-statement [--json | --rich]
   bx report --balance-sheet [--json | --rich]
-  bx accounts show <account_name> [--assert <balance>]
-  bx accounts show --balances [--nonzero]
+  bx account show <account_name> [--assert <balance>]
+  bx balances show [--nonzero]
 """
 import json
 import os
@@ -182,8 +182,6 @@ class ChartCommand:
 
 
 def chart_command(arguments: Dict, chart_path: Path):
-    if arguments["define"]:
-        raise NotImplementedError
     if arguments["init"]:
         try:
             init_chart(chart_path)
@@ -266,48 +264,66 @@ def chart_command(arguments: Dict, chart_path: Path):
             print_chart(holder.chart)
 
 
+@dataclass
+class LedgerCommand:
+    chart: Chart
+    csv_file: CsvFile
+
+    def add_starting_balances(self, starting_balances_dict: Dict):
+        me = to_multiple_entry(Ledger.new(self.chart), starting_balances_dict)
+        entries = me.entries(self.chart.null_account)
+        x = Ledger.new(self.chart).post_many(entries)[self.chart.null_account].balance()
+        if x != 0:
+            raise AbacusError(
+                f"Balance of null account affter adding starting balances must be 0, got {x}."
+            )
+        self.csv_file.append_many(entries)
+        for entry in entries:
+            print("Posted entry:", entry)
+
+    def add_operations(self, operations: List[str], amounts: List[str]):
+        for operation, amount in zip(operations, amounts):
+            debit, credit = self.chart.operations[operation]
+            entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
+            self.csv_file.append(entry)
+
+    def add_closing_entries(self):
+        ledger = Ledger.new(self.chart)
+        ledger.post_many(entries=self.csv_file.yield_entries())
+        closing_entries = make_closing_entries(self.chart, ledger).all()
+        self.csv_file.append_many(entries=closing_entries)
+        print("Added closing entries:", closing_entries)
+
+    def append_entry(self, debit: str, credit: str, amount: str):
+        entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
+        self.csv_file.append(entry)
+        print("Posted entry:", entry)
+
+
 def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
-    file = CsvFile(entries_path)
     chart = Chart.parse_file(chart_path)
+    file = CsvFile(entries_path)
+    holder = LedgerCommand(chart=chart, csv_file=file)
     if arguments["erase"] and arguments["--force"]:
         file.erase()
-    elif arguments["open"]:
+    elif arguments["init"]:
         file.touch()
         print("Created", entries_path)
-        if arguments["--start"]:
+        if arguments["<file>"]:
             balances = read_starting_balances(arguments["<file>"])
             print("Starting balances:", balances)
-            me = to_multiple_entry(Ledger.new(chart), balances)
-            entries = me.entries(chart.null_account)
-            x = Ledger.new(chart).post_many(entries)[chart.null_account].balance()
-            print("Balance of null account is", x, "(expected balance is 0).")
-            assert x == 0
-            file.append_many(entries)
-            print("Added entries", entries)
+            holder.add_starting_balances(balances)
     elif arguments["post"]:
         if arguments["--operation"]:
-            operations = arguments["<operations>"]
-            amounts = arguments["<amounts>"]
-            for operation, amount in zip(operations, amounts):
-                debit, credit = chart.operations[operation]
-                entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
-                file.append(entry)
-                print("Posted entry:", entry)
+            holder.add_operations(arguments["<operations>"], arguments["<amounts>"])
         else:
-            entry = Entry(
+            holder.append_entry(
                 debit=arguments["<debit>"],
                 credit=arguments["<credit>"],
                 amount=Amount(arguments["<amount>"]),
             )
-            file.append(entry)
-            print("Posted entry:", entry)
     elif arguments["close"]:
-        chart = Chart.parse_file(chart_path)
-        ledger = Ledger.new(chart)
-        ledger.post_many(entries=file.yield_entries())
-        closing_entries = make_closing_entries(chart, ledger).all()
-        file.append_many(entries=closing_entries)
-        print("Added closing entries:", closing_entries)
+        holder.add_closing_entries()
     elif arguments["show"]:
         for entry in file.yield_entries():
             print(entry.debit, entry.credit, entry.amount, sep="\t")
@@ -394,18 +410,17 @@ def accounts_command(arguments, entries_path, chart_path):
     chart = Chart.parse_file(chart_path)
     entries = CsvFile(entries_path).yield_entries()
     ledger = Ledger.new(chart).post_many(entries)
-    if account_name := arguments["<account_name>"]:
+    if arguments["account"] and (account_name := arguments["<account_name>"]):
         if arguments["--assert"]:
             assert_account_balance(ledger, account_name, arguments["<balance>"])
         else:
             print_account_info(ledger, chart, account_name)
-    elif arguments["--balances"]:
+    elif arguments["balances"]:
         # this command always returns a json, there is no --json flag
         balances = ledger.balances()
         if arguments["--nonzero"]:
             balances = {k: v for k, v in balances.items() if v}
         print(json.dumps(balances))
-
 
 def main():
     arguments = docopt(__doc__, version="0.5.1")
@@ -415,7 +430,7 @@ def main():
         ledger_command(arguments, get_entries_path(), get_chart_path())
     elif arguments["report"]:
         report_command(arguments, get_entries_path(), get_chart_path())
-    elif arguments["accounts"]:
+    elif arguments["account"] or arguments["balances"]:
         accounts_command(arguments, get_entries_path(), get_chart_path())
     else:
         sys.exit("Command not recognized. Use bx --help for reference.")

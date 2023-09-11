@@ -1,11 +1,13 @@
 from abacus.reports import BalanceSheet, IncomeStatement
 
+
 # TODO Migrate to experimental/tests/test_report.py
 def test_income_statement(chart0, entries0):
     income_st = chart0.book().post_many(entries0).close().income_statement()
     assert income_st == IncomeStatement(
         income={"sales": 400}, expenses={"cogs": 200, "sga": 50}
     )
+
 
 # TODO Migrate to experimental/tests/test_report.py
 def test_balance_sheet_with_close(chart0, entries0):
@@ -15,6 +17,7 @@ def test_balance_sheet_with_close(chart0, entries0):
         capital={"equity": 1000, "re": 150},
         liabilities={"divp": 0, "payables": 0},
     )
+
 
 # TODO Migrate to experimental/tests/test_report.py
 def test_balances(chart0, entries0):

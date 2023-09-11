@@ -1,9 +1,7 @@
-
 from engine.base import Entry
 from engine.chart import Chart
 from engine.ledger import Ledger
 from engine.report import BalanceSheet
-
 
 
 def test_create_balance_sheet():

@@ -35,4 +35,5 @@ class CsvFile:
             self.path.touch()
 
     def erase(self):
-        self.path.unlink()
+        if self.path.exists():
+            self.path.unlink()
