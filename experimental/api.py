@@ -7,8 +7,7 @@ Usage:
   bx chart add --income    <account_name> [(--title <title>)] [(--code <code>)] 
   bx chart add --expense   <account_name> [(--title <title>)] [(--code <code>)] 
   bx chart offset <account_name> <contra_account_names>...
-  bx chart name <account_name> <title>
-  bx chart code <account_name> <code>
+  bx chart set <account_name> [(--title <title>)] [(--code <code>)]
   bx chart set --retained-earnings <account_name> [(--title <title>)] [(--code <code>)]
   bx chart set --income-summary-account <account_name> [(--title <title>)] [(--code <code>)]
   bx chart set --null-account <account_name> [(--title <title>)] [(--code <code>)]
@@ -174,7 +173,7 @@ class ChartCommand:
 
     def alias(self, name: str, debit: AccountName, credit: AccountName):
         self.chart.add_operation(name, debit, credit)
-        return f"Added operation {name} (debit is {debit}, credit is {credit})."
+        return f"Added operation: {name} (debit is {debit}, credit is {credit})."
 
     def set_name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
@@ -211,16 +210,17 @@ def chart_command(arguments: Dict, chart_path: Path):
     account_name = arguments["<account_name>"]
     if arguments["set"] or arguments["add"]:
         if arguments["--title"]:
-            msg = holder.set_name(arguments["<account_name>"], arguments["<title>"])
-            holder.write(chart_path)
+            title = arguments["<title>"]
+            msg = holder.set_name(account_name, title)
             print(msg)
+            holder.write(chart_path)
         if arguments["--code"]:
             code = arguments["<code>"]
             if not code:
                 raise ValueError(f"Code must be provided, got {code} in {arguments}.")
             msg = holder.set_code(account_name, code)
-            holder.write(chart_path)
             print(msg)
+            holder.write(chart_path)
         # set
         if arguments["--retained-earnings"]:
             holder.set_retained_earnings(account_name)
@@ -246,16 +246,8 @@ def chart_command(arguments: Dict, chart_path: Path):
         msg = holder.offset(
             arguments["<account_name>"], arguments["<contra_account_names>"]
         )
-        holder.write(chart_path)
         print(msg)
-    elif arguments["name"]:
-        msg = holder.set_name(arguments["<account_name>"], arguments["<title>"])
         holder.write(chart_path)
-        print(msg)
-    elif arguments["code"]:
-        msg = holder.set_code(arguments["<account_name>"], arguments["<code>"])
-        holder.write(chart_path)
-        print(msg)
     elif arguments["alias"]:
         msg = holder.alias(
             arguments["<name>"], arguments["<debit>"], arguments["<credit>"]
