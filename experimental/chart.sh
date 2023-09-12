@@ -1,9 +1,10 @@
+# TODO:aff more codes from https://www.audit-it.ru/plan_schetov/
 poetry run python api.py chart erase --force
 poetry run python api.py chart init
 poetry run python api.py chart add --asset cash --code 50
-poetry run python api.py chart add --asset ar
+poetry run python api.py chart add --asset ar --code "62D"
 poetry run python api.py chart add --asset goods 
-poetry run python api.py chart add --asset ppe --title "Property, plant, equipment" --code 10
+poetry run python api.py chart add --asset ppe --title "Property, plant, equipment" --code 01
 poetry run python api.py chart add --capital equity
 poetry run python api.py chart add --income sales
 poetry run python api.py chart add --expense cogs

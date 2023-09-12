@@ -1,11 +1,11 @@
 """
 Usage:
   bx chart init
-  bx chart add --asset <account_name> [(--title <title>)] [(--code <code>)] 
-  bx chart add --capital <account_name>  [(--title <title>)] [(--code <code>)] 
-  bx chart add --liability <account_name>  [(--title <title>)] [(--code <code>)] 
-  bx chart add --income <account_name>  [(--title <title>)] [(--code <code>)] 
-  bx chart add --expense <account_name>  [(--title <title>)] [(--code <code>)] 
+  bx chart add --asset     <account_name> [(--title <title>)] [(--code <code>)] 
+  bx chart add --capital   <account_name> [(--title <title>)] [(--code <code>)] 
+  bx chart add --liability <account_name> [(--title <title>)] [(--code <code>)] 
+  bx chart add --income    <account_name> [(--title <title>)] [(--code <code>)] 
+  bx chart add --expense   <account_name> [(--title <title>)] [(--code <code>)] 
   bx chart offset <account_name> <contra_account_names>...
   bx chart name <account_name> <title>
   bx chart code <account_name> <code>
