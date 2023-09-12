@@ -24,8 +24,8 @@ Usage:
   bx report --trial-balance
   bx report --income-statement [--json | --rich]
   bx report --balance-sheet [--json | --rich]
+  bx assert account <account_name> --balance <balance>
   bx show account <account_name>
-  bx check account <account_name> --balance <balance>
   bx show balances [--nonzero]
 """
 import json
@@ -405,6 +405,9 @@ def assert_command(arguments, entries_path, chart_path):
 
 
 def assert_account_balance(ledger, account_name: str, assert_amount: str):
+    """ "
+    bx assert account <account_name> --balance <balance>
+    """
     amount = ledger[account_name].balance()
     expected_amount = Amount(assert_amount)
     if amount != expected_amount:
@@ -419,15 +422,11 @@ def assert_account_balance(ledger, account_name: str, assert_amount: str):
 def account_command(arguments, entries_path, chart_path):
     """
     bx show account <account_name>
-    bx check account <account_name> --balance <balance>
     """
     chart = Chart.parse_file(chart_path)
     ledger = process_full_ledger(chart_path, entries_path)
-    account_name = arguments["<account_name>"]
-    if arguments["check"]:
-        assert_account_balance(ledger, account_name, arguments["<balance>"])
-    elif arguments["show"]:
-        print_account_info(ledger, chart, account_name)
+    if arguments["show"]:
+        print_account_info(ledger, chart, account_name=arguments["<account_name>"])
     else:
         raise AbacusError("Command not recognized.")
 
@@ -460,6 +459,11 @@ def main():
         ledger_command(arguments, entries_path, chart_path)
     elif arguments["report"]:
         report_command(arguments, entries_path, chart_path)
+    elif arguments["assert"]:
+        ledger = process_full_ledger(chart_path, entries_path)
+        assert_account_balance(
+            ledger, arguments["<account_name>"], arguments["<balance>"]
+        )
     elif arguments["account"]:
         account_command(arguments, entries_path, chart_path)
     elif arguments["balances"]:
