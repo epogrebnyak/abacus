@@ -5,13 +5,14 @@ from typing import Dict, List, Tuple
 from engine.accounts import (
     Asset,
     Capital,
+    CreditAccount,
+    DebitAccount,
     Expense,
     Income,
     Liability,
-    DebitAccount,
-    CreditAccount,
 )
 from engine.base import AccountName, Amount
+from engine.chart import get_account_type
 from pydantic import BaseModel  # type: ignore
 from rich.console import Console  # type: ignore
 from rich.table import Table  # type: ignore
@@ -258,7 +259,6 @@ class Column:
         return "\n".join(self.strings)
 
 
-from engine.chart import get_account_type
 
 
 # TODO: add account type as a column

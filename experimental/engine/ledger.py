@@ -1,9 +1,9 @@
 """Ledger data structure, can be created from chart, used to post entries and produce reports."""
 from collections import UserDict
-from typing import Dict, List, Type, Tuple
+from typing import Dict, List, Tuple, Type
 
 from engine.accounts import CreditAccount, DebitAccount, TAccount
-from engine.base import AccountName, Amount, Entry, MultipleEntry, AbacusError
+from engine.base import AbacusError, AccountName, Amount, Entry, MultipleEntry
 from engine.chart import Chart, make_ledger_dict
 
 

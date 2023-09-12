@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from docopt import docopt  # type: ignore
+from engine.accounts import CreditAccount, DebitAccount
 from engine.base import AbacusError, AccountName, Amount, Entry
 from engine.chart import Chart
 from engine.closing import make_closing_entries
@@ -371,7 +372,6 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
             print(statement.view(chart.names))
 
 
-from engine.accounts import DebitAccount, CreditAccount
 
 
 def side(ledger, account_name):
