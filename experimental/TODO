@@ -4,22 +4,22 @@ FOR REVIEW:
 - [x] --rich or --json
 - [x] add command
 - [x] show operations in chart
+- [x] add account types to trial balance
 
 TODO:
 - [ ] merge test suites 
-- [ ] --title for entry
 - [ ] memo + build-you-own-x
 - [ ] mount as bx
+- [ ] README migration 
+- [ ] RAS codes 
+- [ ] requires in alias 
+- [ ] textbook examples
 
 WONTFIX:
+- [ ] --title for csv file
 - [ ] help messages
 - [ ] types of entries (S,B,A,C1,C2,C3,C4,P)
 - [ ] post entry with chart check
-- [ ] shorthand flags
-- [ ] requires in alias 
+- [ ] adjustment and post-close entries
 - [ ] cash in chart
-- [ ] textbook examples
-- [ ] --no-color
-- [ ] current profit can be income summary account name
-- [ ] add account types to trial balance
-- [ ] code (also for RAS)
+ 
