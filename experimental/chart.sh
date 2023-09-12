@@ -12,6 +12,7 @@ poetry run python api.py chart add --expense sga
 poetry run python api.py chart set --retained-earnings "प्रतिधारित कमाई"
 poetry run python api.py chart set --retained-earnings re
 poetry run python api.py chart add --liability dividend_due
+poetry run python api.py chart add --liability ap --code "62K"
 poetry run python api.py chart offset sales voids refunds
 poetry run python api.py chart offset ppe depreciation
 poetry run python api.py chart alias --operation invoice --debit ar --credit sales
