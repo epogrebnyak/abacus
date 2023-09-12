@@ -1,6 +1,6 @@
 poetry run python api.py chart erase --force
 poetry run python api.py chart init
-poetry run python api.py chart add --asset cash
+poetry run python api.py chart add --asset cash --code 50
 poetry run python api.py chart add --asset ar
 poetry run python api.py chart add --asset goods 
 poetry run python api.py chart add --asset ppe --title "Property, plant, equipment" --code 10

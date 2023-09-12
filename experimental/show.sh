@@ -1,5 +1,5 @@
-poetry run python api.py account show cash
-poetry run python api.py account show cash --assert 550
-poetry run python api.py balances show 
-poetry run python api.py balances show --nonzero
-poetry run python api.py balances show --nonzero > balances.json
+poetry run python api.py show account cash
+poetry run python api.py check account cash --balance 550
+poetry run python api.py show balances 
+poetry run python api.py show balances --nonzero
+poetry run python api.py show balances --nonzero > balances.json

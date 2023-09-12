@@ -1,18 +1,18 @@
 """
 Usage:
   bx chart init
-  bx chart add --asset     <account_name> [--title <title>] [--code <code>] 
-  bx chart add --capital   <account_name> [--title <title>] [--code <code>]
-  bx chart add --liability <account_name> [--title <title>] [--code <code>]
-  bx chart add --income    <account_name> [--title <title>] [--code <code>]
-  bx chart add --expense   <account_name> [--title <title>] [--code <code>]
+  bx chart add --asset <account_name> [(--title <title>)] [(--code <code>)] 
+  bx chart add --capital <account_name>  [(--title <title>)] [(--code <code>)] 
+  bx chart add --liability <account_name>  [(--title <title>)] [(--code <code>)] 
+  bx chart add --income <account_name>  [(--title <title>)] [(--code <code>)] 
+  bx chart add --expense <account_name>  [(--title <title>)] [(--code <code>)] 
   bx chart offset <account_name> <contra_account_names>...
   bx chart name <account_name> <title>
   bx chart code <account_name> <code>
-  bx chart set --retained-earnings <account_name> [--title <title>] [--code <code>]
-  bx chart set --income-summary-account <account_name> [--title <title>] [--code <code>]
-  bx chart set --null-account <account_name> [--title <title>] [--code <code>]
-  bx chart alias --operation <name> --debit <debit> --credit <credit> [--requires <requires>]
+  bx chart set --retained-earnings <account_name> [(--title <title>)] [(--code <code>)]
+  bx chart set --income-summary-account <account_name> [(--title <title>)] [(--code <code>)]
+  bx chart set --null-account <account_name> [(--title <title>)] [(--code <code>)]
+  bx chart alias (--operation <name>) (--debit <debit>) (--credit <credit>) [(--requires <requires>)]
   bx chart show [--json]
   bx chart erase --force
   bx ledger init [<file>]
@@ -25,8 +25,9 @@ Usage:
   bx report --trial-balance
   bx report --income-statement [--json | --rich]
   bx report --balance-sheet [--json | --rich]
-  bx account show <account_name> [--assert <balance>]
-  bx balances show [--nonzero]
+  bx show account <account_name>
+  bx check account <account_name> --balance <balance>
+  bx show balances [--nonzero]
 """
 import json
 import os
@@ -181,7 +182,7 @@ class ChartCommand:
 
     def set_code(self, account_name, code: str) -> str:
         self.chart.set_code(account_name, code)
-        return f"Added code {code} to {account_name}."
+        return f"Set code {code} for account {account_name}."
 
 
 def chart_command(arguments: Dict, chart_path: Path):
@@ -214,7 +215,10 @@ def chart_command(arguments: Dict, chart_path: Path):
             holder.write(chart_path)
             print(msg)
         if arguments["--code"]:
-            msg = holder.set_code(account_name, arguments["<code>"])
+            code = arguments["<code>"]
+            if not code:
+                raise ValueError(f"Code must be provided, got {code} in {arguments}.")
+            msg = holder.set_code(account_name, code)
             holder.write(chart_path)
             print(msg)
         # set
@@ -375,13 +379,30 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
             print(statement.view(chart.names))
 
 
+from engine.accounts import DebitAccount, CreditAccount
+
+
+def side(ledger, account_name):
+    match ledger[account_name]:
+        case DebitAccount(_, _):
+            return "debit"
+        case CreditAccount(_, _):
+            return "credit"
+        case _:
+            raise TypeError(ledger[account_name].__class__.__name__)
+
+
 def print_account_info(ledger, chart, account_name: str):
     account = ledger[account_name]
-    print("Account:", chart.compose_name(account_name))
-    print("   Type:", account.split_on_caps())
-    print(" Debits:", account.debits)
-    print("Credits:", account.credits)
-    print("Balance:", account.balance())
+    print("     Account:", chart.get_name(account_name))
+    print("  Short name:", account_name)
+    print("   Long name:", chart.compose_name_long(account_name))
+    print("        Code:", chart.codes.get(account_name, "not assigned"))
+    print("        Type:", account.split_on_caps())
+    print("      Debits:", str(account.debits) + ",", "total", sum(account.debits))
+    print("     Credits:", str(account.credits) + ",", "total", sum(account.credits))
+    print("     Balance:", account.balance())
+    print("Balance side:", side(ledger, account_name).capitalize())
 
 
 def assert_command(arguments, entries_path, chart_path):
@@ -396,44 +417,61 @@ def assert_account_balance(ledger, account_name: str, assert_amount: str):
     expected_amount = Amount(assert_amount)
     if amount != expected_amount:
         sys.exit(
-            f"Check failed for {account_name}: expected balance is {expected_amount}, got {amount}."
+            f"Check failed for {account_name}, expected balance is {expected_amount}, got {amount}."
         )
     print(
-        f"Check passed for account {account_name}: account balance is {expected_amount}."
+        f"Check passed for account {account_name},  account balance is {expected_amount} as expected."
     )
 
 
-def accounts_command(arguments, entries_path, chart_path):
+def account_command(arguments, entries_path, chart_path):
     """
-    bx accounts show <account_name> [--assert <balance>]
-    bx accounts show --balances [--nonzero]
+    bx show account <account_name>
+    bx check account <account_name> --balance <balance>
     """
     chart = Chart.parse_file(chart_path)
+    ledger = process_full_ledger(chart_path, entries_path)
+    account_name = arguments["<account_name>"]
+    if arguments["check"]:
+        assert_account_balance(ledger, account_name, arguments["<balance>"])
+    elif arguments["show"]:
+        print_account_info(ledger, chart, account_name)
+    else:
+        raise AbacusError("Command not recognized.")
+
+
+def process_full_ledger(chart_path: Path, entries_path: Path) -> Ledger:
+    chart = Chart.parse_file(chart_path)
     entries = CsvFile(entries_path).yield_entries()
-    ledger = Ledger.new(chart).post_many(entries)
-    if arguments["account"] and (account_name := arguments["<account_name>"]):
-        if arguments["--assert"]:
-            assert_account_balance(ledger, account_name, arguments["<balance>"])
-        else:
-            print_account_info(ledger, chart, account_name)
-    elif arguments["balances"]:
-        # this command always returns a json, there is no --json flag
-        balances = ledger.balances()
-        if arguments["--nonzero"]:
-            balances = {k: v for k, v in balances.items() if v}
-        print(json.dumps(balances))
+    return Ledger.new(chart).post_many(entries)
+
+
+def show_balances_command(arguments, entries_path, chart_path):
+    """
+    bx show balances [--nonzero]
+    """
+    # this command always returns a json, there is no --json flag
+    ledger = process_full_ledger(chart_path, entries_path)
+    balances = ledger.balances()
+    if arguments["--nonzero"]:
+        balances = {k: v for k, v in balances.items() if v}
+    print(json.dumps(balances))
 
 
 def main():
+    entries_path = get_entries_path()
+    chart_path = get_chart_path()
     arguments = docopt(__doc__, version="0.5.1")
     if arguments["chart"]:
-        chart_command(arguments, get_chart_path())
+        chart_command(arguments, chart_path)
     elif arguments["ledger"]:
-        ledger_command(arguments, get_entries_path(), get_chart_path())
+        ledger_command(arguments, entries_path, chart_path)
     elif arguments["report"]:
-        report_command(arguments, get_entries_path(), get_chart_path())
-    elif arguments["account"] or arguments["balances"]:
-        accounts_command(arguments, get_entries_path(), get_chart_path())
+        report_command(arguments, entries_path, chart_path)
+    elif arguments["account"]:
+        account_command(arguments, entries_path, chart_path)
+    elif arguments["balances"]:
+        show_balances_command(arguments, entries_path, chart_path)
     else:
         sys.exit("Command not recognized. Use bx --help for reference.")
 
