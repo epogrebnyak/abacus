@@ -420,7 +420,7 @@ def assert_account_balance(ledger, account_name: str, assert_amount: str):
             f"Check failed for {account_name}, expected balance is {expected_amount}, got {amount}."
         )
     print(
-        f"Check passed for account {account_name},  account balance is {expected_amount} as expected."
+        f"Check passed for account {account_name}, account balance is {expected_amount} as expected."
     )
 
 
