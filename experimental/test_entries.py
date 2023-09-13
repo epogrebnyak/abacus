@@ -2,7 +2,7 @@
 
 import pytest  # type: ignore
 from engine.base import Entry
-from entries import CsvFile
+from experimental.engine.entries import CsvFile
 
 
 @pytest.fixture

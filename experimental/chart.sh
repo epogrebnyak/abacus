@@ -9,7 +9,7 @@ poetry run python api.py chart set ppe --title "Property, plant, equipment"
 poetry run python api.py chart set ppe --code 01
 poetry run python api.py chart add --capital equity
 poetry run python api.py chart add --income sales
-poetry run python api.py chart add --expense cogs
+poetry run python api.py chart add --expense cogs --title "Cost of goods sold"
 poetry run python api.py chart add --expense sga --title "Selling, general, and adm. expenses"
 poetry run python api.py chart set --retained-earnings "प्रतिधारित कमाई"
 poetry run python api.py chart set --retained-earnings re

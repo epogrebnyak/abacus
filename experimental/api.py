@@ -41,7 +41,7 @@ from engine.base import AbacusError, AccountName, Amount, Entry
 from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger, to_multiple_entry
-from entries import CsvFile
+from experimental.engine.entries import CsvFile
 
 
 def cwd() -> Path:
@@ -268,13 +268,9 @@ class LedgerCommand:
     csv_file: CsvFile
 
     def add_starting_balances(self, starting_balances_dict: Dict):
-        me = to_multiple_entry(Ledger.new(self.chart), starting_balances_dict)
+        self.chart.ledger(starting_balances_dict) # check that all accounts are present
+        me = to_multiple_entry(self.chart.ledger(), starting_balances_dict)
         entries = me.entries(self.chart.null_account)
-        x = Ledger.new(self.chart).post_many(entries)[self.chart.null_account].balance()
-        if x != 0:
-            raise AbacusError(
-                f"Balance of null account affter adding starting balances must be 0, got {x}."
-            )
         self.csv_file.append_many(entries)
         for entry in entries:
             print("Posted entry:", entry)
