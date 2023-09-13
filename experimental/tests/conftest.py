@@ -1,4 +1,4 @@
-import pytest  # pylint: disable=import-error
+import pytest  # type: ignore
 from engine.base import Entry
 from engine.chart import Chart
 from engine.ledger import Ledger
@@ -18,7 +18,7 @@ def chart():
 
 @fixture
 def ledger(chart):
-    return Ledger.new(chart).post(
+    return Ledger.new(chart).post_many(
         [
             Entry("cash", "equity", 1000),
             Entry("ar", "sales", 250),

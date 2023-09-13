@@ -58,14 +58,9 @@ class Ledger(UserDict[AccountName, TAccount]):
             ]
         )
 
-    def post(self, entries: Entry | List[Entry]) -> "Ledger":
+    def post(self, entries: Entry) -> "Ledger":
         # Note that post() mutates the existing data structure
-        if isinstance(entries, list):
-            post_entries(self, entries)
-        elif isinstance(entries, Entry):
-            post_entry(self, entries)
-        else:
-            raise TypeError(entries)
+        post_entry(self, entries)
         return self
 
     def post_many(self, entries: List[Entry]) -> "Ledger":
@@ -80,7 +75,7 @@ class Ledger(UserDict[AccountName, TAccount]):
         from engine.closing import close_contra_income as ci
 
         closing_entries = ci(chart, self) + ce(chart, self)
-        return self.condense().post(closing_entries)
+        return self.condense().post_many(closing_entries)
 
     def income_statement(self, chart: Chart, post_close_entries=None):
         from engine.report import IncomeStatement

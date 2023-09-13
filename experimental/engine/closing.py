@@ -55,10 +55,10 @@ def make_closing_entries(chart: Chart, ledger: Ledger) -> ClosingEntries:
     dummy_ledger = ledger.condense()
     a = close_contra_income(chart, dummy_ledger)
     b = close_contra_expense(chart, dummy_ledger)
-    dummy_ledger.post(a + b)
+    dummy_ledger.post_many(a + b)
     c = close_income_to_isa(chart.income_summary_account, dummy_ledger)
     d = close_expenses_to_isa(chart.income_summary_account, dummy_ledger)
-    dummy_ledger.post(c + d)
+    dummy_ledger.post_many(c + d)
     e = close_isa(
         isa=chart.income_summary_account,
         re=chart.retained_earnings_account,

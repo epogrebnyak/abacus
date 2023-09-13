@@ -41,7 +41,7 @@ from engine.base import AbacusError, AccountName, Amount, Entry
 from engine.chart import Chart
 from engine.closing import make_closing_entries
 from engine.ledger import Ledger, to_multiple_entry
-from experimental.engine.entries import CsvFile
+from engine.entries import CsvFile
 
 
 def cwd() -> Path:

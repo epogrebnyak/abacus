@@ -1,4 +1,4 @@
-import pytest  # pylint: disable=import-error
+import pytest  # type: ignore
 from engine.base import Entry
 from engine.chart import Chart
 from engine.ledger import Ledger
