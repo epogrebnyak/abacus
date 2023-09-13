@@ -1,4 +1,4 @@
-from engine.accounts import Asset, DebitAccount, CreditAccount
+from engine.accounts import Asset, CreditAccount, DebitAccount
 
 
 def test_asset_topup():

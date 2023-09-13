@@ -12,7 +12,6 @@ from engine.accounts import (
     Liability,
 )
 from engine.base import AccountName, Amount
-from engine.chart import get_account_type
 from pydantic import BaseModel  # type: ignore
 from rich.console import Console  # type: ignore
 from rich.table import Table  # type: ignore
@@ -164,9 +163,9 @@ def unpack(line: Line) -> Tuple[Text, Text]:
         case HeaderLine(a, b):
             return bold(a), bold(red(b))
         case AccountLine(a, b):
-            return ("  " + a, red(b))
+            return (Text("  " + a), red(b))
         case EmptyLine(a, b):
-            return ("", "")
+            return Text(""), Text("")
         case _:
             raise ValueError(line)
 
@@ -259,18 +258,16 @@ class Column:
         return "\n".join(self.strings)
 
 
-# TODO: add account type as a column
 def yield_tuples_for_trial_balance(chart, ledger):
+    def t(account_name):
+        return chart.get_account_type(account_name).__name__
+
     for account_name, t_account in ledger.items():
         if isinstance(t_account, DebitAccount):
-            yield account_name, get_account_type(
-                chart, account_name
-            ).__name__, t_account.balance(), 0
+            yield account_name, t(account_name), t_account.balance(), 0
     for account_name, t_account in ledger.items():
         if isinstance(t_account, CreditAccount):
-            yield account_name, get_account_type(
-                chart, account_name
-            ).__name__, 0, t_account.balance()
+            yield account_name, t(account_name), 0, t_account.balance()
 
 
 def nth(data, n, f=lambda x: x):

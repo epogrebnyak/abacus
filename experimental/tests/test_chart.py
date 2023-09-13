@@ -1,7 +1,8 @@
 import pytest  # type: ignore
-from engine.accounts import Asset, Income
+from engine.accounts import Asset, DebitAccount, Income
 from engine.base import AbacusError
 from engine.chart import Chart
+from engine.ledger import Ledger
 
 
 def test_empty_chart_constructor():
@@ -77,11 +78,6 @@ def test_chart_get_name():
 
 def test_chart_set_name_get_name():
     assert Chart().set_name("cos", "Cost of sales").get_name("cos") == "Cost of sales"
-
-
-from engine.accounts import DebitAccount
-from engine.base import AbacusError
-from engine.ledger import Ledger
 
 
 def test_is_debit_account():

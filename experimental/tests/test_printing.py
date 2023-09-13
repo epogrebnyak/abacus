@@ -1,8 +1,7 @@
-from abacus.reports import BalanceSheet, IncomeStatement
-from abacus.tables import RichViewer
+from engine.report import BalanceSheet, IncomeStatement
 
 
-def test_cv():
+def test_printing():
     bs = BalanceSheet(
         assets=({"cash": 1130, "receivables": 25, "goods_for_sale": 45}),
         capital=({"equity": 1000, "re": 75}),
@@ -12,13 +11,13 @@ def test_cv():
         income=({"sales": 760}),
         expenses=({"cogs": 440, "sga": 400}),
     )
-
     rename_dict = {
         "re": "Retained earnings",
         "divp": "Dividend due",
         "cogs": "Cost of goods sold",
         "sga": "Selling, general and adm. expenses",
     }
-    cv = RichViewer(rename_dict, width=60)
-    cv.print(bs)
-    cv.print(inc)
+    assert bs.view(rename_dict)
+    bs.print_rich(rename_dict)
+    assert inc.view(rename_dict)
+    inc.print_rich(rename_dict)

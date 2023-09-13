@@ -1,15 +1,18 @@
 from engine.accounts import (
     Asset,
     Capital,
+    ContraAsset,
+    ContraCapital,
     ContraIncome,
     Expense,
+    Income,
     IncomeSummaryAccount,
     NullAccount,
     RetainedEarnings,
 )
 from engine.base import Entry, MultipleEntry
 from engine.chart import Chart
-from engine.ledger import Ledger, to_multiple_entry
+from engine.ledger import Ledger, to_multiple_entry, unsafe_post_entries
 
 
 def test_ledger(ledger):
@@ -85,3 +88,110 @@ def test_journal_with_starting_balance():
         [("cash", 1400)],
         [("equity", 1500), ("re", -100)],
     )
+
+
+def test_post_many():
+    chart = Chart(
+        assets=["cash", "goods_for_sale"],
+        expenses=["cogs", "sga"],
+        equity=["equity"],
+        income=["sales"],
+        liabilities=[],
+    ).offset("sales", ["discounts", "cashback"])
+
+    starting_balances = {"cash": 10, "goods_for_sale": 10, "equity": 20}
+    ledger = chart.ledger(starting_balances)
+    e1 = Entry(debit="cash", credit="equity", amount=1000)  # pay in capital
+    e2 = Entry(
+        debit="goods_for_sale", credit="cash", amount=250
+    )  # acquire goods worth 250
+    e3 = Entry(
+        credit="goods_for_sale", debit="cogs", amount=200
+    )  # sell goods worth 200
+    e4 = Entry(credit="sales", debit="cash", amount=400)  # for 400 in cash
+    e5 = Entry(credit="cash", debit="sga", amount=50)  # administrative expenses
+    ledger.post_many([e1, e2, e3, e4, e5])
+    assert ledger.income_statement(chart).current_profit() == 150
+
+
+def test_make_ledger():
+    chart = Chart(
+        assets=["cash"],
+        equity=["equity"],
+    )
+    assert chart.ledger() == {
+        "cash": Asset(debits=[], credits=[]),
+        "equity": Capital(debits=[], credits=[]),
+        "current_profit": IncomeSummaryAccount(debits=[], credits=[]),
+        "re": RetainedEarnings(debits=[], credits=[]),
+        "null": NullAccount(debits=[], credits=[]),
+    }
+
+
+def test_unsafe_process_entries():
+    _ledger = Ledger(
+        {
+            "cash": Asset(debits=[], credits=[]),
+            "equity": Capital(debits=[], credits=[]),
+        }
+    )
+    _, failed = unsafe_post_entries(_ledger, [Entry("", "", 0)])
+    assert failed == [Entry("", "", 0)]
+
+
+def test_create_ledger_again():
+    (
+        Chart(
+            assets=["cash", "goods", "ppe"],
+            equity=["equity", "re"],
+            income=["sales"],
+            expenses=["cogs", "sga"],
+        )
+        .offset("ppe", ["depreciation"])
+        # https://stripe.com/docs/revenue-recognition/methodology
+        .offset("sales", ["refunds", "voids"])
+        .ledger()
+    ) == {
+        "cash": Asset(debits=[], credits=[]),
+        "goods": Asset(debits=[], credits=[]),
+        "ppe": Asset(debits=[], credits=[]),
+        "cogs": Expense(debits=[], credits=[]),
+        "sga": Expense(debits=[], credits=[]),
+        "equity": Capital(debits=[], credits=[]),
+        "sales": Income(debits=[], credits=[]),
+        "depreciation": ContraAsset(debits=[], credits=[]),
+        "refunds": ContraIncome(debits=[], credits=[]),
+        "voids": ContraIncome(debits=[], credits=[]),
+        "null": NullAccount(debits=[], credits=[]),
+        "re": RetainedEarnings(debits=[], credits=[]),
+        "current_profit": IncomeSummaryAccount(debits=[], credits=[]),
+    }
+
+
+def test_make_ledger_with_netting():
+    chart = Chart(
+        assets=["ppe"], expenses=[], equity=["shares"], liabilities=[], income=["sales"]
+    )
+    chart.contra_accounts = {
+        "sales": ["refunds", "voids"],
+        "shares": ["treasury_shares"],
+        "ppe": ["depreciation"],
+    }
+    assert chart.ledger() == {
+        "ppe": Asset(
+            debits=[],
+            credits=[],
+        ),
+        "shares": Capital(
+            debits=[],
+            credits=[],
+        ),
+        "re": RetainedEarnings(debits=[], credits=[]),
+        "sales": Income(debits=[], credits=[]),
+        "refunds": ContraIncome(debits=[], credits=[]),
+        "voids": ContraIncome(debits=[], credits=[]),
+        "treasury_shares": ContraCapital(debits=[], credits=[]),
+        "depreciation": ContraAsset(debits=[], credits=[]),
+        "current_profit": IncomeSummaryAccount(debits=[], credits=[]),
+        "null": NullAccount(debits=[], credits=[]),
+    }

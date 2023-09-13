@@ -10,7 +10,7 @@ from engine.accounts import (
     RetainedEarnings,
     mapping,
 )
-from engine.base import AbacusError, AccountName, Pair
+from engine.base import AbacusError, AccountName, Amount, Pair
 from pydantic import BaseModel  # type: ignore
 
 
@@ -63,8 +63,9 @@ class Chart(BaseModel):
 
     def compose_name_long(self, account_name: AccountName):
         """Produce name like 'asset:cash (Cash)'."""
-        t = get_account_type(self, account_name).__name__
-        return t + ":" + account_name + " (" + self.get_name(account_name) + ")"
+        t = self.get_account_type(account_name).__name__
+        n = self.get_name(account_name)
+        return t + ":" + account_name + " (" + n + ")"
 
     @property
     def duplicates(self):
@@ -134,6 +135,24 @@ class Chart(BaseModel):
                 for contra_account_name in contra_account_names:
                     yield regular_account_name, contra_account_name
 
+    def get_account_type(self, account_name: AccountName) -> Type:
+        return dict(yield_all_accounts(self))[account_name]
+
+    def ledger(self, starting_balances: Dict[AccountName, Amount] = {}):
+        """Create ledger from chart."""
+        from engine.ledger import Ledger, to_multiple_entry
+
+        ledger = Ledger.new(self)
+        entries = to_multiple_entry(ledger, starting_balances).entries(
+            self.null_account
+        )
+        ledger.post_many(entries)
+        if (x := ledger[self.null_account].balance()) != 0:
+            raise AbacusError(
+                f"Balance of null account after adding starting balances must be 0, got {x}."
+            )
+        return ledger
+
 
 def yield_all_accounts(chart: Chart):
     for attribute, (Class, ContraClass) in mapping():
@@ -149,10 +168,6 @@ def yield_all_accounts(chart: Chart):
     yield chart.retained_earnings_account, RetainedEarnings
     yield chart.income_summary_account, IncomeSummaryAccount
     yield chart.null_account, NullAccount
-
-
-def get_account_type(chart: Chart, account_name: AccountName) -> Type:
-    return dict(yield_all_accounts(chart))[account_name]
 
 
 def make_ledger_dict(chart: Chart) -> Dict:

@@ -318,7 +318,7 @@ def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
             holder.append_entry(
                 debit=arguments["<debit>"],
                 credit=arguments["<credit>"],
-                amount=Amount(arguments["<amount>"]),
+                amount=arguments["<amount>"],
             )
     elif arguments["close"]:
         holder.add_closing_entries()
