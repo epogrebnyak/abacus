@@ -7,9 +7,9 @@ from engine.accounts import (
     NullAccount,
     RetainedEarnings,
 )
-from engine.base import Entry
+from engine.base import Entry, MultipleEntry
 from engine.chart import Chart
-from engine.ledger import Ledger
+from engine.ledger import Ledger, to_multiple_entry
 
 
 def test_ledger(ledger):
@@ -67,3 +67,21 @@ def test_ledger_report_income_statement(chart, ledger):
         "income": {"sales": 200},
         "expenses": {"cogs": 0, "sga": 0},
     }
+
+
+def test_journal_with_starting_balance():
+    chart = Chart(
+        assets=["cash"],
+        equity=["equity"],
+        expenses=["salaries", "rent"],
+        liabilities=[],
+        income=["services"],
+    )
+    ledger = Ledger.new(chart)
+
+    # Account balances are known from previous period end
+    starting_balances = {"cash": 1400, "equity": 1500, "re": -100}
+    assert to_multiple_entry(ledger, starting_balances) == MultipleEntry(
+        [("cash", 1400)],
+        [("equity", 1500), ("re", -100)],
+    )

@@ -77,3 +77,94 @@ def test_chart_get_name():
 
 def test_chart_set_name_get_name():
     assert Chart().set_name("cos", "Cost of sales").get_name("cos") == "Cost of sales"
+
+
+from engine.accounts import DebitAccount
+from engine.base import AbacusError
+from engine.ledger import Ledger
+
+
+def test_is_debit_account():
+    acc = Ledger.new(
+        Chart(
+            assets=["cash"],
+            equity=[],
+            expenses=[],
+            liabilities=[],
+            income=[],
+        )
+    )["cash"]
+    assert isinstance(acc, DebitAccount)
+
+
+def test_offset():
+    chart = Chart(
+        assets=[],
+        equity=[],
+        expenses=[],
+        liabilities=[],
+        income=["sales"],
+    ).offset("sales", "refund")
+    assert chart.contra_accounts == {"sales": ["refund"]}
+    chart.offset("sales", "voids")
+    assert chart.contra_accounts == {"sales": ["refund", "voids"]}
+
+
+chart = (
+    Chart(
+        assets=["cash", "receivables", "goods_for_sale", "ppe"],
+        expenses=["cogs", "sga", "depreciation_expense"],
+        equity=["equity"],
+        liabilities=["dividend_due", "payables"],
+        income=["sales"],
+    )
+    .offset("ppe", ["depreciation"])
+    .offset("sales", ["discount", "returned"])
+)
+
+
+def test_invalid_chart_with_duplicate_key():
+    with pytest.raises(AbacusError):
+        Chart(
+            assets=["cash"],
+            expenses=[],
+            equity=["cash"],
+            liabilities=[],
+            income=[],
+        ).validate()
+
+
+def test_invalid_chart_with_non_existent_contra_account_name():
+    with pytest.raises(AbacusError):
+        Chart(
+            assets=["cash", "goods"],
+            expenses=["cogs"],
+            equity=["capital"],
+            liabilities=["loan"],
+            income=["sales"],
+        ).offset("sssalessssss", ["refunds"])
+
+
+def test_account_names_method(chart):
+    assert chart.account_names(Asset) == ["cash", "ar", "goods"]
+
+
+def test_creation():
+    (
+        Chart(
+            assets=["cash", "ar", "goods", "ppe"],
+            equity=["equity", "retained_earnings"],
+            income=["sales"],
+            liabilities=["ap"],
+            expenses=["cogs", "sga"],
+        )
+        .offset("ppe", ["depreciation"])
+        .offset("sales", ["refunds", "voids"])
+        .set_name("ppe", "Property, plant, equipment")
+        .set_name("goods", "Inventory (goods for sale)")
+        .set_name("ar", "Accounts receivable")
+        .set_name("ap", "Accounts payable")
+        .set_name("cogs", "Cost of goods sold")
+        .set_name("sga", "Selling, general and adm. expenses")
+    )
+    assert 1
