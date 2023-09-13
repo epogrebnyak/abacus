@@ -259,8 +259,6 @@ class Column:
         return "\n".join(self.strings)
 
 
-
-
 # TODO: add account type as a column
 def yield_tuples_for_trial_balance(chart, ledger):
     for account_name, t_account in ledger.items():
