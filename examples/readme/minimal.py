@@ -1,4 +1,10 @@
-from abacus import BalanceSheet, Chart, IncomeStatement, PlainTextViewer, RichViewer
+from abacus_depr import (
+    BalanceSheet,
+    Chart,
+    IncomeStatement,
+    PlainTextViewer,
+    RichViewer,
+)
 
 chart = (
     Chart(

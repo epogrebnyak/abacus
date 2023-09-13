@@ -5,9 +5,9 @@ from typing import List
 import pandas as pd
 import streamlit as st
 
-from abacus.naming import variable  # noqa: E402
-from abacus.remove.accounting import Chart, Entry, make_book  # noqa: E402
-from abacus.remove.formatting import side_by_side  # noqa: E402
+from abacus_depr.naming import variable  # noqa: E402
+from abacus_depr.remove.accounting import Chart, Entry, make_book  # noqa: E402
+from abacus_depr.remove.formatting import side_by_side  # noqa: E402
 
 st.set_page_config(
     page_title="Accounting as Code",

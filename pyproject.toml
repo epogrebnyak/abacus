@@ -12,11 +12,11 @@ description = "A minimal, yet valid double-entry accounting system in Python."
 authors = ["Evgeniy Pogrebnyak <e.pogrebnyak@gmail.com>"]
 readme = "README.md"
 packages = [
-    {include = "experimental"}
+    {include = "abacus"}
 ]
 
 [tool.poetry.scripts]
-bx = 'experimental.api:main'
+bx = 'abacus.api:main'
 
 [tool.poetry.dependencies]
 python = "^3.8"

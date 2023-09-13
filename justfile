@@ -30,8 +30,7 @@ grill:
 
 # Run pytest (up to first error) and print slowest test times 
 test:
-  poetry run pytest tests -x --durations=5
-  poetry run pytest experimental -x --durations=5
+  poetry run pytest . -x --durations=5
 
 
 # Type check
