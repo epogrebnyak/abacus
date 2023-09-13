@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple, Type
 
 from engine.accounts import CreditAccount, DebitAccount, TAccount
 from engine.base import AbacusError, AccountName, Amount, Entry, MultipleEntry
-from engine.chart import Chart, make_ledger_dict
+from engine.chart import Chart
 
 
 class Ledger(UserDict[AccountName, TAccount]):
@@ -13,7 +13,7 @@ class Ledger(UserDict[AccountName, TAccount]):
     @classmethod
     def new(cls, chart: Chart) -> "Ledger":
         """Create an empty ledger from chart."""
-        return Ledger(make_ledger_dict(chart))
+        return Ledger(chart.ledger_dict())
 
     def apply(self, attribute: str):
         """Apply an *attribute* to all accounts in ledger and return a new ledger."""
@@ -67,14 +67,17 @@ class Ledger(UserDict[AccountName, TAccount]):
         post_entries(self, entries)
         return self
 
+    def closing_entries_for_income_statement(self, chart: Chart):
+        from engine.closing import close_contra_expense as ce
+        from engine.closing import close_contra_income as ci
+
+        return ci(chart, self) + ce(chart, self)
+
     def close_some(self, chart: Chart) -> "Ledger":
         """Close contra accounts corresponding to income and expense.
         Returns a copy of a ledger.
         """
-        from engine.closing import close_contra_expense as ce
-        from engine.closing import close_contra_income as ci
-
-        closing_entries = ci(chart, self) + ce(chart, self)
+        closing_entries = self.closing_entries_for_income_statement(chart)
         return self.condense().post_many(closing_entries)
 
     def income_statement(self, chart: Chart, post_close_entries=None):
@@ -85,15 +88,17 @@ class Ledger(UserDict[AccountName, TAccount]):
         ledger = self.condense().close_some(chart).post_many(post_close_entries)
         return IncomeStatement.new(ledger)
 
+    def closing_entries_for_balance_sheet(self, chart: Chart):
+        from engine.closing import flush_permanent_accounts, make_closing_entries
+
+        closing_entries_struct = make_closing_entries(chart, self)
+        return closing_entries_struct.all() + flush_permanent_accounts(chart, self)
+
     def close(self, chart: Chart) -> "Ledger":
         """Close all accounts related to retained earnings and to permanent accounts.
         Returns a copy of a ledger.
         """
-        from engine.closing import flush_permanent_accounts, make_closing_entries
-
-        closing_entries = make_closing_entries(
-            chart, self
-        ).all() + flush_permanent_accounts(chart, self)
+        closing_entries = self.closing_entries_for_balance_sheet(chart)
         return self.condense().post_many(closing_entries)
 
     def balance_sheet(self, chart: Chart, post_close_entries=None):

@@ -10,7 +10,7 @@ from engine.accounts import (
     RetainedEarnings,
     mapping,
 )
-from engine.base import AbacusError, AccountName, Amount, Pair
+from engine.base import AbacusError, AccountName, Amount, Pair, Entry
 from pydantic import BaseModel  # type: ignore
 
 
@@ -35,6 +35,12 @@ class Chart(BaseModel):
     names: Dict[AccountName, str] = {"re": "Retained earnings"}
     codes: Dict[AccountName, str] = {}
     operations: Dict[str, Pair] = {}
+
+    def make_entries(self, operation_names, amounts):
+        return [
+            Entry(*self.operations[on], amount)
+            for on, amount in zip(operation_names, amounts)
+        ]
 
     def five_types_of_accounts(self):
         return ("assets", "equity", "liabilities", "income", "expenses")
@@ -138,6 +144,10 @@ class Chart(BaseModel):
     def get_account_type(self, account_name: AccountName) -> Type:
         return dict(yield_all_accounts(self))[account_name]
 
+    def ledger_dict(self):
+        """Create ledger dictionary from chart. Used to create Ledger class."""
+        return {account_name: cls() for account_name, cls in yield_all_accounts(self)}
+
     def ledger(self, starting_balances: Dict[AccountName, Amount] = {}):
         """Create ledger from chart."""
         from engine.ledger import Ledger, to_multiple_entry
@@ -168,11 +178,3 @@ def yield_all_accounts(chart: Chart):
     yield chart.retained_earnings_account, RetainedEarnings
     yield chart.income_summary_account, IncomeSummaryAccount
     yield chart.null_account, NullAccount
-
-
-def make_ledger_dict(chart: Chart) -> Dict:
-    """Create ledger dictionary from chart. Used to create Ledger class."""
-    ledger = {}
-    for account_name, cls in yield_all_accounts(chart):
-        ledger[account_name] = cls()
-    return ledger

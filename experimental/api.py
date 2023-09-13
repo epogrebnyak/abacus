@@ -268,7 +268,7 @@ class LedgerCommand:
     csv_file: CsvFile
 
     def add_starting_balances(self, starting_balances_dict: Dict):
-        self.chart.ledger(starting_balances_dict) # check that all accounts are present
+        self.chart.ledger(starting_balances_dict)  # check that all accounts are present
         me = to_multiple_entry(self.chart.ledger(), starting_balances_dict)
         entries = me.entries(self.chart.null_account)
         self.csv_file.append_many(entries)
@@ -276,10 +276,8 @@ class LedgerCommand:
             print("Posted entry:", entry)
 
     def add_operations(self, operations: List[str], amounts: List[str]):
-        for operation, amount in zip(operations, amounts):
-            debit, credit = self.chart.operations[operation]
-            entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
-            self.csv_file.append(entry)
+        entries = self.chart.make_entries(operations, amounts)
+        self.csv_file.append_many(entries)
 
     def add_closing_entries(self):
         ledger = Ledger.new(self.chart)
