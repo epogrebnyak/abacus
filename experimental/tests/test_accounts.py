@@ -1,4 +1,4 @@
-from engine.accounts import Asset, CreditAccount, DebitAccount
+from engine.accounts import Asset, CreditAccount, DebitAccount, ContraIncome
 
 
 def test_asset_topup():
@@ -35,3 +35,7 @@ def test_balance_on_DebitAccount():
 
 def test_balance_on_CreditAccount():
     assert CreditAccount([2, 2], [5, 4]).balance() == 5 + 4 - 2 - 2
+
+
+def test_ContraIncome():
+    assert ContraIncome([8], []).balance() == 8
