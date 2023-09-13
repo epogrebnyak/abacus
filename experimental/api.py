@@ -24,9 +24,9 @@ Usage:
   bx report --trial-balance
   bx report --income-statement [--json | --rich]
   bx report --balance-sheet [--json | --rich]
-  bx show account <account_name>
-  bx show account <account_name> --balance [<value>]
-  bx show balances [--nonzero]
+  bx account <account_name>
+  bx account <account_name> --assert <value>
+  bx balances [--nonzero]
 """
 import json
 import os
@@ -410,17 +410,14 @@ def assert_account_balance(ledger, account_name: str, assert_amount: str):
 
 def account_command(arguments, entries_path, chart_path):
     """
-    bx show account <account_name>
-    bx show account <account_name> --balance
-    bx show account <account_name> --balance <value>
+    bx account <account_name>
+    bx account <account_name> --balance <value>
     """
     chart = Chart.parse_file(chart_path)
     ledger = process_full_ledger(chart_path, entries_path)
     account_name = arguments["<account_name>"]
-    if arguments["--balance"]:
-        print(account_name, "balance is", ledger[account_name].balance())
-        if v := arguments["<value>"]:
-            assert_account_balance(ledger, account_name, v)
+    if v := arguments["<value>"]:
+        assert_account_balance(ledger, account_name, v)
     else:
         print_account_info(ledger, chart, account_name)
 
@@ -433,7 +430,7 @@ def process_full_ledger(chart_path: Path, entries_path: Path) -> Ledger:
 
 def show_balances_command(arguments, entries_path, chart_path):
     """
-    bx show balances [--nonzero]
+    bx balances [--nonzero]
     """
     # this command always returns a json, there is no --json flag
     ledger = process_full_ledger(chart_path, entries_path)
@@ -453,9 +450,9 @@ def main():
         ledger_command(arguments, entries_path, chart_path)
     elif arguments["report"]:
         report_command(arguments, entries_path, chart_path)
-    elif arguments["show"] and arguments["account"]:
+    elif arguments["account"]:
         account_command(arguments, entries_path, chart_path)
-    elif arguments["show"] and arguments["balances"]:
+    elif arguments["balances"]:
         show_balances_command(arguments, entries_path, chart_path)
     else:
         sys.exit("Command not recognized. Use bx --help for reference.")

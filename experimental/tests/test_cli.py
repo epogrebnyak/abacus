@@ -7,8 +7,8 @@ import pytest
 
 @pytest.fixture
 def commands():
-    path = pathlib.Path(__file__).parent / "test_cli.bat"
-    return path.read_text().replace("|| exit /b", "").strip()
+    path = pathlib.Path(__file__).parent / "test_cli.sh"
+    return path.read_text()
 
 
 def test_n_commands(commands):
