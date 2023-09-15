@@ -19,14 +19,10 @@ go:
 
 # Run all tests, checks and linters
 grill:
-  just test
-  just mypy
-  just isort
-  just black
-  just ruff
+  just go
   just md
   just readme
-  just test-scripts
+  just scripts
 
 # Run pytest (up to first error) and print slowest test times 
 test:
@@ -58,34 +54,21 @@ readme:
   just readme-py
   just readme-console
 
-# Run console examples from README.md
-readme-console:
-  cat README.md | npx codedown bash > examples/readme/minimal.sh
-  rm -rf examples/readme/try_abacus
-  just {{ readme_command }}
-
-# Run console examples from README.md (Windows):
-readme-console-win:
-  cp examples/readme/minimal.sh examples/readme/minimal.bat
-  cd examples/readme && call minimal.bat
-
-# Run console examples from README.md (Linux):
-readme-console-linux:
-  poetry run bash -c "cd examples/readme && source minimal.sh"
-
-# Demo command line example and test_cli.bat (Windows and Linux)
-test-scripts:
-  cd examples/demo && {{ source_command }} chart.bat
-  cd examples/demo && {{ source_command }} operations.bat
-  cd examples/demo && {{ source_command }} ledger.bat
-  cd examples/demo && {{ source_command }} show.bat
-  cd tests && {{ source_command }} test_cli.bat
-
 # Run Python code from README.md
 readme-py:
-  cat README.md | npx codedown python > examples/readme/minimal.py
-  poetry run python examples/readme/minimal.py
-  
+  cat README.md | npx codedown python > scripts/minimal.py
+  poetry run python scripts/minimal.py
+
+# Run console examples from README.md
+readme-console:
+  cat README.md | npx codedown bash > scripts/minimal.sh
+  rm -f scripts/chart.json scripts/entries.csv
+  cd scripts && bash -e minimal.sh
+
+# Run command line examples (Linux)
+scripts:
+  cd scripts && bash -e all.sh
+ 
 # Build and serve docs
 docs:
   poetry run mkdocs serve 
@@ -93,7 +76,3 @@ docs:
 # Publish docs
 docs-publish:
   poetry run mkdocs gh-deploy 
-
-# Launch streamlit app (not in use)
-app:
-  poetry run streamlit run app/app.py

@@ -5,16 +5,17 @@ FOR REVIEW:
 - [x] add command
 - [x] show operations in chart
 - [x] add account types to trial balance
+- [x] merge test suites 
+- [x] mount as bx
+- [x] README migration 
+
 
 FIXME:
 - bx ledger init must fail when file is present
-- title fails when pout first
+- --title fails when written first
 
 TODO:
-- [ ] merge test suites 
 - [ ] memo + build-you-own-x
-- [ ] mount as bx
-- [ ] README migration 
 - [ ] RAS codes 
 - [ ] requires in alias 
 - [ ] textbook examples

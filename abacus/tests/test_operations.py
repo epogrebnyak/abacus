@@ -1,4 +1,3 @@
-
 from abacus.engine.chart import Chart
 from abacus.engine.report import BalanceSheet, IncomeStatement
 

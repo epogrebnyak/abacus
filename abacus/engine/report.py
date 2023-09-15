@@ -23,12 +23,13 @@ def total(self: dict) -> Amount:
     return sum(self.values())
 
 
+# TODO: make this class ABC
 class Report:
     def lines(self, attributes: List[str]) -> List["Line"]:
         """Return list of lines for a given subset attributes.
 
         Allows to create a report with multiple columns, for example,
-        capital and liabilities on the left side of balance sheet."""
+        capital and liabilities on the left side of balance sheet"""
         lines: List[Line] = []
         for attr in attributes:
             dict_ = getattr(self, attr)
@@ -37,6 +38,12 @@ class Report:
             for name, value in dict_.items():
                 lines.append(AccountLine(name, str(value)))
         return lines
+
+    def view(self, rename_dict: Dict[str, str]) -> str:
+        raise NotImplementedError
+
+    def print(self, rename_dict: Dict[str, str]) -> None:
+        print(self.view(rename_dict))
 
 
 class BalanceSheet(BaseModel, Report):

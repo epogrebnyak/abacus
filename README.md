@@ -43,43 +43,44 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 Install package and create temporary directory:
 
-```bash
+```
 pip install -U abacus-py
-mkdir try_abacus && cd try_abacus
+mkdir -p scripts/try && cd scripts/try
 ```
 
 Create chart of accounts:
 
 ```bash
-bx chart add  --asset cash
-bx chart add  --asset ar --title "Accounts receivable"
-bx chart add  --asset goods --title "Inventory (goods for resale)"
-bx chart add  --capital equity
-bx chart add  --retained-earnings re
-bx chart add  --income sales
+bx chart init
+bx chart add --asset cash
+bx chart add --asset ar --title "Accounts receivable"
+bx chart add --asset goods --title "Inventory (goods for resale)"
+bx chart add --capital equity
+bx chart add --income sales
 bx chart offset sales discounts
-bx chart add  --expense cogs --title "Cost of goods sold"
-bx chart add  --expense sga --title "Selling, general and adm. expenses"
+bx chart add --expense cogs --title "Cost of goods sold"
+bx chart add --expense sga --title "Selling, general and adm. expenses"
 bx chart show
 ```
 
 Start ledger, post entries and close accounts at period end:
 
 ```bash
-bx ledger start
-bx post entry --title "Initial investment"     --debit cash  --credit equity --amount 5000
-bx post entry --title "Acquire goods for cash" --debit goods --credit cash   --amount 4000
-bx post entry --title "Register cost of sales" --debit cogs  --credit goods  --amount 2700
-bx post entry --title "Issue invoice"          --debit ar    --credit sales  --amount 3900
-bx post entry --title "Provide discount"       --debit discounts --credit ar --amount  400
-bx post entry --title "Accept payment"         --debit cash  --credit ar     --amount 2000
-bx post entry --title "Reimburse sales team"   --debit sga   --credit cash   --amount  300
+bx ledger init
+bx ledger post --debit cash  --credit equity --amount 5000 --title "Initial investment"
+bx ledger post --debit goods --credit cash   --amount 4000 --title "Acquire goods for cash"
+bx ledger post --debit cogs  --credit goods  --amount 2700 --title "Register cost of sales"
+bx ledger post --debit ar    --credit sales  --amount 3900 --title "Issue invoice"
+bx ledger post --debit discounts --credit ar --amount  400 --title "Provide discount"
+bx ledger post --debit cash  --credit ar     --amount 2000 --title "Accept payment"
+bx ledger post --debit sga   --credit cash   --amount  300 --title "Reimburse sales team"
 bx ledger close
 ```
 
 Make reports:
 
 ```bash
+bx report --trial-balance
 bx report --balance-sheet
 bx report --income-statement
 ```
@@ -111,7 +112,7 @@ and post-close entries.
     </summary>
 
 ```python
-from abacus import BalanceSheet, Chart, IncomeStatement, PlainTextViewer, RichViewer
+from abacus import Chart, Entry, BalanceSheet, IncomeStatement
 
 chart = (
     Chart(
@@ -120,7 +121,6 @@ chart = (
         equity=["equity", "re"],
         income=["sales"],
     )
-    .set_retained_earnings("re")
     .offset("sales", "discounts")
     .set_name("cogs", "Cost of goods sold")
     .set_name("sga", "Selling, general and adm.expenses")
@@ -128,33 +128,28 @@ chart = (
     .set_name("ar", "Accounts receivable")
 )
 
-book = (
-    chart.book()
-    .post(debit="cash", credit="equity", amount=1000)
-    .post(debit="goods", credit="cash", amount=800)
-    .post(debit="ar", credit="sales", amount=465)
-    .post(debit="discounts", credit="ar", amount=65)
-    .post(debit="cogs", credit="goods", amount=200)
-    .post(debit="sga", credit="cash", amount=100)
-    .post(debit="cash", credit="ar", amount=360)
-    .close()
+ledger = (
+    chart.ledger()
+    .post(Entry(debit="cash", credit="equity", amount=1000))
+    .post(Entry(debit="goods", credit="cash", amount=800))
+    .post(Entry(debit="ar", credit="sales", amount=465))
+    .post(Entry(debit="discounts", credit="ar", amount=65))
+    .post(Entry(debit="cogs", credit="goods", amount=200))
+    .post(Entry(debit="sga", credit="cash", amount=100))
+    .post(Entry(debit="cash", credit="ar", amount=360))
 )
 
-income_statement = book.income_statement()
-balance_sheet = book.balance_sheet()
-tv = PlainTextViewer(rename_dict=chart.names)
-tv.print(balance_sheet)
-tv.print(income_statement)
-
-rv = RichViewer(rename_dict=chart.names, width=80)
-rv.print(balance_sheet)
-rv.print(income_statement)
-
-print(income_statement)
+income_statement = ledger.income_statement(chart)
+income_statement.print(chart.names)
+income_statement.print_rich(chart.names)
 assert income_statement == IncomeStatement(
     income={"sales": 400}, expenses={"cogs": 200, "sga": 100}
 )
-print(balance_sheet)
+
+ledger.close(chart)
+balance_sheet = ledger.balance_sheet(chart)
+balance_sheet.print(chart.names)
+balance_sheet.print_rich(chart.names)
 assert balance_sheet == BalanceSheet(
     assets={"cash": 460, "ar": 40, "goods": 600},
     capital={"equity": 1000, "re": 100},
@@ -162,9 +157,9 @@ assert balance_sheet == BalanceSheet(
 )
 
 # Create next period
-end_balances = book.nonzero_balances()
+end_balances = ledger.nonzero_balances()
 print(end_balances)
-next_book = chart.book(starting_balances=end_balances)
+next_book = chart.ledger(starting_balances=end_balances)
 ```
 
 </details>

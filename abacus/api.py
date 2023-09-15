@@ -168,7 +168,7 @@ class ChartCommand:
         for contra_account_name in contra_account_names:
             self.chart.offset(account_name, contra_account_name)
         if len(contra_account_names) > 1:
-            text = "Added countra accounts: "
+            text = "Added contra accounts: "
         else:
             text = "Added contra account: "
         return text + contra_phrase(account_name, contra_account_names) + "."
@@ -438,7 +438,7 @@ def show_balances_command(arguments, entries_path, chart_path):
     ledger = process_full_ledger(chart_path, entries_path)
     balances = ledger.balances()
     if arguments["--nonzero"]:
-        balances = {k: v for k, v in balances.items() if v}
+        balances = ledger.nonzero_balances()
     print(json.dumps(balances))
 
 

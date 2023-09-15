@@ -42,6 +42,10 @@ class Ledger(UserDict[AccountName, TAccount]):
         """Return account balances."""
         return dict(self.apply("balance").data)
 
+    def nonzero_balances(self) -> Dict[AccountName, Amount]:
+        """Return nonzero account balances."""
+        return {k: v for k, v in self.balances().items() if v != 0}
+
     def subset(self, classes: Type | List[Type]) -> "Ledger":
         """Filter ledger by account type."""
         if not isinstance(classes, list):
@@ -58,9 +62,9 @@ class Ledger(UserDict[AccountName, TAccount]):
             ]
         )
 
-    def post(self, entries: Entry) -> "Ledger":
+    def post(self, entry: Entry) -> "Ledger":
         # Note that post() mutates the existing data structure
-        post_entry(self, entries)
+        post_entry(self, entry)
         return self
 
     def post_many(self, entries: List[Entry]) -> "Ledger":
