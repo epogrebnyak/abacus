@@ -323,24 +323,10 @@ def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
             print(entry.debit, entry.credit, entry.amount, sep="\t")
 
 
-def touches_isa(chart: Chart, entry: Entry) -> bool:
-    """True if entry touches income summary account."""
-    isa = chart.income_summary_account
-    return (entry.debit == isa) or (entry.credit == isa)
-
-
-def filter_for_income_statement(entries: List[Entry], chart: Chart):
-    """Filter entries that do not close income accounts."""
-
-    def not_touches_isa(entry):
-        return not touches_isa(chart, entry)
-
-    return filter(not_touches_isa, entries)
-
-
 def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
     chart = Chart.parse_file(chart_path)
-    entries = CsvFile(entries_path).yield_entries()
+    store = CsvFile(entries_path)
+    entries = store.yield_entries()
     ledger = Ledger.new(chart)
     if arguments["--trial-balance"]:
         ledger.post_many(entries)
@@ -356,7 +342,7 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
             print("Balance sheet")
             print(statement.view(chart.names))
     elif arguments["--income-statement"]:
-        entries = filter_for_income_statement(entries, chart)
+        entries = store.yield_entries_for_income_statement(chart)
         ledger.post_many(entries)
         statement = ledger.income_statement(chart)
         if arguments["--json"]:
