@@ -78,8 +78,8 @@ bx ledger post --debit discounts --credit ar --amount  450 --title "Provide disc
 bx ledger post --debit cash  --credit ar     --amount 3000 --title "Accept payment"
 bx ledger post --debit sga   --credit cash   --amount  350 --title "Reimburse sales team"
 bx ledger adjust --debit sga --credit prepaid_rent --amount 800 --title "Expense 8 months of rent"
-bx ledger post-close --debit re --credit dividend_due --amount 150 --title "Accrue dividend"
 bx ledger close
+bx ledger post-close --debit re --credit dividend_due --amount 150 --title "Accrue dividend"
 ```
 
 Make reports:

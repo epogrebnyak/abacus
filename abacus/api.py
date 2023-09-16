@@ -290,12 +290,12 @@ class LedgerCommand:
         print("Added closing entries:")
         for entry in closing_entries:
             print(" ", entry)
- 
+
     def append_entry(self, debit: str, credit: str, amount: str):
         try:
             entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
         except TypeError:
-            raise TypeError([f"Invalid entry: {debit}, {credit}, {amount}."])    
+            raise TypeError([f"Invalid entry: {debit}, {credit}, {amount}."])
         self.csv_file.append(entry)
         print("Posted entry:", entry)
 
@@ -317,7 +317,7 @@ def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
     elif arguments["post"] or arguments["adjust"] or arguments["post-close"]:
         if arguments["--operation"]:
             holder.add_operations(arguments["<operations>"], arguments["<amounts>"])
-        else:  
+        else:
             holder.append_entry(
                 debit=arguments["<debit>"],
                 credit=arguments["<credit>"],
