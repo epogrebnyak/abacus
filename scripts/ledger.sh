@@ -1,5 +1,5 @@
 bx ledger erase --force
-echo {"cash": 550, "ar": 450, "goods": 50, "equity": 1000, "re": 50} > balances.json
+echo {\"cash\": 550, \"ar\": 450, \"goods\": 50, \"equity\": 1000, \"re\": 50} > balances.json
 bx ledger init balances.json
 bx ledger show
 bx ledger erase --force
