@@ -19,27 +19,25 @@ TODO:
 - [ ] RAS codes 
 - [ ] requires in alias 
 - [ ] textbook examples
+- [ ] adjustment example (with trial balance)
 
 WONTFIX:
+- [ ] adjust and postclose entries
 - [ ] --title for csv file
 - [ ] help messages
 - [ ] types of entries (S,B,A,C1,C2,C3,C4,P)
 - [ ] post entry with chart check
 - [ ] adjustment and post-close entries
-- [ ] cash in chart
-- [ ] change readme
 - [ ] consolidate at /example folder
 - [ ] `--reference` or `--refer`
-- [ ] adjustment example (with trial balance)
 - [ ] post-close example
 - [ ] add operation title to entry title
 - [ ] add small hash for entry
 - [ ] `--cash` asset type
 - [ ] `--current-asset`, `--non-current-asset` asset type
 - [ ] `--current-liability`, `--long-term-liability`
+- [ ] write to and read from Excel file
 
 Wont fix:
 - [ ] `ledger list` must show nicer output
-- [ ] --title for entry
 - [ ] testing of a multiline string `pytest-console-plugin`
-- [ ] write to and read from Excel file

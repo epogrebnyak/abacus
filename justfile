@@ -56,14 +56,13 @@ readme:
 
 # Run Python code from README.md
 readme-py:
-  cat README.md | npx codedown python > scripts/minimal.py
-  poetry run python scripts/minimal.py
+  cat README.md | npx codedown python > scripts/readme/minimal.py
+  poetry run python scripts/readme/minimal.py
 
 # Run console examples from README.md
 readme-console:
-  cat README.md | npx codedown bash > scripts/minimal.sh
-  rm -f scripts/chart.json scripts/entries.csv
-  cd scripts && bash -e minimal.sh
+  cat README.md | npx codedown bash > scripts/readme/minimal.sh
+  cd scripts/readme && rm -f chart.json entries.csv && bash -e minimal.sh
 
 # Run command line examples (Linux)
 scripts:

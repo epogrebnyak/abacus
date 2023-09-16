@@ -15,8 +15,8 @@ Usage:
   bx chart show [--json]
   bx chart erase --force
   bx ledger init [<file>]
-  bx ledger post <debit> <credit> <amount> [--title <title>]
-  bx ledger post (--debit <debit>) (--credit <credit>) (--amount <amount>) [(--title <title>)]
+  bx ledger (post|adjust|post-close) <debit> <credit> <amount> [--title <title>]
+  bx ledger (post|adjust|post-close) (--debit <debit>) (--credit <credit>) (--amount <amount>) [(--title <title>)]
   bx ledger post --operation (<operations> <amounts>)...  [(--title <title>)]
   bx ledger close
   bx ledger show
@@ -279,16 +279,23 @@ class LedgerCommand:
     def add_operations(self, operations: List[str], amounts: List[str]):
         entries = self.chart.make_entries_for_operations(operations, amounts)
         self.csv_file.append_many(entries)
+        for entry in entries:
+            print("Posted entry:", entry)
 
     def add_closing_entries(self):
         ledger = Ledger.new(self.chart)
         ledger.post_many(entries=self.csv_file.yield_entries())
         closing_entries = make_closing_entries(self.chart, ledger).all()
         self.csv_file.append_many(entries=closing_entries)
-        print("Added closing entries:", closing_entries)
-
+        print("Added closing entries:")
+        for entry in closing_entries:
+            print(" ", entry)
+ 
     def append_entry(self, debit: str, credit: str, amount: str):
-        entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
+        try:
+            entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
+        except TypeError:
+            raise TypeError([f"Invalid entry: {debit}, {credit}, {amount}."])    
         self.csv_file.append(entry)
         print("Posted entry:", entry)
 
@@ -307,10 +314,10 @@ def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
             balances = read_starting_balances(arguments["<file>"])
             print("Starting balances:", balances)
             holder.add_starting_balances(balances)
-    elif arguments["post"]:
+    elif arguments["post"] or arguments["adjust"] or arguments["post-close"]:
         if arguments["--operation"]:
             holder.add_operations(arguments["<operations>"], arguments["<amounts>"])
-        else:
+        else:  
             holder.append_entry(
                 debit=arguments["<debit>"],
                 credit=arguments["<credit>"],
