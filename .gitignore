@@ -1,10 +1,6 @@
 **/chart.json
 **/entries.json
-**/start.json
-**/end_balances.json
-examples/readme/chart.json
-examples/readme/entries.json
-examples/readme/end_balances.json
+**/balances.json
 docs/site/
 .env-cli/
 

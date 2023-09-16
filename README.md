@@ -41,10 +41,9 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Minimal command line example
 
-Install package and create temporary directory:
+Сreate temporary directory where `chart.json` and `entries.csv` will be created:
 
 ```
-pip install -U abacus-py
 mkdir -p scripts/try && cd scripts/try
 ```
 
@@ -108,7 +107,7 @@ Additional features include entry templates (`operation` command), adjustment
 and post-close entries.
 
 <details>
-    <summary>Python code (`examples/readme/minimal.py`)
+    <summary>Python code (`scripts/minimal.py`)
     </summary>
 
 ```python
@@ -156,7 +155,7 @@ assert balance_sheet == BalanceSheet(
     liabilities={},
 )
 
-# Create next period
+# Create end of period balances
 end_balances = ledger.nonzero_balances()
 print(end_balances)
 next_book = chart.ledger(starting_balances=end_balances)
