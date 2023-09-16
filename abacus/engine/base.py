@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 AccountName = str
-Amount = int  # Can be changed to Decimal
+Amount = int  # May be changed to Decimal
 
 
 @dataclass
@@ -47,11 +47,13 @@ class MultipleEntry:
         self.validate()
 
     def validate(self):
+        """Assert sum of debit entries equals sum of credit entries."""
         if sum_second(self.debit_entries) != sum_second(self.credit_entries):
             raise AbacusError(["Invalid multiple entry", self])
         return self
 
-    def entries(self, null_account_name: AccountName):
+    def entries(self, null_account_name: AccountName) -> list[Entry]:
+        """Return list of entries that make up multiple entry."""
         return [
             Entry(account_name, null_account_name, amount)
             for (account_name, amount) in self.debit_entries

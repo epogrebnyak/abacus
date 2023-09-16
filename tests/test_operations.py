@@ -46,7 +46,7 @@ def scd(xs):
 
 
 def test_named_entries_income_statement():
-    entries = chart.make_entries(fst(named_entries), scd(named_entries))
+    entries = chart.make_entries_for_operations(fst(named_entries), scd(named_entries))
     income_st = chart.ledger().post_many(entries).income_statement(chart)
     assert income_st == IncomeStatement(
         income={"sales": 760}, expenses={"cogs": 440, "sga": 400}
@@ -54,7 +54,7 @@ def test_named_entries_income_statement():
 
 
 def test_named_entries_balance_sheet():
-    entries = chart.make_entries(fst(named_entries), scd(named_entries))
+    entries = chart.make_entries_for_operations(fst(named_entries), scd(named_entries))
     assert chart.ledger().post_many(entries).balance_sheet(chart) == BalanceSheet(
         assets={"cash": 464, "receivables": 131, "goods_for_sale": 380},
         capital={"equity": 1000, "re": -80},

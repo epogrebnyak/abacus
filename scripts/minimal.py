@@ -1,4 +1,4 @@
-from abacus import BalanceSheet, Chart, Entry, IncomeStatement
+from abacus import Chart, Entry, BalanceSheet, IncomeStatement
 
 chart = (
     Chart(
@@ -42,7 +42,7 @@ assert balance_sheet == BalanceSheet(
     liabilities={},
 )
 
-# Create next period
+# Create end of period balances
 end_balances = ledger.nonzero_balances()
 print(end_balances)
 next_book = chart.ledger(starting_balances=end_balances)

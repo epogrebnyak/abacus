@@ -38,6 +38,10 @@ class Ledger(UserDict[AccountName, TAccount]):
         """Purge data from ledger. Creates a copy of ledger."""
         return self.apply("empty")
 
+    def make_multiple_entry(self, starting_balances: dict) -> MultipleEntry:
+        """Make a multiple entry from starting balances."""
+        return to_multiple_entry(self, starting_balances)
+
     def balances(self) -> Dict[AccountName, Amount]:
         """Return account balances."""
         return dict(self.apply("balance").data)

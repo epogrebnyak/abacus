@@ -37,9 +37,11 @@ class Chart(BaseModel):
     codes: Dict[AccountName, str] = {}
     operations: Dict[str, Pair] = {}
 
-    def make_entries(self, operation_names, amounts):
+    def make_entries_for_operations(
+        self, operation_names: List[str], amounts: List[str]
+    ):
         return [
-            Entry(*self.operations[on], amount)
+            Entry(*self.operations[on], Amount(amount))
             for on, amount in zip(operation_names, amounts)
         ]
 

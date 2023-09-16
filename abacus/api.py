@@ -42,7 +42,7 @@ from abacus.engine.base import AbacusError, AccountName, Amount, Entry
 from abacus.engine.chart import Chart
 from abacus.engine.closing import make_closing_entries
 from abacus.engine.entries import CsvFile
-from abacus.engine.ledger import Ledger, to_multiple_entry
+from abacus.engine.ledger import Ledger
 
 
 def cwd() -> Path:
@@ -270,14 +270,14 @@ class LedgerCommand:
 
     def add_starting_balances(self, starting_balances_dict: Dict):
         self.chart.ledger(starting_balances_dict)  # check that all accounts are present
-        me = to_multiple_entry(self.chart.ledger(), starting_balances_dict)
+        me = self.chart.ledger().make_multiple_entry(starting_balances_dict)
         entries = me.entries(self.chart.null_account)
         self.csv_file.append_many(entries)
         for entry in entries:
             print("Posted entry:", entry)
 
     def add_operations(self, operations: List[str], amounts: List[str]):
-        entries = self.chart.make_entries(operations, amounts)
+        entries = self.chart.make_entries_for_operations(operations, amounts)
         self.csv_file.append_many(entries)
 
     def add_closing_entries(self):
