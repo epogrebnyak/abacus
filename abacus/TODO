@@ -9,7 +9,7 @@ FOR REVIEW:
 
 FIXME:
 - bx ledger init must fail when file is present
-- --title fails when written first
+- --title fails when written first with post entry (see fail.sh)
 
 TODO:
 - [ ] memo + build-you-own-x

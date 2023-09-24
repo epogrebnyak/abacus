@@ -188,4 +188,88 @@ in [issues](https://github.com/epogrebnyak/abacus/issues),
 on [reddit](https://www.reddit.com/user/iamevpo)
 or via [Telegram](https://t.me/epoepo).
 
-Your feedback is highly appreciated and helps steering `abacus` development.
+Your feedback is highly appreciated and should help steering `abacus` development.
+
+## Contributions
+
+### Program design
+
+`abacus` is designed around core accounting concepts such as
+chart of accounts, general ledger, accounting entry and financial reports.
+These concepts correspond to classes created inside `abacus`:
+`Chart`, `Ledger`, `Entry`, `BalanceSheet` and `IncomeStatement`.
+
+Here is a basic workflow how these classes interact:
+
+- you add necessary accounts to `Chart` indicating account type,
+- from `Chart` you create empty `Ledger`,
+- an `Entry` or a list of entries `[Entry]` can be posted to `Ledger`,
+- there is a procedure to create a list of closing entries and these
+  closing entries are also posted to ledger;
+- from `Ledger` you can get account balances;
+- the account balances are used to create trial balance, `BalanceSheet` and
+  `IncomeStatement`.
+
+As seen in the code in README, you can use just `abacus.Chart` and `abacus.Entry`
+classes to write code for the entire accounting cycle as other classes
+(`Ledger`, balances, `BalanceSheet` and `IncomeStatement`) will be derived form
+`Chart` and `Entry`.
+
+In the sequence above the most tricky part are probably the closing entries,
+thus special care is given to documenting them in the `abacus.closing` module.
+
+Handling contra accounts also required some thinking to implement, but
+I believe we have contra accounts nicely covered in the `abacus`
+type system (there is a contra account class for each account class,
+e.g. `Asset` and `ContraAsset`).
+
+Fro storage of data we persist the chart and the entries and we do not save the
+state of the ledger. Given the chart (from `chart.json` file) and
+accounting entries (from the `entries.json` file) we can calculate
+ledger state at any time. This may seem a bit counter-intuitive, but think
+of entries as deltas to the original state of the ledger.
+
+If you into functional programming, the entire type signature for
+`abacus` is the following:
+
+```
+Chart -> [Entry] -> Ledger -> [ClosingEntry] -> Ledger -> (BalanceSheet, IncomeStatement)
+```
+
+In general, what `abacus` (as well as any other double entry program) does is
+maintaining an extended accounting equation in balance.
+If you are comfortable with this idea, the rest of program flow and code
+should be more natural to follow.
+
+Note that "real" ERP and accounting systems do a lot more than double entry accounting,
+for example keeping the original documents and maintaining identities for the
+clients and suppliers as well as keeping extra data about contracts and
+whatever management accounting may need to have a record of. Validating
+and invalidating entries is also a common task.
+
+Most of this of this is out of scope for double entry ledger.
+We just need a chart of accounts, create a ledger based on chart,
+post entries that have information about debit, credit and amount,
+close ledger at period end and produce reports, plus allow checking
+the trail balance and doing adjustment and post-close entries if needed.
+
+### Testing
+
+You will need [just command runner](https://github.com/casey/just)
+and [poetry package manager](https://python-poetry.org/) for developing
+`abacus`.
+
+All commands I use for testing are gathered in `just grill` command.
+This command will launch:
+
+- `pytest` for unit tests
+- `mypy` to check type annotations
+- `isort` to sort imports
+- `black` for code formatting
+- `ruff` for code check and linting
+- `prettier` to clean markdown files
+- console scripts and Python code from README to keep README up to date
+- bash scripts with command line interface commands as additional tests.
+
+I found that testing CLI with a few bash files, each for chart, ledger, reports and
+show commands, accelerates the workflow.
