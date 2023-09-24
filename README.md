@@ -1,7 +1,7 @@
 # abacus
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
-![PyPI](https://img.shields.io/pypi/v/abacus-py?color=blue)
+[![PyPI](https://img.shields.io/pypi/v/abacus-py?color=blue)](https://pypi.org/project/abacus-py/)
 
 A minimal, yet valid double-entry accounting system, provided as `abacus-py` Python package and the `bx` command line tool.
 

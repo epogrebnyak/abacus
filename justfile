@@ -75,3 +75,7 @@ docs:
 # Publish docs
 docs-publish:
   poetry run mkdocs gh-deploy 
+
+# Publish to PyPI
+publish:
+  poetry publish --build
