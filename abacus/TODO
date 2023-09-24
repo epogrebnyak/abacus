@@ -1,14 +1,11 @@
 FOR REVIEW:
 - [x] open ledger with starting balances
-- [x] single entry and multiple entry
-- [x] --rich or --json
-- [x] add command
+- [x] multiple entry
+- [x] --rich or --json flags
 - [x] show operations in chart
 - [x] add account types to trial balance
 - [x] merge test suites 
 - [x] mount as bx
-- [x] README migration 
-
 
 FIXME:
 - bx ledger init must fail when file is present

@@ -12,7 +12,7 @@ def commands():
 
 
 def test_n_commands(commands):
-    assert len(commands) == 17
+    assert len(commands) == 18
 
 
 def test_runner(tmpdir):
