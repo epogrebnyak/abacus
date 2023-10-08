@@ -18,6 +18,9 @@ from abacus.engine.accounts import (
 )
 from abacus.engine.base import AccountName, Amount
 
+# TODO: may separate from engine
+from abacus.engine.column_builder import Column
+
 
 def total(self: dict) -> Amount:
     return sum(self.values())
@@ -127,7 +130,7 @@ def left_and_right(
     # rename lines
     left = [line.rename(rename_dict) for line in left]
     right = [line.rename(rename_dict) for line in right]
-    # make left and right same number of lines
+    # make `left` and `right` same number of lines by adding empty lines
     n = max(len(left), len(right))
     left += [EmptyLine("", "")] * (n - len(left))
     right += [EmptyLine("", "")] * (n - len(right))
@@ -217,53 +220,10 @@ def offset(line: Line) -> str:
     raise TypeError  # mypy wanted it
 
 
-def to_columns(lines: List[Line]) -> Tuple["Column", "Column"]:
-    return Column(list(map(offset, lines))), Column([line.value for line in lines])
-
-
-@dataclass
-class Column:
-    strings: List[str]
-
-    @property
-    def width(self):
-        return max(len(s) for s in self.strings)
-
-    def align_left(self, fill_char=" "):
-        return Column([s.ljust(self.width, fill_char) for s in self.strings])
-
-    def align_right(self, fill_char=" "):
-        return Column([s.rjust(self.width, fill_char) for s in self.strings])
-
-    def align_center(self):
-        return Column([s.center(self.width) for s in self.strings])
-
-    def empty(self, n: int = 1):
-        return self.refill(" " * n)
-
-    def add_right(self, string: str):
-        return self + self.refill(string)
-
-    def add_space(self, n: int = 1):
-        return self + self.empty(n)
-
-    def add_space_left(self, n: int = 1):
-        return self.empty(n) + self
-
-    def refill(self, text):
-        return Column([text] * len(self.strings))
-
-    def merge(self, column):
-        return Column([a + b for a, b in zip(self.strings, column.strings)])
-
-    def __add__(self, column: "Column"):
-        return self.merge(column)
-
-    def header(self, text):
-        return Column([text.center(self.width)] + self.strings)
-
-    def printable(self):
-        return "\n".join(self.strings)
+def to_columns(lines: List[Line]) -> Tuple[Column, Column]:
+    return Column([offset(line) for line in lines]), Column(
+        [line.value for line in lines]
+    )
 
 
 def yield_tuples_for_trial_balance(chart, ledger):
@@ -278,7 +238,8 @@ def yield_tuples_for_trial_balance(chart, ledger):
             yield account_name, t(account_name), 0, t_account.balance()
 
 
-def nth(data, n, f=lambda x: x):
+def nth(data: List[List | Tuple], n: int, f=str) -> Column:
+    """Make a column from nth element of each tuple or list in `data`."""
     return Column([f(d[n]) for d in data])
 
 
@@ -290,10 +251,8 @@ def view_trial_balance(chart, ledger) -> str:
         .add_space(1)
         .header("Account")
     )
-    col_2 = (
-        nth(data, 2, str).align_right().add_space_left(2).header("Debit").add_space(2)
-    )
-    col_3 = nth(data, 3, str).align_right().add_space_left(2).header("Credit")
+    col_2 = nth(data, 2).align_right().add_space_left(2).header("Debit").add_space(2)
+    col_3 = nth(data, 3).align_right().add_space_left(2).header("Credit")
     return (col_1 + col_2 + col_3).printable()
 
 
