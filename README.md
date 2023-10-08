@@ -46,7 +46,8 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 Сreate temporary directory:
 
 ```
-mkdir -p try_abacus && cd try_abacus
+mkdir -p try_abacus
+cd try_abacus
 ```
 
 ### Chart of accounts
