@@ -1,17 +1,9 @@
-FOR REVIEW:
-- [x] open ledger with starting balances
-- [x] multiple entry
-- [x] --rich or --json flags
-- [x] show operations in chart
-- [x] add account types to trial balance
-- [x] merge test suites 
-- [x] mount as bx
-
 FIXME:
 - bx ledger init must fail when file is present
-- --title fails when written first with post entry (see fail.sh)
+- `--title` fails when written first with post entry (see fail.sh)
 
 TODO:
+- [ ] injest .as file with bx ... commands
 - [ ] memo + build-you-own-x
 - [ ] RAS codes 
 - [ ] --requires flag in alias 
@@ -25,7 +17,7 @@ WONTFIX:
 - [ ] types of entries (S,B,A,C1,C2,C3,C4,P)
 - [ ] post entry with chart check
 - [ ] adjustment and post-close entries
-- [ ] `--reference` or `--refer`
+- [ ] `--reference` or `--refer` or meta
 - [ ] post-close example
 - [ ] add operation title to entry title
 - [ ] add small hash for entry
@@ -37,3 +29,12 @@ WONTFIX:
 Wont fix:
 - [ ] `ledger list` must show nicer output
 - [ ] testing of a multiline string `pytest-console-plugin`
+
+FOR REVIEW:
+- [x] open ledger with starting balances
+- [x] multiple entry
+- [x] --rich or --json flags
+- [x] show operations in chart
+- [x] add account types to trial balance
+- [x] merge test suites 
+- [x] mount as bx

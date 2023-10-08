@@ -109,7 +109,7 @@ bx report --balance-sheet
 bx report --income-statement
 ```
 
-The results for balance sheet and incomestatement should look similar to this:
+The results for balance sheet and income statement should look similar to this:
 
 ```
 Balance sheet
@@ -128,7 +128,7 @@ Expenses                                                   3000
 Profit                                                      500
 ```
 
-### Inspect accounts and show account balances
+### Inspect accounts
 
 `account` command will show detailed information about a specific account.
 `assert` is useful in testing - it makes sure account balance equals specific value after all postings.
