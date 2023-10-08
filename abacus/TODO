@@ -14,7 +14,7 @@ FIXME:
 TODO:
 - [ ] memo + build-you-own-x
 - [ ] RAS codes 
-- [ ] requires in alias 
+- [ ] --requires flag in alias 
 - [ ] textbook examples
 - [ ] adjustment example (with trial balance)
 
@@ -25,7 +25,6 @@ WONTFIX:
 - [ ] types of entries (S,B,A,C1,C2,C3,C4,P)
 - [ ] post entry with chart check
 - [ ] adjustment and post-close entries
-- [ ] consolidate at /example folder
 - [ ] `--reference` or `--refer`
 - [ ] post-close example
 - [ ] add operation title to entry title

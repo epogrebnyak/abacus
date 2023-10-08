@@ -1,4 +1,25 @@
-"""Classes to different types of accounts, all based on TAccount."""
+"""Classes to different types of accounts, all based on TAccount.
+
+Regular accounts (`RegularAccount`)
+
+- Permanent accounts are `Asset`, `Capital` and `Liability`.
+- `RetainedEarnings` is a subclass of `Capital` account. 
+- Income summary account is `IncomeSummaryAccount`.
+- There must be exactly one `RetainedEarnings` 
+  and one `IncomeSummaryAccount` account in a ledger.
+- Temporary accounts `Income` and `Expense` are closed at period end.
+  Their balances are transferred to `IncomeSummaryAccount`.
+  `IncomeSummaryAccount` balance is transferred to  `RetainedEarnings`.
+
+Contra accounts (`ContraAccount`):
+  
+- `ContraIncome` and `ContraExpense` are closed before closing of 
+  `Income` and `Expense`.
+- `ContraAsset`, `ContraCapital` and `ContraLiability` are permanent,
+   they are passed to next period. These accounts are netted for 
+   balance sheet presentation.
+"""
+
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
