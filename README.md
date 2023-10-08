@@ -3,12 +3,12 @@
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 [![PyPI](https://img.shields.io/pypi/v/abacus-py?color=blue)](https://pypi.org/project/abacus-py/)
 
-A minimal, yet valid double-entry accounting system, provided as `abacus-py` Python package and the `bx` command line tool.
+A minimal, yet valid double-entry accounting system in Python. 
 
-Using `abacus` you can:
+With `abacus` you can:
 
 - define a chart of accounts,
-- post regular and adjustment entries to ledger,
+- post entries to ledger,
 - make trial balance,
 - close accounts at period end,
 - produce balance sheet and income statement.
@@ -29,7 +29,7 @@ Using `abacus` you can:
 pip install abacus-py
 ```
 
-This will install both `abacus-py` package and the `bx` command line tool.
+This will install the `abacus` package and the `bx` command line tool.
 
 For latest version install from github:
 
@@ -41,11 +41,15 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Minimal command line example
 
-Сreate temporary directory where `chart.json` and `entries.csv` will be created:
+### Working directory 
+
+Сreate temporary directory:
 
 ```
-mkdir -p scripts/try && cd scripts/try
+mkdir -p scripts/try_abacus && cd scripts/try_abacus
 ```
+
+### Chart of accounts
 
 Create chart of accounts:
 
@@ -66,6 +70,10 @@ bx chart alias --operation cost --debit cogs --credit goods
 bx chart show
 ```
 
+At this point you will see `chart.json` created.
+
+### Ledger
+
 Start ledger, post entries and close accounts at period end:
 
 ```bash
@@ -82,7 +90,9 @@ bx ledger close
 bx ledger post entry --debit re --credit dividend_due --amount 150 --title "Accrue dividend" --after-close
 ```
 
-Make reports:
+### Make reports
+
+Create trial balance, balance sheet and income statement reports.
 
 ```bash
 bx report --trial-balance
@@ -90,15 +100,7 @@ bx report --balance-sheet
 bx report --income-statement
 ```
 
-Inspect accounts:
-
-```bash
-bx account sales
-bx assert cash 3000
-bx balances --nonzero
-```
-
-The results should look similar to this:
+The results for balance sheet and incomestatement should look similar to this:
 
 ```
 Balance sheet
@@ -116,6 +118,34 @@ Expenses                                                   3000
 - Selling, general and adm. expenses                        300
 Profit                                                      500
 ```
+
+### Inspect accounts and show account balances
+
+`account` command will show detailed information about a specific account.
+`assert` is useful in testing - it makes sure account balance equals specific value after all postings.
+
+```bash
+bx account sales
+bx assert cash 3000
+```
+
+### Show account balances
+
+Print to screen a JSON file with account names and account balances.
+
+```bash
+bx balances --nonzero
+```
+
+This command is used in carring balances forward to next period.
+
+```
+# save output to end.json 
+bx balances --nonzero > end.json
+# copy end.json and chart.json to a new folder and do:
+bx ledger init end.json
+```
+
 
 <details>
     <summary>Python code (`scripts/minimal.py`)
@@ -199,35 +229,39 @@ chart of accounts, general ledger, accounting entry and financial reports.
 These concepts correspond to classes created inside `abacus`:
 `Chart`, `Ledger`, `Entry`, `BalanceSheet` and `IncomeStatement`.
 
-Here is a basic workflow how these classes interact:
+Here is a basic workflow in which these classes interact:
 
 - you add necessary accounts to `Chart` indicating account type,
 - from `Chart` you create empty `Ledger`,
-- an `Entry` or a list of entries `[Entry]` can be posted to `Ledger`,
-- there is a procedure to create a list of closing entries and these
-  closing entries are also posted to ledger;
+- an `Entry` or a list of entries `[Entry]` posted to `Ledger`,
+- there is a procedure to create a list of closing entries for `Ledger` and these
+  closing entries are posted to ledger;
 - from `Ledger` you can get account balances;
 - the account balances are used to create trial balance, `BalanceSheet` and
   `IncomeStatement`.
 
-As seen in the code in README, you can use just `abacus.Chart` and `abacus.Entry`
+As seen in the code in README, you need to import just `abacus.Chart` and `abacus.Entry`
 classes to write code for the entire accounting cycle as other classes
 (`Ledger`, balances, `BalanceSheet` and `IncomeStatement`) will be derived form
 `Chart` and `Entry`.
 
-In the sequence above the most tricky part are probably the closing entries,
+In the sequence above the most tricky part is probably the closing entries issue,
 thus special care is given to documenting them in the `abacus.closing` module.
 
-Handling contra accounts also required some thinking to implement, but
-I believe we have contra accounts nicely covered in the `abacus`
-type system (there is a contra account class for each account class,
-e.g. `Asset` and `ContraAsset`).
+`abacus` type system also also handles contra accounts, for example 
+property, plant and equipment is an instance of `Asset` class, while 
+depreciation is a `ContraAsset` instance. The temporary contra accounts
+(those offsetting `Income` and `Expense`) will be closed at period end, 
+while permanent contra accounts (offsetting `Asset`, `Equity` and `Liability`)
+will be carried forward to next period to preserve useful information.
 
-Fro storage of data we persist the chart and the entries and we do not save the
+For storage we persist just the chart and the entries posted and we do not save the
 state of the ledger. Given the chart (from `chart.json` file) and
 accounting entries (from the `entries.json` file) we can calculate
-ledger state at any time. This may seem a bit counter-intuitive, but think
-of entries as deltas to the original state of the ledger.
+ledger state at any time. This state may be cached to speed up retieval 
+of balances in a bigger systems (see [solution used in `medici` package][cache]).
+
+[cache]: https://github.com/flash-oss/medici#fast-balance
 
 If you into functional programming, the entire type signature for
 `abacus` is the following:
@@ -236,22 +270,29 @@ If you into functional programming, the entire type signature for
 Chart -> [Entry] -> Ledger -> [ClosingEntry] -> Ledger -> (BalanceSheet, IncomeStatement)
 ```
 
-In general, what `abacus` (as well as any other double entry program) does is
+1. start with chart
+2. add a list of entries
+3. create ledger
+4. calualte closing entries
+5. post closing entries to ledger
+6. calculate balance sheet and income statement
+
+In general, what `abacus` (or any other double entry program) does is
 maintaining an extended accounting equation in balance.
 If you are comfortable with this idea, the rest of program flow and code
-should be more natural to follow.
+should be more easy to follow.
 
-Note that "real" ERP and accounting systems do a lot more than double entry accounting,
-for example keeping the original documents and maintaining identities for the
-clients and suppliers as well as keeping extra data about contracts and
-whatever management accounting may need to have a record of. Validating
-and invalidating entries is also a common task.
+Note that real ERP and accounting systems do a lot more than double entry accounting,
+for example keeping the original documents and maintaining identities 
+of the clients and suppliers as well as keeping extra data about contracts and
+whatever management accounting may need to have a record of (your inventory). 
 
-Most of this of this is out of scope for double entry ledger.
+Most of this funcitonality is out of scope for a double entry ledger.
 We just need a chart of accounts, create a ledger based on chart,
-post entries that have information about debit, credit and amount,
-close ledger at period end and produce reports, plus allow checking
-the trail balance and doing adjustment and post-close entries if needed.
+post entries that have information about debit account, credit account and amount,
+close ledger at period end and produce financial reports,
+plus allow creating a trail balance and doing adjustment 
+and post-close entries if needed.
 
 ### Testing
 
@@ -268,8 +309,8 @@ This command will launch:
 - `black` for code formatting
 - `ruff` for code check and linting
 - `prettier` to clean markdown files
-- console scripts and Python code from README to keep README up to date
-- bash scripts with command line interface commands as additional tests.
+- extracting and running code from README.md
+- a few bash scripts to keep text the `bx`command line tool.
 
-I found that testing CLI with a few bash files, each for chart, ledger, reports and
-show commands, accelerates the workflow.
+I found that testing CLI with bash files, one for chart, ledger, reports and
+inspect commands, accelerates the development workflow.
