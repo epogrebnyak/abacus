@@ -3,10 +3,6 @@
 # run commands from console
 
 
-import yaml
-import subprocess
-import os
-import sys              
 import pathlib
 
 doc = pathlib.Path("example.as").read_text()
