@@ -31,4 +31,5 @@ bx report --income-statement
 
 bx account sales
 bx assert cash 3000
+
 bx balances --nonzero

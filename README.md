@@ -3,7 +3,7 @@
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 [![PyPI](https://img.shields.io/pypi/v/abacus-py?color=blue)](https://pypi.org/project/abacus-py/)
 
-A minimal, yet valid double-entry accounting system in Python. 
+A minimal, yet valid double-entry accounting system in Python.
 
 With `abacus` you can:
 
@@ -41,17 +41,23 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Minimal command line example
 
-### Working directory 
+### Working directory
 
 Сreate temporary directory:
 
 ```
-mkdir -p scripts/try_abacus && cd scripts/try_abacus
+mkdir -p try_abacus && cd try_abacus
 ```
 
 ### Chart of accounts
 
-Create chart of accounts:
+Create chart of accounts using the following:
+
+- `chart init` for new chart
+- `chart add` for regular accounts
+- `chart offset` for contra accounts
+- `chart alias` for naming operations
+- `chart show` to print chart
 
 ```bash
 bx chart init
@@ -89,6 +95,8 @@ bx ledger post entry --debit sga --credit prepaid_rent --amount 800 --title "Exp
 bx ledger close
 bx ledger post entry --debit re --credit dividend_due --amount 150 --title "Accrue dividend" --after-close
 ```
+
+At this point you will see `entries.csv` created.
 
 ### Make reports
 
@@ -140,12 +148,11 @@ bx balances --nonzero
 This command is used in carring balances forward to next period.
 
 ```
-# save output to end.json 
+# save output to end.json
 bx balances --nonzero > end.json
 # copy end.json and chart.json to a new folder and do:
 bx ledger init end.json
 ```
-
 
 <details>
     <summary>Python code (`scripts/minimal.py`)
@@ -248,17 +255,17 @@ classes to write code for the entire accounting cycle as other classes
 In the sequence above the most tricky part is probably the closing entries issue,
 thus special care is given to documenting them in the `abacus.closing` module.
 
-`abacus` type system also also handles contra accounts, for example 
-property, plant and equipment is an instance of `Asset` class, while 
+`abacus` type system also also handles contra accounts, for example
+property, plant and equipment is an instance of `Asset` class, while
 depreciation is a `ContraAsset` instance. The temporary contra accounts
-(those offsetting `Income` and `Expense`) will be closed at period end, 
+(those offsetting `Income` and `Expense`) will be closed at period end,
 while permanent contra accounts (offsetting `Asset`, `Equity` and `Liability`)
 will be carried forward to next period to preserve useful information.
 
 For storage we persist just the chart and the entries posted and we do not save the
 state of the ledger. Given the chart (from `chart.json` file) and
 accounting entries (from the `entries.json` file) we can calculate
-ledger state at any time. This state may be cached to speed up retieval 
+ledger state at any time. This state may be cached to speed up retieval
 of balances in a bigger systems (see [solution used in `medici` package][cache]).
 
 [cache]: https://github.com/flash-oss/medici#fast-balance
@@ -283,15 +290,15 @@ If you are comfortable with this idea, the rest of program flow and code
 should be more easy to follow.
 
 Note that real ERP and accounting systems do a lot more than double entry accounting,
-for example keeping the original documents and maintaining identities 
+for example keeping the original documents and maintaining identities
 of the clients and suppliers as well as keeping extra data about contracts and
-whatever management accounting may need to have a record of (your inventory). 
+whatever management accounting may need to have a record of (your inventory).
 
 Most of this funcitonality is out of scope for a double entry ledger.
 We just need a chart of accounts, create a ledger based on chart,
 post entries that have information about debit account, credit account and amount,
 close ledger at period end and produce financial reports,
-plus allow creating a trail balance and doing adjustment 
+plus allow creating a trail balance and doing adjustment
 and post-close entries if needed.
 
 ### Testing
