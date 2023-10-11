@@ -7,14 +7,18 @@ import pathlib
 
 doc = pathlib.Path("example.as").read_text()
 
-from dataclasses import dataclass    
+from dataclasses import dataclass
+
+
 @dataclass
 class Key:
-    term: str    
+    term: str
+
 
 @dataclass
 class Command:
-    term: str    
+    term: str
+
 
 def parse(doc):
     for line in doc.splitlines():
@@ -24,6 +28,7 @@ def parse(doc):
             yield Command(line.strip())
         if line.endswith(":"):
             yield Key(line[:-1])
+
 
 elements = list(parse(doc))
 
@@ -36,4 +41,4 @@ for element in elements:
         case Command(term):
             command = term
             if prefix:
-                print(prefix + " " + command)    
+                print(prefix + " " + command)

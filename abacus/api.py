@@ -145,23 +145,25 @@ class ChartCommand:
         return self
 
     def _add(self, attribute: str, account_name: str):
-        setattr(self.chart, attribute, getattr(self.chart, attribute) + [account_name])
+        new_list = getattr(self.chart, attribute) + [account_name]
+        setattr(self.chart, attribute, new_list)
+        return self
 
     def add_asset(self, account_name: str):
-        self._add("assets", account_name)
+        return self._add("assets", account_name)
 
     def add_capital(self, account_name: str):
-        # adding account_names to 'equity' attribute
-        self._add("equity", account_name)
+        # will adding account_name to 'equity' attribute
+        return self._add("equity", account_name)
 
     def add_liability(self, account_name: str):
-        self._add("liabilities", account_name)
+        return self._add("liabilities", account_name)
 
     def add_income(self, account_name: str):
-        self._add("income", account_name)
+        return self._add("income", account_name)
 
     def add_expense(self, account_name: str):
-        self._add("expenses", account_name)
+        return self._add("expenses", account_name)
 
     def offset(self, account_name, contra_account_names) -> str:
         for contra_account_name in contra_account_names:
