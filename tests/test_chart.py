@@ -57,7 +57,7 @@ def test_accounts_names_all(chart):
 
 
 def test_contra_account_pairs(chart):
-    assert list(chart.viewer.get_contra_accounts_all(RegularAccountEnum.INCOME)) == [
+    assert list(chart.viewer.get_contra_account_pairs(RegularAccountEnum.INCOME)) == [
         ("sales", "refunds"),
         ("sales", "voids"),
     ]

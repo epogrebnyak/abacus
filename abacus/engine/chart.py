@@ -21,9 +21,16 @@ def repeated_names(xs):
     return [k for k, v in Counter(xs).items() if v > 1]
 
 
+def first(xs):
+    return [x[0] for x in xs]
+
+
 @dataclass
 class ChartViewer:
     chart: "Chart"
+
+    def contains(self, account_name: AccountName) -> bool:
+        return account_name in self.account_names_all()
 
     def get_regular_account_names(
         self, regular_account: RegularAccountEnum | Type[RegularAccount]
@@ -34,28 +41,28 @@ class ChartViewer:
             attribute = RegularAccountEnum.from_class(regular_account).value
         return getattr(self.chart, attribute)
 
-    def get_contra_accounts_one(
-        self, regular_account_name: AccountName
-    ) -> List[Tuple[AccountName, AccountName]]:
-        try:
-            return [
-                (regular_account_name, contra_account_name)
-                for contra_account_name in self.chart.contra_accounts[
-                    regular_account_name
-                ]
-            ]
-        except KeyError:
-            return []
-
-    def get_contra_accounts_all(
+    def get_contra_account_pairs(
         self, regular_account_type: RegularAccountEnum
     ) -> List[Tuple[AccountName, AccountName]]:
+        """Get contra account pairs for all regular account types."""
+
+        def get_one(regular_account_name):
+            """Get all contra accounts for a given regular account."""
+            r = regular_account_name
+            try:
+                return [
+                    (r, contra_account_name)
+                    for contra_account_name in self.chart.contra_accounts[r]
+                ]
+            except KeyError:
+                return []
+
         return [
             pair
             for regular_account_name in self.get_regular_account_names(
                 regular_account_type
             )
-            for pair in self.get_contra_accounts_one(regular_account_name)
+            for pair in get_one(regular_account_name)
         ]
 
     def account_names_regular(self) -> List[AccountName]:
@@ -71,7 +78,7 @@ class ChartViewer:
         return [v for values in self.chart.contra_accounts.values() for v in values]
 
     def account_names_unique(self) -> List[AccountName]:
-        return [account_name for account_name, _ in self.yield_unique_accounts()]
+        return first(self.yield_unique_accounts())
 
     def account_names_all(self) -> List[AccountName]:
         """Names of all regular accounts, contra accounts and unique accounts."""
@@ -84,15 +91,6 @@ class ChartViewer:
     @property
     def duplicates(self):
         return repeated_names(self.account_names_all())
-
-    # def contra_account_pairs(self, cls: Type[RegularAccount]):
-    #     """Yield pairs of regular and contra account names for given regular account type *cls*.
-    #     This action unpacks self.conta_accounts to a sequence of tuples, each tuple is
-    #     a pair of account names."""
-    #     for regular_account_name, contra_account_names in self.chart.contra_accounts.items():
-    #         if regular_account_name in self.account_names(cls):
-    #             for contra_account_name in contra_account_names:
-    #                 yield regular_account_name, contra_account_name
 
     def get_account_type(self, account_name: AccountName) -> Type:
         return dict(self.yield_all_accounts())[account_name]

@@ -44,10 +44,12 @@ class CsvFile:
     def touch(self):
         if not self.path.exists():
             self.path.touch()
+        return self
 
     def erase(self):
         if self.path.exists():
             self.path.unlink()
+        return self
 
 
 def touches_isa(chart: Chart, entry: Entry) -> bool:

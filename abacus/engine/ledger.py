@@ -102,6 +102,9 @@ class Ledger(UserDict[AccountName, TAccount]):
         closing_entries_struct = make_closing_entries(chart, self)
         return closing_entries_struct.all() + flush_permanent_accounts(chart, self)
 
+    def closing_entries(self, chart):
+        return self.closing_entries_for_balance_sheet(chart)
+
     def close(self, chart: Chart) -> "Ledger":
         """Close all accounts related to retained earnings and to permanent accounts.
         Returns a copy of a ledger.

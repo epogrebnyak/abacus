@@ -92,7 +92,7 @@ def _flush_by_enum(
     the entries will transfer balances from ContraIncome accounts to Income accounts.
 
     These entries are used to close contra accounts."""
-    g = chart.viewer.get_contra_accounts_all(regular_account)
+    g = chart.viewer.get_contra_account_pairs(regular_account)
     return [
         ledger[contra_account_name].transfer(contra_account_name, regular_account_name)  # type: ignore
         for regular_account_name, contra_account_name in g

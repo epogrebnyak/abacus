@@ -175,6 +175,8 @@ class ContraIncome(DebitAccount, ContraAccount, Temporary):
 
 
 class RegularAccountEnum(Enum):
+    """Class for mapping account types to their names."""
+
     # enum values are Chart attributes
     ASSET = "assets"
     LIABILITY = "liabilities"
