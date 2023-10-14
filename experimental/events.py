@@ -1,7 +1,8 @@
-from abacus import Amount, Entry
 from dataclasses import dataclass, field
 from datetime import date as Date
 from typing import List
+
+from abacus import Amount, Entry
 
 
 @dataclass

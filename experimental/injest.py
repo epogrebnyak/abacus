@@ -4,10 +4,9 @@
 
 
 import pathlib
+from dataclasses import dataclass
 
 doc = pathlib.Path("example.as").read_text()
-
-from dataclasses import dataclass
 
 
 @dataclass

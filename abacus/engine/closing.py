@@ -2,14 +2,7 @@
 from dataclasses import dataclass
 from typing import List, Type
 
-from abacus.engine.accounts import (
-    Asset,
-    Capital,
-    Expense,
-    Income,
-    Liability,
-    RegularAccount,
-)
+from abacus.engine.accounts import Expense, Income, RegularAccount, RegularAccountEnum
 from abacus.engine.base import AccountName, Entry
 from abacus.engine.chart import Chart
 from abacus.engine.ledger import Ledger
@@ -23,10 +16,14 @@ __all__ = [
 
 
 def flush_permanent_accounts(chart: Chart, ledger: Ledger) -> List[Entry]:
-    def f(cls):
-        return _flush(chart, ledger, cls)
+    def f(account_type: RegularAccountEnum):
+        return _flush_by_enum(chart, ledger, account_type)
 
-    return f(Asset) + f(Capital) + f(Liability)
+    return (
+        f(RegularAccountEnum.ASSET)
+        + f(RegularAccountEnum.EQUITY)
+        + f(RegularAccountEnum.LIABILITY)
+    )
 
 
 @dataclass
@@ -81,13 +78,24 @@ def make_closing_entries(chart: Chart, ledger: Ledger) -> ClosingEntries:
 
 
 def _flush(chart: Chart, ledger: Ledger, cls: Type[RegularAccount]) -> List[Entry]:
+    return _flush_by_enum(
+        chart, ledger, regular_account=RegularAccountEnum.from_class(cls)
+    )
+
+
+def _flush_by_enum(
+    chart: Chart, ledger: Ledger, regular_account: RegularAccountEnum
+) -> List[Entry]:
     """Make a list of entries for transferring balances for accounts of a certain type.
+
     The type of accounts is contra accounts for *cls*, e.g. when provided Income,
     the entries will transfer balances from ContraIncome accounts to Income accounts.
+
     These entries are used to close contra accounts."""
+    g = chart.viewer.get_contra_accounts_all(regular_account)
     return [
         ledger[contra_account_name].transfer(contra_account_name, regular_account_name)  # type: ignore
-        for regular_account_name, contra_account_name in chart.contra_account_pairs(cls)
+        for regular_account_name, contra_account_name in g
     ]
 
 

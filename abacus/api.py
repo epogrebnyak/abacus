@@ -70,7 +70,7 @@ def init_chart(path: Path):
 
 def print_chart(chart: Chart):
     def name(account_name):
-        return chart.compose_name(account_name)
+        return chart.namer.compose_name(account_name)
 
     print("Accounts:")
     for attribute in chart.five_types_of_accounts():
@@ -91,7 +91,7 @@ def print_chart(chart: Chart):
 def print_re(chart):
     print(
         "Retained earnings account:",
-        chart.compose_name(chart.retained_earnings_account) + ".",
+        chart.namer.compose_name(chart.retained_earnings_account) + ".",
     )
 
 
@@ -180,7 +180,9 @@ class ChartCommand:
 
     def set_name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
-        return "Added account title: " + self.chart.compose_name(account_name) + "."
+        return (
+            "Added account title: " + self.chart.namer.compose_name(account_name) + "."
+        )
 
     def set_code(self, account_name, code: str) -> str:
         self.chart.set_code(account_name, code)
@@ -376,9 +378,9 @@ def side(ledger, account_name):
 
 def print_account_info(ledger, chart, account_name: str):
     account = ledger[account_name]
-    print("     Account:", chart.get_name(account_name))
+    print("     Account:", chart.namer[account_name])
     print("  Short name:", account_name)
-    print("   Long name:", chart.compose_name_long(account_name))
+    print("   Long name:", chart.namer.compose_name_long(account_name))
     print("        Code:", chart.codes.get(account_name, "not assigned"))
     print("        Type:", account.split_on_caps())
     print("      Debits:", str(account.debits) + ",", "total", sum(account.debits))

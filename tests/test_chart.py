@@ -1,6 +1,6 @@
 import pytest  # type: ignore
 
-from abacus.engine.accounts import Asset, DebitAccount, Income
+from abacus.engine.accounts import Asset, DebitAccount, RegularAccountEnum
 from abacus.engine.base import AbacusError
 from abacus.engine.chart import Chart
 from abacus.engine.ledger import Ledger
@@ -40,14 +40,14 @@ def test_chart_offset():
 
 
 def test_accounts_names_all(chart):
-    assert chart.account_names_all() == [
+    assert chart.viewer.account_names_all() == [
         "cash",
         "ar",
         "goods",
-        "cogs",
-        "sga",
         "equity",
         "sales",
+        "cogs",
+        "sga",
         "refunds",
         "voids",
         "re",
@@ -57,14 +57,14 @@ def test_accounts_names_all(chart):
 
 
 def test_contra_account_pairs(chart):
-    assert list(chart.contra_account_pairs(Income)) == [
+    assert list(chart.viewer.get_contra_accounts_all(RegularAccountEnum.INCOME)) == [
         ("sales", "refunds"),
         ("sales", "voids"),
     ]
 
 
 def test_account_names(chart):
-    assert chart.account_names(Asset) == ["cash", "ar", "goods"]
+    assert chart.viewer.get_regular_account_names(Asset) == ["cash", "ar", "goods"]
 
 
 def test_chart_offset_many():
@@ -74,11 +74,12 @@ def test_chart_offset_many():
 
 
 def test_chart_get_name():
-    assert Chart().get_name("_dividends_due") == "Dividends due"
+    assert Chart().namer["_dividends_due"] == "Dividends due"
 
 
 def test_chart_set_name_get_name():
-    assert Chart().set_name("cos", "Cost of sales").get_name("cos") == "Cost of sales"
+    namer = Chart().set_name("cos", "Cost of sales").namer
+    assert namer["cos"] == "Cost of sales"
 
 
 def test_is_debit_account():
@@ -143,7 +144,7 @@ def test_invalid_chart_with_non_existent_contra_account_name():
 
 
 def test_account_names_method(chart):
-    assert chart.account_names(Asset) == ["cash", "ar", "goods"]
+    assert chart.viewer.get_regular_account_names(Asset) == ["cash", "ar", "goods"]
 
 
 def test_creation():

@@ -1,21 +1,44 @@
-from pathlib import Path
-from abacus import Chart, AbacusError #, AccountName
 from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+
+from abacus import AbacusError, Chart
+from abacus.engine.base import AccountName
 
 
-def init_chart(path: Path):
+def contra_phrase(account_name, contra_account_names):
+    return account_name + " is offset by " + ", ".join(contra_account_names)
+
+
+def init_chart(path: Path) -> None:
     """Write empty chart to *path* if does not file exist."""
     if not path.exists():
         ChartCommand.new().write(path)
     else:
         raise AbacusError
 
-def contra_phrase(account_name, contra_account_names):
-    return account_name + " is offset by " + ", ".join(contra_account_names)
 
 @dataclass
 class Lоgger:
+    """Logger will hold string notifiaction about last action taken"""
+
     message: str = ""
+
+    def log(self, string: str):
+        self.message = string
+
+
+class RegularAccount(Enum):
+    ASSET = "asset"
+    LIABILITY = "liability"
+    EQUITY = "equity"
+    INCOME = "income"
+    EXPENSE = "expense"
+
+
+def flag_to_account_type(flag: str) -> RegularAccount:
+    return RegularAccount(flag.upper())
+
 
 @dataclass
 class ChartCommand:
@@ -50,6 +73,9 @@ class ChartCommand:
         return self
 
     def _add(self, attribute: str, account_name: str) -> "ChartCommand":
+        """Generic metod to add account of *atrribute* type to chart.
+        Attribute in any of ['assets', 'liabilities', 'equity', 'income', 'expenses'].
+        """
         account_names = getattr(self.chart, attribute) + [account_name]
         setattr(self.chart, attribute, account_names)
         return self
@@ -58,7 +84,7 @@ class ChartCommand:
         return self._add("assets", account_name)
 
     def add_capital(self, account_name: str):
-        # will add account_name to 'equity' attribute
+        """Add *account_name* to 'equity' attribute of the chart."""
         return self._add("equity", account_name)
 
     def add_liability(self, account_name: str):
@@ -70,25 +96,32 @@ class ChartCommand:
     def add_expense(self, account_name: str):
         return self._add("expenses", account_name)
 
-    def offset(self, account_name, contra_account_names) ->     "ChartCommand":
+    def offset(self, account_name, contra_account_names) -> "ChartCommand":
         for contra_account_name in contra_account_names:
             self.chart.offset(account_name, contra_account_name)
         # logging
-        text = "Added contra account:"
-        if len(contra_account_names) > 1:
-            text = "Added contra accounts:"
-        self.logger.message = text + " " + contra_phrase(account_name, contra_account_names) + "."
+        ending = "s" if len(contra_account_names) > 1 else ""
+        text = f"Added contra account{ending}:"
+        self.logger.log(
+            text + " " + contra_phrase(account_name, contra_account_names) + "."
+        )
         return self
 
     def alias(self, name: str, debit: AccountName, credit: AccountName):
         self.chart.add_operation(name, debit, credit)
-        self.logger.message = f"Added operation: {name} (debit is {debit}, credit is {credit})."
+        self.logger.log(
+            f"Added operation: {name} (debit is {debit}, credit is {credit})."
+        )
         return self
 
     def set_name(self, account_name, title) -> str:
         self.chart.set_name(account_name, title)
-        return "Added account title: " + self.chart.compose_name(account_name) + "."
+        self.logger.log(
+            f"Added account title: {self.chart.namer.compose_name(account_name)}."
+        )
+        return self
 
     def set_code(self, account_name, code: str) -> str:
         self.chart.set_code(account_name, code)
-        return f"Set code {code} for account {account_name}."
+        self.logger.log(f"Set code {code} for account {account_name}.")
+        return self

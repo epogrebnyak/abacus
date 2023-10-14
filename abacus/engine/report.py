@@ -228,7 +228,7 @@ def to_columns(lines: List[Line]) -> Tuple[Column, Column]:
 
 def yield_tuples_for_trial_balance(chart, ledger):
     def t(account_name):
-        return chart.get_account_type(account_name).__name__
+        return chart.viewer.get_account_type(account_name).__name__
 
     for account_name, t_account in ledger.items():
         if isinstance(t_account, DebitAccount):
@@ -246,7 +246,7 @@ def nth(data: List[List | Tuple], n: int, f=str) -> Column:
 def view_trial_balance(chart, ledger) -> str:
     data = list(yield_tuples_for_trial_balance(chart, ledger))
     col_1 = (
-        Column([chart.compose_name_long(d[0]) for d in data])
+        Column([chart.namer.compose_name_long(d[0]) for d in data])
         .align_left(".")
         .add_space(1)
         .header("Account")

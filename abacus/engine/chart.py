@@ -1,7 +1,9 @@
 """Chart of accounts data structure."""
 
+import itertools
 from collections import Counter
-from typing import Dict, List, Type
+from dataclasses import dataclass
+from typing import Dict, List, Tuple, Type
 
 from pydantic import BaseModel  # type: ignore
 
@@ -9,14 +11,118 @@ from abacus.engine.accounts import (
     IncomeSummaryAccount,
     NullAccount,
     RegularAccount,
+    RegularAccountEnum,
     RetainedEarnings,
-    mapping,
 )
 from abacus.engine.base import AbacusError, AccountName, Amount, Entry, Pair
 
 
 def repeated_names(xs):
     return [k for k, v in Counter(xs).items() if v > 1]
+
+
+@dataclass
+class ChartViewer:
+    chart: "Chart"
+
+    def get_regular_account_names(
+        self, regular_account: RegularAccountEnum | Type[RegularAccount]
+    ) -> List[AccountName]:
+        if isinstance(regular_account, RegularAccountEnum):
+            attribute = regular_account.value
+        else:
+            attribute = RegularAccountEnum.from_class(regular_account).value
+        return getattr(self.chart, attribute)
+
+    def get_contra_accounts_one(
+        self, regular_account_name: AccountName
+    ) -> List[Tuple[AccountName, AccountName]]:
+        try:
+            return [
+                (regular_account_name, contra_account_name)
+                for contra_account_name in self.chart.contra_accounts[
+                    regular_account_name
+                ]
+            ]
+        except KeyError:
+            return []
+
+    def get_contra_accounts_all(
+        self, regular_account_type: RegularAccountEnum
+    ) -> List[Tuple[AccountName, AccountName]]:
+        return [
+            pair
+            for regular_account_name in self.get_regular_account_names(
+                regular_account_type
+            )
+            for pair in self.get_contra_accounts_one(regular_account_name)
+        ]
+
+    def account_names_regular(self) -> List[AccountName]:
+        """Names of all regular accounts in chart."""
+        return [
+            account_name
+            for regular_account in RegularAccountEnum.all()
+            for account_name in self.get_regular_account_names(regular_account)
+        ]
+
+    def account_names_contra(self) -> List[AccountName]:
+        """Names of contra accounts in chart."""
+        return [v for values in self.chart.contra_accounts.values() for v in values]
+
+    def account_names_unique(self) -> List[AccountName]:
+        return [account_name for account_name, _ in self.yield_unique_accounts()]
+
+    def account_names_all(self) -> List[AccountName]:
+        """Names of all regular accounts, contra accounts and unique accounts."""
+        return (
+            self.account_names_regular()
+            + self.account_names_contra()
+            + self.account_names_unique()
+        )
+
+    @property
+    def duplicates(self):
+        return repeated_names(self.account_names_all())
+
+    # def contra_account_pairs(self, cls: Type[RegularAccount]):
+    #     """Yield pairs of regular and contra account names for given regular account type *cls*.
+    #     This action unpacks self.conta_accounts to a sequence of tuples, each tuple is
+    #     a pair of account names."""
+    #     for regular_account_name, contra_account_names in self.chart.contra_accounts.items():
+    #         if regular_account_name in self.account_names(cls):
+    #             for contra_account_name in contra_account_names:
+    #                 yield regular_account_name, contra_account_name
+
+    def get_account_type(self, account_name: AccountName) -> Type:
+        return dict(self.yield_all_accounts())[account_name]
+
+    def yield_unique_accounts(self):
+        yield self.chart.retained_earnings_account, RetainedEarnings
+        yield self.chart.income_summary_account, IncomeSummaryAccount
+        yield self.chart.null_account, NullAccount
+
+    def yield_regular_accounts(self):
+        for regular_account_type in RegularAccountEnum.all():
+            cls = regular_account_type.cls()
+            for account_name in self.get_regular_account_names(regular_account_type):
+                yield account_name, cls
+
+    def yield_contra_accounts(self):
+        for regular_account_type in RegularAccountEnum.all():
+            for account_name in self.get_regular_account_names(regular_account_type):
+                if account_name in self.chart.contra_accounts.keys():
+                    contra_cls = regular_account_type.contra_class()
+                    for contra_account_name in self.chart.contra_accounts[account_name]:
+                        yield contra_account_name, contra_cls
+        yield from []
+
+    def yield_all_accounts(self):
+        return itertools.chain(
+            self.yield_regular_accounts(),
+            self.yield_contra_accounts(),
+            self.yield_unique_accounts(),
+        )
 
 
 class Chart(BaseModel):
@@ -60,31 +166,10 @@ class Chart(BaseModel):
         self.names[account_name] = title
         return self
 
-    def get_name(self, account_name: AccountName) -> str:
-        try:
-            return self.names[account_name]
-        except KeyError:
-            return account_name.replace("_", " ").strip().capitalize()
-
-    def compose_name(self, account_name: AccountName):
-        """Produce name like 'cash (Cash)'."""
-        return account_name + " (" + self.get_name(account_name) + ")"
-
-    def compose_name_long(self, account_name: AccountName):
-        """Produce name like 'asset:cash (Cash)'."""
-        t = self.get_account_type(account_name).__name__
-        n = self.get_name(account_name)
-        return t + ":" + account_name + " (" + n + ")"
-
-    @property
-    def duplicates(self):
-        return repeated_names(self.account_names_all())
-
     def validate(self):
-        if self.duplicates:
-            raise AbacusError(
-                f"Following account names were duplicated: {self.duplicates}"
-            )
+        dups = self.viewer.duplicates
+        if dups:
+            raise AbacusError(f"Following account names were duplicated: {dups}")
         return self
 
     def offset(
@@ -93,7 +178,7 @@ class Chart(BaseModel):
         contra_account_names: AccountName | List[AccountName],
     ):
         """Add contra accounts to chart."""
-        if account_name not in self.account_names_all():
+        if account_name not in self.viewer.account_names_regular():
             raise AbacusError(
                 f"{account_name} must be specified in chart before adding {contra_account_names}."
             )
@@ -105,51 +190,12 @@ class Chart(BaseModel):
             self.contra_accounts[account_name] = contra_account_names
         return self
 
-    def account_names_regular(self) -> List[AccountName]:
-        return [
-            account_name
-            for attribute, _ in mapping()
-            for account_name in getattr(self, attribute)
-        ]
-
-    def account_names_contra(self) -> List[AccountName]:
-        return [v for values in self.contra_accounts.values() for v in values]
-
-    def account_names_all(self) -> List[AccountName]:
-        """Names of all regular accounts, contra accounts and unique accounts."""
-        return (
-            self.account_names_regular()
-            + self.account_names_contra()
-            + [
-                self.retained_earnings_account,
-                self.income_summary_account,
-                self.null_account,
-            ]
-        )
-
-    def account_names(self, cls: Type[RegularAccount]) -> List[AccountName]:
-        """Return account names for account class *cls*."""
-        reverse_dict = {
-            Class.__name__: attribute for attribute, (Class, _) in mapping()
-        }
-        attribute = reverse_dict[cls.__name__]  # "assets" for example
-        return getattr(self, attribute)
-
-    def contra_account_pairs(self, cls: Type[RegularAccount]):
-        """Yield pairs of regular and contra account names for given regular account type *cls*.
-        This action unpacks self.conta_accounts to a sequence of tuples, each tuple is
-        a pair of account names."""
-        for regular_account_name, contra_account_names in self.contra_accounts.items():
-            if regular_account_name in self.account_names(cls):
-                for contra_account_name in contra_account_names:
-                    yield regular_account_name, contra_account_name
-
-    def get_account_type(self, account_name: AccountName) -> Type:
-        return dict(yield_all_accounts(self))[account_name]
-
     def ledger_dict(self):
         """Create ledger dictionary from chart. Used to create Ledger class."""
-        return {account_name: cls() for account_name, cls in yield_all_accounts(self)}
+        return {
+            account_name: cls()
+            for account_name, cls in self.viewer.yield_all_accounts()
+        }
 
     def ledger(self, starting_balances: Dict[AccountName, Amount] = {}):
         """Create ledger from chart."""
@@ -166,18 +212,33 @@ class Chart(BaseModel):
             )
         return ledger
 
+    @property
+    def namer(self):
+        return Namer(self)
 
-def yield_all_accounts(chart: Chart):
-    for attribute, (Class, ContraClass) in mapping():
-        for account_name in getattr(chart, attribute):
-            # regular accounts
-            yield account_name, Class
-            try:
-                # contra accounts if found
-                for contra_account_name in chart.contra_accounts[account_name]:
-                    yield contra_account_name, ContraClass
-            except KeyError:
-                pass
-    yield chart.retained_earnings_account, RetainedEarnings
-    yield chart.income_summary_account, IncomeSummaryAccount
-    yield chart.null_account, NullAccount
+    @property
+    def viewer(self):
+        return ChartViewer(self)
+
+
+@dataclass
+class Namer:
+    """Get account names and titles."""
+
+    chart: Chart
+
+    def __getitem__(self, account_name: AccountName) -> str:
+        try:
+            return self.chart.names[account_name]
+        except KeyError:
+            return account_name.replace("_", " ").strip().capitalize()
+
+    def compose_name(self, account_name: AccountName):
+        """Produce name like 'cash (Cash)'."""
+        return account_name + " (" + self[account_name] + ")"
+
+    def compose_name_long(self, account_name: AccountName):
+        """Produce name like 'asset:cash (Cash)'."""
+        t = self.chart.viewer.get_account_type(account_name).__name__
+        n = self[account_name]
+        return t + ":" + account_name + " (" + n + ")"

@@ -23,9 +23,10 @@ Contra accounts (`ContraAccount`):
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List
+from enum import Enum
+from typing import List, Type
 
-from abacus.engine.base import AccountName, Amount, Entry
+from abacus.engine.base import AbacusError, AccountName, Amount, Entry
 
 
 @dataclass
@@ -173,12 +174,51 @@ class ContraIncome(DebitAccount, ContraAccount, Temporary):
     pass
 
 
-def mapping():
-    """Relate Chart class attributes (keys) to actual classes (values)."""
-    return dict(
-        assets=(Asset, ContraAsset),
-        expenses=(Expense, ContraExpense),
-        equity=(Capital, ContraCapital),
-        liabilities=(Liability, ContraLiability),
-        income=(Income, ContraIncome),
-    ).items()
+class RegularAccountEnum(Enum):
+    # enum values are Chart attributes
+    ASSET = "assets"
+    LIABILITY = "liabilities"
+    EQUITY = "equity"
+    INCOME = "income"
+    EXPENSE = "expenses"
+
+    @classmethod
+    def from_flag(cls, string: str) -> "RegularAccountEnum":
+        string = string.upper().strip()
+        try:
+            return RegularAccountEnum[string]
+        except KeyError:
+            raise AbacusError(f"Unknown account flag: {string}")
+
+    @classmethod
+    def from_class(cls, regular_cls: Type[RegularAccount]):
+        return dict(
+            asset=RegularAccountEnum.ASSET,
+            liability=RegularAccountEnum.LIABILITY,
+            # note Capital class name converts to EQUITY enum value
+            capital=RegularAccountEnum.EQUITY,
+            income=RegularAccountEnum.INCOME,
+            expense=RegularAccountEnum.EXPENSE,
+        )[regular_cls.__name__.lower()]
+
+    @classmethod
+    def all(cls):
+        return [item for item in RegularAccountEnum.__members__.values()]
+
+    def cls(self):
+        return dict(
+            asset=Asset,
+            liability=Liability,
+            equity=Capital,
+            income=Income,
+            expense=Expense,
+        )[self.name.lower()]
+
+    def contra_class(self):
+        return dict(
+            asset=ContraAsset,
+            liability=ContraLiability,
+            equity=ContraCapital,
+            income=ContraIncome,
+            expense=ContraExpense,
+        )[self.name.lower()]

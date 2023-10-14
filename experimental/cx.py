@@ -1,3 +1,11 @@
+import os
+import shlex
+from dataclasses import dataclass
+from pathlib import Path
+
+from chart_command import init_chart
+from docopt import docopt
+
 script = """cx new "Joan Law Office (Weygandt, ed 12, p. 31)"
 cx post --debit asset:cash               --credit capital:equity --amount 11000
 cx post --debit expense:rent             --credit cash           --amount 800
@@ -15,24 +23,16 @@ cx report --balance-sheet
 cx report --income-statement
 cx chart --json"""
 
-from pathlib import Path
-import os
-from chart_command import init_chart
-
-def match_type(prefix):
-    types = (Asset, Expense, Income, Liability, Capital)
-    for t in types:
-        if prefix in [t.__name__, t.__name__.lower()]:
-            return t    
-
 
 def split_on_colon(text):
     parts = "contra:equity:withdrawal".split(":")
     if parts[0] == "contra":
-        return (Contra, parts[1:])
+        pass
+
 
 def cwd() -> Path:
     return Path(os.getcwd())
+
 
 @dataclass
 class PathFinder:
@@ -47,19 +47,20 @@ class PathFinder:
         return self.directory / "entries.csv"
 
 
-
 def commands(arguments):
     if arguments["new"]:
         init_chart(path=PathFinder(directory=cwd()).chart)
     elif arguments["post"]:
         # split debit and credit account names, add to chart if needed
         # exit if account name not valid (not prefix for new account)
+        pass
     elif arguments["name"]:
         print("name")
     elif arguments["chart"]:
         print("chart")
     elif arguments["report"]:
         print("report")
+
 
 docstring = """Usage:
   cx new <title> [--chart-file=<chart-file>]
@@ -70,8 +71,6 @@ docstring = """Usage:
   cx report --income-statement
 """
 
-from docopt import docopt
-import shlex
 
 for line in script.split("\n"):
     print(line)
