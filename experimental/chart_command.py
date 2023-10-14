@@ -155,7 +155,7 @@ class ChartCommand:
             case 1:
                 if not self.chart.viewer.contains(parts[0]):
                     raise AbacusError(
-                        f"Account name must be deined before use: {parts[0]}"
+                        f"Account name must be defined before use: {parts[0]}"
                     )
             case 2:
                 self.add_account_by_prefix(parts[0], parts[1])
