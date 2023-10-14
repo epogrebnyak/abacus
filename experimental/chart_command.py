@@ -84,27 +84,12 @@ class ChartCommand:
         self.chart.income_summary_account = account_name
         return self
 
-    def add_account_by_prefix(self, prefix: str, account_name: str) -> "ChartCommand":
-        """Add account to chart by prefix."""
-        if prefix in ["asset", "assets"]:
-            self.add_asset(account_name)
-        elif prefix in ["liability", "liabilities"]:
-            self.add_liability(account_name)
-        elif prefix in ["capital", "equity"]:
-            self.add_capital(account_name)
-        elif prefix in ["expense", "expenses"]:
-            self.add_expense(account_name)
-        elif prefix in ["income"]:
-            self.add_income(account_name)
-        else:
-            raise AbacusError(f"Invalid account prefix: {prefix}")
-        return self
-
     def _add(self, attribute: str, account_name: str) -> "ChartCommand":
         """Generic metod to add account of *atrribute* type to chart.
         Attribute in any of ['assets', 'liabilities', 'equity', 'income', 'expenses'].
         """
         account_names = getattr(self.chart, attribute)
+        # TODO: validate the name is not duplicated 
         if account_name not in account_names:
             setattr(self.chart, attribute, account_names + [account_name])
         return self
@@ -161,14 +146,29 @@ class ChartCommand:
                 self.add_account_by_prefix(parts[0], parts[1])
             case 3:
                 if parts[0] == "contra":
-                    self.offset(parts[1], [parts[2]])
+                    self.offset(parts[1], contra_account_names=[parts[2]])
                 else:
-                    raise AbacusError(f"Wrong account name format: {string}")
+                    raise AbacusError(f"Wrong account name format for contra account: {string}")
             case _:
-                raise AbacusError(f"Too many colons in account name: {string}")
+                raise AbacusError(f"Too many colons (:) in account name: {string}")
         return self
 
-
+    def add_account_by_prefix(self, prefix: str, account_name: str) -> "ChartCommand":
+        """Add account to chart by prefix."""
+        if prefix in ["asset", "assets"]:
+            self.add_asset(account_name)
+        elif prefix in ["liability", "liabilities"]:
+            self.add_liability(account_name)
+        elif prefix in ["capital", "equity"]:
+            self.add_capital(account_name)
+        elif prefix in ["expense", "expenses"]:
+            self.add_expense(account_name)
+        elif prefix in ["income"]:
+            self.add_income(account_name)
+        else:
+            raise AbacusError(f"Invalid account prefix: {prefix}")
+        return self
+    
 @dataclass
 class LedgerCommand:
     csv_file: CsvFile
@@ -200,13 +200,14 @@ class LedgerCommand:
 
     def post_starting_balances(self, starting_balances_dict: Dict):
         pass
+        # TODO: add starting balances to ledger
 
     def post_closing_entries(self, chart):
-        ledger = Ledger.new(chart)
-        ledger.post_many(entries=self.csv_file.yield_entries())
-        closing_entries = ledger.closing_entries(chart)
-        self.csv_file.append_many(entries=closing_entries)
-        print("Posted closing entries:")
+        closing_entries = (Ledger.new(chart)
+                                 .post_many(entries=self.csv_file.yield_entries())
+                                 .closing_entries(chart))
+        self.csv_file.append_many(closing_entries)
+        print("Posted closing entries to ledger:")
         for entry in closing_entries:
             print(" ", entry)
 
@@ -216,7 +217,7 @@ class LedgerCommand:
         except TypeError:
             raise AbacusError(f"Invalid entry: {debit}, {credit}, {amount}.")
         self.csv_file.append(entry)
-        print("Posted entry:", entry)
+        print("Posted entry to ledger:", entry)
 
 
 def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
