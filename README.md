@@ -23,16 +23,6 @@ With `abacus` you can:
 
 > Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
 
-### Command line tools
-
-`abacus` provides two command line tools called `bx` and `cx`:
-
-- `cx` has just five commands to learn that allow you to do entire accounting cycle
-  and produce reports.
-- `bx` enables to define a chart of accounts beforehand and inspect individual accounts.
-
-When starting go with `cx` to just to play or solve textbook problems.
-
 ## Install
 
 ```
@@ -48,6 +38,20 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 
 `abacus-py` requires Python 3.10 or higher.
+
+## Command line tools
+
+`abacus` provides two command line tools called `bx` and `cx`.
+
+- `cx` has just five commands to learn that allow you to do entire accounting cycle
+  and produce reports.
+- `bx` has a more verbose interface build around chart, ledger, report and account inspection
+   areas, it enables to define a chart of accounts beforehand and inspect individual accounts
+  in detail.
+
+When starting with `abacus` go with `cx` just to play or solve textbook problems, move
+to `bx` for more structured work, but more commands to learn. Both `cx` and `bx` 
+work using the same files `chart.json` and `entries.csv` in your project folder.
 
 ## The `cx` command line tool
 
