@@ -62,7 +62,6 @@ by Weygandt, Kimmel and Kieso, the starting operations of Joan Robinson law offi
 (ed 12, p. 31):
 
 > Joan Robinson opens her own law office on July 1, 2017. During the first month of operations, the following transactions occurred.
-
 > 1. Joan invested $11,000 in cash in the law practice.
 > 2. Paid $800 for July rent on offi ce space.
 > 3. Purchased equipment on account $3,000.
