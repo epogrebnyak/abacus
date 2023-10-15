@@ -182,7 +182,7 @@ class LedgerCommand:
     def read(cls, path: Path) -> "LedgerCommand":
         return LedgerCommand(csv_file=CsvFile(path))
 
-    def erase(self) -> "LedgerCommand":
+    def erase(self) -> None:
         self.csv_file.erase()
 
     def show(self, sep=","):

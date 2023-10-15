@@ -437,7 +437,7 @@ def show_balances_command(arguments, entries_path, chart_path):
 def main():
     entries_path = get_entries_path()
     chart_path = get_chart_path()
-    arguments = docopt(__doc__, version="0.6.3")
+    arguments = docopt(__doc__, version="0.7.0")
     if arguments["chart"]:
         chart_command(arguments, chart_path)
     elif arguments["ledger"]:

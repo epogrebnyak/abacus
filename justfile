@@ -67,7 +67,7 @@ readme-console:
 # Run command line examples (Linux)
 scripts:
   cd scripts/bx && bash -e all.sh
-  cd scripts/cx && bash -e cx.sh
+  cd scripts/cx && bash -e joan.sh
  
 # Build and serve docs
 docs:

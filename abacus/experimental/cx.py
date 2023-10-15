@@ -27,18 +27,18 @@ Options:
 # cx export --excel <file>
 
 import os
-import shlex
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-import sys
 from typing import Dict
+
+from docopt import docopt
 
 from abacus.experimental.chart_command import (
     ChartCommand,
     LedgerCommand,
     report_command,
 )
-from docopt import docopt
 
 
 def cwd() -> Path:
@@ -101,6 +101,7 @@ def dispatch_commands(arguments: Dict):
     else:
         sys.exit("Command not recognized. Use 'cx --help' for reference.")
 
+
 def main():
-    arguments = docopt(__doc__, version="0.6.3")
+    arguments = docopt(__doc__, version="0.7.0")
     dispatch_commands(arguments)

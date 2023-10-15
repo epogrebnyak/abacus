@@ -13,6 +13,8 @@ bx chart alias --operation invoice --debit ar --credit sales
 bx chart alias --operation cost --debit cogs --credit goods
 bx chart show
 
+cat chart.json
+
 bx ledger init
 bx ledger post entry --debit cash  --credit equity --amount 5000 --title "Initial investment"
 bx ledger post entry --debit goods --credit cash   --amount 3500 --title "Acquire goods for cash"
@@ -25,11 +27,14 @@ bx ledger post entry --debit sga --credit prepaid_rent --amount 800 --title "Exp
 bx ledger close
 bx ledger post entry --debit re --credit dividend_due --amount 150 --title "Accrue dividend" --after-close
 
+cat entries.csv
+
 bx report --trial-balance
 bx report --balance-sheet
 bx report --income-statement
 
 bx account sales
+
 bx assert cash 3000
 
 bx balances --nonzero

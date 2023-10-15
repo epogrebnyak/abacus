@@ -1,5 +1,7 @@
 import shlex
+
 from docopt import docopt
+
 import abacus.experimental.cx as cx
 from abacus.experimental.chart_command import ChartCommand
 
