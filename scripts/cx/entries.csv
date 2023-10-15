@@ -1,0 +1,17 @@
+cash,equity,11000
+rent,cash,800
+equipment,ap,3000
+cash,sales,1500
+cash,note,700
+ar,sales,2000
+salaries,cash,500
+utilities,cash,300
+ads,cash,100
+withdrawal,cash,1000
+sales,current_profit,3500
+current_profit,rent,800
+current_profit,salaries,500
+current_profit,utilities,300
+current_profit,ads,100
+current_profit,re,1800
+equity,withdrawal,1000

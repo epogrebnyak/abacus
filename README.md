@@ -23,13 +23,23 @@ With `abacus` you can:
 
 > Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
 
+### Command line tools
+
+`abacus` provides two command line tools called `bx` and `cx`:
+
+- `cx` has just five commands to learn that allow you to do entire accounting cycle
+  and produce reports.
+- `bx` enables to define a chart of accounts beforehand and inspect individual accounts.
+
+When starting go with `cx` to just to play or solve textbook problems.
+
 ## Install
 
 ```
 pip install abacus-py
 ```
 
-This will install the `abacus` package and the `bx` command line tool.
+This will install the `abacus` package and the `bx` and `cx` command line tools.
 
 For latest version install from github:
 
@@ -39,29 +49,23 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 `abacus-py` requires Python 3.10 or higher.
 
-## Next release `0.7.0`
+## `cx` command line tool (version 0.7.0 and higher)
 
-In the next release 0.7.0 `abacus` shall allow semicolon in account names.
-The `post` command will add new account names to chart, these new account names
-should start with `asset`, `capital`, `liability`, `income`, `expense`
-for regular accounts or `contra` for contra accounts. Once account
-was used in a posting, you can refer to it by name only (e.g. `cash`
-instead of `asset:cash`). So far all accounts are at one level,
-there is no `asset:cash:bank` and `asset:cash:petty` yet.
+With `cx` command line tool the entire accounting cycle can be performed using just five commands:
 
-The entire accounting cycle will be down to five commands:
+1. `init` - start new project in empty folder,
+2. `post` - add new account names to chart and post accounting entry to ledger,
+3. `close` - add closing entries to ledger at accounting period end,
+4. `name` - define longer account names, and
+5. `report` - show trial balance, balance sheet or income statement.
 
-1. `init` (start new project in empty folder),
-2. `post` (add new account names to chart and post accounting entry to ledger),
-3. `close` (add closing entries to ledger at accountign period end),
-4. `name` (provide longer and more descriptive account names), and
-5. `report` (provide trial balance, balance sheet or income statement).
+### Textbook example
 
-For preview you can run the code that solves an excercise from "Accounting Principles"
-by Weygandt, Kimmel and Kieso, the starting operations of Joan Robinson law office
-(ed 12, p. 31):
+Here is an excercise from "Accounting Principles" by Weygandt, Kimmel and Kieso
+(ed 12, p. 31) solved with `cx`.
 
 > Joan Robinson opens her own law office on July 1, 2017. During the first month of operations, the following transactions occurred.
+>
 > 1. Joan invested $11,000 in cash in the law practice.
 > 2. Paid $800 for July rent on offi ce space.
 > 3. Purchased equipment on account $3,000.
@@ -70,6 +74,8 @@ by Weygandt, Kimmel and Kieso, the starting operations of Joan Robinson law offi
 > 6. Performed legal services for client on account $2,000.
 > 7. Paid monthly expenses: salaries and wages $500, utilities $300, and advertising $100.
 > 8. Joan withdrew $1,000 cash for personal use.
+
+Here is a complete code to solve the excercise:
 
 ```
 cx init
@@ -92,15 +98,29 @@ cx report --balance-sheet --rich
 cx report --income-statement
 ```
 
-To run this example you can clone the reporitory and run:
+See issue [#49](https://github.com/epogrebnyak/abacus/issues/49) for more information about this example.
 
-```
-poetry run python experimental/cx.py
-```
+### Note about account names
 
-More about the example in issue [#49](https://github.com/epogrebnyak/abacus/issues/49).
+The `post` command accepts account names under following rules:
 
-## Minimal command line example for `0.6.3`
+- **Оne colon**: (`asset:cash`) is account type and name seperated by colon (`:`).
+  Valid account types are `asset`, `capital`, `liability`, `income`, `expense`,
+  or plural forms where appropriate. When first encountered, the account name
+  is added to the chart of accounts. Account names should be unique.
+- **Two colons starting with `contra`**. In example `contra:equity:withdrawal`
+  the new account name is `withdrawal`. This new account will be added
+  to chart as a contra acccount to `equity` account.
+- **No colon**: Short names like `cash`, `sales`, `withdrawal` without colon
+  can be used in `post` command after the account name is added to chart.
+
+## `bx` command line tool (`0.6.3` and higher)
+
+The `bx` command line tool has a more verbose interface than `cx`.
+The `bx` tool you can define chart ot accounts, post entries and close ledger,
+produce reports and inspect accounts.
+
+Let's go through an example.
 
 ### Working directory
 
@@ -138,7 +158,11 @@ bx chart alias --operation cost --debit cogs --credit goods
 bx chart show
 ```
 
-At this point you will see `chart.json` created.
+At this point you will see `chart.json` created:
+
+```bash
+cat chart.json
+```
 
 ### Ledger
 
@@ -160,9 +184,13 @@ bx ledger post entry --debit re --credit dividend_due --amount 150 --title "Accr
 
 At this point you will see `entries.csv` created.
 
-### Make reports
+```bash
+cat centries.csv
+```
 
-Create trial balance, balance sheet and income statement reports.
+### Reports
+
+Produce and print to screen the trial balance, balance sheet and income statement reports.
 
 ```bash
 bx report --trial-balance
@@ -189,17 +217,22 @@ Expenses                                                   3000
 Profit                                                      500
 ```
 
-### Inspect accounts
+### Inspect individual accounts
 
 `account` command will show detailed information about a specific account.
-`assert` is useful in testing - it makes sure account balance equals specific value after all postings.
 
 ```bash
 bx account sales
+```
+
+`assert` is useful in testing - it makes sure account balance equals
+specific value after all postings.
+
+```bash
 bx assert cash 3000
 ```
 
-### Show account balances
+### Account balances
 
 Print to screen a JSON file with account names and account balances.
 
@@ -299,33 +332,34 @@ chart of accounts, general ledger, accounting entry and financial reports.
 These concepts correspond to classes created inside `abacus`:
 `Chart`, `Ledger`, `Entry`, `BalanceSheet` and `IncomeStatement`.
 
-Here is a basic workflow in which these classes interact:
+Here is a workflow scetch under which these classes interact:
 
-- you add necessary accounts to `Chart` indicating account type,
+- you add new accounts to `Chart` indicating the account type,
 - from `Chart` you create empty `Ledger`,
-- an `Entry` or a list of entries `[Entry]` posted to `Ledger`,
-- there is a procedure to create a list of closing entries for `Ledger` and these
-  closing entries are posted to ledger;
-- from `Ledger` you can get account balances;
+- an `Entry` or a list of entries `[Entry]` is posted to `Ledger`,
+- there is a procedure to create a list of closing entries for `Ledger`
+  at period end,
+- these closing entries are posted to ledger,
+- from `Ledger` you can get account balances,
 - the account balances are used to create trial balance, `BalanceSheet` and
   `IncomeStatement`.
 
-As seen in the code in README, you need to import just `abacus.Chart` and `abacus.Entry`
+You need to import just `abacus.Chart` and `abacus.Entry`
 classes to write code for the entire accounting cycle as other classes
 (`Ledger`, balances, `BalanceSheet` and `IncomeStatement`) will be derived form
 `Chart` and `Entry`.
 
-In the sequence above the most tricky part is probably the closing entries issue,
+In the sequence above the most tricky part is probably the closing entries,
 thus special care is given to documenting them in the `abacus.closing` module.
 
-`abacus` type system also also handles contra accounts, for example
-property, plant and equipment is an instance of `Asset` class, while
-depreciation is a `ContraAsset` instance. The temporary contra accounts
-(those offsetting `Income` and `Expense`) will be closed at period end,
+`abacus` type system also handles contra accounts, for example
+property, plant and equipment account is an instance of `Asset` class, while
+depreciation is a `ContraAsset` class instance. The temporary contra accounts
+(those accounts that offsett `Income` and `Expense`) will be closed at period end,
 while permanent contra accounts (offsetting `Asset`, `Equity` and `Liability`)
 will be carried forward to next period to preserve useful information.
 
-For storage we persist just the chart and the entries posted and we do not save the
+For storage we persist just the chart and the entries posted. We do not save the
 state of the ledger. Given the chart (from `chart.json` file) and
 accounting entries (from the `entries.json` file) we can calculate
 ledger state at any time. This state may be cached to speed up retieval
@@ -347,15 +381,15 @@ Chart -> [Entry] -> Ledger -> [ClosingEntry] -> Ledger -> (BalanceSheet, IncomeS
 5. post closing entries to ledger
 6. calculate balance sheet and income statement
 
-In general, what `abacus` (or any other double entry program) does is
-maintaining an extended accounting equation in balance.
+In general, what `abacus` (or any other double entry accounting program) does
+is maintaining an extended accounting equation in balance.
 If you are comfortable with this idea, the rest of program flow and code
 should be more easy to follow.
 
 Note that real ERP and accounting systems do a lot more than double entry accounting,
-for example keeping the original documents and maintaining identities
+for example keeping the original document references and maintaining identities
 of the clients and suppliers as well as keeping extra data about contracts and
-whatever management accounting may need to have a record of (your inventory).
+whatever management accounting may need to have a record of (for example, your inventory).
 
 Most of this funcitonality is out of scope for a double entry ledger.
 We just need a chart of accounts, create a ledger based on chart,
@@ -370,7 +404,7 @@ You will need [just command runner](https://github.com/casey/just)
 and [poetry package manager](https://python-poetry.org/) for developing
 `abacus`.
 
-All commands I use for testing are gathered in `just grill` command.
+All commands for testing I gather in `just grill` command.
 This command will launch:
 
 - `pytest` for unit tests
@@ -380,7 +414,7 @@ This command will launch:
 - `ruff` for code check and linting
 - `prettier` to clean markdown files
 - extracting and running code from README.md
-- a few bash scripts to keep text the `bx`command line tool.
+- a few bash scripts to test the `bx` and `cx` command line tools.
 
 I found that testing CLI with bash files, one for chart, ledger, reports and
 inspect commands, accelerates the development workflow.

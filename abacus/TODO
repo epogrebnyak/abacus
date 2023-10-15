@@ -3,14 +3,14 @@ FIXME:
 - `--title` fails when written first with post entry (see fail.sh)
 
 TODO:
-- [ ] injest .as file with bx ... commands
 - [ ] memo + build-you-own-x
 - [ ] RAS codes 
 - [ ] --requires flag in alias 
-- [ ] textbook examples
+- [ ] more textbook examples
 - [ ] adjustment example (with trial balance)
 
 WONTFIX:
+- [ ] injest .as file with bx ... commands
 - [ ] adjust and postclose entries
 - [ ] --title for csv file
 - [ ] help messages
