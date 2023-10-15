@@ -3,6 +3,9 @@ FIXME:
 - `--title` fails when written first with post entry (see fail.sh)
 
 TODO:
+- [ ] change names to prefix+account name Asset:equipment (Equipment).........................
+- [ ] interacting with retained earnings may be a problem
+- [ ] add totals to trial balance
 - [ ] memo + build-you-own-x
 - [ ] RAS codes 
 - [ ] --requires flag in alias 
