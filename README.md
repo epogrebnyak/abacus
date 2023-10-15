@@ -98,7 +98,34 @@ cx report --balance-sheet --rich
 cx report --income-statement
 ```
 
-See issue [#49](https://github.com/epogrebnyak/abacus/issues/49) for more information about this example.
+<details>
+    <summary>See the program output
+    </summary>
+
+```
+Balance sheet
+ASSETS.................. 15500  CAPITAL............... 11800
+  Cash.................. 10500    Equity.............. 10000
+  Equipment.............  3000    Retained earnings...  1800
+  Accounts receivable...  2000  LIABILITIES...........  3700
+........................          Accounts payable....  3000
+........................          Note................   700
+TOTAL:.................. 15500  TOTAL:................ 15500
+
+Income statement
+INCOME........... 3500
+  Sales.......... 3500
+EXPENSES......... 1700
+  Rent...........  800
+  Salaries.......  500
+  Utilities......  300
+  Advertising....  100
+CURRENT PROFIT... 1800
+```
+
+Issue [#49](https://github.com/epogrebnyak/abacus/issues/49) has additional information about this example.
+
+</details>
 
 ### Note about account names
 
@@ -418,3 +445,20 @@ This command will launch:
 
 I found that testing CLI with bash files, one for chart, ledger, reports and
 inspect commands, accelerates the development workflow.
+
+## Changelog
+
+### 0.7.0
+
+The `cx` command line tool enables to run entire accounting cycle from postings to reports with just five commands:
+
+- `init` - start new project in folder,
+- `post` - post accounting entry with debit account, credit account and transaction amount,
+- `close` - post closing entries at accounting period end,
+- `name` - specify verbose account names for reports, and
+- `report` - show trial balance, balance sheet or income statement.
+
+There is a textbook example from Principles of Accounting textbook by Weygandt, Kimmel and Kieso - the starting of Joan Robinson law office (ed 12, p. 31). There are 11 transactions in the excercise and under 20 lines of code to solve it with `abacus`,
+[check it out](https://github.com/epogrebnyak/abacus#textbook-example)!
+
+Posted the changelog to Reddit as <https://www.reddit.com/r/Python/comments/178kgyu/github_epogrebnyakabacus_run_full_doubleentry/>
