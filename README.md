@@ -49,7 +49,7 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 `abacus-py` requires Python 3.10 or higher.
 
-## `cx` command line tool (version 0.7.0 and higher)
+## The `cx` command line tool
 
 With `cx` command line tool the entire accounting cycle can be performed using just five commands:
 
@@ -141,7 +141,7 @@ The `post` command accepts account names under following rules:
 - **No colon**: Short names like `cash`, `sales`, `withdrawal` without colon
   can be used in `post` command after the account name is added to chart.
 
-## `bx` command line tool (`0.6.3` and higher)
+## The `bx` command line tool
 
 The `bx` command line tool has a more verbose interface than `cx`.
 The `bx` tool you can define chart ot accounts, post entries and close ledger,
