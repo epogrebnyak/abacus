@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from typing import Dict
 
 from abacus import AbacusError, Amount, Chart, Entry, Ledger
+from abacus.engine.accounts import RegularAccountEnum
 from abacus.engine.base import AccountName
 from abacus.engine.entries import CsvFile
 
@@ -30,16 +30,12 @@ class Lоgger:
         self.message = string
 
 
-class RegularAccount(Enum):
-    ASSET = "asset"
-    LIABILITY = "liability"
-    EQUITY = "equity"
-    INCOME = "income"
-    EXPENSE = "expense"
-
-
-def flag_to_account_type(flag: str) -> RegularAccount:
-    return RegularAccount(flag.upper())
+def which_flag(arguments):
+    allowed_flags = ["--asset", "--capital", "--liability", "--expense", "--income"]
+    raised_flags = [flag for flag in allowed_flags if arguments[flag]]
+    if len(raised_flags) > 1 or len(raised_flags):
+        raise AbacusError(f"Exactly of one of {raised_flags} can be raised.")
+    return RegularAccountEnum.from_flag(raised_flags[0])
 
 
 @dataclass
@@ -84,14 +80,21 @@ class ChartCommand:
         self.chart.income_summary_account = account_name
         return self
 
+    def add_by_enum(
+        self, account_type: RegularAccountEnum, account_name: str
+    ) -> "ChartCommand":
+        return self._add(account_type.value, account_name)
+
     def _add(self, attribute: str, account_name: str) -> "ChartCommand":
         """Generic metod to add account of *atrribute* type to chart.
         Attribute in any of ['assets', 'liabilities', 'equity', 'income', 'expenses'].
         """
+        assert attribute in self.chart.five_types_of_accounts()
         account_names = getattr(self.chart, attribute)
-        # TODO: validate the name is not duplicated 
-        if account_name not in account_names:
-            setattr(self.chart, attribute, account_names + [account_name])
+        if self.chart.viewer.contains(account_name):
+            raise AbacusError(f"Account name already exists: {account_name}")
+        setattr(self.chart, attribute, account_names + [account_name])
+        self.log(f"Added account {account_name} to chart <{attribute}>.")
         return self
 
     def add_asset(self, account_name: str):
@@ -110,7 +113,8 @@ class ChartCommand:
     def add_expense(self, account_name: str):
         return self._add("expenses", account_name)
 
-    def offset(self, account_name, contra_account_names) -> "ChartCommand":
+    def offset_many(self, account_name, contra_account_names) -> "ChartCommand":
+        # logic
         for contra_account_name in contra_account_names:
             self.chart.offset(account_name, contra_account_name)
         # logging
@@ -118,6 +122,9 @@ class ChartCommand:
         text = f"Added contra account{ending}:"
         self.log(text + " " + contra_phrase(account_name, contra_account_names) + ".")
         return self
+
+    def offset(self, account_name, contra_account_name) -> "ChartCommand":
+        return self.offset_many(account_name, [contra_account_name])
 
     def alias(self, name: str, debit: AccountName, credit: AccountName):
         self.chart.add_operation(name, debit, credit)
@@ -138,37 +145,21 @@ class ChartCommand:
         parts = string.split(":")
         match len(parts):
             case 1:
-                if not self.chart.viewer.contains(parts[0]):
-                    raise AbacusError(
-                        f"Account name must be defined before use: {parts[0]}"
-                    )
+                self.chart.viewer.assert_contains(parts[0])
             case 2:
-                self.add_account_by_prefix(parts[0], parts[1])
+                self.add_by_enum(detect_prefix(parts[0]), parts[1])
             case 3:
                 if parts[0] == "contra":
-                    self.offset(parts[1], contra_account_names=[parts[2]])
+                    self.offset(account_name=parts[1], contra_account_name=parts[2])
                 else:
-                    raise AbacusError(f"Wrong account name format for contra account: {string}")
+                    raise AbacusError(
+                        f"Wrong account name format for contra account: {string}"
+                    )
             case _:
                 raise AbacusError(f"Too many colons (:) in account name: {string}")
         return self
 
-    def add_account_by_prefix(self, prefix: str, account_name: str) -> "ChartCommand":
-        """Add account to chart by prefix."""
-        if prefix in ["asset", "assets"]:
-            self.add_asset(account_name)
-        elif prefix in ["liability", "liabilities"]:
-            self.add_liability(account_name)
-        elif prefix in ["capital", "equity"]:
-            self.add_capital(account_name)
-        elif prefix in ["expense", "expenses"]:
-            self.add_expense(account_name)
-        elif prefix in ["income"]:
-            self.add_income(account_name)
-        else:
-            raise AbacusError(f"Invalid account prefix: {prefix}")
-        return self
-    
+
 @dataclass
 class LedgerCommand:
     csv_file: CsvFile
@@ -203,9 +194,11 @@ class LedgerCommand:
         # TODO: add starting balances to ledger
 
     def post_closing_entries(self, chart):
-        closing_entries = (Ledger.new(chart)
-                                 .post_many(entries=self.csv_file.yield_entries())
-                                 .closing_entries(chart))
+        closing_entries = (
+            Ledger.new(chart)
+            .post_many(entries=self.csv_file.yield_entries())
+            .closing_entries(chart)
+        )
         self.csv_file.append_many(closing_entries)
         print("Posted closing entries to ledger:")
         for entry in closing_entries:
@@ -249,3 +242,19 @@ def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
         else:
             print("Income statement")
             print(statement.view(chart.names))
+
+
+def detect_prefix(prefix: str) -> RegularAccountEnum:
+    prefix = prefix.lower()
+    if prefix in ["asset", "assets"]:
+        return RegularAccountEnum.ASSET
+    elif prefix in ["liability", "liabilities"]:
+        return RegularAccountEnum.LIABILITY
+    elif prefix in ["capital", "equity"]:
+        return RegularAccountEnum.EQUITY
+    elif prefix in ["expense", "expenses"]:
+        return RegularAccountEnum.EXPENSE
+    elif prefix in ["income"]:
+        return RegularAccountEnum.INCOME
+    else:
+        raise AbacusError(f"Invalid account prefix: {prefix}")

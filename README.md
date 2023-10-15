@@ -39,7 +39,69 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 `abacus-py` requires Python 3.10 or higher.
 
-## Minimal command line example
+## Next release `0.7.0`
+
+In the next release 0.7.0 `abacus` shall allow semicolon in account names.
+The `post` command will add new account names to chart, these new account names
+should start with `asset`, `capital`, `liability`, `income`, `expense`
+for regular accounts or `contra` for contra accounts. Once account
+was used in a posting, you can refer to it by name only (e.g. `cash`
+instead of `asset:cash`). So far all accounts are at one level,
+there is no `asset:cash:bank` and `asset:cash:petty` yet.
+
+The entire accounting cycle will be down to five commands:
+
+1. `init` (start new project in empty folder),
+2. `post` (add new account names to chart and post accounting entry to ledger),
+3. `close` (add closing entries to ledger at accountign period end),
+4. `name` (provide longer and more descriptive account names), and
+5. `report` (provide trial balance, balance sheet or income statement).
+
+For preview you can run the code that solves an excercise from "Accounting Principles"
+by Weygandt, Kimmel and Kieso, the starting operations of Joan Robinson law office
+(ed 12, p. 31):
+
+> Joan Robinson opens her own law office on July 1, 2017. During the first month of operations, the following transactions occurred.
+
+1. Joan invested $11,000 in cash in the law practice.
+2. Paid $800 for July rent on offi ce space.
+3. Purchased equipment on account $3,000.
+4. Performed legal services to clients for cash $1,500.
+5. Borrowed $700 cash from a bank on a note payable.
+6. Performed legal services for client on account $2,000.
+7. Paid monthly expenses: salaries and wages $500, utilities $300, and advertising $100.
+8. Joan withdrew $1,000 cash for personal use.
+
+```
+cx init
+cx post --debit asset:cash               --credit capital:equity --amount 11000
+cx post --debit expense:rent             --credit cash           --amount 800
+cx post --debit asset:equipment          --credit liability:ap   --amount 3000
+cx post --debit cash                     --credit income:sales   --amount 1500
+cx post --debit cash                     --credit liability:note --amount 700
+cx post --debit asset:ar                 --credit sales          --amount 2000
+cx post --debit expense:salaries         --credit cash           --amount 500
+cx post --debit expense:utilities        --credit cash           --amount 300
+cx post --debit expense:ads              --credit cash           --amount 100
+cx post --debit contra:equity:withdrawal --credit cash           --amount 1000
+cx name ar "Accounts receivable"
+cx name ap "Accounts payable"
+cx name ads "Advertising"
+cx report --trial-balance
+cx close
+cx report --balance-sheet --rich
+cx report --income-statement
+```
+
+To run this example you can clone the reporitory and run:
+
+```
+poetry run python experimental/cx.py
+```
+
+More about the example in issue [#49](https://github.com/epogrebnyak/abacus/issues/49).
+
+## Minimal command line example for `0.6.3`
 
 ### Working directory
 
@@ -151,6 +213,7 @@ This command is used in carring balances forward to next period.
 ```
 # save output to end.json
 bx balances --nonzero > end.json
+
 # copy end.json and chart.json to a new folder and do:
 bx ledger init end.json
 ```

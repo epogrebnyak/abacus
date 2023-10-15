@@ -32,6 +32,12 @@ class ChartViewer:
     def contains(self, account_name: AccountName) -> bool:
         return account_name in self.account_names_all()
 
+    def assert_contains(self, account_name: AccountName) -> None:
+        if not self.contains(account_name):
+            raise AbacusError(
+                f"Account name must be defined before use, {account_name} not in chart."
+            )
+
     def get_regular_account_names(
         self, regular_account: RegularAccountEnum | Type[RegularAccount]
     ) -> List[AccountName]:
@@ -165,9 +171,8 @@ class Chart(BaseModel):
         return self
 
     def validate(self):
-        dups = self.viewer.duplicates
-        if dups:
-            raise AbacusError(f"Following account names were duplicated: {dups}")
+        if dups := self.viewer.duplicates:
+            raise AbacusError(f"The following account names were duplicated: {dups}")
         return self
 
     def offset(
@@ -178,7 +183,7 @@ class Chart(BaseModel):
         """Add contra accounts to chart."""
         if account_name not in self.viewer.account_names_regular():
             raise AbacusError(
-                f"{account_name} must be specified in chart before adding {contra_account_names}."
+                f"{account_name} must be specified in chart before adding contra accounts."
             )
         if not isinstance(contra_account_names, list):
             contra_account_names = [contra_account_names]

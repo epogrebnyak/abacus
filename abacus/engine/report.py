@@ -186,7 +186,7 @@ def income_statement_lines(report: IncomeStatement, rename_dict: Dict[str, str])
     # rename lines
     left = [line.rename(rename_dict) for line in left]
     # add end line
-    h1 = HeaderLine("Current profit:", str(report.current_profit()))
+    h1 = HeaderLine("Current profit", str(report.current_profit()))
     left.append(h1)
     return left
 
