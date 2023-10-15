@@ -94,7 +94,7 @@ cx name ap "Accounts payable"
 cx name ads "Advertising"
 cx report --trial-balance
 cx close
-cx report --balance-sheet --rich
+cx report --balance-sheet
 cx report --income-statement
 ```
 
