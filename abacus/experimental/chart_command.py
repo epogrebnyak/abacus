@@ -92,7 +92,13 @@ class ChartCommand:
         assert attribute in self.chart.five_types_of_accounts()
         account_names = getattr(self.chart, attribute)
         if self.chart.viewer.contains(account_name):
-            raise AbacusError(f"Account name already exists: {account_name}")
+            self.log(f"Account name already exists: {account_name}.")
+            if account_name in account_names:
+                return self
+            else:
+                raise AbacusError(
+                    f"Account name {account_name} already taken in different account group."
+                )
         setattr(self.chart, attribute, account_names + [account_name])
         self.log(f"Added account {account_name} to chart <{attribute}>.")
         return self
