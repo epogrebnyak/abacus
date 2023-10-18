@@ -5,7 +5,7 @@ from typing import Dict
 from abacus import AbacusError, Amount, Chart, Entry, Ledger
 from abacus.engine.accounts import RegularAccountEnum
 from abacus.engine.base import AccountName
-from abacus.engine.entries import CsvFile
+from abacus.engine.entries import LineJSON
 
 
 def contra_phrase(account_name, contra_account_names):
@@ -168,7 +168,7 @@ class ChartCommand:
 
 @dataclass
 class LedgerCommand:
-    csv_file: CsvFile
+    store: LineJSON
     logger: Lоgger = Lоgger()
 
     def echo(self):
@@ -181,18 +181,18 @@ class LedgerCommand:
 
     @classmethod
     def start_ledger(cls, path) -> "LedgerCommand":
-        csv_file = CsvFile(path).touch()
-        return LedgerCommand(csv_file).log(f"Wrote ledger file: {path}")
+        store = LineJSON(path).file.touch()
+        return LedgerCommand(store).log(f"Wrote ledger file: {path}")
 
     @classmethod
     def read(cls, path: Path) -> "LedgerCommand":
-        return LedgerCommand(csv_file=CsvFile(path))
+        return LedgerCommand(store=LineJSON(path))
 
     def erase(self) -> None:
-        self.csv_file.erase()
+        self.store.file.erase()
 
     def show(self, sep=","):
-        for entry in self.csv_file.yield_entries():
+        for entry in self.store.yield_entries():
             print(entry.debit, entry.credit, entry.amount, sep=sep)
 
     def post_starting_balances(self, starting_balances_dict: Dict):
@@ -202,10 +202,10 @@ class LedgerCommand:
     def post_closing_entries(self, chart):
         closing_entries = (
             Ledger.new(chart)
-            .post_many(entries=self.csv_file.yield_entries())
+            .post_many(entries=self.store.yield_entries())
             .closing_entries(chart)
         )
-        self.csv_file.append_many(closing_entries)
+        self.store.append_many(closing_entries)
         print("Posted closing entries to ledger:")
         for entry in closing_entries:
             print(" ", entry)
@@ -215,13 +215,13 @@ class LedgerCommand:
             entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
         except TypeError:
             raise AbacusError(f"Invalid entry: {debit}, {credit}, {amount}.")
-        self.csv_file.append(entry)
+        self.store.append(entry)
         print("Posted entry to ledger:", entry)
 
 
 def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
     chart = Chart.parse_file(chart_path)
-    store = CsvFile(entries_path)
+    store = LineJSON(entries_path)
     entries = store.yield_entries()
     ledger = Ledger.new(chart)
     if arguments["--trial-balance"]:

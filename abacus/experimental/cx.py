@@ -55,7 +55,7 @@ class PathFinder:
 
     @property
     def entries(self):
-        return self.directory / "entries.csv"
+        return self.directory / "entries.linejson"
 
 
 def last(string):

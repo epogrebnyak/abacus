@@ -1,5 +1,6 @@
 """Baisc data types used across package."""
 
+import json
 from dataclasses import dataclass
 from typing import Tuple
 
@@ -14,6 +15,9 @@ class Entry:
     debit: AccountName
     credit: AccountName
     amount: Amount
+
+    def to_json(self):
+        return json.dumps(self.__dict__)
 
 
 class AbacusError(Exception):

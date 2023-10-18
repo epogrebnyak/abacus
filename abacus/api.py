@@ -40,7 +40,7 @@ from abacus.engine.accounts import CreditAccount, DebitAccount
 from abacus.engine.base import AbacusError, AccountName, Amount, Entry
 from abacus.engine.chart import Chart
 from abacus.engine.closing import make_closing_entries
-from abacus.engine.entries import CsvFile
+from abacus.engine.entries import LineJSON
 from abacus.engine.ledger import Ledger
 
 
@@ -53,7 +53,7 @@ def get_chart_path() -> Path:
 
 
 def get_entries_path() -> Path:
-    return cwd() / "entries.csv"
+    return cwd() / "entries.linejson"
 
 
 def read_json(path):
@@ -269,31 +269,31 @@ def chart_command(arguments: Dict, chart_path: Path):
 @dataclass
 class LedgerCommand:
     chart: Chart
-    csv_file: CsvFile
+    store: LineJSON
 
     def show(self):
-        for entry in self.csv_file.yield_entries():
+        for entry in self.store.yield_entries():
             print(entry.debit, entry.credit, entry.amount, sep="\t")
 
     def post_starting_balances(self, starting_balances_dict: Dict):
         self.chart.ledger(starting_balances_dict)  # check that all accounts are present
         me = self.chart.ledger().make_multiple_entry(starting_balances_dict)
         entries = me.entries(self.chart.null_account)
-        self.csv_file.append_many(entries)
+        self.store.append_many(entries)
         for entry in entries:
             print("Posted entry:", entry)
 
     def post_operations(self, operations: List[str], amounts: List[str]):
         entries = self.chart.make_entries_for_operations(operations, amounts)
-        self.csv_file.append_many(entries)
+        self.store.append_many(entries)
         for entry in entries:
             print("Posted entry:", entry)
 
     def post_closing_entries(self):
         ledger = Ledger.new(self.chart)
-        ledger.post_many(entries=self.csv_file.yield_entries())
+        ledger.post_many(entries=self.store.yield_entries())
         closing_entries = make_closing_entries(self.chart, ledger).all()
-        self.csv_file.append_many(entries=closing_entries)
+        self.store.append_many(entries=closing_entries)
         print("Added closing entries:")
         for entry in closing_entries:
             print(" ", entry)
@@ -303,19 +303,19 @@ class LedgerCommand:
             entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
         except TypeError:
             raise AbacusError(f"Invalid entry: {debit}, {credit}, {amount}.")
-        self.csv_file.append(entry)
+        self.store.append(entry)
         print("Posted entry:", entry)
 
 
 def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
-    csv_file = CsvFile(entries_path)
+    store = LineJSON(entries_path)
     if arguments["erase"] and arguments["--force"]:
-        csv_file.erase()
+        store.file.erase()
         sys.exit(0)
     chart = Chart.parse_file(chart_path)
-    holder = LedgerCommand(chart=chart, csv_file=csv_file)
+    holder = LedgerCommand(chart=chart, store=store)
     if arguments["init"]:
-        csv_file.touch()
+        store.file.touch()
         print("Created", entries_path)
         if start_balances_file := arguments["<file>"]:
             balances = read_starting_balances(start_balances_file)
@@ -337,7 +337,7 @@ def ledger_command(arguments: Dict, entries_path: Path, chart_path: Path):
 
 def report_command(arguments: Dict, entries_path: Path, chart_path: Path):
     chart = Chart.parse_file(chart_path)
-    store = CsvFile(entries_path)
+    store = LineJSON(entries_path)
     entries = store.yield_entries()
     ledger = Ledger.new(chart)
     if arguments["--trial-balance"]:
@@ -391,7 +391,7 @@ def print_account_info(ledger, chart, account_name: str):
 
 def assert_command(arguments, entries_path, chart_path):
     chart = Chart.parse_file(chart_path)
-    entries = CsvFile(entries_path).yield_entries()
+    entries = LineJSON(entries_path).yield_entries()
     ledger = Ledger.new(chart).post_many(entries)
     assert_account_balance(ledger, arguments["<account_name>"], arguments["<balance>"])
 
@@ -418,7 +418,7 @@ def account_command(arguments, entries_path, chart_path):
 
 def process_full_ledger(chart_path: Path, entries_path: Path) -> Ledger:
     chart = Chart.parse_file(chart_path)
-    entries = CsvFile(entries_path).yield_entries()
+    entries = LineJSON(entries_path).yield_entries()
     return Ledger.new(chart).post_many(entries)
 
 

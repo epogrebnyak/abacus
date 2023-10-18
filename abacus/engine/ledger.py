@@ -1,6 +1,6 @@
 """Ledger data structure, can be created from chart, used to post entries and produce reports."""
 from collections import UserDict
-from typing import Dict, List, Tuple, Type
+from typing import Dict, Iterable, List, Tuple, Type
 
 from abacus.engine.accounts import CreditAccount, DebitAccount, TAccount
 from abacus.engine.base import AbacusError, AccountName, Amount, Entry, MultipleEntry
@@ -71,7 +71,7 @@ class Ledger(UserDict[AccountName, TAccount]):
         post_entry(self, entry)
         return self
 
-    def post_many(self, entries: List[Entry]) -> "Ledger":
+    def post_many(self, entries: Iterable[Entry]) -> "Ledger":
         post_entries(self, entries)
         return self
 
@@ -131,15 +131,15 @@ def post_entry(ledger: Ledger, entry: Entry) -> None:
     ledger[entry.credit].credit(entry.amount)
 
 
-def post_entries(ledger: Ledger, entries: List[Entry]):
+def post_entries(ledger: Ledger, entries: Iterable[Entry]):
     ledger, failed_entries = unsafe_post_entries(ledger, entries)
     if failed_entries:
         raise AbacusError(failed_entries)
 
 
 def unsafe_post_entries(
-    ledger: Ledger, entries: List[Entry]
-) -> Tuple[Ledger, List[Entry]]:
+    ledger: Ledger, entries: Iterable[Entry]
+) -> Tuple[Ledger, Iterable[Entry]]:
     failed = []
     for entry in entries:
         try:
