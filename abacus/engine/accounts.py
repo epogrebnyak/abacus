@@ -177,12 +177,15 @@ class ContraIncome(DebitAccount, ContraAccount, Temporary):
 class RegularAccountEnum(Enum):
     """Class for mapping account types to their names."""
 
-    # enum values are Chart attributes
     ASSET = "assets"
     LIABILITY = "liabilities"
     EQUITY = "equity"
     INCOME = "income"
     EXPENSE = "expenses"
+
+    def chart_attribute(self):
+        # enum values are Chart attributes
+        return self.value
 
     @classmethod
     def from_flag(cls, string: str) -> "RegularAccountEnum":
@@ -197,7 +200,7 @@ class RegularAccountEnum(Enum):
         return dict(
             asset=RegularAccountEnum.ASSET,
             liability=RegularAccountEnum.LIABILITY,
-            # note Capital class name converts to EQUITY enum value
+            # note that Capital class name converts to EQUITY enum value
             capital=RegularAccountEnum.EQUITY,
             income=RegularAccountEnum.INCOME,
             expense=RegularAccountEnum.EXPENSE,

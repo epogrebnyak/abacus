@@ -67,4 +67,3 @@ class LineJSON:
     def yield_entries_for_income_statement(self, chart: Chart) -> Iterable[Entry]:
         """Filter entries that do not close income accounts."""
         return income_statement_stream(self.yield_entries(), chart)
-

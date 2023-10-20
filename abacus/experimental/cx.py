@@ -15,14 +15,14 @@ Options:
   --debit <debit_account>    Provide debit account name for entry.
   --credit <credit_account>  Provide credit account name for entry.
   --amount <amount>          Provide transaction amount for entry.
-  --rich                     Print report in a nice colored format.      
+  --rich                     Print report in with color.      
   --json                     Emit report in JSON format.         
 """
 # NOTE: add/add breaks the workflow
 # сx add (--asset | --capital | --liability | --expense | --income) <account_names>...
 # сx adds (--asset | --capital | --liability | --expense | --income) <account_name> [--title <title>]
 # cx offset <account_name> <contra_account_names>...
-# cx account --balances
+# cx report --balances --json
 # cx assert cash 200
 # cx export --excel <file>
 
@@ -34,11 +34,9 @@ from typing import Dict
 
 from docopt import docopt
 
-from abacus.experimental.chart_command import (
-    ChartCommand,
-    LedgerCommand,
-    report_command,
-)
+from abacus.experimental.chart_command import ChartCommand
+from abacus.experimental.ledger_command import LedgerCommand
+from abacus.experimental.report_command import report_command
 
 
 def cwd() -> Path:
@@ -66,8 +64,8 @@ def dispatch_commands(arguments: Dict):
     chart_path = PathFinder(directory=cwd()).chart
     ledger_path = PathFinder(directory=cwd()).entries
     if arguments["init"]:
-        ChartCommand.new().write(chart_path).echo()
-        LedgerCommand.start_ledger(ledger_path).echo()
+        ChartCommand.init(chart_path).echo()
+        LedgerCommand.init(ledger_path).echo()
     elif arguments["post"]:
         # split debit and credit account names and  add to chart if needed
         (
