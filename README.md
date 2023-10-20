@@ -213,10 +213,10 @@ bx ledger close
 bx ledger post entry --debit re --credit dividend_due --amount 150 --title "Accrue dividend" --after-close
 ```
 
-At this point you will see `entries.csv` created:
+At this point you will see `entries.linejson` created:
 
 ```bash
-cat entries.csv
+cat entries.linejson
 ```
 
 ### Reports

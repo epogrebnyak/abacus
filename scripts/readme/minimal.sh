@@ -27,7 +27,7 @@ bx ledger post entry --debit sga --credit prepaid_rent --amount 800 --title "Exp
 bx ledger close
 bx ledger post entry --debit re --credit dividend_due --amount 150 --title "Accrue dividend" --after-close
 
-cat entries.csv
+cat entries.linejson
 
 bx report --trial-balance
 bx report --balance-sheet

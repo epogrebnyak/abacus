@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
+
 @dataclass
 class Logger:
     """Logger will hold string message about actions taken."""
@@ -12,7 +13,7 @@ class Logger:
 
     def echo(self):
         for string in self.messages:
-            print(string)    
+            print(string)
 
 
 # @dataclass

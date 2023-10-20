@@ -41,12 +41,11 @@ class ChartCommand:
         return self
 
     @classmethod
-    def init(cls, path: Path) -> None:
+    def init(cls, path: Path) -> "ChartCommand":
         """Write empty chart to *path* if does not file exist."""
-        if not path.exists():
-            ChartCommand.new().write(path)
-        else:
+        if path.exists():
             raise AbacusError(f"{path} already exists.")
+        return ChartCommand.new().write(path)
 
     @classmethod
     def new(cls) -> "ChartCommand":
@@ -93,9 +92,7 @@ class ChartCommand:
                 self.log(f"Account name already exists: {account_name}.")
                 return self
             else:
-                raise AbacusError(
-                    f"Account name {account_name} already taken."
-                )
+                raise AbacusError(f"Account name {account_name} already taken.")
         setattr(self.chart, attribute, account_names + [account_name])
         self.log(f"Added account {account_name} to chart <{attribute}>.")
         return self
@@ -120,9 +117,11 @@ class ChartCommand:
         for contra_account_name in contra_account_names:
             self.chart.offset(account_name, contra_account_name)
         ending = "s" if len(contra_account_names) > 1 else ""
-        self.log(f"Added contra account{ending}: " 
-                 + contra_phrase(account_name, contra_account_names) 
-                 + ".")
+        self.log(
+            f"Added contra account{ending}: "
+            + contra_phrase(account_name, contra_account_names)
+            + "."
+        )
         return self
 
     def offset(self, account_name, contra_account_name) -> "ChartCommand":
@@ -149,9 +148,7 @@ class ChartCommand:
                 if parts[0] == "contra":
                     self.offset(account_name=parts[1], contra_account_name=parts[2])
                 else:
-                    raise AbacusError(
-                        f"Wrong format for contra account name: {string}"
-                    )
+                    raise AbacusError(f"Wrong format for contra account name: {string}")
             case _:
                 raise AbacusError(f"Too many colons (:) in account name: {string}")
         return self

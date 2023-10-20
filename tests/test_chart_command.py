@@ -19,7 +19,8 @@ def test_chart_command(tmp_path):
     assert ChartCommand.read(tmp_path).chart.json(indent=2)
 
 
-script = """cx init
+script = """cx delete chart.json
+cx init
 cx post --debit asset:cash               --credit capital:equity --amount 11000
 cx post --debit expense:rent             --credit cash           --amount 800
 cx post --debit asset:equipment          --credit liability:ap   --amount 3000
