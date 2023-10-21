@@ -81,3 +81,6 @@ docs-publish:
 # Publish to PyPI
 publish:
   poetry publish --build
+
+cli:
+  poetry run python abacus/cli/main.py  

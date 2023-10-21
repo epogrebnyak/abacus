@@ -11,26 +11,10 @@ def contra_phrase(account_name, contra_account_names):
     return account_name + " is offset by " + ", ".join(contra_account_names)
 
 
-def init_chart(path: Path) -> None:
-    """Write empty chart to *path* if does not file exist."""
-    if not path.exists():
-        ChartCommand.new().write(path)
-    else:
-        raise AbacusError
-
-
-def which_flag(arguments):
-    allowed_flags = ["--asset", "--capital", "--liability", "--expense", "--income"]
-    raised_flags = [flag for flag in allowed_flags if arguments[flag]]
-    if len(raised_flags) > 1 or len(raised_flags):
-        raise AbacusError(f"Exactly of one of {raised_flags} can be raised.")
-    return RegularAccountEnum.from_flag(raised_flags[0])
-
-
 @dataclass
 class ChartCommand:
     chart: Chart
-    logger: Logger = Logger([])
+    logger: Logger = Logger(messages=[])
 
     def echo(self):
         self.logger.echo()
@@ -53,12 +37,12 @@ class ChartCommand:
 
     @classmethod
     def read(cls, path: Path) -> "ChartCommand":
-        return ChartCommand(chart=Chart.parse_file(path))
+        return ChartCommand(chart=Chart.parse_file(path), logger=Logger(messages=[]))
 
     def write(self, path: Path) -> "ChartCommand":
         content = self.chart.json(indent=4, ensure_ascii=True)
         Path(path).write_text(content, encoding="utf-8")
-        self.log(f"Wrote chart file: {path}")
+        self.log(f"Wrote chart file {path}.")
         return self
 
     def set_retained_earnings(self, account_name) -> "ChartCommand":
@@ -90,52 +74,36 @@ class ChartCommand:
         account_names = getattr(self.chart, attribute)
         if self.chart.viewer.contains(account_name):
             if account_name in account_names:
-                self.log(f"Account name already exists: {account_name}.")
+                self.log(
+                    f"Account name <{account_name}> already exists within <{attribute}>."
+                )
                 return self
             else:
-                raise AbacusError(f"Account name {account_name} already taken.")
+                raise AbacusError(f"Account name <{account_name}> already taken.")
         setattr(self.chart, attribute, account_names + [account_name])
-        self.log(f"Added account {account_name} to chart <{attribute}>.")
+        self.log(f"Added account <{account_name}> of type <{attribute}> to chart.")
         return self
-
-    def add_asset(self, account_name: str):
-        return self._add("assets", account_name)
-
-    def add_capital(self, account_name: str):
-        """Add *account_name* to 'equity' attribute of the chart."""
-        return self._add("equity", account_name)
-
-    def add_liability(self, account_name: str):
-        return self._add("liabilities", account_name)
-
-    def add_income(self, account_name: str):
-        return self._add("income", account_name)
-
-    def add_expense(self, account_name: str):
-        return self._add("expenses", account_name)
 
     def offset_many(self, account_name, contra_account_names) -> "ChartCommand":
         for contra_account_name in contra_account_names:
             self.chart.offset(account_name, contra_account_name)
-        ending = "s" if len(contra_account_names) > 1 else ""
-        self.log(
-            f"Added contra account{ending}: "
-            + contra_phrase(account_name, contra_account_names)
-            + "."
-        )
+            self.log(f"Added contra account <{contra_account_name}> to chart.")
         return self
 
     def offset(self, account_name, contra_account_name) -> "ChartCommand":
         return self.offset_many(account_name, [contra_account_name])
 
-    def alias(self, name: str, debit: AccountName, credit: AccountName):
+    # FIXME: operations not supported on cli level
+    def add_operation(self, name: str, debit: AccountName, credit: AccountName):
         self.chart.add_operation(name, debit, credit)
-        self.log(f"Added operation: {name} (debit is {debit}, credit is {credit}).")
+        self.log(
+            f"Added operation {name} where debit account is {debit}, credit account is {credit}."
+        )
         return self
 
     def set_name(self, account_name, title) -> "ChartCommand":
         self.chart.set_name(account_name, title)
-        self.log(f"Added account title: {self.chart.namer.compose_name(account_name)}.")
+        self.log(f'Changed account <{account_name}> title to "{title}".')
         return self
 
     def promote(self, string: str) -> "ChartCommand":
@@ -143,6 +111,7 @@ class ChartCommand:
         match len(parts):
             case 1:
                 self.chart.viewer.assert_contains(parts[0])
+                self.log(f"Account <{parts[0]}> is already in chart.")
             case 2:
                 self.add_by_enum(detect_prefix(parts[0]), parts[1])
             case 3:
@@ -152,6 +121,13 @@ class ChartCommand:
                     raise AbacusError(f"Wrong format for contra account name: {string}")
             case _:
                 raise AbacusError(f"Too many colons (:) in account name: {string}")
+        return self
+
+    def json(self):
+        return self.chart.json(indent=4, ensure_ascii=True)
+
+    def show(self):
+        print(self.json())
         return self
 
 

@@ -26,8 +26,20 @@ def add(account_name, title):
 
 
 @cli.command()
+@click.option(
+    "--last",
+    type=int,
+    default=1,
+    help="Number of last entries to show in ledger [default: 1].",
+)
+def ledger():
+    """Print ledger."""
+    pass
+
+
+@cli.command()
 def init():
-    """Initialize chart and ledger in current folder."""
+    """Initialize project in current folder."""
     click.echo("Initialized the ledger")
 
 
@@ -44,6 +56,12 @@ def post(debit, credit, amount):
 def close():
     """Close ledger at period end."""
     click.echo("Posted closing entries to ledger.")
+
+
+@cli.command()
+def chart():
+    """Print chart of accounts."""
+    click.echo("Printed chart of accounts.")
 
 
 @cli.command()
@@ -66,23 +84,17 @@ def report(type_, plain, json):
     click.echo(json)
 
 
-@cli.command()
-@click.argument("what", type=click.Choice(["chart", "ledger"]), required=True)
-@click.option(
-    "--last",
-    type=int,
-    default=1,
-    help="Number of last entries to show in ledger [default: 1].",
-)
-def show(what, last):
-    """Print chart or ledger."""
-    click.echo(f"Showing {what}.")
-    click.echo(last)
+# @cli.command()
+# @click.argument("what", type=click.Choice(["chart", "ledger"]), required=True)
+# def show(what, last):
+#     """Print chart or ledger."""
+#     click.echo(f"Showing {what}.")
+#     click.echo(last)
 
 
-@cli.command(name="account", help="Verify account balance.")
+@cli.command(name="account", help="Show account.")
 @click.argument("account_name")
-@click.option("--assert-balance", type=int, help="Expected account balance.")
+@click.option("--assert-balance", type=int, help="Verify account balance.")
 def assert_command(account_name, assert_balance):
     click.echo(account_name)
     click.echo(assert_balance)
@@ -94,7 +106,7 @@ def assert_command(account_name, assert_balance):
     prompt="Are you sure you want to permanently delete this file?"
 )
 def unlink(what):
-    """Delete chart or ledger in current folder."""
+    """Delete files in current folder."""
     click.echo(f"Deleted {what}.")
 
 

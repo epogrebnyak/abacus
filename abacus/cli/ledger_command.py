@@ -2,15 +2,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
 
-from abacus import AbacusError, Amount, Chart, Entry, Ledger
+from abacus import Amount, Chart, Entry, Ledger
 from abacus.engine.entries import LineJSON
-from abacus.experimental.base import Logger
+from abacus.cli.logger import Logger
 
 
 @dataclass
 class LedgerCommand:
     store: LineJSON
-    logger: Logger = Logger([])
+    logger: Logger = Logger()
 
     def echo(self):
         self.logger.echo()
@@ -19,18 +19,15 @@ class LedgerCommand:
     def log(self, message):
         self.logger.log(message)
         return self
-
+    
     @classmethod
     def init(cls, path) -> "LedgerCommand":
         store = LineJSON(path).file.touch()
-        return LedgerCommand(store).log(f"Created ledger file: {path}")
+        return LedgerCommand(store).log(f"Created ledger file {path}.")
 
     @classmethod
     def read(cls, path: Path) -> "LedgerCommand":
         return LedgerCommand(store=LineJSON(path))
-
-    def erase(self) -> None:
-        self.store.file.erase()
 
     def show(self, sep=","):
         for entry in self.store.yield_entries():
@@ -43,16 +40,13 @@ class LedgerCommand:
         me = chart.ledger().make_multiple_entry(starting_balances_dict)
         entries = me.entries(chart.null_account)
         self.store.append_many(entries)
-        for entry in entries:
-            print("Posted starting entry:", entry)
+        return self
 
     def post_entry(self, debit: str, credit: str, amount: str):
-        try:
-            entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
-        except TypeError:
-            raise AbacusError(f"Invalid entry: {debit}, {credit}, {amount}.")
+        entry = Entry(debit=debit, credit=credit, amount=Amount(amount))
         self.store.append(entry)
-        print("Posted entry to ledger:", entry)
+        self.log(f"Posted entry to ledger: {entry}")
+        return self
 
     def post_closing_entries(self, chart):
         closing_entries = (
@@ -61,8 +55,6 @@ class LedgerCommand:
             .closing_entries(chart)
         )
         self.store.append_many(closing_entries)
-        print("Posted closing entries to ledger:")
         for entry in closing_entries:
-            print(" ", entry)
-
-    # excludes post operation
+            self.log(f"Posted entry to ledger: {entry}")
+        return self   
