@@ -1,54 +1,102 @@
 import click
-#import click_default_group
-from abacus import Entry, Amount
+
+from abacus import Amount, Entry
+
 
 @click.group()
 def cli():
     pass
 
+
+@cli.command()
+@click.argument("account_name")
+@click.option(
+    "--title", type=str, required=False, help="Descriptive title for an account."
+)
+def add(account_name, title):
+    """Add or rename account in chart.
+
+    Examples:
+      abacus add asset:cash --title "Cash and equivalents"
+      abacus add expense:rent
+      abacus add asset:ppe --title "Property, plant and equipment"
+      abacus add contra:ppe:depreciation --title "Accumulated depreciation" """
+    click.echo(account_name)
+    click.echo(title)
+
+
 @cli.command()
 def init():
     """Initialize chart and ledger in current folder."""
-    click.echo('Initialized the ledger')
+    click.echo("Initialized the ledger")
+
 
 @cli.command()
-@click.option('--debit', required=True, type=str, help='Debit account name.')
-@click.option('--credit', required=True, type=str, help='Credit account name.')
-@click.option('--amount', required=True, type=int, help='Transaction amount.')
+@click.option("--debit", required=True, type=str, help="Debit account name.")
+@click.option("--credit", required=True, type=str, help="Credit account name.")
+@click.option("--amount", required=True, type=int, help="Transaction amount.")
 def post(debit, credit, amount):
     """Post entry to ledger."""
     click.echo(Entry(debit, credit, Amount(amount)))
 
+
 @cli.command()
-@click.argument('what', type=click.Choice(['MD5', 'SHA1'], case_sensitive=False))
 def close():
     """Close ledger at period end."""
+    click.echo("Posted closing entries to ledger.")
 
-from click_option_group import optgroup, RequiredMutuallyExclusiveOptionGroup
 
 @cli.command()
-@click.argument('type_', type=click.Choice(['trial-balance', 'balance-sheet', 'income-statement'], case_sensitive=False))
-@optgroup.group('Modify output', cls=RequiredMutuallyExclusiveOptionGroup,
-                help='Show reports as JSON or rich text.')
-@optgroup.option('--json', is_flag=True, mutually_exclusive=True, help='Show JSON format.')
-@optgroup.option('--rich', is_flag=True, mutually_exclusive=True, help='Show with rich text formatting.')
+@click.argument(
+    "type_",
+    type=click.Choice(
+        ["trial-balance", "balance-sheet", "income-statement"], case_sensitive=False
+    ),
+)
+@click.option(
+    "--plain/--rich",
+    default=True,
+    help="Choose plain or rich text output format [default: --plain].",
+)
+@click.option("--json", is_flag=True, help="Provide output as JSON.")
+def report(type_, plain, json):
+    """Print trial balace, balance sheet or income statement."""
+    click.echo(type_)
+    click.echo(plain)
+    click.echo(json)
 
 
-def report(type_, json_, rich):
-    """Show trial balace, balance sheet or income statement."""
-    click.echo(type_, json_, rich)
+@cli.command()
+@click.argument("what", type=click.Choice(["chart", "ledger"]), required=True)
+@click.option(
+    "--last",
+    type=int,
+    default=1,
+    help="Number of last entries to show in ledger [default: 1].",
+)
+def show(what, last):
+    """Print chart or ledger."""
+    click.echo(f"Showing {what}.")
+    click.echo(last)
 
 
-#   cx init  
-#   cx name <account> <title>
-#   cx post --debit <debit_account> --credit <credit_account> --amount <amount>
-#   cx close
-#   cx report --trial-balance
-#   cx report --balance-sheet [--rich | --json]
-#   cx report --income-statement [--rich | --json]
-#   cx delete <file>
+@cli.command(name="account", help="Verify account balance.")
+@click.argument("account_name")
+@click.option("--assert-balance", type=int, help="Expected account balance.")
+def assert_command(account_name, assert_balance):
+    click.echo(account_name)
+    click.echo(assert_balance)
 
 
-if __name__ == '__main__':
+@cli.command()
+@click.argument("what", type=click.Choice(["chart", "ledger"]), required=True)
+@click.confirmation_option(
+    prompt="Are you sure you want to permanently delete this file?"
+)
+def unlink(what):
+    """Delete chart or ledger in current folder."""
+    click.echo(f"Deleted {what}.")
+
+
+if __name__ == "__main__":
     cli()
-

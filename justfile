@@ -68,6 +68,7 @@ readme-console:
 scripts:
   cd scripts/bx && bash -e all.sh
   cd scripts/cx && bash -e joan.sh
+  cd scripts/ex && bash -e ex.sh
  
 # Build and serve docs
 docs:

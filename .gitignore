@@ -1,5 +1,8 @@
 **/chart.json
-**/entries.json
+**/entries.linejson
+examples/readme/chart.json
+scripts/cx/entries.linejson
+scripts/readme/entries.linejson
 **/balances.json
 docs/site/
 .env-cli/
@@ -133,4 +136,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-examples/readme/chart.json
+
