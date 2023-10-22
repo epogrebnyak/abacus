@@ -62,12 +62,17 @@ readme-py:
 # Run console examples from README.md
 readme-console:
   cat README.md | npx codedown bash > scripts/readme/minimal.sh
-  cd scripts/readme && rm -f chart.json entries.csv && bash -e minimal.sh
+  cd scripts/readme && rm -f chart.json entries.linejson && bash -e minimal.sh
 
 # Run command line examples (Linux)
 scripts:
+  # abacus is almost complete version of bx
+  cd scripts/abacus && bash -e all.sh
+  # bx is a stable version 
   cd scripts/bx && bash -e all.sh
+  # cx is shorthand
   cd scripts/cx && bash -e joan.sh
+  # ex is shorter abacus, will replace cx
   cd scripts/ex && bash -e ex.sh
  
 # Build and serve docs
@@ -83,4 +88,7 @@ publish:
   poetry publish --build
 
 cli:
-  poetry run python abacus/cli/main.py  
+  cd scripts/abacus && bash -e all.sh 
+
+patch:
+  poetry version patch

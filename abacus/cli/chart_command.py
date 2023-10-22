@@ -81,7 +81,10 @@ class ChartCommand:
             else:
                 raise AbacusError(f"Account name <{account_name}> already taken.")
         setattr(self.chart, attribute, account_names + [account_name])
-        self.log(f"Added account <{account_name}> of type <{attribute}> to chart.")
+        # FIXME: may refine the message
+        self.log(
+            f"Added account to chart: <{account_name}>, account types is <{attribute}>."
+        )
         return self
 
     def offset_many(self, account_name, contra_account_names) -> "ChartCommand":

@@ -1,4 +1,4 @@
-from abacus import BalanceSheet, Chart, Entry, IncomeStatement
+from abacus import Chart, Entry, BalanceSheet, IncomeStatement
 
 chart = (
     Chart(

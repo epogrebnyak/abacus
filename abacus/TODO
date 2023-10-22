@@ -2,25 +2,34 @@ FIXME:
 - bx ledger init must fail when file is present
 - `--title` fails when written first with post entry (see fail.sh)
 
+CODES:
+
+# TODO: add more codes from https://www.audit-it.ru/plan_schetov/
+# --code 50
+
+
+OPERATIONS:
+# abacus chart alias --operation invoice --debit ar --credit sales --requires cost
+# abacus chart alias --operation cost --debit cogs --credit goods --requires invoice
+
 TODO:
-- [ ] change names to prefix+account name Asset:equipment (Equipment).........................
-- [ ] interacting with retained earnings may be a problem
+- [ ] change names to prefix+account name Asset:equipment (Equipment)
 - [ ] add totals to trial balance
 - [ ] memo + build-you-own-x
 - [ ] RAS codes 
-- [ ] --requires flag in alias 
 - [ ] more textbook examples
 - [ ] adjustment example (with trial balance)
 
 WONTFIX:
-- [ ] injest .as file with bx ... commands
+- [ ] --requires flag in alias 
+- [ ] "run" command - injest .as file with bx ... commands
 - [ ] adjust and postclose entries
-- [ ] --title for csv file
+- [ ] --title for post command
 - [ ] help messages
 - [ ] types of entries (S,B,A,C1,C2,C3,C4,P)
 - [ ] post entry with chart check
 - [ ] adjustment and post-close entries
-- [ ] `--reference` or `--refer` or meta
+- [ ] `--reference` or `--refer` or --meta
 - [ ] post-close example
 - [ ] add operation title to entry title
 - [ ] add small hash for entry

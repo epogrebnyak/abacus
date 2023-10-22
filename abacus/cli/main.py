@@ -1,12 +1,12 @@
+import json
 import os
 import sys
 from pathlib import Path
-from typing import List, Dict
-import json
+from typing import Dict, List
 
 import click
 
-from abacus import AbacusError, Amount
+from abacus import AbacusError, Chart
 from abacus.cli.chart_command import ChartCommand
 from abacus.cli.ledger_command import LedgerCommand
 from abacus.engine.base import AccountName
@@ -57,9 +57,7 @@ def _add(account_name):
 
 @chart.command
 @click.argument("account_name", type=str)
-@click.option(
-    "--title", type=str, required=False, help="Long account title."
-)
+@click.option("--title", type=str, required=False, help="Long account title.")
 def add(account_name: str, title: str):
     """Add account to chart.
 
@@ -70,8 +68,7 @@ def add(account_name: str, title: str):
         abacus add contra:ppe:depreciation --title "Accumulated depreciation" """
     _add(account_name)
     if title:
-       _name(account_name, title)
-
+        _name(last(account_name), title)
 
 
 @chart.command
@@ -84,16 +81,32 @@ def add_many(account_names: List[AccountName]):
 
 @chart.command()
 @click.argument("account_name")
-@click.option(
-    "--title", type=str, required=False, help="Long account title."
-)
+@click.option("--title", type=str, required=False, help="Account title.")
 def name(account_name, title):
     """Change account title."""
     _name(account_name, title)
 
+
+@chart.command(name="set")
+@click.option("--re", type=str, required=False, help="Retained earnings account name.")
+@click.option("--null", type=str, required=False, help="Null account name.")
+@click.option("--isa", type=str, required=False, help="Income summary account name.")
+def set_special_accounts(re, null, isa):
+    """Change default names to special accounts."""
+    path = get_chart_path()
+    command = ChartCommand.read(path)
+    if re:
+        command.set_retained_earnings(re).echo().write(path)
+    if null:
+        command.set_null_account(null).echo().write(path)
+    if isa:
+        command.set_isa(isa).echo().write(path)
+
+
 def _name(account_name, title):
     path = get_chart_path()
     ChartCommand.read(path).set_name(account_name, title).echo().write(path)
+
 
 @chart.command(name="show")
 @click.option("--json", is_flag=True, help="Show chart as JSON.")
@@ -121,7 +134,11 @@ def ledger():
 
 
 @ledger.command(name="init")
-@click.option("--file", type=click.Path(exists=True), help="JSON file with account starting balances.")
+@click.option(
+    "--file",
+    type=click.Path(exists=True),
+    help="JSON file with account starting balances.",
+)
 # add starting balances
 def init_ledger(file):
     """Create ledger file (entries.linejson) in current folder."""
@@ -131,7 +148,7 @@ def init_ledger(file):
     if file:
         starting_balances = read_starting_balances(file)
         chart = ChartCommand.read(path=get_chart_path()).chart
-        ledger.post_starting_balances(chart, starting_balances).echo() 
+        ledger.post_starting_balances(chart, starting_balances).echo()
 
 
 def last(string):
@@ -144,9 +161,9 @@ def last(string):
 @click.option("--amount", required=True, type=int, help="Transaction amount.")
 def post(debit, credit, amount):
     """Post entry to ledger."""
-    path=get_chart_path()
-    ChartCommand.read(path).promote(debit).promote(credit).echo().write(path)  
-    path=get_entries_path()
+    path = get_chart_path()
+    ChartCommand.read(path).promote(debit).promote(credit).echo().write(path)
+    path = get_entries_path()
     LedgerCommand.read(path).post_entry(last(debit), last(credit), amount).echo()
 
 
@@ -175,7 +192,7 @@ def unlink_ledger():
     click.echo(f"Dropped {path}")
 
 
-@abacus.group()
+@abacus.group
 def report():
     """Show reports."""
     pass
@@ -184,34 +201,105 @@ def report():
 @report.command(name="trial-balance")
 def trial_balance():
     """Show trial balance."""
-    pass
+    from abacus.cli.report_command import trial_balance
+
+    click.echo(trial_balance(get_entries_path(), get_chart_path()))
+
+
+def echo_statement(statement, chart, plain, json, rich):
+    match sum(1 for x in [plain, json, rich] if x):
+        case 0:
+            plain = True
+        case 1:
+            pass
+        case _:
+            sys.exit("Choose one of --plain, --json or --rich.")
+    if json:
+        click.echo(statement.json())
+    elif rich:
+        click.echo(statement.print_rich(chart.names))
+    elif plain:
+        click.echo(statement.view(chart.names))
 
 
 @report.command(name="balance-sheet")
-def balance_sheet():
+@click.option(
+    "--plain",
+    is_flag=True,
+    help="Plain text output [default].",
+)
+@click.option(
+    "--rich",
+    is_flag=True,
+    help="Rich text output.",
+)
+@click.option("--json", is_flag=True, help="Format output as JSON.")
+def balance_sheet(plain, rich, json):
     """Show balance sheet."""
-    pass
+    from abacus.cli.report_command import balance_sheet
+
+    statement = balance_sheet(get_entries_path(), get_chart_path())
+    chart = ChartCommand.read(path=get_chart_path()).chart
+    echo_statement(statement, chart, plain, json, rich)
 
 
 @report.command(name="income-statement")
-def income_statement():
+@click.option(
+    "--plain",
+    is_flag=True,
+    help="Plain text output [default].",
+)
+@click.option(
+    "--rich",
+    is_flag=True,
+    help="Rich text output.",
+)
+@click.option("--json", is_flag=True, help="Format output as JSON.")
+def income_statement(plain, rich, json):
     """Show income statement."""
-    pass
+    from abacus.cli.report_command import income_statement
+
+    statement = income_statement(get_entries_path(), get_chart_path())
+    chart = ChartCommand.read(path=get_chart_path()).chart
+    echo_statement(statement, chart, plain, json, rich)
 
 
 @report.command(name="account-balances")
 @click.option("--nonzero", is_flag=True, help="Omit accounts with zero balances.")
-def account_balances():
+def account_balances(nonzero):
     """Show account balances."""
-    pass
+    from abacus.cli.report_command import account_balances
+
+    balances = account_balances(
+        entries_path=get_entries_path(), chart_path=get_chart_path(), nonzero=nonzero
+    )
+    click.echo(jsonify(balances))
+
+
+def jsonify(x):
+    return json.dumps(x, indent=4, sort_keys=True, ensure_ascii=False)
 
 
 @abacus.command()
 @click.argument("account_name")
 @click.option("--assert-balance", type=int, help="Verify account balance.")
-def inspect(account_name: AccountName, assert_balance: Amount):
+def inspect(account_name: str, assert_balance: int):
     """Show or check extra information."""
-    pass
+    from abacus.cli.inspect_command import assert_account_balance, print_account_info
+    from abacus.cli.report_command import current_ledger
+
+    ledger = current_ledger(
+        chart_path=get_chart_path(), entries_path=get_entries_path()
+    )
+    if assert_balance or assert_balance == 0:
+        print("Checking balance...")
+        assert_account_balance(ledger, account_name, assert_balance)
+    else:
+        print_account_info(ledger, get_chart(), account_name)
+
+
+def get_chart():
+    return Chart.parse_file(get_chart_path())
 
 
 if __name__ == "__main__":
