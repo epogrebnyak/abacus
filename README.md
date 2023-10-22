@@ -452,6 +452,12 @@ inspect commands, accelerates the development workflow.
 
 ## Changelog
 
+### 0.7.3
+
+- `click` package used for new CLI entrypoint called `abacus` (will replace `bx` tool)
+- parts of CLI code moved to `abacus.cli`
+- targeting fuller `abacus` and minimal 5 command `ex` command line tools
+
 ### 0.7.0
 
 The `cx` command line tool enables to run entire accounting cycle from postings to reports with just five commands:
