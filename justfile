@@ -98,4 +98,3 @@ make-help:
   abacus chart --help >> abacus-help.txt
   abacus ledger --help >> abacus-help.txt
   abacus report --help >> abacus-help.txt
-  abacus inspect --help >> abacus-help.txt

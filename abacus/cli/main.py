@@ -92,7 +92,7 @@ def add(account_name: str, title: str):
 @click.argument("prefix")
 @click.argument("account_names", nargs=-1)
 def add_many(prefix, account_names: List[str]):
-    """Add several accounts of the same type to chart.
+    """Add several accounts to chart.
 
     Example:
         abacus chart add-many asset cash inventory ar ppe
@@ -328,9 +328,9 @@ def income_statement(plain, rich, json):
     echo_statement(statement, get_chart(), plain, json, rich)
 
 
-@report.command(name="account-balances")
+@report.command(name="balances")
 @click.option("--nonzero", is_flag=True, help="Omit accounts with zero balances.")
-def account_balances(nonzero):
+def balances(nonzero):
     """Show account balances."""
     from abacus.cli.report_command import account_balances
 
@@ -344,11 +344,11 @@ def jsonify(x):
     return json.dumps(x, indent=4, sort_keys=True, ensure_ascii=False)
 
 
-@abacus.command()
+@report.command()
 @click.argument("account_name")
 @click.option("--assert-balance", type=int, help="Verify account balance.")
-def inspect(account_name: str, assert_balance: int):
-    """Show or check extra information."""
+def account(account_name: str, assert_balance: int):
+    """Show or check account information."""
     from abacus.cli.inspect_command import assert_account_balance, print_account_info
     from abacus.cli.report_command import current_ledger
 

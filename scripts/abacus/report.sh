@@ -6,5 +6,5 @@ abacus report income-statement --rich
 abacus report income-statement --json
 abacus report income-statement --plain
 abacus report income-statement
-abacus report account-balances 
-abacus report account-balances --nonzero
+abacus report balances 
+abacus report balances --nonzero
