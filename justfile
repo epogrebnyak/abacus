@@ -92,3 +92,10 @@ cli:
 
 patch:
   poetry version patch
+
+make-help:
+  abacus --help > abacus-help.txt
+  abacus chart --help >> abacus-help.txt
+  abacus ledger --help >> abacus-help.txt
+  abacus report --help >> abacus-help.txt
+  abacus inspect --help >> abacus-help.txt

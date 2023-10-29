@@ -12,9 +12,25 @@ def contra_phrase(account_name, contra_account_names):
 
 
 @dataclass
+class ChartPath:
+    path: Path
+
+    def init(self):
+        """Write empty chart to *self.path* if does not file exist."""
+        if self.path.exists():
+            raise AbacusError(f"{self.path} already exists.")
+        return ChartCommand.new().write(self.path)
+
+    def read(self) -> "ChartCommand":
+        """Read chart from *self.path*."""
+        return ChartCommand(chart=Chart.parse_file(self.path), path=self.path)
+
+
+@dataclass
 class ChartCommand:
     chart: Chart
     logger: Logger = Logger(messages=[])
+    path: Path | None = None
 
     def echo(self):
         self.logger.echo()
@@ -48,16 +64,19 @@ class ChartCommand:
     def set_retained_earnings(self, account_name) -> "ChartCommand":
         """Override default name of retained earnings account."""
         self.chart.retained_earnings_account = account_name
+        self.log(f"Retained earnings account name was set to {account_name}.")
         return self
 
     def set_null_account(self, account_name) -> "ChartCommand":
         """Override default name of null account."""
         self.chart.null_account = account_name
+        self.log(f"Null account name was set to {account_name}.")
         return self
 
     def set_isa(self, account_name) -> "ChartCommand":
         """Override default name of income summary account."""
         self.chart.income_summary_account = account_name
+        self.log(f"Income summary account was set to {account_name}.")
         return self
 
     def add_by_enum(

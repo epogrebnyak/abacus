@@ -7,7 +7,7 @@ from typing import Dict, List
 import click
 
 from abacus import AbacusError, Chart
-from abacus.cli.chart_command import ChartCommand
+from abacus.cli.chart_command import ChartCommand, ChartPath
 from abacus.cli.ledger_command import LedgerCommand
 from abacus.engine.base import AccountName
 from abacus.engine.entries import File
@@ -38,19 +38,18 @@ def abacus():
 @abacus.group()
 def chart():
     """Define chart of accounts."""
-    pass
 
 
 @chart.command(name="init")
 def init_chart():
     """Create chart of accounts file (chart.json) in current folder."""
-    ChartCommand.init(path=get_chart_path()).echo()
+    ChartPath(path=get_chart_path()).init().echo()
 
 
-def _add(account_name):
+def promote(account_name):
+    """Safe add account to chart."""
     try:
-        path = get_chart_path()
-        ChartCommand.read(path).promote(account_name).echo().write(path)
+        ChartPath(path=get_chart_path()).read().promote(account_name).echo().write()
     except AbacusError as e:
         sys.exit(e)
 
@@ -59,7 +58,7 @@ def _add(account_name):
 @click.argument("account_name", type=str)
 @click.option("--title", type=str, required=False, help="Long account title.")
 def add(account_name: str, title: str):
-    """Add account to chart.
+    """Add account to chart with optional title.
 
     Examples:
         abacus add asset:cash --title "Cash and equivalents"
@@ -92,7 +91,7 @@ def name(account_name, title):
 @click.option("--null", type=str, required=False, help="Null account name.")
 @click.option("--isa", type=str, required=False, help="Income summary account name.")
 def set_special_accounts(re, null, isa):
-    """Change default names to special accounts."""
+    """Change default names of retained earnings, income summary or null account."""
     path = get_chart_path()
     command = ChartCommand.read(path)
     if re:
