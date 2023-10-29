@@ -1,4 +1,12 @@
 abacus --help
+abacus chart unlink --yes
+abacus chart init
+abacus chart add asset:cash 
+abacus chart add asset:goods
+abacus chart add capital:equity
+abacus chart set --retained-earnings-account re
+abacus ledger unlink --yes
+abacus ledger init
 # bx ledger erase --force
 # bx chart erase --force
 # bx chart init

@@ -1,10 +1,8 @@
 from dataclasses import dataclass
-from pathlib import Path
 
 from abacus import AbacusError, Chart
+from abacus.cli.base import BaseCommand
 from abacus.engine.accounts import RegularAccountEnum
-from abacus.engine.base import AccountName
-from abacus.experimental.base import Logger
 
 
 def contra_phrase(account_name, contra_account_names):
@@ -12,97 +10,79 @@ def contra_phrase(account_name, contra_account_names):
 
 
 @dataclass
-class ChartPath:
-    path: Path
+class ChartCommand(BaseCommand):
+    chart: Chart = Chart()
 
-    def init(self):
-        """Write empty chart to *self.path* if does not file exist."""
-        if self.path.exists():
-            raise AbacusError(f"{self.path} already exists.")
-        return ChartCommand.new().write(self.path)
+    def json(self):
+        return self.chart.json(indent=4, ensure_ascii=True)
 
-    def read(self) -> "ChartCommand":
-        """Read chart from *self.path*."""
-        return ChartCommand(chart=Chart.parse_file(self.path), path=self.path)
-
-
-@dataclass
-class ChartCommand:
-    chart: Chart
-    logger: Logger = Logger(messages=[])
-    path: Path | None = None
-
-    def echo(self):
-        self.logger.echo()
-        return self
-
-    def log(self, message):
-        self.logger.log(message)
-        return self
-
-    @classmethod
-    def init(cls, path: Path) -> "ChartCommand":
-        """Write empty chart to *path* if does not file exist."""
-        if path.exists():
-            raise AbacusError(f"{path} already exists.")
-        return ChartCommand.new().write(path)
-
-    @classmethod
-    def new(cls) -> "ChartCommand":
-        return ChartCommand(chart=Chart())
-
-    @classmethod
-    def read(cls, path: Path) -> "ChartCommand":
-        return ChartCommand(chart=Chart.parse_file(path), logger=Logger(messages=[]))
-
-    def write(self, path: Path) -> "ChartCommand":
-        content = self.chart.json(indent=4, ensure_ascii=True)
-        Path(path).write_text(content, encoding="utf-8")
-        self.log(f"Wrote chart file {path}.")
+    def write(self):
+        self.path.write_text(self.json(), encoding="utf-8")
+        self.log(f"Wrote file {self.path}.")
         return self
 
     def set_retained_earnings(self, account_name) -> "ChartCommand":
         """Override default name of retained earnings account."""
         self.chart.retained_earnings_account = account_name
-        self.log(f"Retained earnings account name was set to {account_name}.")
+        self.log(f"Retained earnings account name was set to <{account_name}>.")
         return self
 
     def set_null_account(self, account_name) -> "ChartCommand":
         """Override default name of null account."""
         self.chart.null_account = account_name
-        self.log(f"Null account name was set to {account_name}.")
+        self.log(f"Null account name was set to <{account_name}>.")
         return self
 
     def set_isa(self, account_name) -> "ChartCommand":
         """Override default name of income summary account."""
         self.chart.income_summary_account = account_name
-        self.log(f"Income summary account was set to {account_name}.")
+        self.log(f"Income summary account was set to <{account_name}>.")
         return self
 
-    def add_by_enum(
-        self, account_type: RegularAccountEnum, account_name: str
-    ) -> "ChartCommand":
-        return self._add(account_type.chart_attribute(), account_name)
+    def promote(self, string: str) -> "ChartCommand":
+        parts = string.split(":")
+        match len(parts):
+            case 1:
+                self.chart.viewer.assert_contains(parts[0])
+                self.log(f"Account <{parts[0]}> is already in chart.")
+            case 2:
+                chart_attribute = detect_prefix(parts[0]).chart_attribute()
+                self.add_by_attribute(chart_attribute, parts[1])
+            case 3:
+                if parts[0] == "contra":
+                    self.offset(account_name=parts[1], contra_account_name=parts[2])
+                else:
+                    raise AbacusError(f"Wrong format for contra account name: {string}")
+            case _:
+                raise AbacusError(f"Too many colons (:) in account name: {string}")
+        return self
 
-    def _add(self, attribute: str, account_name: str) -> "ChartCommand":
-        """Generic method to add account of *attribute* type to chart.
+    def add_by_attribute(
+        self, chart_attribute: str, account_name: str
+    ) -> "ChartCommand":
+        """Add account of *attribute* type to chart.
         Attribute in any of ['assets', 'liabilities', 'equity', 'income', 'expenses'].
         """
-        if attribute not in self.chart.five_types_of_accounts():
-            raise AbacusError(f"Invalid attribute: {attribute}")
-        account_names = getattr(self.chart, attribute)
+        try:
+            account_names = getattr(self.chart, chart_attribute)
+        except AttributeError:
+            raise AbacusError(f"Invalid attribute: {chart_attribute}")
         if self.chart.viewer.contains(account_name):
             if account_name in account_names:
                 self.log(
-                    f"Account name <{account_name}> already exists within <{attribute}>."
+                    f"Account name <{account_name}> already exists "
+                    f"within <{chart_attribute}>."
                 )
                 return self
             else:
-                raise AbacusError(f"Account name <{account_name}> already taken.")
-        setattr(self.chart, attribute, account_names + [account_name])
-        # FIXME: may refine the message
+                raise AbacusError(
+                    "Account names must be unique. "
+                    f"Account name <{account_name}> is already taken in this chart."
+                )
+        setattr(self.chart, chart_attribute, account_names + [account_name])
         self.log(
-            f"Added account to chart: <{account_name}>, account types is <{attribute}>."
+            f"Added account <{account_name}> to chart, "
+            f"account type is <{chart_attribute}>."
         )
         return self
 
@@ -115,40 +95,21 @@ class ChartCommand:
     def offset(self, account_name, contra_account_name) -> "ChartCommand":
         return self.offset_many(account_name, [contra_account_name])
 
-    # FIXME: operations not supported on cli level
-    def add_operation(self, name: str, debit: AccountName, credit: AccountName):
-        self.chart.add_operation(name, debit, credit)
-        self.log(
-            f"Added operation {name} where debit account is {debit}, credit account is {credit}."
-        )
-        return self
+    # # FIXME: operations not supported on cli level
+    # def add_operation(self, name: str, debit: AccountName, credit: AccountName):
+    #     self.chart.add_operation(name, debit, credit)
+    #     self.log(
+    #         f"Added operation {name} where debit account is {debit}, credit account is {credit}."
+    #     )
+    #     return self
 
     def set_name(self, account_name, title) -> "ChartCommand":
         self.chart.set_name(account_name, title)
         self.log(f'Changed account <{account_name}> title to "{title}".')
         return self
 
-    def promote(self, string: str) -> "ChartCommand":
-        parts = string.split(":")
-        match len(parts):
-            case 1:
-                self.chart.viewer.assert_contains(parts[0])
-                self.log(f"Account <{parts[0]}> is already in chart.")
-            case 2:
-                self.add_by_enum(detect_prefix(parts[0]), parts[1])
-            case 3:
-                if parts[0] == "contra":
-                    self.offset(account_name=parts[1], contra_account_name=parts[2])
-                else:
-                    raise AbacusError(f"Wrong format for contra account name: {string}")
-            case _:
-                raise AbacusError(f"Too many colons (:) in account name: {string}")
-        return self
-
-    def json(self):
-        return self.chart.json(indent=4, ensure_ascii=True)
-
     def show(self):
+        # FIXME: can print more verbose name
         print(self.json())
         return self
 

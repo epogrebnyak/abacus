@@ -1,43 +1,32 @@
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Dict
 
-from abacus import Amount, Chart, Entry, Ledger
-from abacus.cli.logger import Logger
+from abacus import AbacusError, Amount, Chart, Entry, Ledger
+from abacus.cli.base import BaseCommand
 from abacus.engine.entries import LineJSON
 
 
 @dataclass
-class LedgerCommand:
-    store: LineJSON
-    logger: Logger = Logger()
+class LedgerCommand(BaseCommand):
+    @property
+    def store(self):
+        return LineJSON(self.path)
 
-    def echo(self):
-        self.logger.echo()
+    def init(self) -> "LedgerCommand":
+        if self.path.exists():
+            raise AbacusError(f"{self.path} already exists.")
+        else:
+            self.path.touch()
+            self.log(f"Created ledger file {self.path}.")
         return self
-
-    def log(self, message):
-        self.logger.log(message)
-        return self
-
-    @classmethod
-    def init(cls, path) -> "LedgerCommand":
-        store = LineJSON(path)
-        store.file.touch()
-        return LedgerCommand(store).log(f"Created ledger file {path}.")
-
-    @classmethod
-    def read(cls, path: Path) -> "LedgerCommand":
-        return LedgerCommand(store=LineJSON(path))
 
     def show(self, sep=","):
         for entry in self.store.yield_entries():
             print(entry.debit, entry.credit, entry.amount, sep=sep)
 
     def post_starting_balances(self, chart: Chart, starting_balances_dict: Dict):
-        _ = chart.ledger(
-            starting_balances_dict
-        )  # check all accounts are present in chart
+        # check all accounts are present in chart
+        _ = chart.ledger(starting_balances_dict)
         me = chart.ledger().make_multiple_entry(starting_balances_dict)
         entries = me.entries(chart.null_account)
         return self.post_many(entries)
