@@ -51,7 +51,8 @@ def chart():
 @chart.command(name="init")
 def init_chart():
     """Create chart of accounts file (chart.json) in current folder."""
-    ChartCommand(path=get_chart_path(), chart=Chart()).write().echo()
+    handler = ChartCommand(path=get_chart_path(), chart=Chart())
+    handler.assert_does_not_exist().write().echo()
 
 
 def promote(account_name: str):
@@ -75,7 +76,7 @@ def name(account_name, title) -> None:
 @click.argument("account_name", type=str)
 @click.option("--title", type=str, required=False, help="Long account title.")
 def add(account_name: str, title: str):
-    """Add account to chart with optional title.
+    """Add account to chart.
 
     Examples:
         abacus chart add asset:cash --title "Cash and equivalents"
@@ -107,6 +108,17 @@ def add_many(prefix, account_names: List[str]):
 def name_command(account_name, title):
     """Change account title."""
     name(account_name, title)
+
+
+@chart.command
+@click.argument("opname")
+@click.option("--debit", required=True, type=str, help="Debit account name.")
+@click.option("--credit", required=True, type=str, help="Credit account name.")
+# FIXME: make required option
+# @click.option("--requires")
+def operation(opname, debit, credit):
+    """Define a named pair of debit and credit accounts."""
+    chart_command().add_operation(opname, debit, credit).echo().write()
 
 
 @chart.command(name="set")
@@ -172,11 +184,10 @@ def ledger():
 )
 def init_ledger(file):
     """Create ledger file (entries.linejson) in current folder."""
-    # FIXME: maybe different message if not created
-    ledger_command = LedgerCommand(path=get_entries_path()).init().echo()
+    handler = LedgerCommand(path=get_entries_path()).init().echo()
     if file:
         starting_balances = read_starting_balances(file)
-        ledger_command.post_starting_balances(get_chart(), starting_balances).echo()
+        handler.post_starting_balances(get_chart(), starting_balances).echo()
 
 
 def read_starting_balances(path: str) -> Dict:
@@ -203,7 +214,6 @@ def post_compound(debit, credit):
     for account, _ in debit + credit:
         chart_handler.promote(account)
     chart_handler.echo().write()
-    chart_handler.log("This should not appear in other handler!")
 
     def apply_last(tuples):
         return [(last(account), amount) for account, amount in tuples]
@@ -214,11 +224,13 @@ def post_compound(debit, credit):
     ).echo()
 
 
-@click.option("--operation", "-o", type=(str, int), multiple=True)
+@click.option("--operation", "-o", "operations", type=(str, int), multiple=True)
 @ledger.command
-def post_operation(operation):
+def post_operation(operations):
     """Post operation to ledger."""
-    pass
+    handler = ledger_command()
+    chart = get_chart()
+    handler.post_operations(chart, operations).echo()
 
 
 @ledger.command

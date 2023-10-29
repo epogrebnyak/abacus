@@ -1,6 +1,6 @@
-from typing import Dict
+from typing import Dict, List, Tuple
 
-from abacus import AbacusError, Amount, Chart, Entry, Ledger, MultipleEntry
+from abacus import Amount, Chart, Entry, Ledger, MultipleEntry
 from abacus.cli.base import BaseCommand
 from abacus.engine.entries import LineJSON
 
@@ -11,18 +11,21 @@ class LedgerCommand(BaseCommand):
         return LineJSON(self.path)
 
     def init(self) -> "LedgerCommand":
-        if self.path.exists():
-            raise AbacusError(f"{self.path} already exists.")
-        else:
-            self.path.touch()
-            self.log(f"Created ledger file {self.path}.")
+        self.assert_does_not_exist()
+        self.path.touch()
+        self.log(f"Created ledger file {self.path}.")
         return self
 
     def show(self, sep=","):
         for entry in self.store.yield_entries():
             print(entry.debit, entry.credit, entry.amount, sep=sep)
 
-    def post_compound(self, chart: Chart, debit_tuples, credit_tuples):
+    def post_compound(
+        self,
+        chart: Chart,
+        debit_tuples: List[Tuple[str, int]],
+        credit_tuples: List[Tuple[str, int]],
+    ):
         me = MultipleEntry(debit_entries=debit_tuples, credit_entries=credit_tuples)
         entries = me.entries(chart.null_account)
         return self.post_many(entries, "single")
@@ -46,9 +49,11 @@ class LedgerCommand(BaseCommand):
             self.log(f"Posted {noun}entry to ledger: {entry}")
         return self
 
-    def post_operations(self, chart, operations: list[str], amounts: list[str]):
-        entries = chart.make_entries_for_operations(operations, amounts)
-        return self.post_many(entries)
+    def post_operations(self, chart, operations):
+        opnames = [opname for opname, _ in operations]
+        amounts = [amount for _, amount in operations]
+        entries = chart.make_entries_for_operations(opnames, amounts)
+        return self.post_many(entries, "operation")
 
     def post_closing_entries(self, chart):
         closing_entries = (
@@ -56,4 +61,4 @@ class LedgerCommand(BaseCommand):
             .post_many(entries=self.store.yield_entries())
             .closing_entries(chart)
         )
-        return self.post_many(closing_entries)
+        return self.post_many(closing_entries, "closing")

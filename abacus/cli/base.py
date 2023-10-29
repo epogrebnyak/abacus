@@ -28,4 +28,11 @@ class BaseCommand(ABC):
             self.path.unlink()
             click.echo(f"Deleted {self.path}")
         else:
-            click.echo(f"File not found: {self.path}")
+            click.echo(f"{self.path} not found.")
+
+    def assert_does_not_exist(self):
+        """Raise exception if file at *path* exists."""
+        if self.path.exists():
+            raise click.ClickException(f"{self.path} already exists.")
+        else:
+            return self

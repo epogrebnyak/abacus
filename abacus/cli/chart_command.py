@@ -95,13 +95,12 @@ class ChartCommand(BaseCommand):
     def offset(self, account_name, contra_account_name) -> "ChartCommand":
         return self.offset_many(account_name, [contra_account_name])
 
-    # # FIXME: operations not supported on cli level
-    # def add_operation(self, name: str, debit: AccountName, credit: AccountName):
-    #     self.chart.add_operation(name, debit, credit)
-    #     self.log(
-    #         f"Added operation {name} where debit account is {debit}, credit account is {credit}."
-    #     )
-    #     return self
+    def add_operation(self, name: str, debit: str, credit: str):
+        self.chart.add_operation(name, debit, credit)
+        self.log(
+            f"Added operation <{name}> where debit account is <{debit}>, credit account is <{credit}>."
+        )
+        return self
 
     def set_name(self, account_name, title) -> "ChartCommand":
         self.chart.set_name(account_name, title)
