@@ -46,4 +46,5 @@ def test_cx_script():
     for line in script.split("\n"):
         argv = shlex.split(line)
         arguments = docopt(cx.__doc__, argv[1:])
+        print(line)
         cx.dispatch_commands(arguments)

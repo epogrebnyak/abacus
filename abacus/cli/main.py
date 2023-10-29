@@ -189,9 +189,36 @@ def read_starting_balances(path: str) -> Dict:
 @click.option("--credit", required=True, type=str, help="Credit account name.")
 @click.option("--amount", required=True, type=int, help="Transaction amount.")
 def post(debit, credit, amount):
-    """Post entry to ledger."""
+    """Post double entry to ledger."""
     chart_command().promote(debit).promote(credit).echo().write()
     ledger_command().post_entry(last(debit), last(credit), amount).echo()
+
+
+@ledger.command(name="post-compound")
+@click.option("--debit", type=(str, int), multiple=True)
+@click.option("--credit", type=(str, int), multiple=True)
+def post_compound(debit, credit):
+    """Post compound entry to ledger."""
+    chart_handler = chart_command()
+    for account, _ in debit + credit:
+        chart_handler.promote(account)
+    chart_handler.echo().write()
+    chart_handler.log("This should not appear in other handler!")
+
+    def apply_last(tuples):
+        return [(last(account), amount) for account, amount in tuples]
+
+    ledger_handler = ledger_command()
+    ledger_handler.post_compound(
+        get_chart(), apply_last(debit), apply_last(credit)
+    ).echo()
+
+
+@click.option("--operation", "-o", type=(str, int), multiple=True)
+@ledger.command
+def post_operation(operation):
+    """Post operation to ledger."""
+    pass
 
 
 @ledger.command

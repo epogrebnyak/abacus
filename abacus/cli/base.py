@@ -7,32 +7,19 @@ import click
 
 
 @dataclass
-class Logger:
-    """Logger will hold string messages about actions taken."""
-
-    messages: List[str] = field(default_factory=list)
-
-    def log(self, string: str):
-        self.messages.append(string)
-
-    def echo(self):
-        for string in self.messages:
-            print(string)
-
-
-@dataclass
 class BaseCommand(ABC):
     """Base class for chart and ledger commands."""
 
     path: Path
-    logger: Logger = Logger(messages=[])
+    messages: List[str] = field(default_factory=list)
 
     def echo(self):
-        self.logger.echo()
+        for string in self.messages:
+            click.echo(string)
         return self
 
     def log(self, message):
-        self.logger.log(message)
+        self.messages.append(message)
         return self
 
     def unlink(self):

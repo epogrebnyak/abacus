@@ -19,7 +19,7 @@ Simplifying assumptions:
 - balances stick to one side (debit or credit) based on type of account
 
 """
-from .engine.base import AbacusError, Amount, Entry  # noqa: F401
+from .engine.base import AbacusError, Amount, Entry, MultipleEntry  # noqa: F401
 from .engine.chart import Chart  # noqa: F401
 from .engine.entries import LineJSON  # noqa: F401
 from .engine.ledger import Ledger  # noqa: F401

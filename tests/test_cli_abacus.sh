@@ -7,8 +7,12 @@ abacus chart add capital:equity
 abacus chart set --retained-earnings-account re
 abacus ledger unlink --yes
 abacus ledger init
-# bx ledger erase --force
-# bx chart erase --force
+abacus ledger post --debit cash --credit equity --amount 501
+abacus ledger post --debit cash --credit equity --amount 499
+abacus ledger post --debit goods --credit cash --amount 700 
+abacus ledger post-compound --debit expense:cogs 600 --credit goods 600 
+abacus ledger post-compound --credit income:sales 1000 --debit cash 800 --debit asset:ar 200 
+abacus ledger show
 # bx chart init
 # bx chart add --asset cash 
 # bx chart add --asset goods
