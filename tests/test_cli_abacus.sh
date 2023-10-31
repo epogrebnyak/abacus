@@ -9,11 +9,15 @@ abacus chart set --retained-earnings-account re
 abacus ledger unlink --yes
 abacus ledger init
 abacus ledger post --debit cash --credit equity --amount 501
-abacus ledger post-operation -o capitalize 499
+abacus ledger post-operation --operation capitalize 499
 abacus ledger post --debit goods --credit cash --amount 700 
 abacus ledger post-compound --debit expense:cogs 600 --credit goods 600 
 abacus ledger post-compound --credit income:sales 1000 --debit cash 800 --debit asset:ar 200 
 abacus ledger show
+
+#abacus operation add --name capitalize --debit cash --credit equity
+#abacus operation post -o capitalize 1000 
+
 # bx chart init
 # bx chart add --asset cash 
 # bx chart add --asset goods

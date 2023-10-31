@@ -74,7 +74,7 @@ def name(account_name, title) -> None:
 
 @chart.command
 @click.argument("account_name", type=str)
-@click.option("--title", type=str, required=False, help="Long account title.")
+@click.option("--title", type=str, required=False, help="Account title.")
 def add(account_name: str, title: str):
     """Add account to chart.
 
@@ -82,7 +82,8 @@ def add(account_name: str, title: str):
         abacus chart add asset:cash --title "Cash and equivalents"
         abacus chart add expense:rent
         abacus chart add asset:ppe --title "Property, plant and equipment"
-        abacus chart add contra:ppe:depreciation --title "Accumulated depreciation" """
+        abacus chart add contra:ppe:depreciation --title "Accumulated depreciation"
+    """
     promote(account_name)
     if title:
         name(account_name, title)
@@ -111,14 +112,14 @@ def name_command(account_name, title):
 
 
 @chart.command
-@click.argument("opname")
-@click.option("--debit", required=True, type=str, help="Debit account name.")
-@click.option("--credit", required=True, type=str, help="Credit account name.")
+@click.argument("name")
+@click.option("--debit", required=True, type=str, help="Debit account.")
+@click.option("--credit", required=True, type=str, help="Credit account.")
 # FIXME: make required option
 # @click.option("--requires")
-def operation(opname, debit, credit):
+def operation(name, debit, credit):
     """Define a named pair of debit and credit accounts."""
-    chart_command().add_operation(opname, debit, credit).echo().write()
+    chart_command().add_operation(name, debit, credit).echo().write()
 
 
 @chart.command(name="set")
@@ -227,10 +228,8 @@ def post_compound(debit, credit):
 @click.option("--operation", "-o", "operations", type=(str, int), multiple=True)
 @ledger.command
 def post_operation(operations):
-    """Post operation to ledger."""
-    handler = ledger_command()
-    chart = get_chart()
-    handler.post_operations(chart, operations).echo()
+    """Post named operation(s) to ledger."""
+    ledger_command().post_operations(get_chart(), operations).echo()
 
 
 @ledger.command
