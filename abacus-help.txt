@@ -4,9 +4,10 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  chart   Define chart of accounts.
-  ledger  Post entries to ledger.
-  report  Show reports.
+  account  Show account information.
+  chart    Define chart of accounts.
+  ledger   Post entries to ledger.
+  report   Show reports.
 Usage: abacus chart [OPTIONS] COMMAND [ARGS]...
 
   Define chart of accounts.
@@ -44,11 +45,21 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  account           Show account information.
   balance-sheet     Show balance sheet.
-  balances          Show account balances.
   income-statement  Show income statement.
   trial-balance     Show trial balance.
+Usage: abacus account [OPTIONS] COMMAND [ARGS]...
+
+  Show account information.
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  assert         Verify account balance.
+  list           List available accounts.
+  show           Show detailed account information.
+  show-balances  Show account balances as JSON.
 Usage: abacus-extra [OPTIONS] COMMAND [ARGS]...
 
   Extra commands for abacus accounting package.
@@ -57,5 +68,4 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  assert     Verify account balance equals expected value (for testing).
   operation  Define and post operations.

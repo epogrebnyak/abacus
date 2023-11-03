@@ -29,8 +29,6 @@ With `abacus` you can:
 pip install abacus-py
 ```
 
-This will install the `abacus` package and the `bx` and `cx` command line tools.
-
 For latest version install from github:
 
 ```
@@ -41,27 +39,33 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Command line tools
 
-`abacus` provides two command line tools called `bx` and `cx`.
+There are two command line tools supplied when you install this package:
 
-- `cx` has just five commands to learn that allow you to do entire accounting cycle
-  and produce reports.
-- `bx` has a more verbose interface build around chart, ledger, report and account inspection
-  areas, it enables to define a chart of accounts beforehand and inspect individual accounts
-  in detail.
+- `abacus` with full set of commands and options, and
+- `cx`, a shorthand utility with just five commands that can yet complete a full accounting cycle. `cx` is ideal for solving textbook excercises.
 
-When starting with `abacus` go with `cx` just to play or solve textbook problems, move
-to `bx` for more structured work, but more commands to learn. Both `cx` and `bx`
-work using the same files `chart.json` and `entries.csv` in your project folder.
+**Data model.** Both `abacus` and `cx` work using the same two files `chart.json` and `entries.csv` in your project folder.
 
 ## The `cx` command line tool
 
 With `cx` command line tool the entire accounting cycle can be performed using just five commands:
 
 1. `init` - start new project in empty folder,
-2. `post` - add new account names to chart and post accounting entry to ledger,
+2. `post` - post a double entry to ledger,
 3. `close` - add closing entries to ledger at accounting period end,
-4. `name` - define longer account names, and
+4. `name` - define more descriptive account names, and
 5. `report` - show trial balance, balance sheet or income statement.
+
+Here is these `cx` commands compare with `abacus` commands:
+
+| `cx`            | `abacus`                                                        |
+| --------------- | --------------------------------------------------------------- |
+| `cx init`       | `abacus chart init && abacus ledger init`                       |
+| `cx post`       | `abacus ledger post`                                            |
+| `cx close`      | `abacus ledger close`                                           |
+| `cx name`       | `abacus chart name`                                             |
+| `cx report -t`  | `abacus report trial-balance`                                   |
+| `cx report -ib` | `abacus report income-statement && abacus report balance sheet` |
 
 ### Textbook example
 

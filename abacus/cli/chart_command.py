@@ -109,7 +109,7 @@ class ChartCommand(BaseCommand):
 
     def show(self):
         # FIXME: can print more verbose name
-        print(self.json())
+        print("This will print chart")
         return self
 
 

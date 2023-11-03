@@ -71,21 +71,6 @@ def post_operation(operations):
     ledger_command().post_operations(get_chart(), operations).echo()
 
 
-@abacus_extra.command(name="assert")
-@click.argument("account_name")
-@click.argument("balance", type=int)
-def assert_balance(account_name: str, balance: int):
-    """Verify account balance equals expected value (for testing)."""
-    from abacus.cli.inspect_command import assert_account_balance
-    from abacus.cli.report_command import current_ledger
-
-    print("Checking balance...")
-    ledger = current_ledger(
-        chart_path=get_chart_path(), entries_path=get_entries_path()
-    )
-    assert_account_balance(ledger, account_name, balance)
-
-
 @click.group()
 def abacus():
     pass
@@ -197,7 +182,7 @@ def show_chart(json_flag):
     if json_flag:
         click.echo(command.json())
     else:
-        click.echo(command.show())
+        command.show()
 
 
 @chart.command(name="unlink")
@@ -357,10 +342,42 @@ def income_statement(plain, rich, json):
     echo_statement(statement, get_chart(), plain, json, rich)
 
 
-@report.command(name="balances")
+@abacus.group(name="account")
+def accounts():
+    """Show account information."""
+
+
+@accounts.command()
+@click.argument("account_name")
+def show(account_name: str):
+    """Show detailed account information."""
+    from abacus.cli.inspect_command import print_account_info
+    from abacus.cli.report_command import current_ledger
+
+    ledger = current_ledger(
+        chart_path=get_chart_path(), entries_path=get_entries_path()
+    )
+    print_account_info(ledger, get_chart(), account_name)
+
+
+@accounts.command("assert")
+@click.argument("account_name")
+@click.argument("balance", type=int)
+def assert_balance(account_name: str, balance: int):
+    """Verify account balance."""
+    from abacus.cli.inspect_command import assert_account_balance
+    from abacus.cli.report_command import current_ledger
+
+    ledger = current_ledger(
+        chart_path=get_chart_path(), entries_path=get_entries_path()
+    )
+    assert_account_balance(ledger, account_name, balance)
+
+
+@accounts.command(name="show-balances")
 @click.option("--nonzero", is_flag=True, help="Omit accounts with zero balances.")
-def balances(nonzero):
-    """Show account balances."""
+def json_balances(nonzero):
+    """Show account balances as JSON."""
     from abacus.cli.report_command import account_balances
 
     balances = account_balances(
@@ -372,18 +389,10 @@ def balances(nonzero):
 def jsonify(x):
     return json.dumps(x, indent=4, sort_keys=True, ensure_ascii=False)
 
+@accounts.command(name="list")
+def list_accounts():
+    """List available accounts."""
 
-@report.command()
-@click.argument("account_name")
-def account(account_name: str):
-    """Show account information."""
-    from abacus.cli.inspect_command import print_account_info
-    from abacus.cli.report_command import current_ledger
-
-    ledger = current_ledger(
-        chart_path=get_chart_path(), entries_path=get_entries_path()
-    )
-    print_account_info(ledger, get_chart(), account_name)
 
 
 if __name__ == "__main__":
