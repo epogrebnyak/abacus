@@ -71,6 +71,21 @@ def post_operation(operations):
     ledger_command().post_operations(get_chart(), operations).echo()
 
 
+@abacus_extra.command(name="assert")
+@click.argument("account_name")
+@click.argument("balance", type=int)
+def assert_balance(account_name: str, balance: int):
+    """Show or check account information."""
+    from abacus.cli.inspect_command import assert_account_balance
+    from abacus.cli.report_command import current_ledger
+
+    print("Checking balance...")
+    ledger = current_ledger(
+        chart_path=get_chart_path(), entries_path=get_entries_path()
+    )
+    assert_account_balance(ledger, account_name, balance)
+
+
 @click.group()
 def abacus():
     pass
@@ -360,20 +375,15 @@ def jsonify(x):
 
 @report.command()
 @click.argument("account_name")
-@click.option("--assert-balance", type=int, help="Verify account balance.")
-def account(account_name: str, assert_balance: int):
+def account(account_name: str):
     """Show or check account information."""
-    from abacus.cli.inspect_command import assert_account_balance, print_account_info
+    from abacus.cli.inspect_command import print_account_info
     from abacus.cli.report_command import current_ledger
 
     ledger = current_ledger(
         chart_path=get_chart_path(), entries_path=get_entries_path()
     )
-    if assert_balance or assert_balance == 0:
-        print("Checking balance...")
-        assert_account_balance(ledger, account_name, assert_balance)
-    else:
-        print_account_info(ledger, get_chart(), account_name)
+    print_account_info(ledger, get_chart(), account_name)
 
 
 if __name__ == "__main__":

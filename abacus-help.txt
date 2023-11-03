@@ -57,4 +57,5 @@ Options:
   --help  Show this message and exit.
 
 Commands:
+  assert     Show or check account information.
   operation  Define and post operations.

@@ -1,4 +1,4 @@
 abacus report account cash
-abacus report account cash --assert-balance 550
-abacus report account ar --assert-balance 450
-abacus report account equity --assert-balance 0 || echo "Captured planned failure."
+abacus-extra assert cash 550
+abacus-extra assert ar 450
+abacus-extra assert equity 0 || echo "Captured planned failure."
