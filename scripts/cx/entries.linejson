@@ -491,3 +491,10 @@
 {"debit": "current_profit", "credit": "ads", "amount": 100}
 {"debit": "current_profit", "credit": "re", "amount": 1800}
 {"debit": "equity", "credit": "withdrawal", "amount": 1000}
+{"debit": "cash", "credit": "equity", "amount": 11000}
+{"debit": "rent", "credit": "cash", "amount": 800}
+{"debit": "equipment", "credit": "ap", "amount": 3000}
+{"debit": "cash", "credit": "sales", "amount": 1500}
+{"debit": "cash", "credit": "note", "amount": 700}
+{"debit": "ar", "credit": "sales", "amount": 2000}
+{"debit": "salaries", "credit": "cash", "amount": 500}

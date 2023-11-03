@@ -44,7 +44,7 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  account           Show or check account information.
+  account           Show account information.
   balance-sheet     Show balance sheet.
   balances          Show account balances.
   income-statement  Show income statement.
@@ -57,5 +57,5 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  assert     Show or check account information.
+  assert     Verify account balance equals expected value (for testing).
   operation  Define and post operations.

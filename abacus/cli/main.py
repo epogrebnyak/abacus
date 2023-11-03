@@ -75,7 +75,7 @@ def post_operation(operations):
 @click.argument("account_name")
 @click.argument("balance", type=int)
 def assert_balance(account_name: str, balance: int):
-    """Show or check account information."""
+    """Verify account balance equals expected value (for testing)."""
     from abacus.cli.inspect_command import assert_account_balance
     from abacus.cli.report_command import current_ledger
 
@@ -376,7 +376,7 @@ def jsonify(x):
 @report.command()
 @click.argument("account_name")
 def account(account_name: str):
-    """Show or check account information."""
+    """Show account information."""
     from abacus.cli.inspect_command import print_account_info
     from abacus.cli.report_command import current_ledger
 
