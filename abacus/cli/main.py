@@ -27,7 +27,10 @@ def chart_command(path: Path | None = None) -> ChartCommand:
     """Chart command based on local chart.json file."""
     if path is None:
         path = get_chart_path()
-    return ChartCommand(chart=Chart.parse_file(path), path=path)
+    try:
+        return ChartCommand(chart=Chart.parse_file(path), path=path)
+    except FileNotFoundError:
+        sys.exit(f"Chart file {path} not found. Use `abacus chart init` to create it.")
 
 
 def get_chart() -> Chart:
@@ -36,6 +39,36 @@ def get_chart() -> Chart:
 
 def ledger_command() -> LedgerCommand:
     return LedgerCommand(path=get_entries_path())
+
+
+@click.group()
+def abacus_extra():
+    """Extra commands for abacus accounting package."""
+    pass
+
+
+@abacus_extra.group()
+def operation():
+    """Define and post operations."""
+
+
+@operation.command(name="add")
+@click.argument("name")
+@click.option("--debit", required=True, type=str, help="Debit account.")
+@click.option("--credit", required=True, type=str, help="Credit account.")
+# TODO: add --requires option
+# @click.option("--requires")
+def add_operation(name, debit, credit):
+    """Define operation as a pair of debit and credit accounts with a name."""
+    # FIXME: will not check if debit and credit are in chart, not strict.
+    chart_command().add_operation(name, debit, credit).echo().write()
+
+
+@operation.command(name="post")
+@click.option("--operation", "-o", "operations", type=(str, int), multiple=True)
+def post_operation(operations):
+    """Post operations to ledger."""
+    ledger_command().post_operations(get_chart(), operations).echo()
 
 
 @click.group()
@@ -109,17 +142,6 @@ def add_many(prefix, account_names: List[str]):
 def name_command(account_name, title):
     """Change account title."""
     name(account_name, title)
-
-
-@chart.command
-@click.argument("name")
-@click.option("--debit", required=True, type=str, help="Debit account.")
-@click.option("--credit", required=True, type=str, help="Credit account.")
-# FIXME: make required option
-# @click.option("--requires")
-def operation(name, debit, credit):
-    """Define a named pair of debit and credit accounts."""
-    chart_command().add_operation(name, debit, credit).echo().write()
 
 
 @chart.command(name="set")
@@ -223,13 +245,6 @@ def post_compound(debit, credit):
     ledger_handler.post_compound(
         get_chart(), apply_last(debit), apply_last(credit)
     ).echo()
-
-
-@click.option("--operation", "-o", "operations", type=(str, int), multiple=True)
-@ledger.command
-def post_operation(operations):
-    """Post named operation(s) to ledger."""
-    ledger_command().post_operations(get_chart(), operations).echo()
 
 
 @ledger.command

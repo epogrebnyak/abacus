@@ -20,6 +20,8 @@ bx = 'abacus.api:main'
 cx = 'abacus.experimental.cx:main'
 ex = 'abacus.cli.ex:cli'
 abacus = 'abacus.cli.main:abacus'
+abacus-extra = 'abacus.cli.main:abacus_extra'
+
 
 [tool.poetry.dependencies]
 python = "^3.8"

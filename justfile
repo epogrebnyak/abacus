@@ -23,6 +23,7 @@ grill:
   just md
   just readme
   just scripts
+  just make-help
 
 # Run pytest (up to first error) and print slowest test times 
 test:
@@ -98,3 +99,4 @@ make-help:
   abacus chart --help >> abacus-help.txt
   abacus ledger --help >> abacus-help.txt
   abacus report --help >> abacus-help.txt
+  abacus-extra --help >> abacus-help.txt

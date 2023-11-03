@@ -12,8 +12,8 @@ abacus chart add liability:dividend_due
 abacus chart add liability:ap --title "Accounts payable"
 abacus chart add-many contra:sales voids refunds
 abacus chart add contra:ppe:depreciation
-abacus chart operation invoice --debit ar --credit sales
-abacus chart operation cost --debit cogs --credit goods
+abacus-extra operation add invoice --debit ar --credit sales
+abacus-extra operation add cost --debit cogs --credit goods
 abacus chart show --json
 abacus chart show
 abacus chart set --retained-earnings-account "प्रतिधारित कमाई"

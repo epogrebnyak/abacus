@@ -6,7 +6,7 @@ abacus ledger unlink --yes
 abacus ledger init
 abacus ledger post --debit cash --credit equity --amount 1000
 abacus ledger post --debit goods --credit cash --amount 700
-abacus ledger post-operation -o invoice 850 -o cost 650
+abacus-extra operation post -o invoice 850 -o cost 650
 abacus ledger post --debit cash --credit ar --amount 400
 abacus ledger post --debit sga --credit cash --amount 150
 abacus ledger close
