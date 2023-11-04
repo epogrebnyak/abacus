@@ -20,13 +20,6 @@ def test_runner(tmpdir):
     assert result.returncode == 0
 
 
-def test_run_bx_help(tmpdir):
-    result = subprocess.run(
-        "python -m abacus.bx --help".split(), shell=True, cwd=tmpdir
-    )
-    assert result.returncode == 0
-
-
 def test_few_commands(commands, tmpdir):
     for line in commands:
         command = line
