@@ -171,12 +171,31 @@ def cx_close():
 
 
 @cx.command(name="report")
-@click.option("--trial-balance", "-t", "trial_balance_flag", is_flag=True, help="Show trial balance.")
-@click.option("--balance-sheet", "-b", "balance_sheet_flag", is_flag=True, help="Show balance sheet.")
-@click.option("--income-statement", "-i", "income_statement_flag", is_flag=True, help="Show income statement.")
+@click.option(
+    "--trial-balance",
+    "-t",
+    "trial_balance_flag",
+    is_flag=True,
+    help="Show trial balance.",
+)
+@click.option(
+    "--balance-sheet",
+    "-b",
+    "balance_sheet_flag",
+    is_flag=True,
+    help="Show balance sheet.",
+)
+@click.option(
+    "--income-statement",
+    "-i",
+    "income_statement_flag",
+    is_flag=True,
+    help="Show income statement.",
+)
 def cx_report(trial_balance_flag, balance_sheet_flag, income_statement_flag):
     """Show reports."""
     from abacus.cli.report_command import balance_sheet, income_statement, trial_balance
+
     paths = get_entries_path(), get_chart_path()
     if trial_balance_flag:
         click.echo(trial_balance(*paths))

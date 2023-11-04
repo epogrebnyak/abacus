@@ -263,10 +263,9 @@ def detect_prefix(prefix: str) -> RegularAccountEnum:
 @dataclass
 class RegularName:
     account_name: str
-    klass: Type = RegularAccount
 
     def qualified(self) -> str:
-        return f"{self.klass.__name__.lower()}:{self.account_name}"
+        return f"{self.klass.__name__.lower()}:{self.account_name}"  # type: ignore
 
     @classmethod
     def new(cls, prefix: str, account_name: str) -> "RegularName":
@@ -311,7 +310,7 @@ class ContraName:
     account_name: str
     contra_account_name: str
 
-    def __str__(self):
+    def qualified(self) -> str:
         return f"contra:{self.account_name}:{self.contra_account_name}"
 
 

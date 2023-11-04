@@ -138,6 +138,7 @@ class ChartViewer:
             self.yield_unique_accounts(),
         )
 
+
 class Chart(BaseModel):
     """Chart of accounts."""
 
@@ -244,17 +245,19 @@ class Namer:
 
     def compose_name_long(self, account_name: AccountName):
         """Produce name like 'asset:cash (Cash)'."""
-        t = self.chart.viewer.get_account_type(account_name).__name__
+        # t = self.chart.viewer.get_account_type(account_name).__name__
         n = self[account_name]
-        return t + ":" + account_name + " (" + n + ")"
-
+        return self.get_name(account_name).qualified() + " (" + n + ")"
 
     def get_name(self, account_name: AccountName) -> RegularName | ContraName:
         if account_name in self.chart.assets:
             return AssetName(account_name)
         elif account_name in self.chart.expenses:
             return ExpenseName(account_name)
-        elif account_name in self.chart.equity or account_name == self.chart.retained_earnings_account:
+        elif (
+            account_name in self.chart.equity
+            or account_name == self.chart.retained_earnings_account
+        ):
             return CapitalName(account_name)
         elif account_name in self.chart.liabilities:
             return LiabilityName(account_name)

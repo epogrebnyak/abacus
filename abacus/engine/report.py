@@ -14,9 +14,9 @@ from abacus.engine.accounts import (
     DebitAccount,
     Expense,
     Income,
+    IncomeSummaryAccount,
     Liability,
     NullAccount,
-    IncomeSummaryAccount,
 )
 from abacus.engine.base import AccountName, Amount
 
@@ -231,9 +231,11 @@ def to_columns(lines: List[Line]) -> Tuple[Column, Column]:
 def yield_tuples_for_trial_balance(chart, ledger):
     def t(account_name):
         return chart.viewer.get_account_type(account_name).__name__
-    
+
     def must_exclude(t_account):
-        return isinstance(t_account, NullAccount) or isinstance(t_account, IncomeSummaryAccount)
+        return isinstance(t_account, NullAccount) or isinstance(
+            t_account, IncomeSummaryAccount
+        )
 
     for account_name, t_account in ledger.items():
         if isinstance(t_account, DebitAccount) and not must_exclude(t_account):
@@ -250,8 +252,9 @@ def nth(data: List[List | Tuple], n: int, f=str) -> Column:
 
 def view_trial_balance(chart, ledger) -> str:
     data = list(yield_tuples_for_trial_balance(chart, ledger))
+    namer = chart.namer
     col_1 = (
-        Column([chart.namer.compose_name_long(d[0]) for d in data])
+        Column([namer.compose_name_long(d[0]) for d in data])
         .align_left(".")
         .add_space(1)
         .header("Account")
