@@ -5,10 +5,12 @@ from pathlib import Path
 from typing import Dict, List
 
 import click
+from click_option_group import RequiredMutuallyExclusiveOptionGroup, optgroup
 
 from abacus import AbacusError, Chart
 from abacus.cli.chart_command import ChartCommand
 from abacus.cli.ledger_command import LedgerCommand
+from abacus.engine.accounts import RegularAccountEnum
 
 
 def cwd() -> Path:
@@ -79,7 +81,7 @@ def abacus():
 
 @click.group()
 def cx():
-    """Just five commands for a complete accounting cycle."""
+    """Complete accounting cycle using just five commands."""
     pass
 
 
@@ -98,6 +100,56 @@ def cx_command():
 def cx_name(account_name, title):
     """Set account title."""
     name(account_name, title)
+
+
+@cx.command(name="add")
+@optgroup.group(
+    "Account type",
+    cls=RequiredMutuallyExclusiveOptionGroup,
+    hidden=False,
+    help="Indicate account type.",
+)
+@optgroup.option("--asset", is_flag=True, help="Asset account.")
+@optgroup.option("--capital", is_flag=True, help="Capital account.")
+@optgroup.option("--liability", is_flag=True, help="Liability account.")
+@optgroup.option("--income", is_flag=True, help="Income account.")
+@optgroup.option("--expense", is_flag=True, help="Expense account.")
+@click.argument("account_names", type=str, nargs=-1)
+@click.option("--title", type=str, required=False, help="Account title.")
+def cx_add(account_names, asset, capital, liability, income, expense, title):
+    print(get_type(asset, capital, liability, income, expense))
+    print(account_names)
+    if title and len(account_names) == 1:
+        print(title)
+
+
+@cx.command(name="promote")
+@click.argument("account_labels", required=True, type=str, nargs=-1)
+def cx_promote(account_labels):
+    print(account_labels)
+
+
+@cx.command(name="offset")
+@click.argument("account_name", required=True, type=str)
+@click.argument("contra_account_names", required=True, type=str, nargs=-1)
+def cx_offset(account_name, contra_account_names):
+    print(account_name)
+    print(contra_account_names)
+
+
+def get_type(asset, capital, liability, income, expense):
+    if asset:
+        return RegularAccountEnum.ASSET
+    elif capital:
+        return RegularAccountEnum.CAPITAL
+    elif liability:
+        return RegularAccountEnum.LIABILITY
+    elif income:
+        return RegularAccountEnum.INCOME
+    elif expense:
+        return RegularAccountEnum.EXPENSE
+    else:
+        raise AbacusError("Account type not specified.")
 
 
 @cx.command(name="post")

@@ -21,7 +21,7 @@ def flush_permanent_accounts(chart: Chart, ledger: Ledger) -> List[Entry]:
 
     return (
         f(RegularAccountEnum.ASSET)
-        + f(RegularAccountEnum.EQUITY)
+        + f(RegularAccountEnum.CAPITAL)
         + f(RegularAccountEnum.LIABILITY)
     )
 

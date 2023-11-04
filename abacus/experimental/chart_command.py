@@ -162,7 +162,7 @@ def detect_prefix(prefix: str) -> RegularAccountEnum:
     elif prefix in ["liability", "liabilities"]:
         return RegularAccountEnum.LIABILITY
     elif prefix in ["capital", "equity"]:
-        return RegularAccountEnum.EQUITY
+        return RegularAccountEnum.CAPITAL
     elif prefix in ["expense", "expenses"]:
         return RegularAccountEnum.EXPENSE
     elif prefix in ["income"]:

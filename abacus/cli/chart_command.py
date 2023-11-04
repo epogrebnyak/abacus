@@ -2,7 +2,11 @@ from dataclasses import dataclass
 
 from abacus import AbacusError, Chart
 from abacus.cli.base import BaseCommand
-from abacus.engine.accounts import RegularAccountEnum
+from abacus.engine.accounts import (
+    QualifiedContraName,
+    QualifiedRegularName,
+    RegularAccountEnum,
+)
 
 
 def contra_phrase(account_name, contra_account_names):
@@ -46,27 +50,36 @@ class ChartCommand(BaseCommand):
                 self.chart.viewer.assert_contains(parts[0])
                 self.log(f"Account <{parts[0]}> is already in chart.")
             case 2:
-                chart_attribute = detect_prefix(parts[0]).chart_attribute()
-                self.add_by_attribute(chart_attribute, parts[1])
+                name1 = QualifiedRegularName(parts[0], parts[1])
+                self.add_item(name1)
             case 3:
                 if parts[0] == "contra":
-                    self.offset(account_name=parts[1], contra_account_name=parts[2])
+                    name2 = QualifiedContraName(
+                        account_name=parts[1], contra_account_name=parts[2]
+                    )
+                    self.add_item(name2)
                 else:
                     raise AbacusError(f"Wrong format for contra account name: {string}")
             case _:
                 raise AbacusError(f"Too many colons (:) in account name: {string}")
         return self
 
-    def add_by_attribute(
-        self, chart_attribute: str, account_name: str
+    def add_item(
+        self, qualified_name: QualifiedRegularName | QualifiedContraName
     ) -> "ChartCommand":
-        """Add account of *attribute* type to chart.
-        Attribute in any of ['assets', 'liabilities', 'equity', 'income', 'expenses'].
-        """
-        try:
-            account_names = getattr(self.chart, chart_attribute)
-        except AttributeError:
-            raise AbacusError(f"Invalid attribute: {chart_attribute}")
+        match qualified_name:
+            case QualifiedRegularName(_, account_name):
+                return self.add_by_account_type(
+                    qualified_name.account_type(), account_name
+                )
+            case QualifiedContraName(account_name, contra_account_name):
+                return self.offset(account_name, contra_account_name)
+
+    def add_by_account_type(
+        self, account_type: RegularAccountEnum, account_name: str
+    ) -> "ChartCommand":
+        chart_attribute = account_type.chart_attribute()
+        account_names = getattr(self.chart, chart_attribute)
         if self.chart.viewer.contains(account_name):
             if account_name in account_names:
                 self.log(
@@ -120,7 +133,7 @@ def detect_prefix(prefix: str) -> RegularAccountEnum:
     elif prefix in ["liability", "liabilities"]:
         return RegularAccountEnum.LIABILITY
     elif prefix in ["capital", "equity"]:
-        return RegularAccountEnum.EQUITY
+        return RegularAccountEnum.CAPITAL
     elif prefix in ["expense", "expenses"]:
         return RegularAccountEnum.EXPENSE
     elif prefix in ["income"]:

@@ -179,13 +179,16 @@ class RegularAccountEnum(Enum):
 
     ASSET = "assets"
     LIABILITY = "liabilities"
-    EQUITY = "equity"
+    CAPITAL = "equity"
     INCOME = "income"
     EXPENSE = "expenses"
 
     def chart_attribute(self):
         # enum values are Chart attributes
         return self.value
+
+    def singular(self):
+        return self.name.lower()
 
     @classmethod
     def from_flag(cls, string: str) -> "RegularAccountEnum":
@@ -200,8 +203,7 @@ class RegularAccountEnum(Enum):
         return dict(
             asset=RegularAccountEnum.ASSET,
             liability=RegularAccountEnum.LIABILITY,
-            # note that Capital class name converts to EQUITY enum value
-            capital=RegularAccountEnum.EQUITY,
+            capital=RegularAccountEnum.CAPITAL,
             income=RegularAccountEnum.INCOME,
             expense=RegularAccountEnum.EXPENSE,
         )[regular_cls.__name__.lower()]
@@ -211,19 +213,82 @@ class RegularAccountEnum(Enum):
         return [item for item in RegularAccountEnum.__members__.values()]
 
     def cls(self):
+        """Link account type enum to account class."""
         return dict(
             asset=Asset,
             liability=Liability,
-            equity=Capital,
+            capital=Capital,
             income=Income,
             expense=Expense,
         )[self.name.lower()]
 
     def contra_class(self):
+        """Link regular account type to its contra account type."""
         return dict(
             asset=ContraAsset,
             liability=ContraLiability,
-            equity=ContraCapital,
+            capital=ContraCapital,
             income=ContraIncome,
             expense=ContraExpense,
         )[self.name.lower()]
+
+
+def regular_name(account_type, account_name):
+    return f"{account_type.singular()}:{account_name}"
+
+
+def contra_name(account_name, contra_account_name):
+    return f"contra:{account_name}:{contra_account_name}"
+
+
+def detect_prefix(prefix: str) -> RegularAccountEnum:
+    prefix = prefix.lower()
+    if prefix in ["asset", "assets"]:
+        return RegularAccountEnum.ASSET
+    elif prefix in ["liability", "liabilities"]:
+        return RegularAccountEnum.LIABILITY
+    elif prefix in ["capital", "equity"]:
+        return RegularAccountEnum.CAPITAL
+    elif prefix in ["expense", "expenses"]:
+        return RegularAccountEnum.EXPENSE
+    elif prefix in ["income"]:
+        return RegularAccountEnum.INCOME
+    else:
+        raise AbacusError(f"Invalid account prefix: {prefix}")
+
+
+class QualifiedName:
+    pass
+
+
+@dataclass
+class QualifiedRegularName(QualifiedName):
+    prefix: str
+    account_name: str
+
+    def __post_init__(self):
+        self.account_type()
+
+    def account_type(self):
+        return detect_prefix(self.prefix)
+
+    def __str__(self):
+        return regular_name(self.account_type(), self.account_name)
+
+
+@dataclass
+class QualifiedContraName(QualifiedName):
+    account_name: str
+    contra_account_name: str
+
+    def __str__(self):
+        return f"contra:{self.account_name}:{self.contra_account_name}"
+
+
+if __name__ == "__main__":
+    assert str(QualifiedRegularName("asset", "cash")) == "asset:cash"
+    assert str(QualifiedRegularName("CAPITAL", "equity")) == "capital:equity"
+    assert str(QualifiedRegularName("LIABILITies", "loan")) == "liability:loan"
+    assert str(QualifiedRegularName("INCOME", "sales")) == "income:sales"
+    assert str(QualifiedRegularName("expenseS", "cogs")) == "expense:cogs"
+    assert str(QualifiedContraName("sales", "refunds")) == "contra:sales:refunds"
