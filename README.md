@@ -48,7 +48,7 @@ cx --help
 ```
 
 `abacus` has a full set of commands and options, while `cx` is just several commands with a more simple syntax.
-`cx` is ideal for solving textbook excercises.
+`cx` is ideal for solving textbook exercises.
 Both tools enable to complete a full accounting cycle and share the same data model.
 They create and modify two files `chart.json` and `entries.linejson` in your project folder.
 
@@ -78,7 +78,7 @@ Here is how the key `cx` commands compare with `abacus` commands:
 
 ### Textbook example
 
-Here is an excercise from "Accounting Principles" by Weygandt, Kimmel and Kieso
+Here is an exercise from "Accounting Principles" by Weygandt, Kimmel and Kieso
 (ed 12, p. 31) solved with `cx`.
 
 > Joan Robinson opens her own law office on July 1, 2017. During the first month of operations, the following transactions occurred.
@@ -92,7 +92,7 @@ Here is an excercise from "Accounting Principles" by Weygandt, Kimmel and Kieso
 > 7. Paid monthly expenses: salaries and wages $500, utilities $300, and advertising $100.
 > 8. Joan withdrew $1,000 cash for personal use.
 
-Here is a complete code to solve the excercise:
+Here is a complete code to solve the exercise:
 
 ```
 cx init

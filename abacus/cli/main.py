@@ -10,7 +10,6 @@ from click_option_group import RequiredMutuallyExclusiveOptionGroup, optgroup
 from abacus import AbacusError, Chart
 from abacus.cli.chart_command import ChartCommand
 from abacus.cli.ledger_command import LedgerCommand
-from abacus.engine.accounts import RegularAccountEnum
 
 
 def cwd() -> Path:
@@ -46,24 +45,23 @@ def ledger_command() -> LedgerCommand:
 @click.group()
 def abacus_extra():
     """Extra commands for abacus accounting package."""
-    pass
 
 
-@abacus_extra.group()
+@abacus_extra.group(name="alias")
 def operation():
     """Define and post operations."""
 
 
 @operation.command(name="add")
-@click.argument("name")
+@click.option("--operation")
 @click.option("--debit", required=True, type=str, help="Debit account.")
 @click.option("--credit", required=True, type=str, help="Credit account.")
 # TODO: add --requires option
 # @click.option("--requires")
-def add_operation(name, debit, credit):
+def add_operation(operation, debit, credit):
     """Define operation as a pair of debit and credit accounts with a name."""
     # FIXME: will not check if debit and credit are in chart, not strict.
-    chart_command().add_operation(name, debit, credit).echo().write()
+    chart_command().add_operation(operation, debit, credit).echo().write()
 
 
 @operation.command(name="post")
@@ -71,12 +69,6 @@ def add_operation(name, debit, credit):
 def post_operation(operations):
     """Post operations to ledger."""
     ledger_command().post_operations(get_chart(), operations).echo()
-
-
-@click.group()
-def abacus():
-    """A minimal, yet valid double entry accounting system."""
-    pass
 
 
 @click.group()
@@ -100,59 +92,6 @@ def cx_command():
 def cx_name(account_name, title):
     """Set account title."""
     name(account_name, title)
-
-
-@cx.command(name="add")
-@optgroup.group(
-    "Account type",
-    cls=RequiredMutuallyExclusiveOptionGroup,
-    hidden=False,
-    help="Indicate account type.",
-)
-@optgroup.option("--asset", is_flag=True, help="Asset account.")
-@optgroup.option("--capital", is_flag=True, help="Capital account.")
-@optgroup.option("--liability", is_flag=True, help="Liability account.")
-@optgroup.option("--income", is_flag=True, help="Income account.")
-@optgroup.option("--expense", is_flag=True, help="Expense account.")
-@click.argument("account_names", type=str, nargs=-1)
-@click.option("--title", type=str, required=False, help="Account title.")
-def cx_add(account_names, asset, capital, liability, income, expense, title):
-    """Add accounts by account type."""
-    print(get_type(asset, capital, liability, income, expense))
-    print(account_names)
-    if title and len(account_names) == 1:
-        print(title)
-
-
-@cx.command(name="promote")
-@click.argument("account_labels", required=True, type=str, nargs=-1)
-def cx_promote(account_labels):
-    """Add accounts using lables like `asset:cash`."""
-    print(account_labels)
-
-
-@cx.command(name="offset")
-@click.argument("account_name", required=True, type=str)
-@click.argument("contra_account_names", required=True, type=str, nargs=-1)
-def cx_offset(account_name, contra_account_names):
-    """Add contra accounts to chart."""
-    print(account_name)
-    print(contra_account_names)
-
-
-def get_type(asset, capital, liability, income, expense):
-    if asset:
-        return RegularAccountEnum.ASSET
-    elif capital:
-        return RegularAccountEnum.CAPITAL
-    elif liability:
-        return RegularAccountEnum.LIABILITY
-    elif income:
-        return RegularAccountEnum.INCOME
-    elif expense:
-        return RegularAccountEnum.EXPENSE
-    else:
-        raise AbacusError("Account type not specified.")
 
 
 @cx.command(name="post")
@@ -217,6 +156,11 @@ def cx_unlink():
     LedgerCommand(path=get_entries_path()).unlink()
 
 
+@click.group()
+def abacus():
+    """A minimal, yet valid double entry accounting system."""
+
+
 @abacus.group()
 def chart():
     """Define chart of accounts."""
@@ -246,37 +190,75 @@ def name(account_name, title) -> None:
     chart_command().set_name(last(account_name), title).echo().write()
 
 
-@chart.command
-@click.argument("account_name", type=str)
+@chart.command(name="promote")
+@click.argument("account_names", required=True, type=str, nargs=-1)
 @click.option("--title", type=str, required=False, help="Account title.")
-def add(account_name: str, title: str):
+def promote_command(account_names: List[str], title: str):
+    """Add accounts to chart using labels like `asset:cash`.
+
+    \b
+    Example:
+      abacus chart promote asset:cash capital:equity income:sales expense:cogs
+      abacus chart promote contra:sales:refunds --title "Refunds and cashback"
+    """
+    for account_name in account_names:
+        promote(account_name)
+    if title and len(account_names) == 1:
+        name(account_names[0], title)
+
+
+@chart.command(name="add")
+@optgroup.group(
+    "Account type",
+    cls=RequiredMutuallyExclusiveOptionGroup,
+    help="Account type.",
+)
+@optgroup.option("--asset", is_flag=True, help="Asset account.")
+@optgroup.option("--capital", is_flag=True, help="Capital account.")
+@optgroup.option("--liability", is_flag=True, help="Liability account.")
+@optgroup.option("--income", is_flag=True, help="Income account.")
+@optgroup.option("--expense", is_flag=True, help="Expense account.")
+@click.argument("account_names", type=str, nargs=-1)
+@click.option("--title", type=str, required=False, help="Account title.")
+def add_with_flag(account_names, asset, capital, liability, income, expense, title):
     """Add account to chart.
 
     \b
     Examples:
-      abacus chart add asset:cash --title "Cash and equivalents"
-      abacus chart add expense:rent
-      abacus chart add asset:ppe --title "Property, plant and equipment"
-      abacus chart add contra:ppe:depreciation --title "Accumulated depreciation"
+      abacus chart add --asset cash
+      abacus chart add --expense cogs rent
+      abacus chart add --asset ppe --title "Property, plant and equipment"
     """
-    promote(account_name)
-    if title:
-        name(account_name, title)
+    for account_name in account_names:
+        if asset:
+            prefix = "asset"
+        elif capital:
+            prefix = "capital"
+        elif liability:
+            prefix = "liability"
+        elif income:
+            prefix = "income"
+        elif expense:
+            prefix = "expense"
+        promote(prefix + ":" + account_name)
+    if title and len(account_names) == 1:
+        name(account_names[0], title)
 
 
-@chart.command
-@click.argument("prefix")
-@click.argument("account_names", nargs=-1)
-def add_many(prefix, account_names: List[str]):
-    """Add several accounts to chart.
+@chart.command(name="offset")
+@click.argument("account_name", required=True, type=str)
+@click.argument("contra_account_names", required=True, type=str, nargs=-1)
+@click.option("--title", type=str, required=False, help="Account title.")
+def abacus_offset(account_name, contra_account_names, title):
+    """Add contra accounts to chart.
 
     \b
     Example:
-        abacus chart add-many asset cash inventory ar ppe
-        abacus chart add-many contra:sales refunds voids
+        abacus chart offset ppe depreciation --title "Accumulated depreciation"
     """
-    for account_name in account_names:
-        promote(prefix + ":" + account_name)
+    chart_command().offset_many(account_name, contra_account_names).echo().write()
+    if title and len(contra_account_names) == 1:
+        name(contra_account_names[0], title)
 
 
 @chart.command(name="name")
