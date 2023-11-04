@@ -73,7 +73,7 @@ def print_chart(chart: Chart):
         return chart.namer.compose_name(account_name)
 
     print("Accounts:")
-    for attribute in chart.five_types_of_accounts():
+    for attribute in ("assets", "equity", "liabilities", "income", "expenses"):
         account_names = getattr(chart, attribute)
         if account_names:
             print(attribute.capitalize() + ":", ", ".join(map(name, account_names)))

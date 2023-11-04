@@ -85,7 +85,7 @@ class ChartCommand:
         """Generic method to add account of *attribute* type to chart.
         Attribute in any of ['assets', 'liabilities', 'equity', 'income', 'expenses'].
         """
-        if attribute not in self.chart.five_types_of_accounts():
+        if attribute not in ("assets", "equity", "liabilities", "income", "expenses"):
             raise AbacusError(f"Invalid attribute: {attribute}")
         account_names = getattr(self.chart, attribute)
         if self.chart.viewer.contains(account_name):

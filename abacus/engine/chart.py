@@ -8,10 +8,17 @@ from typing import Dict, List, Tuple, Type
 from pydantic import BaseModel  # type: ignore
 
 from abacus.engine.accounts import (
+    AssetName,
+    CapitalName,
+    ContraName,
+    ExpenseName,
+    IncomeName,
     IncomeSummaryAccount,
+    LiabilityName,
     NullAccount,
     RegularAccount,
     RegularAccountEnum,
+    RegularName,
     RetainedEarnings,
 )
 from abacus.engine.base import AbacusError, AccountName, Amount, Entry, Pair
@@ -23,6 +30,11 @@ def repeated_names(xs):
 
 def first(xs):
     return [x[0] for x in xs]
+
+
+@dataclass
+class ChartReviewer:
+    chart: "Chart"
 
 
 @dataclass
@@ -126,6 +138,22 @@ class ChartViewer:
             self.yield_unique_accounts(),
         )
 
+    def get_name(self, account_name: AccountName) -> RegularName | ContraName:
+        if account_name in self.chart.assets:
+            return AssetName(account_name)
+        elif account_name in self.chart.expenses:
+            return ExpenseName(account_name)
+        elif account_name in self.chart.equity:
+            return CapitalName(account_name)
+        elif account_name in self.chart.liabilities:
+            return LiabilityName(account_name)
+        elif account_name in self.chart.income:
+            return IncomeName(account_name)
+        for account, contra_acconts in self.chart.contra_accounts.items():
+            if account_name in contra_acconts:
+                return ContraName(account, account_name)
+        raise AbacusError(f"Account name <{account_name}> not in chart.")
+
 
 class Chart(BaseModel):
     """Chart of accounts."""
@@ -152,9 +180,6 @@ class Chart(BaseModel):
             Entry(*self.operations[on], Amount(amount))
             for on, amount in zip(operation_names, amounts)
         ]
-
-    def five_types_of_accounts(self):
-        return ("assets", "equity", "liabilities", "income", "expenses")
 
     def add_operation(self, name: str, debit: AccountName, credit: AccountName):
         self.operations[name] = (debit, credit)
@@ -207,11 +232,6 @@ class Chart(BaseModel):
             self.null_account
         )
         ledger.post_many(entries)
-        # REMOVE: ensured by to_multiple_entry:
-        # if (x := ledger[self.null_account].balance()) != 0:
-        #     raise AbacusError(
-        #         f"Balance of null account after adding starting balances must be 0, got {x}."
-        #     )
         return ledger
 
     @property
@@ -234,23 +254,6 @@ class Namer:
             return self.chart.names[account_name]
         except KeyError:
             return account_name.replace("_", " ").strip().capitalize()
-
-    # def qualified_name(self, account_name: str):
-    #     """Produce name like 'asset:cash'."""
-    #     t = self.chart.viewer.get_account_type(account_name)
-    #     print(t)
-    #     if isinstance(t(), RegularAccount):
-    #         return RegularName(t.__name__, account_name)
-    #     if isinstance(t(), ContraAccount):
-    #         return ContraName(t.__name__, account_name)
-    # case NullAccount:
-    #     return self.compose_n   ame(account_name)
-    # case IncomeSummaryAccount:
-    #     return self.compose_name(account_name)
-    # case RetainedEarnings:
-    #     return self.compose_name(account_name)
-    # case _:
-    #    raise AbacusError(f"Unknown account type: {account_name}")
 
     def compose_name(self, account_name: AccountName):
         """Produce name like 'cash (Cash)'."""

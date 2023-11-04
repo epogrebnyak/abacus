@@ -48,6 +48,7 @@ class ChartCommand(BaseCommand):
         return self
 
     def promote(self, string: str) -> "ChartCommand":
+        """Add account to chart using notation like `asset:cash` or `contra:sales:voids`."""
         if ":" not in string:
             self.chart.viewer.assert_contains(string)
             self.log(f"Account <{string}> is already in chart.")
@@ -70,6 +71,7 @@ class ChartCommand(BaseCommand):
         return self
 
     def add_by_attribute(self, chart_attribute, account_name):
+        """Perform checks and add account to chart."""
         account_names = getattr(self.chart, chart_attribute)
         if self.chart.viewer.contains(account_name):
             if account_name in account_names:
@@ -113,19 +115,3 @@ class ChartCommand(BaseCommand):
         # FIXME: can print more verbose name
         print("This will print chart")
         return self
-
-
-# def detect_prefix(prefix: str) -> RegularAccountEnum:
-#     prefix = prefix.lower()
-#     if prefix in ["asset", "assets"]:
-#         return RegularAccountEnum.ASSET
-#     elif prefix in ["liability", "liabilities"]:
-#         return RegularAccountEnum.LIABILITY
-#     elif prefix in ["capital", "equity"]:
-#         return RegularAccountEnum.CAPITAL
-#     elif prefix in ["expense", "expenses"]:
-#         return RegularAccountEnum.EXPENSE
-#     elif prefix in ["income"]:
-#         return RegularAccountEnum.INCOME
-#     else:
-#         raise AbacusError(f"Invalid account prefix: {prefix}")
