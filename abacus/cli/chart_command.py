@@ -24,6 +24,10 @@ class ChartCommand(BaseCommand):
     def json(self):
         return self.chart.json(indent=4, ensure_ascii=True)
 
+    @staticmethod
+    def read(path):
+        return ChartCommand(chart=Chart.parse_file(path), path=path)
+
     def write(self):
         self.path.write_text(self.json(), encoding="utf-8")
         self.log(f"Wrote chart file {self.path}.")
@@ -102,7 +106,8 @@ class ChartCommand(BaseCommand):
     def add_operation(self, name: str, debit: str, credit: str):
         self.chart.add_operation(name, debit, credit)
         self.log(
-            f"Added operation <{name}> where debit account is <{debit}>, credit account is <{credit}>."
+            f"Added operation <{name}> where debit account is <{debit}>,"
+            f" credit account is <{credit}>."
         )
         return self
 

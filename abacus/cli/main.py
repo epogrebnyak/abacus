@@ -29,7 +29,7 @@ def chart_command(path: Path | None = None) -> ChartCommand:
     if path is None:
         path = get_chart_path()
     try:
-        return ChartCommand(chart=Chart.parse_file(path), path=path)
+        return ChartCommand.read(path)
     except FileNotFoundError:
         sys.exit(f"Chart file {path} not found. Use `abacus chart init` to create it.")
 

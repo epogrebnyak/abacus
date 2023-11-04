@@ -3,20 +3,20 @@ import shlex
 from click.testing import CliRunner
 
 from abacus.cli.main import cx
-from abacus.experimental.chart_command import ChartCommand
+from abacus.cli.chart_command import ChartCommand
 
 
 def test_chart_command(tmp_path):
     tmp_path = tmp_path / "chart.json"
-    ChartCommand.new().promote("asset:cash").write(tmp_path)
-    ChartCommand.new().promote("asset:cash").write(tmp_path)
-    ChartCommand.read(tmp_path).promote("cash").write(tmp_path)
-    ChartCommand.read(tmp_path).promote("expense:ads").write(tmp_path)
-    ChartCommand.read(tmp_path).promote("ads").write(tmp_path)
-    ChartCommand.read(tmp_path).promote("capital:equity").write(tmp_path)
-    ChartCommand.read(tmp_path).promote("contra:equity:withdrawals").write(tmp_path)
-    ChartCommand.read(tmp_path).promote("contra:equity:treasury_stock").write(tmp_path)
-    assert ChartCommand.read(tmp_path).chart.json(indent=2)
+    ChartCommand(tmp_path).promote("asset:cash").write()
+    ChartCommand(tmp_path).promote("asset:cash").write()
+    ChartCommand.read(tmp_path).promote("cash").write()
+    ChartCommand.read(tmp_path).promote("expense:ads").write()
+    ChartCommand.read(tmp_path).promote("ads").write()
+    ChartCommand.read(tmp_path).promote("capital:equity").write()
+    ChartCommand.read(tmp_path).promote("contra:equity:withdrawals").write()
+    ChartCommand.read(tmp_path).promote("contra:equity:treasury_stock").write()
+    assert ChartCommand.read(tmp_path).json()
 
 
 script = """cx init
