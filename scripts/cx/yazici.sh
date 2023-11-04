@@ -1,6 +1,6 @@
 # https://alqashi.com/book/Book50.pdf (pages)
-cx delete entries.csv
-cx delete chart.json
+abacus chart unlink --yes 
+abacus ledger unlink --yes 
 cx init
 cx post --debit asset:cash               --credit capital:equity     --amount 100_000
 cx post --debit asset:equipment          --credit liability:notes    --amount  50_000

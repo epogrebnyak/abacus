@@ -1,5 +1,7 @@
 Usage: abacus [OPTIONS] COMMAND [ARGS]...
 
+  A minimal, yet valid double entry accounting system.
+
 Options:
   --help  Show this message and exit.
 

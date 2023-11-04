@@ -1,3 +1,7 @@
+abacus --help
+
+cx --help
+
 bx chart init
 bx chart add --asset cash
 bx chart add --asset ar --title "Accounts receivable"

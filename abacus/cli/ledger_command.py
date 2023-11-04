@@ -13,7 +13,7 @@ class LedgerCommand(BaseCommand):
     def init(self) -> "LedgerCommand":
         self.assert_does_not_exist()
         self.path.touch()
-        self.log(f"Created ledger file {self.path}.")
+        self.log(f"Wrote ledger file {self.path}.")
         return self
 
     def show(self, sep=","):

@@ -39,10 +39,66 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Command line tools
 
-There are two command line tools supplied when you install this package:
+There are two command line tools supplied after you install this package, try them out:
 
-- `abacus` with full set of commands and options, and
-- `cx`, a shorthand utility with just five commands that can yet complete a full accounting cycle. `cx` is ideal for solving textbook excercises.
+```bash
+abacus --help
+```
+
+<details>
+    <summary>See command output
+    </summary>
+
+```
+Usage: abacus [OPTIONS] COMMAND [ARGS]...
+
+  A minimal, yet valid double entry accounting system.
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  account  Show account information.
+  chart    Define chart of accounts.
+  ledger   Post entries to ledger.
+  report   Show reports.
+```
+
+</details>
+
+```bash
+cx --help
+```
+
+<details>
+    <summary>See command output
+    </summary>
+
+```
+Utility for double-entry bookkeeping and financial reporting.
+
+Usage:
+  cx init
+  cx name <account> <title>
+  cx post --debit <debit_account> --credit <credit_account> --amount <amount>
+  cx close
+  cx report --trial-balance
+  cx report --balance-sheet [--rich | --json]
+  cx report --income-statement [--rich | --json]
+  cx delete <file>
+
+Options:
+  -h, --help                 Show this screen.
+  --debit <debit_account>    Provide debit account name for entry.
+  --credit <credit_account>  Provide credit account name for entry.
+  --amount <amount>          Provide transaction amount for entry.
+  --rich                     Print report in with color.
+  --json                     Emit report in JSON format.
+```
+
+</details>
+
+`abacus` has a full set of commands and options, while `cx` is a shorthand utility with just five commands, but both can complete a full accounting cycle. `cx` is ideal for solving textbook excercises.
 
 **Data model.** Both `abacus` and `cx` work using the same two files `chart.json` and `entries.csv` in your project folder.
 

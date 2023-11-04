@@ -1,8 +1,8 @@
 import shlex
 
-from docopt import docopt
+from click.testing import CliRunner
 
-import abacus.experimental.cx as cx
+from abacus.cli.main import cx
 from abacus.experimental.chart_command import ChartCommand
 
 
@@ -19,8 +19,7 @@ def test_chart_command(tmp_path):
     assert ChartCommand.read(tmp_path).chart.json(indent=2)
 
 
-script = """cx delete chart.json
-cx init
+script = """cx init
 cx post --debit asset:cash               --credit capital:equity --amount 11000
 cx post --debit expense:rent             --credit cash           --amount 800
 cx post --debit asset:equipment          --credit liability:ap   --amount 3000
@@ -35,16 +34,20 @@ cx name ar "Accounts receivable"
 cx name ap "Accounts payable"
 cx name ads "Advertising"
 cx report --trial-balance
+cx report -t
 cx close
-cx report --balance-sheet --rich
+cx report --balance-sheet
+cx report -b
 cx report --income-statement
-cx delete entries.csv
-cx delete chart.json"""
+cx report -i
+cx unlink --yes"""
 
 
 def test_cx_script():
-    for line in script.split("\n"):
-        argv = shlex.split(line)
-        arguments = docopt(cx.__doc__, argv[1:])
-        print(line)
-        cx.dispatch_commands(arguments)
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        for line in script.split("\n"):
+            argv = shlex.split(line)[1:]
+            print(argv)
+            result = runner.invoke(cx, argv)
+            assert result.exit_code == 0

@@ -67,14 +67,13 @@ readme-console:
 
 # Run command line examples (Linux)
 scripts:
-  # abacus is almost complete version of bx
+  # abacus replaces bx
   cd scripts/abacus && bash -e all.sh
   # bx is a stable version 
   cd scripts/bx && bash -e all.sh
   # cx is shorthand
   cd scripts/cx && bash -e joan.sh
-  # ex is shorter abacus, will replace cx
-  cd scripts/ex && bash -e ex.sh
+
  
 # Build and serve docs
 docs:

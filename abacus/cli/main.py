@@ -73,7 +73,75 @@ def post_operation(operations):
 
 @click.group()
 def abacus():
+    """A minimal, yet valid double entry accounting system."""
     pass
+
+
+@click.group()
+def cx():
+    """Just five commands for a complete accounting cycle."""
+    pass
+
+
+@cx.command(name="init")
+def cx_command():
+    """Initialize chart and ledger."""
+    ChartCommand(
+        path=get_chart_path(), chart=Chart()
+    ).assert_does_not_exist().write().echo()
+    LedgerCommand(path=get_entries_path()).init().echo()
+
+
+@cx.command(name="name")
+@click.argument("account_name", type=str)
+@click.argument("title", type=str)
+def cx_name(account_name, title):
+    """Set account title."""
+    name(account_name, title)
+
+
+@cx.command(name="post")
+@click.option("--debit", required=True, type=str, help="Debit account name.")
+@click.option("--credit", required=True, type=str, help="Credit account name.")
+@click.option("--amount", required=True, type=int, help="Transaction amount.")
+def cx_post(debit, credit, amount):
+    """Post double entry to ledger."""
+    chart_command().promote(debit).promote(credit).echo().write()
+    ledger_command().post_entry(last(debit), last(credit), amount).echo()
+
+
+@cx.command(name="close")
+def cx_close():
+    """Close ledger at accounting period end."""
+
+
+@cx.command(name="report")
+@click.option("--trial-balance", "-t", is_flag=True, help="Show trial balance.")
+@click.option("--balance-sheet", "-b", is_flag=True, help="Show balance sheet.")
+@click.option("--income-statement", "-i", is_flag=True, help="Show income statement.")
+def cx_report(trial_balance, balance_sheet, income_statement):
+    """Show reports."""
+    from abacus.cli.report_command import balance_sheet, income_statement, trial_balance
+
+    paths = get_entries_path(), get_chart_path()
+    if trial_balance:
+        click.echo(trial_balance(*paths))
+    if balance_sheet:
+        statement = balance_sheet(*paths)
+        echo_statement(statement, get_chart(), plain=True, json_flag=False, rich=False)
+    if income_statement:
+        statement = income_statement(*paths)
+        echo_statement(statement, get_chart(), plain=True, json_flag=False, rich=False)
+
+
+@cx.command(name="unlink")
+@click.confirmation_option(
+    prompt="Are you sure you want to permanently delete project files?"
+)
+def cx_unlink():
+    """Permanently delete chart and ledger files."""
+    ChartCommand(path=get_chart_path()).unlink()
+    LedgerCommand(path=get_entries_path()).unlink()
 
 
 @abacus.group()
@@ -389,10 +457,10 @@ def json_balances(nonzero):
 def jsonify(x):
     return json.dumps(x, indent=4, sort_keys=True, ensure_ascii=False)
 
+
 @accounts.command(name="list")
 def list_accounts():
     """List available accounts."""
-
 
 
 if __name__ == "__main__":

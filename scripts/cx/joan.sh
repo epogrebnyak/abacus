@@ -1,5 +1,5 @@
-cx delete entries.csv
-cx delete chart.json
+abacus chart unlink --yes 
+abacus ledger unlink --yes 
 cx init
 cx post --debit asset:cash               --credit capital:equity --amount 11000
 cx post --debit expense:rent             --credit cash           --amount 800
@@ -16,7 +16,5 @@ cx name ap "Accounts payable"
 cx name ads "Advertising"
 cx report --trial-balance
 cx close
-cx report --balance-sheet --rich
-cx report --income-statement --rich
 cx report --balance-sheet
 cx report --income-statement

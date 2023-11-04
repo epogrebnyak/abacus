@@ -18,7 +18,7 @@ class ChartCommand(BaseCommand):
 
     def write(self):
         self.path.write_text(self.json(), encoding="utf-8")
-        self.log(f"Wrote file {self.path}.")
+        self.log(f"Wrote chart file {self.path}.")
         return self
 
     def set_retained_earnings(self, account_name) -> "ChartCommand":
