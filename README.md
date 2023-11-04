@@ -39,68 +39,18 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Command line tools
 
-There are two command line tools supplied after you install this package, try them out:
+There are two command line tools available after you install this package: `abacus` and `cx`.
+You can check them as:
 
 ```bash
 abacus --help
-```
-
-<details>
-    <summary>See command output
-    </summary>
-
-```
-Usage: abacus [OPTIONS] COMMAND [ARGS]...
-
-  A minimal, yet valid double entry accounting system.
-
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  account  Show account information.
-  chart    Define chart of accounts.
-  ledger   Post entries to ledger.
-  report   Show reports.
-```
-
-</details>
-
-```bash
 cx --help
 ```
 
-<details>
-    <summary>See command output
-    </summary>
-
-```
-Utility for double-entry bookkeeping and financial reporting.
-
-Usage:
-  cx init
-  cx name <account> <title>
-  cx post --debit <debit_account> --credit <credit_account> --amount <amount>
-  cx close
-  cx report --trial-balance
-  cx report --balance-sheet [--rich | --json]
-  cx report --income-statement [--rich | --json]
-  cx delete <file>
-
-Options:
-  -h, --help                 Show this screen.
-  --debit <debit_account>    Provide debit account name for entry.
-  --credit <credit_account>  Provide credit account name for entry.
-  --amount <amount>          Provide transaction amount for entry.
-  --rich                     Print report in with color.
-  --json                     Emit report in JSON format.
-```
-
-</details>
-
-`abacus` has a full set of commands and options, while `cx` is a shorthand utility with just five commands, but both can complete a full accounting cycle. `cx` is ideal for solving textbook excercises.
-
-**Data model.** Both `abacus` and `cx` work using the same two files `chart.json` and `entries.csv` in your project folder.
+`abacus` has a full set of commands and options, while `cx` is just several commands with a more simple syntax. 
+`cx` is ideal for solving textbook excercises.
+Both tools enable to complete a full accounting cycle and share the same data model. 
+They create and modify two files `chart.json` and `entries.linejson` in your project folder.
 
 ## The `cx` command line tool
 
@@ -108,15 +58,13 @@ With `cx` command line tool the entire accounting cycle can be performed using j
 
 | Command  | What it does                                           |
 | -------- | ------------------------------------------------------ |
-| `init`   | Start new project in empty folder                      |
-| `post`   | Post a double entry to ledger,                         |
-| `close`  | Add closing entries to ledger at accounting period end |
-| `name `  | Set descriptive title                                  |
+| `init`   | Start new project in empty folder.                     |
+| `post`   | Post a double entry to ledger.                         |
+| `close`  | Add closing entries to ledger at accounting period end.|
+| `name `  | Set descriptive title for an account.                  |
 | `report` | Show trial balance, balance sheet or income statement. |
 
-You can also erase project files in current folder with `cx unlink` command.
-
-Here is how the `cx` commands compare with `abacus` commands:
+Here is how the key `cx` commands compare with `abacus` commands:
 
 | `cx`            | `abacus`                                                        |
 | --------------- | --------------------------------------------------------------- |
