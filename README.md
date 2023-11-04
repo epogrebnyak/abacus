@@ -465,6 +465,11 @@ inspect commands, accelerates the development workflow.
 
 ## Changelog
 
+### 0.7.6
+
+- `ledger post-compound` method added
+- `bx` tool depreciated and replaced by `abacus` CLI
+
 ### 0.7.3
 
 - `click` package used for new CLI entrypoint called `abacus` (will replace `abacus` tool)
