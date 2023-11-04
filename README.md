@@ -106,13 +106,17 @@ Options:
 
 With `cx` command line tool the entire accounting cycle can be performed using just five commands:
 
-1. `init` - start new project in empty folder,
-2. `post` - post a double entry to ledger,
-3. `close` - add closing entries to ledger at accounting period end,
-4. `name` - define more descriptive account names, and
-5. `report` - show trial balance, balance sheet or income statement.
+| Command  | What it does                                           |
+| -------- | ------------------------------------------------------ |
+| `init`   | Start new project in empty folder                      |
+| `post`   | Post a double entry to ledger,                         |
+| `close`  | Add closing entries to ledger at accounting period end |
+| `name `  | Set descriptive title                                  |
+| `report` | Show trial balance, balance sheet or income statement. |
 
-Here is these `cx` commands compare with `abacus` commands:
+You can also erase project files in current folder with `cx unlink` command.
+
+Here is how the `cx` commands compare with `abacus` commands:
 
 | `cx`            | `abacus`                                                        |
 | --------------- | --------------------------------------------------------------- |
@@ -121,7 +125,8 @@ Here is these `cx` commands compare with `abacus` commands:
 | `cx close`      | `abacus ledger close`                                           |
 | `cx name`       | `abacus chart name`                                             |
 | `cx report -t`  | `abacus report trial-balance`                                   |
-| `cx report -ib` | `abacus report income-statement && abacus report balance sheet` |
+| `cx report -ib` | `abacus report income-statement && abacus report balance-sheet` |
+| `cx unlink`     | `abacus chart unlink && abacus ledger unlink`                   |
 
 ### Textbook example
 
@@ -198,14 +203,17 @@ The `post` command accepts account names under following rules:
 - **Оne colon**: (`asset:cash`) is account type and name seperated by colon (`:`).
   Valid account types are `asset`, `capital`, `liability`, `income`, `expense`,
   or plural forms where appropriate. When first encountered, the account name
-  is added to the chart of accounts. Account names should be unique.
+  is added to the chart of accounts. Account names should be unique, you cannot
+  have `cash:other` and `capital:other` in chart.
 - **Two colons starting with `contra`**. In example `contra:equity:withdrawal`
   the new account name is `withdrawal`. This new account will be added
   to chart as a contra acccount to `equity` account.
 - **No colon**: Short names like `cash`, `sales`, `withdrawal` without colon
-  can be used in `post` command after the account name is added to chart.
+  can be used in `post` command after the account name was added to chart.
 
 ## The `bx` command line tool
+
+> This description will be replaced with abacus tool.
 
 The `bx` command line tool has a more verbose interface than `cx`.
 The `bx` tool you can define chart ot accounts, post entries and close ledger,

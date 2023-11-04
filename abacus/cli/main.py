@@ -179,11 +179,12 @@ def name(account_name, title) -> None:
 def add(account_name: str, title: str):
     """Add account to chart.
 
+    \b
     Examples:
-        abacus chart add asset:cash --title "Cash and equivalents"
-        abacus chart add expense:rent
-        abacus chart add asset:ppe --title "Property, plant and equipment"
-        abacus chart add contra:ppe:depreciation --title "Accumulated depreciation"
+      abacus chart add asset:cash --title "Cash and equivalents"
+      abacus chart add expense:rent
+      abacus chart add asset:ppe --title "Property, plant and equipment"
+      abacus chart add contra:ppe:depreciation --title "Accumulated depreciation"
     """
     promote(account_name)
     if title:
@@ -196,6 +197,7 @@ def add(account_name: str, title: str):
 def add_many(prefix, account_names: List[str]):
     """Add several accounts to chart.
 
+    \b
     Example:
         abacus chart add-many asset cash inventory ar ppe
         abacus chart add-many contra:sales refunds voids
