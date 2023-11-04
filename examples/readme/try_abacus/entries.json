@@ -1,0 +1,100 @@
+{
+  "chart": {
+    "base": {
+      "assets": ["cash", "ar", "goods"],
+      "expenses": ["cogs", "sga"],
+      "equity": ["equity"],
+      "liabilities": [],
+      "income": ["sales"]
+    },
+    "retained_earnings_account": "re",
+    "income_summary_account": "_profit",
+    "contra_accounts": {
+      "sales": ["discounts"]
+    },
+    "names": {
+      "ar": "Accounts receivable",
+      "goods": "Inventory (goods for resale)",
+      "re": "Retained earnings",
+      "cogs": "Cost of goods sold",
+      "sga": "Selling, general and adm. expenses"
+    },
+    "operations": {}
+  },
+  "starting_balances": {},
+  "entries": {
+    "business": [
+      {
+        "dr": "cash",
+        "cr": "equity",
+        "amount": 5000
+      },
+      {
+        "dr": "goods",
+        "cr": "cash",
+        "amount": 4000
+      },
+      {
+        "dr": "cogs",
+        "cr": "goods",
+        "amount": 2700
+      },
+      {
+        "dr": "ar",
+        "cr": "sales",
+        "amount": 3900
+      },
+      {
+        "dr": "discounts",
+        "cr": "ar",
+        "amount": 400
+      },
+      {
+        "dr": "cash",
+        "cr": "ar",
+        "amount": 2000
+      },
+      {
+        "dr": "sga",
+        "cr": "cash",
+        "amount": 300
+      }
+    ],
+    "adjustment": [],
+    "closing": {
+      "contra_income": [
+        {
+          "dr": "sales",
+          "cr": "discounts",
+          "amount": 400
+        }
+      ],
+      "contra_expense": [],
+      "income": [
+        {
+          "dr": "sales",
+          "cr": "_profit",
+          "amount": 3500
+        }
+      ],
+      "expense": [
+        {
+          "dr": "_profit",
+          "cr": "cogs",
+          "amount": 2700
+        },
+        {
+          "dr": "_profit",
+          "cr": "sga",
+          "amount": 300
+        }
+      ],
+      "isa": {
+        "dr": "_profit",
+        "cr": "re",
+        "amount": 500
+      }
+    },
+    "after_close": []
+  }
+}
