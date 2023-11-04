@@ -191,7 +191,7 @@ class RegularAccountEnum(Enum):
         return self.name.lower()
 
     def qualified(self, account_name):
-        return QualifiedRegularName(self.name.lower(), account_name)
+        return RegularName(self.name.lower(), account_name)
 
     @classmethod
     def from_flag(cls, string: str) -> "RegularAccountEnum":
@@ -260,27 +260,54 @@ def detect_prefix(prefix: str) -> RegularAccountEnum:
         raise AbacusError(f"Invalid account prefix: {prefix}")
 
 
-class QualifiedName:
-    pass
-
-
 @dataclass
-class QualifiedRegularName(QualifiedName):
-    prefix: str
+class RegularName:
     account_name: str
+    klass: Type = RegularAccount
 
-    def __post_init__(self):
-        self.account_type()
+    def qualified(self) -> str:
+        return f"{self.klass.__name__.lower()}:{self.account_name}"
 
-    def account_type(self):
-        return detect_prefix(self.prefix)
-
-    def __str__(self):
-        return regular_name(self.account_type(), self.account_name)
+    @classmethod
+    def new(cls, prefix: str, account_name: str) -> "RegularName":
+        prefix = prefix.lower()
+        if prefix in ["asset", "assets"]:
+            return AssetName(account_name)
+        elif prefix in ["liability", "liabilities"]:
+            return LiabilityName(account_name)
+        elif prefix in ["capital", "equity"]:
+            return CapitalName(account_name)
+        elif prefix in ["expense", "expenses"]:
+            return ExpenseName(account_name)
+        elif prefix in ["income"]:
+            return IncomeName(account_name)
+        else:
+            raise AbacusError(f"Invalid account prefix: {prefix}")
 
 
 @dataclass
-class QualifiedContraName(QualifiedName):
+class AssetName(RegularName):
+    klass: Type = Asset
+
+
+class LiabilityName(RegularName):
+    klass: Type = Liability
+
+
+class CapitalName(RegularName):
+    klass: Type = Capital
+
+
+class IncomeName(RegularName):
+    klass: Type = Income
+
+
+class ExpenseName(RegularName):
+    klass: Type = Expense
+
+
+@dataclass
+class ContraName:
     account_name: str
     contra_account_name: str
 
@@ -294,12 +321,10 @@ def extract(label: str):
     parts = label.split(":")
     match len(parts):
         case 2:
-            return QualifiedRegularName(parts[0], parts[1])
+            return RegularName.new(parts[0], parts[1])
         case 3:
             if parts[0] == "contra":
-                return QualifiedContraName(
-                    account_name=parts[1], contra_account_name=parts[2]
-                )
+                return ContraName(account_name=parts[1], contra_account_name=parts[2])
             else:
                 raise AbacusError(f"Wrong format for contra account name: {label}")
         case _:

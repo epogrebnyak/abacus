@@ -3,9 +3,13 @@ from dataclasses import dataclass
 from abacus import AbacusError, Chart
 from abacus.cli.base import BaseCommand
 from abacus.engine.accounts import (
-    QualifiedContraName,
-    QualifiedRegularName,
-    RegularAccountEnum,
+    AssetName,
+    CapitalName,
+    ContraName,
+    ExpenseName,
+    IncomeName,
+    LiabilityName,
+    extract,
 )
 
 
@@ -44,41 +48,28 @@ class ChartCommand(BaseCommand):
         return self
 
     def promote(self, string: str) -> "ChartCommand":
-        parts = string.split(":")
-        match len(parts):
-            case 1:
-                self.chart.viewer.assert_contains(parts[0])
-                self.log(f"Account <{parts[0]}> is already in chart.")
-            case 2:
-                name1 = QualifiedRegularName(parts[0], parts[1])
-                self.add_item(name1)
-            case 3:
-                if parts[0] == "contra":
-                    name2 = QualifiedContraName(
-                        account_name=parts[1], contra_account_name=parts[2]
-                    )
-                    self.add_item(name2)
-                else:
-                    raise AbacusError(f"Wrong format for contra account name: {string}")
+        if ":" not in string:
+            self.chart.viewer.assert_contains(string)
+            self.log(f"Account <{string}> is already in chart.")
+            return self
+        match extract(string):
+            case AssetName(account_name):
+                self.add_by_attribute("assets", account_name)
+            case LiabilityName(account_name):
+                self.add_by_attribute("liabilities", account_name)
+            case CapitalName(account_name):
+                self.add_by_attribute("equity", account_name)
+            case IncomeName(account_name):
+                self.add_by_attribute("income", account_name)
+            case ExpenseName(account_name):
+                self.add_by_attribute("expenses", account_name)
+            case ContraName(account_name, contra_account_name):
+                self.offset(account_name, contra_account_name)
             case _:
-                raise AbacusError(f"Too many colons (:) in account name: {string}")
+                raise AbacusError(f"No action for {string}.")
         return self
 
-    def add_item(
-        self, qualified_name: QualifiedRegularName | QualifiedContraName
-    ) -> "ChartCommand":
-        match qualified_name:
-            case QualifiedRegularName(_, account_name):
-                return self.add_by_account_type(
-                    qualified_name.account_type(), account_name
-                )
-            case QualifiedContraName(account_name, contra_account_name):
-                return self.offset(account_name, contra_account_name)
-
-    def add_by_account_type(
-        self, account_type: RegularAccountEnum, account_name: str
-    ) -> "ChartCommand":
-        chart_attribute = account_type.chart_attribute()
+    def add_by_attribute(self, chart_attribute, account_name):
         account_names = getattr(self.chart, chart_attribute)
         if self.chart.viewer.contains(account_name):
             if account_name in account_names:
@@ -90,11 +81,11 @@ class ChartCommand(BaseCommand):
             else:
                 raise AbacusError(
                     "Account names must be unique. "
-                    f"Account name <{account_name}> is already taken in this chart."
+                    f"Account name <{account_name}> is already taken."
                 )
         setattr(self.chart, chart_attribute, account_names + [account_name])
-        qualified_name = account_type.qualified(account_name)
-        self.log(f"Added account <{qualified_name}>.")
+        # FIXME: Account name format not unique
+        self.log(f"Added account <{chart_attribute}:{account_name}>.")
         return self
 
     def offset_many(self, account_name, contra_account_names) -> "ChartCommand":

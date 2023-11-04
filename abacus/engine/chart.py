@@ -8,11 +8,8 @@ from typing import Dict, List, Tuple, Type
 from pydantic import BaseModel  # type: ignore
 
 from abacus.engine.accounts import (
-    ContraAccount,
     IncomeSummaryAccount,
     NullAccount,
-    QualifiedContraName,
-    QualifiedRegularName,
     RegularAccount,
     RegularAccountEnum,
     RetainedEarnings,
@@ -238,22 +235,22 @@ class Namer:
         except KeyError:
             return account_name.replace("_", " ").strip().capitalize()
 
-    def qualified_name(self, account_name: str):
-        """Produce name like 'asset:cash'."""
-        t = self.chart.viewer.get_account_type(account_name)
-        print(t)
-        if isinstance(t(), RegularAccount):
-            return QualifiedRegularName(t.__name__, account_name)
-        if isinstance(t(), ContraAccount):
-            return QualifiedContraName(t.__name__, account_name)
-            # case NullAccount:
-            #     return self.compose_n   ame(account_name)
-            # case IncomeSummaryAccount:
-            #     return self.compose_name(account_name)
-            # case RetainedEarnings:
-            #     return self.compose_name(account_name)
-            # case _:
-            #    raise AbacusError(f"Unknown account type: {account_name}")
+    # def qualified_name(self, account_name: str):
+    #     """Produce name like 'asset:cash'."""
+    #     t = self.chart.viewer.get_account_type(account_name)
+    #     print(t)
+    #     if isinstance(t(), RegularAccount):
+    #         return RegularName(t.__name__, account_name)
+    #     if isinstance(t(), ContraAccount):
+    #         return ContraName(t.__name__, account_name)
+    # case NullAccount:
+    #     return self.compose_n   ame(account_name)
+    # case IncomeSummaryAccount:
+    #     return self.compose_name(account_name)
+    # case RetainedEarnings:
+    #     return self.compose_name(account_name)
+    # case _:
+    #    raise AbacusError(f"Unknown account type: {account_name}")
 
     def compose_name(self, account_name: AccountName):
         """Produce name like 'cash (Cash)'."""

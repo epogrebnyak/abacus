@@ -1,10 +1,11 @@
 from abacus.engine.accounts import (
     Asset,
+    AssetName,
     ContraIncome,
+    ContraName,
     CreditAccount,
     DebitAccount,
-    QualifiedContraName,
-    QualifiedRegularName,
+    extract,
 )
 
 
@@ -48,10 +49,6 @@ def test_ContraIncome():
     assert ContraIncome([8], []).balance() == 8
 
 
-def test_labels():
-    assert str(QualifiedRegularName("asset", "cash")) == "asset:cash"
-    assert str(QualifiedRegularName("CAPITAL", "equity")) == "capital:equity"
-    assert str(QualifiedRegularName("LIABILITies", "loan")) == "liability:loan"
-    assert str(QualifiedRegularName("INCOME", "sales")) == "income:sales"
-    assert str(QualifiedRegularName("expenseS", "cogs")) == "expense:cogs"
-    assert str(QualifiedContraName("sales", "refunds")) == "contra:sales:refunds"
+def test_extract():
+    assert extract("contra:sales:voids") == ContraName("sales", "voids")
+    assert extract("asset:cash") == AssetName("cash")
