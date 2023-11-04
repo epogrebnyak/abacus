@@ -47,22 +47,22 @@ abacus --help
 cx --help
 ```
 
-`abacus` has a full set of commands and options, while `cx` is just several commands with a more simple syntax. 
+`abacus` has a full set of commands and options, while `cx` is just several commands with a more simple syntax.
 `cx` is ideal for solving textbook excercises.
-Both tools enable to complete a full accounting cycle and share the same data model. 
+Both tools enable to complete a full accounting cycle and share the same data model.
 They create and modify two files `chart.json` and `entries.linejson` in your project folder.
 
 ## The `cx` command line tool
 
 With `cx` command line tool the entire accounting cycle can be performed using just five commands:
 
-| Command  | What it does                                           |
-| -------- | ------------------------------------------------------ |
-| `init`   | Start new project in empty folder.                     |
-| `post`   | Post a double entry to ledger.                         |
-| `close`  | Add closing entries to ledger at accounting period end.|
-| `name `  | Set descriptive title for an account.                  |
-| `report` | Show trial balance, balance sheet or income statement. |
+| Command  | What it does                                            |
+| -------- | ------------------------------------------------------- |
+| `init`   | Start new project in empty folder.                      |
+| `post`   | Post a double entry to ledger.                          |
+| `close`  | Add closing entries to ledger at accounting period end. |
+| `name `  | Set descriptive title for an account.                   |
+| `report` | Show trial balance, balance sheet or income statement.  |
 
 Here is how the key `cx` commands compare with `abacus` commands:
 

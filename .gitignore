@@ -137,3 +137,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+scripts/bx/entries.linejson
+scripts/bx/entries.linejson
+scripts/readme/entries.linejson
+scripts/cx/entries.linejson
