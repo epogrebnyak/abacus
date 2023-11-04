@@ -18,13 +18,14 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  add       Add account to chart.
-  add-many  Add several accounts to chart.
-  init      Create chart of accounts file (chart.json) in current folder.
-  name      Change account title.
-  set       Change default names of retained earnings, income summary or...
-  show      Print chart of accounts.
-  unlink    Permanently delete chart of accounts file in current folder.
+  add      Add account to chart.
+  init     Create chart of accounts file (chart.json) in current folder.
+  name     Change account title.
+  offset   Add contra accounts to chart.
+  promote  Add accounts to chart using labels like `asset:cash`.
+  set      Change default names of retained earnings, income summary or...
+  show     Print chart of accounts.
+  unlink   Permanently delete chart of accounts file in current folder.
 Usage: abacus ledger [OPTIONS] COMMAND [ARGS]...
 
   Post entries to ledger.
@@ -70,4 +71,4 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  operation  Define and post operations.
+  alias  Define and post operations.

@@ -2,8 +2,8 @@ import shlex
 
 from click.testing import CliRunner
 
-from abacus.cli.main import cx
 from abacus.cli.chart_command import ChartCommand
+from abacus.cli.main import cx
 
 
 def test_chart_command(tmp_path):
