@@ -117,6 +117,7 @@ def cx_name(account_name, title):
 @click.argument("account_names", type=str, nargs=-1)
 @click.option("--title", type=str, required=False, help="Account title.")
 def cx_add(account_names, asset, capital, liability, income, expense, title):
+    """Add accounts by account type."""
     print(get_type(asset, capital, liability, income, expense))
     print(account_names)
     if title and len(account_names) == 1:
@@ -126,6 +127,7 @@ def cx_add(account_names, asset, capital, liability, income, expense, title):
 @cx.command(name="promote")
 @click.argument("account_labels", required=True, type=str, nargs=-1)
 def cx_promote(account_labels):
+    """Add accounts using lables like `asset:cash`."""
     print(account_labels)
 
 
@@ -133,6 +135,7 @@ def cx_promote(account_labels):
 @click.argument("account_name", required=True, type=str)
 @click.argument("contra_account_names", required=True, type=str, nargs=-1)
 def cx_offset(account_name, contra_account_names):
+    """Add contra accounts to chart."""
     print(account_name)
     print(contra_account_names)
 

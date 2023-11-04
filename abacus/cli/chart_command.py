@@ -93,10 +93,8 @@ class ChartCommand(BaseCommand):
                     f"Account name <{account_name}> is already taken in this chart."
                 )
         setattr(self.chart, chart_attribute, account_names + [account_name])
-        self.log(
-            f"Added account <{account_name}> to chart, "
-            f"account type is <{chart_attribute}>."
-        )
+        qualified_name = account_type.qualified(account_name)
+        self.log(f"Added account <{qualified_name}>.")
         return self
 
     def offset_many(self, account_name, contra_account_names) -> "ChartCommand":
@@ -126,17 +124,17 @@ class ChartCommand(BaseCommand):
         return self
 
 
-def detect_prefix(prefix: str) -> RegularAccountEnum:
-    prefix = prefix.lower()
-    if prefix in ["asset", "assets"]:
-        return RegularAccountEnum.ASSET
-    elif prefix in ["liability", "liabilities"]:
-        return RegularAccountEnum.LIABILITY
-    elif prefix in ["capital", "equity"]:
-        return RegularAccountEnum.CAPITAL
-    elif prefix in ["expense", "expenses"]:
-        return RegularAccountEnum.EXPENSE
-    elif prefix in ["income"]:
-        return RegularAccountEnum.INCOME
-    else:
-        raise AbacusError(f"Invalid account prefix: {prefix}")
+# def detect_prefix(prefix: str) -> RegularAccountEnum:
+#     prefix = prefix.lower()
+#     if prefix in ["asset", "assets"]:
+#         return RegularAccountEnum.ASSET
+#     elif prefix in ["liability", "liabilities"]:
+#         return RegularAccountEnum.LIABILITY
+#     elif prefix in ["capital", "equity"]:
+#         return RegularAccountEnum.CAPITAL
+#     elif prefix in ["expense", "expenses"]:
+#         return RegularAccountEnum.EXPENSE
+#     elif prefix in ["income"]:
+#         return RegularAccountEnum.INCOME
+#     else:
+#         raise AbacusError(f"Invalid account prefix: {prefix}")

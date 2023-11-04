@@ -190,6 +190,9 @@ class RegularAccountEnum(Enum):
     def singular(self):
         return self.name.lower()
 
+    def qualified(self, account_name):
+        return QualifiedRegularName(self.name.lower(), account_name)
+
     @classmethod
     def from_flag(cls, string: str) -> "RegularAccountEnum":
         string = string.upper().strip()
@@ -285,10 +288,19 @@ class QualifiedContraName(QualifiedName):
         return f"contra:{self.account_name}:{self.contra_account_name}"
 
 
-if __name__ == "__main__":
-    assert str(QualifiedRegularName("asset", "cash")) == "asset:cash"
-    assert str(QualifiedRegularName("CAPITAL", "equity")) == "capital:equity"
-    assert str(QualifiedRegularName("LIABILITies", "loan")) == "liability:loan"
-    assert str(QualifiedRegularName("INCOME", "sales")) == "income:sales"
-    assert str(QualifiedRegularName("expenseS", "cogs")) == "expense:cogs"
-    assert str(QualifiedContraName("sales", "refunds")) == "contra:sales:refunds"
+def extract(label: str):
+    if ":" not in label:
+        raise AbacusError(f"Not a label: {label}")
+    parts = label.split(":")
+    match len(parts):
+        case 2:
+            return QualifiedRegularName(parts[0], parts[1])
+        case 3:
+            if parts[0] == "contra":
+                return QualifiedContraName(
+                    account_name=parts[1], contra_account_name=parts[2]
+                )
+            else:
+                raise AbacusError(f"Wrong format for contra account name: {label}")
+        case _:
+            raise AbacusError(f"Too many colons (:) in account name: {label}")

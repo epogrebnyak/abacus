@@ -8,8 +8,11 @@ from typing import Dict, List, Tuple, Type
 from pydantic import BaseModel  # type: ignore
 
 from abacus.engine.accounts import (
+    ContraAccount,
     IncomeSummaryAccount,
     NullAccount,
+    QualifiedContraName,
+    QualifiedRegularName,
     RegularAccount,
     RegularAccountEnum,
     RetainedEarnings,
@@ -34,9 +37,7 @@ class ChartViewer:
 
     def assert_contains(self, account_name: AccountName) -> None:
         if not self.contains(account_name):
-            raise AbacusError(
-                f"Account name must be defined before use, {account_name} not in chart."
-            )
+            raise AbacusError(f"Account name <{account_name}> not in chart.")
 
     def get_regular_account_names(
         self, regular_account: RegularAccountEnum | Type[RegularAccount]
@@ -209,10 +210,11 @@ class Chart(BaseModel):
             self.null_account
         )
         ledger.post_many(entries)
-        if (x := ledger[self.null_account].balance()) != 0:
-            raise AbacusError(
-                f"Balance of null account after adding starting balances must be 0, got {x}."
-            )
+        # REMOVE: ensured by to_multiple_entry:
+        # if (x := ledger[self.null_account].balance()) != 0:
+        #     raise AbacusError(
+        #         f"Balance of null account after adding starting balances must be 0, got {x}."
+        #     )
         return ledger
 
     @property
@@ -235,6 +237,23 @@ class Namer:
             return self.chart.names[account_name]
         except KeyError:
             return account_name.replace("_", " ").strip().capitalize()
+
+    def qualified_name(self, account_name: str):
+        """Produce name like 'asset:cash'."""
+        t = self.chart.viewer.get_account_type(account_name)
+        print(t)
+        if isinstance(t(), RegularAccount):
+            return QualifiedRegularName(t.__name__, account_name)
+        if isinstance(t(), ContraAccount):
+            return QualifiedContraName(t.__name__, account_name)
+            # case NullAccount:
+            #     return self.compose_n   ame(account_name)
+            # case IncomeSummaryAccount:
+            #     return self.compose_name(account_name)
+            # case RetainedEarnings:
+            #     return self.compose_name(account_name)
+            # case _:
+            #    raise AbacusError(f"Unknown account type: {account_name}")
 
     def compose_name(self, account_name: AccountName):
         """Produce name like 'cash (Cash)'."""
