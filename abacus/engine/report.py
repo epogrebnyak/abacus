@@ -15,6 +15,8 @@ from abacus.engine.accounts import (
     Expense,
     Income,
     Liability,
+    NullAccount,
+    IncomeSummaryAccount,
 )
 from abacus.engine.base import AccountName, Amount
 
@@ -229,12 +231,15 @@ def to_columns(lines: List[Line]) -> Tuple[Column, Column]:
 def yield_tuples_for_trial_balance(chart, ledger):
     def t(account_name):
         return chart.viewer.get_account_type(account_name).__name__
+    
+    def must_exclude(t_account):
+        return isinstance(t_account, NullAccount) or isinstance(t_account, IncomeSummaryAccount)
 
     for account_name, t_account in ledger.items():
-        if isinstance(t_account, DebitAccount):
+        if isinstance(t_account, DebitAccount) and not must_exclude(t_account):
             yield account_name, t(account_name), t_account.balance(), 0
     for account_name, t_account in ledger.items():
-        if isinstance(t_account, CreditAccount):
+        if isinstance(t_account, CreditAccount) and not must_exclude(t_account):
             yield account_name, t(account_name), 0, t_account.balance()
 
 
