@@ -1,24 +1,12 @@
-FIXME:
-- bx ledger init must fail when file is present
-- `--title` fails when written first with post entry (see fail.sh)
-
-CODES:
-
-# TODO: add more codes from https://www.audit-it.ru/plan_schetov/
-# --code 50
-
-
-OPERATIONS:
-# abacus chart alias --operation invoice --debit ar --credit sales --requires cost
-# abacus chart alias --operation cost --debit cogs --credit goods --requires invoice
-
 TODO:
-- [ ] change names to prefix+account name Asset:equipment (Equipment)
+- [ ] --adjust, 
+- [ ] --post-close and duplication of entries
 - [ ] add totals to trial balance
 - [ ] memo + build-you-own-x
 - [ ] RAS codes 
 - [ ] more textbook examples
 - [ ] adjustment example (with trial balance)
+- [ ] add more codes from https://www.audit-it.ru/plan_schetov/
 
 WONTFIX:
 - [ ] --requires flag in alias 
@@ -26,7 +14,6 @@ WONTFIX:
 - [ ] adjust and postclose entries
 - [ ] --title for post command
 - [ ] help messages
-- [ ] types of entries (S,B,A,C1,C2,C3,C4,P)
 - [ ] post entry with chart check
 - [ ] adjustment and post-close entries
 - [ ] `--reference` or `--refer` or --meta
@@ -50,3 +37,4 @@ FOR REVIEW:
 - [x] add account types to trial balance
 - [x] merge test suites 
 - [x] mount as bx
+- [x] change names to prefix+account name Asset:equipment (Equipment)

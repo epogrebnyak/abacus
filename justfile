@@ -69,8 +69,6 @@ readme-console:
 scripts:
   # abacus replaces bx
   cd scripts/abacus && bash -e all.sh
-  # bx is a stable version 
-  cd scripts/bx && bash -e all.sh
   # cx is shorthand
   cd scripts/cx && bash -e joan.sh
 

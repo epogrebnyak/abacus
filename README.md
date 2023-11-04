@@ -159,13 +159,9 @@ The `post` command accepts account names under following rules:
 - **No colon**: Short names like `cash`, `sales`, `withdrawal` without colon
   can be used in `post` command after the account name was added to chart.
 
-## The `bx` command line tool
+## The `abacus` command line tool
 
-> This description will be replaced with abacus tool.
-
-The `bx` command line tool has a more verbose interface than `cx`.
-The `bx` tool you can define chart ot accounts, post entries and close ledger,
-produce reports and inspect accounts.
+The `abacus` command line tool has a more verbose interface than `cx`.
 
 Let's go through an example.
 
@@ -185,24 +181,25 @@ Create chart of accounts using the following:
 - `chart init` for new chart
 - `chart add` for regular accounts
 - `chart offset` for contra accounts
+- `chart promote` for adding accounts by labels
 - `chart alias` for naming operations
 - `chart show` to print chart
 
 ```bash
-bx chart init
-bx chart add --asset cash
-bx chart add --asset ar --title "Accounts receivable"
-bx chart add --asset goods --title "Inventory (goods for resale)"
-bx chart add --asset prepaid_rent --title "Storage facility prepaid rent"
-bx chart add --capital equity
-bx chart add --liability dividend_due
-bx chart add --income sales
-bx chart offset sales discounts
-bx chart add --expense cogs --title "Cost of goods sold"
-bx chart add --expense sga --title "Selling, general and adm. expenses"
-bx chart alias --operation invoice --debit ar --credit sales
-bx chart alias --operation cost --debit cogs --credit goods
-bx chart show
+abacus chart init
+abacus chart add --asset cash
+abacus chart add --asset ar --title "Accounts receivable"
+abacus chart add --asset goods --title "Inventory (goods for resale)"
+abacus chart add --asset prepaid_rent --title "Storage facility prepaid rent"
+abacus chart add --capital equity
+abacus chart add --liability dividend_due
+abacus chart add --income sales
+abacus chart offset sales discounts
+abacus chart add --expense cogs --title "Cost of goods sold"
+abacus chart add --expense sga --title "Selling, general and adm. expenses"
+abacus-extra alias add --operation invoice --debit ar --credit sales
+abacus-extra alias add --operation cost --debit cogs --credit goods
+abacus chart show
 ```
 
 At this point you will see `chart.json` created:
@@ -216,17 +213,17 @@ cat chart.json
 Start ledger, post entries and close accounts at period end:
 
 ```bash
-bx ledger init
-bx ledger post entry --debit cash  --credit equity --amount 5000 --title "Initial investment"
-bx ledger post entry --debit goods --credit cash   --amount 3500 --title "Acquire goods for cash"
-bx ledger post entry --debit prepaid_rent --credit cash --amount 1200 --title "Prepay rent"
-bx ledger post operation invoice 4300 cost 2500 --title "Issue invoice and register sales"
-bx ledger post entry --debit discounts --credit ar --amount  450 --title "Provide discount"
-bx ledger post entry --debit cash  --credit ar     --amount 3000 --title "Accept payment"
-bx ledger post entry --debit sga   --credit cash   --amount  300 --title "Reimburse sales team"
-bx ledger post entry --debit sga --credit prepaid_rent --amount 800 --title "Expense 8 months of rent" --adjust
-bx ledger close
-bx ledger post entry --debit re --credit dividend_due --amount 150 --title "Accrue dividend" --after-close
+abacus ledger init
+abacus ledger post --debit cash  --credit equity --amount 5000 --title "Initial investment"
+abacus ledger post --debit goods --credit cash   --amount 3500 --title "Acquire goods for cash"
+abacus ledger post --debit prepaid_rent --credit cash --amount 1200 --title "Prepay rent"
+abacus-extra alias post --operation invoice 4300 --operation cost 2500 --title "Issue invoice and register sales"
+abacus ledger post --debit discounts --credit ar --amount  450 --title "Provide discount"
+abacus ledger post --debit cash  --credit ar     --amount 3000 --title "Accept payment"
+abacus ledger post --debit sga   --credit cash   --amount  300 --title "Reimburse sales team"
+abacus ledger post --debit sga --credit prepaid_rent --amount 800 --title "Expense 8 months of rent"
+abacus ledger close
+abacus ledger post --debit re --credit dividend_due --amount 150 --title "Accrue dividend"
 ```
 
 At this point you will see `entries.linejson` created:
@@ -240,9 +237,9 @@ cat entries.linejson
 Produce and print to screen the trial balance, balance sheet and income statement reports.
 
 ```bash
-bx report --trial-balance
-bx report --balance-sheet
-bx report --income-statement
+abacus report trial-balance
+abacus report balance-sheet
+abacus report income-statement
 ```
 
 The results for balance sheet and income statement should look similar to this:
@@ -266,35 +263,35 @@ Profit                                                      500
 
 ### Inspect individual accounts
 
-`account` command will show detailed information about a specific account.
+`account show` command will show detailed information about a specific account.
 
 ```bash
-bx account sales
+abacus account show sales
 ```
 
-`assert` is useful in testing - it makes sure account balance equals
-specific value after all postings.
+`account assert` is useful in testing as it makes sure account balance equals
+specified value.
 
 ```bash
-bx assert cash 3000
+abacus account assert --balance cash 3000 --balance ar 850 --balance goods 1000
 ```
 
 ### Account balances
 
-Print to screen a JSON file with account names and account balances.
+Print a JSON file with account names and account balances.
 
 ```bash
-bx balances --nonzero
+abacus account show-balances --nonzero
 ```
 
-This command is used in carring balances forward to next period.
+This command is used in carrying balances forward to next period.
 
 ```
 # save output to end.json
-bx balances --nonzero > end.json
+abacus account show-balances --nonzero > end.json
 
 # copy end.json and chart.json to a new folder and do:
-bx ledger init end.json
+abacus ledger init end.json
 ```
 
 <details>
@@ -461,7 +458,7 @@ This command will launch:
 - `ruff` for code check and linting
 - `prettier` to clean markdown files
 - extracting and running code from README.md
-- a few bash scripts to test the `bx` and `cx` command line tools.
+- a few bash scripts to test the `abacus` and `cx` command line tools.
 
 I found that testing CLI with bash files, one for chart, ledger, reports and
 inspect commands, accelerates the development workflow.
@@ -470,7 +467,7 @@ inspect commands, accelerates the development workflow.
 
 ### 0.7.3
 
-- `click` package used for new CLI entrypoint called `abacus` (will replace `bx` tool)
+- `click` package used for new CLI entrypoint called `abacus` (will replace `abacus` tool)
 - parts of CLI code moved to `abacus.cli`
 - targeting fuller `abacus` and minimal 5 command `ex` command line tools
 

@@ -16,9 +16,8 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-bx = 'abacus.api:main'
-cx = 'abacus.cli.main:cx'
 abacus = 'abacus.cli.main:abacus'
+cx = 'abacus.cli.main:cx'
 abacus-extra = 'abacus.cli.main:abacus_extra'
 
 

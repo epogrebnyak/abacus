@@ -1,3 +1,4 @@
+# TODO: add more codes from https://www.audit-it.ru/plan_schetov/
 abacus chart unlink --yes
 abacus chart init
 abacus chart add --asset cash ppe

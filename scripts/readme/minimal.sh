@@ -1,43 +1,43 @@
 abacus --help
 cx --help
 
-bx chart init
-bx chart add --asset cash
-bx chart add --asset ar --title "Accounts receivable"
-bx chart add --asset goods --title "Inventory (goods for resale)"
-bx chart add --asset prepaid_rent --title "Storage facility prepaid rent"
-bx chart add --capital equity
-bx chart add --liability dividend_due
-bx chart add --income sales
-bx chart offset sales discounts
-bx chart add --expense cogs --title "Cost of goods sold"
-bx chart add --expense sga --title "Selling, general and adm. expenses"
-bx chart alias --operation invoice --debit ar --credit sales
-bx chart alias --operation cost --debit cogs --credit goods
-bx chart show
+abacus chart init
+abacus chart add --asset cash
+abacus chart add --asset ar --title "Accounts receivable"
+abacus chart add --asset goods --title "Inventory (goods for resale)"
+abacus chart add --asset prepaid_rent --title "Storage facility prepaid rent"
+abacus chart add --capital equity
+abacus chart add --liability dividend_due
+abacus chart add --income sales
+abacus chart offset sales discounts
+abacus chart add --expense cogs --title "Cost of goods sold"
+abacus chart add --expense sga --title "Selling, general and adm. expenses"
+abacus-extra alias add --operation invoice --debit ar --credit sales
+abacus-extra alias add --operation cost --debit cogs --credit goods
+abacus chart show
 
 cat chart.json
 
-bx ledger init
-bx ledger post entry --debit cash  --credit equity --amount 5000 --title "Initial investment"
-bx ledger post entry --debit goods --credit cash   --amount 3500 --title "Acquire goods for cash"
-bx ledger post entry --debit prepaid_rent --credit cash --amount 1200 --title "Prepay rent"
-bx ledger post operation invoice 4300 cost 2500 --title "Issue invoice and register sales"
-bx ledger post entry --debit discounts --credit ar --amount  450 --title "Provide discount"
-bx ledger post entry --debit cash  --credit ar     --amount 3000 --title "Accept payment"
-bx ledger post entry --debit sga   --credit cash   --amount  300 --title "Reimburse sales team"
-bx ledger post entry --debit sga --credit prepaid_rent --amount 800 --title "Expense 8 months of rent" --adjust
-bx ledger close
-bx ledger post entry --debit re --credit dividend_due --amount 150 --title "Accrue dividend" --after-close
+abacus ledger init
+abacus ledger post --debit cash  --credit equity --amount 5000 --title "Initial investment"
+abacus ledger post --debit goods --credit cash   --amount 3500 --title "Acquire goods for cash"
+abacus ledger post --debit prepaid_rent --credit cash --amount 1200 --title "Prepay rent"
+abacus-extra alias post --operation invoice 4300 --operation cost 2500 --title "Issue invoice and register sales"
+abacus ledger post --debit discounts --credit ar --amount  450 --title "Provide discount"
+abacus ledger post --debit cash  --credit ar     --amount 3000 --title "Accept payment"
+abacus ledger post --debit sga   --credit cash   --amount  300 --title "Reimburse sales team"
+abacus ledger post --debit sga --credit prepaid_rent --amount 800 --title "Expense 8 months of rent"
+abacus ledger close
+abacus ledger post --debit re --credit dividend_due --amount 150 --title "Accrue dividend"
 
 cat entries.linejson
 
-bx report --trial-balance
-bx report --balance-sheet
-bx report --income-statement
+abacus report trial-balance
+abacus report balance-sheet
+abacus report income-statement
 
-bx account sales
+abacus account show sales
 
-bx assert cash 3000
+abacus account assert --balance cash 3000 --balance ar 850 --balance goods 1000
 
-bx balances --nonzero
+abacus account show-balances --nonzero

@@ -66,9 +66,11 @@ def add_operation(operation, debit, credit):
 
 @operation.command(name="post")
 @click.option("--operation", "-o", "operations", type=(str, int), multiple=True)
-def post_operation(operations):
+@click.option("--title")
+def post_operation(operations, title):
     """Post operations to ledger."""
     ledger_command().post_operations(get_chart(), operations).echo()
+    # FIXME: title not in use.
 
 
 @click.group()
@@ -347,10 +349,12 @@ def read_starting_balances(path: str) -> Dict:
 @click.option("--debit", required=True, type=str, help="Debit account name.")
 @click.option("--credit", required=True, type=str, help="Credit account name.")
 @click.option("--amount", required=True, type=int, help="Transaction amount.")
-def post(debit, credit, amount):
+@click.option("--title")
+def post(debit, credit, amount, title):
     """Post double entry to ledger."""
     chart_command().promote(debit).promote(credit).echo().write()
     ledger_command().post_entry(last(debit), last(credit), amount).echo()
+    # FIXME: title not used
 
 
 @ledger.command(name="post-compound")
@@ -486,9 +490,8 @@ def show(account_name: str):
 
 
 @accounts.command("assert")
-@click.argument("account_name")
-@click.argument("balance", type=int)
-def assert_balance(account_name: str, balance: int):
+@click.option("--balance", type=(str, int), multiple=True)
+def assert_balance(balance):
     """Verify account balance."""
     from abacus.cli.inspect_command import assert_account_balance
     from abacus.cli.report_command import current_ledger
@@ -496,7 +499,8 @@ def assert_balance(account_name: str, balance: int):
     ledger = current_ledger(
         chart_path=get_chart_path(), entries_path=get_entries_path()
     )
-    assert_account_balance(ledger, account_name, balance)
+    for account_name, balance_ in balance:
+        assert_account_balance(ledger, account_name, balance_)
 
 
 @accounts.command(name="show-balances")

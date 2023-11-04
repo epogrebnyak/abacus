@@ -117,6 +117,32 @@ class ChartCommand(BaseCommand):
         return self
 
     def show(self):
-        # FIXME: can print more verbose name
-        print("This will print chart")
+        print_chart(self.chart)
         return self
+
+
+def print_re(chart):
+    print(
+        "Retained earnings account:",
+        chart.namer.compose_name(chart.retained_earnings_account) + ".",
+    )
+
+
+def print_chart(chart: Chart):
+    def name(account_name):
+        return chart.namer.compose_name(account_name)
+
+    print("Accounts")
+    for attribute in ("assets", "equity", "liabilities", "income", "expenses"):
+        account_names = getattr(chart, attribute)
+        if account_names:
+            print(attribute.capitalize() + ":", ", ".join(map(name, account_names)))
+    if chart.contra_accounts:
+        print("Contra accounts:")
+        for key, names in chart.contra_accounts.items():
+            print("  -", contra_phrase(name(key), map(name, names)))
+    print_re(chart)
+    if chart.operations:
+        print("Operation aliases:")
+        for key, (debit, credit) in chart.operations.items():
+            print("  -", key, f"(debit is {debit}, credit is {credit})")

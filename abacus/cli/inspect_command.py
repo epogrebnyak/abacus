@@ -14,6 +14,7 @@ def side(ledger, account_name):
             raise TypeError(ledger[account_name].__class__.__name__)
 
 
+# FIXME: may refine account info
 def print_account_info(ledger, chart, account_name: str):
     account = ledger[account_name]
     print("     Account:", chart.namer[account_name])
