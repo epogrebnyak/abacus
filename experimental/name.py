@@ -6,7 +6,22 @@ from typing import ClassVar, Dict, List, Type, Iterable
 from pydantic import BaseModel
 
 from abacus import AbacusError
-from abacus.engine.accounts import Asset, Capital, Expense, Income, Liability
+from abacus.engine.accounts import (
+    Asset,
+    Capital,
+    Expense,
+    Income,
+    Liability,
+    ContraAsset,
+    ContraLiability,
+    ContraCapital,
+    ContraIncome,
+    ContraExpense,
+    RetainedEarnings,
+    IncomeSummaryAccount,
+    NullAccount,
+    TAccount,
+)
 
 
 @dataclass
@@ -48,6 +63,9 @@ class ContraName:
     contra_account_name: str
 
 
+Name = RegularName | ContraName
+
+
 class Prefix(Enum):
     """Prefixes for five types of regular accounts."""
 
@@ -57,12 +75,81 @@ class Prefix(Enum):
     INCOME = "income"
     EXPENSE = "expense"
 
+    def constructor(self):
+        """Link enum to account class."""
+        return dict(
+            asset=Asset,
+            liability=Liability,
+            capital=Capital,
+            income=Income,
+            expense=Expense,
+        )[self.name.lower()]
+
+    def contra_constructor(self):
+        """Link enum to its contra account type."""
+        return dict(
+            asset=ContraAsset,
+            liability=ContraLiability,
+            capital=ContraCapital,
+            income=ContraIncome,
+            expense=ContraExpense,
+        )[self.name.lower()]
+
     @staticmethod
     def all():
         return [p.value for p in Prefix]
 
 
-def detect_prefix(prefix: str, account_name) -> RegularName:
+def find_prefix(chart, target_account) -> Prefix:
+    res = []
+    for _, attribute, prefix in chart.mapper():
+        for account_name in getattr(chart, attribute):
+            if account_name == target_account:
+                res.append(prefix)
+    if len(res) == 1:
+        return res[0]
+    else:
+        raise AbacusError(chart)
+
+
+def yield_regular_accounts(chart):
+    for _, attribute, prefix in chart.mapper():
+        cls = prefix.constructor()
+        for account_name in getattr(chart, attribute):
+            yield account_name, cls
+
+
+def yield_contra_accounts(chart):
+    for _, attribute, prefix in chart.mapper():
+        cls = prefix.contra_constructor()
+        for account_name in getattr(chart, attribute):
+            try:
+                for contra_account in chart.contra_accounts[account_name]:
+                    yield contra_account, cls
+            except KeyError:
+                pass
+    yield from []
+
+
+def yield_unique_accounts(chart):
+    yield chart.retained_earnings_account, RetainedEarnings
+    yield chart.income_summary_account, IncomeSummaryAccount
+    yield chart.null_account, NullAccount
+
+
+import itertools
+
+
+def yield_all_accounts(chart):
+    return itertools.chain(
+        yield_regular_accounts(chart),
+        yield_contra_accounts(chart),
+        yield_unique_accounts(chart),
+    )
+
+
+
+def detect(prefix: str, account_name) -> RegularName:
     prefix = prefix.lower()
     if prefix in ["asset", "assets"]:
         return AssetName(account_name)
@@ -78,17 +165,17 @@ def detect_prefix(prefix: str, account_name) -> RegularName:
         raise AbacusError(f"Invalid account prefix: {prefix}")
 
 
-def extract(label: str):
+def extract(label: str) -> Name:
     match label.split(":"):
         case (prefix, account_name):
-            return detect_prefix(prefix, account_name)
+            return detect(prefix, account_name)
         case "contra", account_name, contra_account_name:
             return ContraName(account_name, contra_account_name)
         case _:
             raise AbacusError(f"Invalid account label: {label}")
 
 
-def account_name(name):
+def account_name(name: Name) -> str:
     match name:
         case RegularName(account_name):
             return account_name
@@ -130,37 +217,21 @@ class BaseChart(BaseModel):
                 raise AbacusError(f"Invalid name: {name}")
         return self
 
-    def promote_many(self, names: Iterable[RegularName | ContraName]):
+    def promote_many(self, names: Iterable[Name]):
         for name in names:
             self.promote(name)
         return self
 
-    def assert_does_not_contain(self, account_name):
-        if account_name in self.account_names_str():
-            raise AbacusError(
-                "Account name must be unique, "
-                f"but <{account_name}> is already in chart."
-            )
-        return self
-
     def add_regular(self, attribute: str, account_name: str):
-        if account_name in getattr(self, attribute):
-            raise AbacusError(
-                f"Account name <{account_name}> already exists "
-                f"within <{attribute}> chart attribute."
-            )
-        self.assert_does_not_contain(account_name)
+        self.check.does_not_exist_in_attribute(account_name, attribute)
+        self.check.does_not_exist(account_name)
         account_names = getattr(self, attribute) + [account_name]
         setattr(self, attribute, account_names)
         return self
 
     def add_contra(self, account_name, contra_account_name):
-        self.assert_does_not_contain(contra_account_name)
-        if account_name not in self.account_names_str():
-            raise AbacusError(
-                f"Account name <{account_name}> must be in chart "
-                f"before adding a contra account <{contra_account_name}>."
-            )
+        self.check.does_not_exist(contra_account_name)
+        self.check.exists(account_name)
         self.contra_accounts[account_name] = self.contra_accounts.get(
             account_name, []
         ) + [contra_account_name]
@@ -169,19 +240,65 @@ class BaseChart(BaseModel):
     def account_names_str(self) -> Iterable[str]:
         return map(account_name, self.account_names_all())
 
+    def mapper(self):
+        return [
+            (AssetName, "assets", Prefix.ASSET),
+            (CapitalName, "capital", Prefix.CAPITAL),
+            (LiabilityName, "liabilities", Prefix.LIABILITY),
+            (IncomeName, "income", Prefix.INCOME),
+            (ExpenseName, "expenses", Prefix.EXPENSE),
+        ]
+
     def account_names_all(self) -> Iterable[RegularName | ContraName]:
-        for cls, attribute in [
-            (AssetName, "assets"),
-            (CapitalName, "capital"),
-            (LiabilityName, "liabilities"),
-            (IncomeName, "income"),
-            (ExpenseName, "expenses"),
-        ]:
+        for cls, attribute, _ in self.mapper():
             for account_name in getattr(self, attribute):
                 yield cls(account_name)
         for account_name, values in self.contra_accounts.items():
             for contra_account_name in values:
                 yield ContraName(account_name, contra_account_name)
+
+    @property
+    def check(self):
+        return Check(self)
+
+
+    def filter_accounts(self, account_classes: List[Type[TAccount]]):
+        for account_name, cls in yield_all_accounts(self):
+            for account_class in account_classes:
+                if isinstance(cls(), account_class):
+                    yield account_name
+        yield from []
+
+
+    def ledger(self):
+        from abacus import Ledger
+        return Ledger((account_name, cls())for account_name, cls in yield_all_accounts(self))
+
+@dataclass
+class Check:
+    chart: BaseChart
+
+    def exists(self, account_name):
+        if account_name not in self.chart.account_names_str():
+            raise AbacusError(
+                f"Account name <{account_name}> must be specified in chart"
+                " to enable this operation."
+            )
+
+    def does_not_exist(self, account_name):
+        if account_name in self.chart.account_names_str():
+            raise AbacusError(
+                "Account name must be unique, "
+                f"but there is already <{account_name}> in chart."
+            )
+        return self
+
+    def does_not_exist_in_attribute(self, account_name, attribute):
+        if account_name in getattr(self.chart, attribute):
+            raise AbacusError(
+                f"Account name <{account_name}> already exists "
+                f"within <{attribute}> chart attribute."
+            )
 
 
 class BetterChart(BaseModel):
@@ -206,10 +323,6 @@ class BetterChart(BaseModel):
     def get_title(self, account_name):
         default_name = account_name.replace("_", " ").title()
         return self.titles.get(account_name, default_name)
-
-    def ledger(self):
-        pass
-
 
 a = (
     BetterChart()
@@ -237,6 +350,17 @@ assert names == [
 ]
 assert BaseChart().promote_many(names) == b
 
+assert list(yield_all_accounts(a.chart)) == [
+    ("cash", Asset),
+    ("equity", Capital),
+    ("ts", ContraCapital),
+    ("re", RetainedEarnings),
+    ("current_profit", IncomeSummaryAccount),
+    ("null", NullAccount),
+]
+
+assert list(b.filter_accounts([ContraCapital])) == ["ts"]
+assert list(b.filter_accounts([Asset, Capital])) == ['cash', 'equity', 're']
 
 # chart0 = (
 #     BetterChart()
