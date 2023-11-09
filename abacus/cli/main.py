@@ -403,7 +403,7 @@ def report():
     """Show reports."""
 
 
-@report.command(name="trial-balance")
+@report.command()
 def trial_balance():
     """Show trial balance."""
     from abacus.cli.report_command import trial_balance
