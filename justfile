@@ -67,10 +67,9 @@ readme-console:
 
 # Run command line examples (Linux)
 scripts:
-  # abacus replaces bx
   cd scripts/abacus && bash -e all.sh
-  # cx is shorthand
   cd scripts/cx && bash -e joan.sh
+  cd scripts/vat && bash -e vat.sh
 
  
 # Build and serve docs
