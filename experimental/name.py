@@ -27,14 +27,21 @@ from abacus.engine.accounts import (  # type: ignore
 )
 
 
-class Prefix(Enum):
-    """Prefixes for five types of regular accounts."""
+# class Prefix(Enum):
+#     """Prefixes for five types of regular accounts."""
+#     ASSET = "asset"
+#     CAPITAL = "capital"
+#     LIABILITY = "liability"
+#     INCOME = "income"
+#     EXPENSE = "expense"
 
-    ASSET = "asset"
-    CAPITAL = "capital"
-    LIABILITY = "liability"
-    INCOME = "income"
-    EXPENSE = "expense"
+from dataclases import dataclass, field
+
+
+@dataclass
+class Name:
+    account_name: str
+    contra_accounts: List[str] = field(factory=list)
 
 
 @dataclass
