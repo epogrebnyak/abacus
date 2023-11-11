@@ -158,6 +158,23 @@ def cx_unlink():
     LedgerCommand(path=get_entries_path()).unlink()
 
 
+# cx init
+# cx add asset:cash
+# cx add capital:equity contra:equity:ts
+# cx name ts --title "Treasury shares"
+# cx add asset:cash --title "Cash and equivalents"
+# assume the rest have no :
+# cx add --prefix=asset goods ar
+# cx name ar --title "Accounts receivable"
+# cx offset equity ts --title "Treasury shares"
+# cx add income:sales
+# cx offset sales voids refunds cashback
+# cx alias --operation capitalize --debit cash --credit equity
+# cx set --income-summary-account current_profit
+# cx set --retained-earings-account re
+# cx set --null-account null
+
+
 @click.group()
 def abacus():
     """A minimal, yet valid double entry accounting system."""

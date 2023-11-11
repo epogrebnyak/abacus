@@ -14,12 +14,13 @@ Simplifying assumptions:
 - one currency
 - no journals, entries posted directly to ledger
 - entry holds just amount, debit and credit accounts, no title or date
-- only balance sheet and income statement reports, no cash flow
-- no non-negativity checks (can distribute dividend greater than profit)
-- balances stick to one side (debit or credit) based on type of account
+- only balance sheet and income statement reports, no cash flow or changes in equity
+- no non-negativity checks (eg can distribute dividend greater than profit)
+- balances stick to one side only (debit or credit) based on specified type of account
 
 """
 from .engine.base import AbacusError, Amount, Entry, MultipleEntry  # noqa: F401
+from .engine.better_chart import Chart as BetterChart  # noqa: F401
 from .engine.chart import Chart  # noqa: F401
 from .engine.entries import LineJSON  # noqa: F401
 from .engine.ledger import Ledger  # noqa: F401

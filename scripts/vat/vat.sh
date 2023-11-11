@@ -1,3 +1,4 @@
+cx unlink --yes
 cx init
 abacus chart add --asset cash
 abacus chart add --income sales
