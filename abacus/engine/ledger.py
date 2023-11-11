@@ -4,16 +4,16 @@ from typing import Dict, Iterable, List, Tuple, Type
 
 from abacus.engine.accounts import CreditAccount, DebitAccount, TAccount
 from abacus.engine.base import AbacusError, AccountName, Amount, Entry, MultipleEntry
-from abacus.engine.chart import Chart
+from abacus.engine.better_chart import Chart
 
 
 class Ledger(UserDict[AccountName, TAccount]):
     """General ledger that holds all accounts. Accounts are referenced by name."""
 
-    @classmethod
-    def new(cls, chart: Chart) -> "Ledger":
-        """Create an empty ledger from chart."""
-        return Ledger(chart.ledger_dict())
+    # @classmethod
+    # def new(cls, chart: Chart) -> "Ledger":
+    #     """Create an empty ledger from chart."""
+    #     return chart.base_chart.empty_ledger()
 
     def apply(self, attribute: str):
         """Apply an *attribute* to all accounts in ledger and return a new ledger."""

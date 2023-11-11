@@ -6,14 +6,14 @@ from pathlib import Path
 from typing import Iterable, List
 
 from abacus.engine.base import Entry
-from abacus.engine.chart import Chart
+from abacus.engine.better_chart import Chart
 
 __all__ = ["LineJSON"]
 
 
 def touches_isa(chart: Chart, entry: Entry) -> bool:
     """True if entry touches income summary account."""
-    isa = chart.income_summary_account
+    isa = chart.base_chart.income_summary_account
     return (entry.debit == isa) or (entry.credit == isa)
 
 

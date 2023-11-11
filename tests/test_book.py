@@ -2,13 +2,14 @@ from abacus import BalanceSheet, Chart, Entry, IncomeStatement
 from abacus.engine.closing import ClosingEntries, make_closing_entries
 
 # Create chart of accounts
-chart = Chart(
-    assets=["cash"],
-    equity=["equity"],
-    expenses=["salaries", "rent"],
-    liabilities=[],
-    income=["services"],
-).offset("services", ["cashback"])
+chart = (
+    Chart()
+    .add("asset:cash")
+    .add("capital:equity")
+    .add("expense:salaries")
+    .add("expense:rent")
+    .add("income:services")
+).offset("services", "cashback")
 
 
 # Account balances are known from previous period end

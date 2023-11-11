@@ -6,7 +6,7 @@ from abacus import Chart, Ledger, LineJSON
 def current(entries_path: Path, chart_path: Path):
     chart = Chart.parse_file(chart_path)
     store = LineJSON(entries_path)
-    ledger = Ledger.new(chart)
+    ledger = chart.ledger()
     return chart, store, ledger
 
 
@@ -39,7 +39,7 @@ def account_balances(entries_path: Path, chart_path: Path, nonzero: bool):
 def current_ledger(chart_path: Path, entries_path: Path) -> Ledger:
     chart = Chart.parse_file(chart_path)
     entries = LineJSON(entries_path).yield_entries()
-    return Ledger.new(chart).post_many(entries)
+    return chart.ledger().post_many(entries)
 
 
 def print_statement(plain, json, rich, statement, chart):

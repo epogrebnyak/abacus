@@ -1,10 +1,10 @@
 """Closing accounts at period end."""
 from dataclasses import dataclass
-from typing import List, Type
+from typing import List
 
-from abacus.engine.accounts import Expense, Income, RegularAccount, RegularAccountEnum
+from abacus.engine.accounts import Expense, Income
 from abacus.engine.base import AccountName, Entry
-from abacus.engine.chart import Chart
+from abacus.engine.better_chart import Chart
 from abacus.engine.ledger import Ledger
 
 __all__ = [
@@ -16,14 +16,13 @@ __all__ = [
 
 
 def flush_permanent_accounts(chart: Chart, ledger: Ledger) -> List[Entry]:
-    def f(account_type: RegularAccountEnum):
-        return _flush_by_enum(chart, ledger, account_type)
+    """Make closing entries for permanent_accounts."""
+    from abacus.engine.better_chart import AssetName, CapitalName, LiabilityName
 
-    return (
-        f(RegularAccountEnum.ASSET)
-        + f(RegularAccountEnum.CAPITAL)
-        + f(RegularAccountEnum.LIABILITY)
-    )
+    def f(name_class):
+        return _flush(chart, ledger, name_class)
+
+    return f(AssetName) + f(CapitalName) + f(LiabilityName)
 
 
 @dataclass
@@ -60,12 +59,12 @@ def make_closing_entries(chart: Chart, ledger: Ledger) -> ClosingEntries:
     a = close_contra_income(chart, dummy_ledger)
     b = close_contra_expense(chart, dummy_ledger)
     dummy_ledger.post_many(a + b)
-    c = close_income_to_isa(chart.income_summary_account, dummy_ledger)
-    d = close_expenses_to_isa(chart.income_summary_account, dummy_ledger)
+    c = close_income_to_isa(chart.base_chart.income_summary_account, dummy_ledger)
+    d = close_expenses_to_isa(chart.base_chart.income_summary_account, dummy_ledger)
     dummy_ledger.post_many(c + d)
     e = close_isa(
-        isa=chart.income_summary_account,
-        re=chart.retained_earnings_account,
+        isa=chart.base_chart.income_summary_account,
+        re=chart.base_chart.retained_earnings_account,
         ledger=dummy_ledger,
     )
     return ClosingEntries(
@@ -77,25 +76,13 @@ def make_closing_entries(chart: Chart, ledger: Ledger) -> ClosingEntries:
     )
 
 
-def _flush(chart: Chart, ledger: Ledger, cls: Type[RegularAccount]) -> List[Entry]:
-    return _flush_by_enum(
-        chart, ledger, regular_account=RegularAccountEnum.from_class(cls)
-    )
-
-
-def _flush_by_enum(
-    chart: Chart, ledger: Ledger, regular_account: RegularAccountEnum
-) -> List[Entry]:
-    """Make a list of entries for transferring balances for accounts of a certain type.
-
-    The type of accounts is contra accounts for *cls*, e.g. when provided Income,
-    the entries will transfer balances from ContraIncome accounts to Income accounts.
-
+def _flush(chart: Chart, ledger: Ledger, name_class) -> List[Entry]:
+    """Make a list of entries for transfering balances for accounts of a certain type.
     These entries are used to close contra accounts."""
-    g = chart.viewer.get_contra_account_pairs(regular_account)
+    gen = chart.base_chart.yield_contra_account_pairs(name_class)
     return [
-        ledger[contra_account_name].transfer(contra_account_name, regular_account_name)  # type: ignore
-        for regular_account_name, contra_account_name in g
+        ledger[contra_account].transfer(contra_account, regular_account)  # type: ignore
+        for regular_account, contra_account in gen
     ]
 
 
@@ -104,7 +91,9 @@ def close_contra_income(chart: Chart, ledger: Ledger) -> List[Entry]:
     Balance transfered from contra account to corresponding income account.
     The income accounts will hold net value after these entries are posted.
     """
-    return _flush(chart, ledger, Income)
+    from abacus.engine.better_chart import IncomeName
+
+    return _flush(chart, ledger, IncomeName)
 
 
 def close_contra_expense(chart: Chart, ledger: Ledger) -> List[Entry]:
@@ -112,7 +101,9 @@ def close_contra_expense(chart: Chart, ledger: Ledger) -> List[Entry]:
     Balance transfered from contra account to corresponding expense account.
     The expense account will hold net value after these entries are posted.
     """
-    return _flush(chart, ledger, Expense)
+    from abacus.engine.better_chart import ExpenseName
+
+    return _flush(chart, ledger, ExpenseName)
 
 
 def close_income_to_isa(isa: AccountName, ledger: Ledger) -> List[Entry]:

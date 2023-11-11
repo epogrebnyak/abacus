@@ -28,6 +28,6 @@ def test_yield_entries_for_income_statement(path):
     store.append(e1)
     store.append(e2)
     chart = Chart()
-    chart.income_summary_account = "isa"
+    chart.base_chart.income_summary_account = "isa"
     assert list(store.yield_entries()) == [e1, e2]
     assert list(store.yield_entries_for_income_statement(chart)) == [e1]

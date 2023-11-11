@@ -11,45 +11,42 @@ from abacus.engine.accounts import (
     Liability,
     RetainedEarnings,
 )
-from abacus.engine.base import Amount, Entry
-from abacus.engine.chart import Chart
+from abacus.engine.base import Entry
+from abacus.engine.better_chart import BaseChart, Chart
 from abacus.engine.closing import make_closing_entries
 from abacus.engine.ledger import Ledger
 
 
 @fixture
 def entries():
-    doc_ = """
-cash,equity,1000
-goods,cash,800
-cogs,goods,700
-ar,sales,899
-refunds,ar,89
-cashback,ar,10
-cash,ar,400
-sga,cash,50"""
-
-    def make(line):
-        a, b, c = line.split(",")
-        return Entry(a.strip(), b.strip(), Amount(c))
-
-    return [make(line) for line in doc_.strip().split("\n")]
+    return [
+        Entry(debit="cash", credit="equity", amount=1000),
+        Entry(debit="goods", credit="cash", amount=800),
+        Entry(debit="cogs", credit="goods", amount=700),
+        Entry(debit="ar", credit="sales", amount=899),
+        Entry(debit="refunds", credit="ar", amount=89),
+        Entry(debit="cashback", credit="ar", amount=10),
+        Entry(debit="cash", credit="ar", amount=400),
+        Entry(debit="sga", credit="cash", amount=50),
+    ]
 
 
 @fixture
 def chart2():
     return Chart(
-        assets=["cash", "goods", "ar"],
-        equity=["equity"],
-        income=["sales"],
-        expenses=["cogs", "sga"],
-        contra_accounts={"sales": ["refunds", "cashback"]},
+        base_chart=BaseChart(
+            assets=["cash", "goods", "ar"],
+            capital=["equity"],
+            income=["sales"],
+            expenses=["cogs", "sga"],
+            contra_accounts={"sales": ["refunds", "cashback"]},
+        )
     )
 
 
 @fixture
 def ledger_before_close(chart2, entries):
-    return Ledger.new(chart2).post_many(entries)
+    return chart2.ledger().post_many(entries)
 
 
 def test_len_closing_entries(chart2, ledger_before_close):
@@ -74,14 +71,16 @@ def test_balances_after(chart2, ledger_before_close):
 def test_closing_entries():
     chart = (
         Chart(
-            assets=["cash", "receivables", "goods_for_sale", "ppe"],
-            expenses=["cogs", "sga", "depreciation_expense"],
-            equity=["equity"],
-            liabilities=["dividend_due", "payables"],
-            income=["sales"],
+            base_chart=BaseChart(
+                assets=["cash", "receivables", "goods_for_sale", "ppe"],
+                expenses=["cogs", "sga", "depreciation_expense"],
+                capital=["equity"],
+                liabilities=["dividend_due", "payables"],
+                income=["sales"],
+            )
         )
-        .offset("ppe", ["depreciation"])
-        .offset("sales", ["discount", "returns"])
+        .offset("ppe", "depreciation")
+        .offset_many("sales", ["discount", "returns"])
     )
 
     ledger = Ledger(

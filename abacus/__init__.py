@@ -20,8 +20,6 @@ Simplifying assumptions:
 
 """
 from .engine.base import AbacusError, Amount, Entry, MultipleEntry  # noqa: F401
-from .engine.better_chart import Chart as BetterChart  # noqa: F401
-from .engine.chart import Chart  # noqa: F401
 from .engine.entries import LineJSON  # noqa: F401
 from .engine.ledger import Ledger  # noqa: F401
 from .engine.report import BalanceSheet, IncomeStatement  # noqa: F401

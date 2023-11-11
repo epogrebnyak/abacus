@@ -209,6 +209,34 @@ def name(account_name, title) -> None:
     chart_command().set_name(last(account_name), title).echo().write()
 
 
+@chart.command(name="add-many")
+@click.argument("account_labels", required=True, type=str, nargs=-1)
+@click.option("--prefix", type=str, required=False, help="Account type.")
+def add_many(account_labels, prefix):
+    """Add several accounts to chart.
+
+    \b
+    Example:
+      abacus chart add-many asset:cash capital:equity
+      abacus chart add-many --prefix=asset ar goods
+    """
+    click.echo(account_labels, prefix)
+
+
+@chart.command(name="add-one")
+@click.argument("account_label", required=True, type=str, nargs=-1)
+@click.option("--title", type=str, required=False, help="Account title.")
+def add_one(account_label, title):
+    """Add one account to chart.
+
+    \b
+    Example:
+      abacus chart add-one asset:cash --title "Cash ans equivalents"
+      abacus chart add-one capital:equity
+    """
+    click.echo([account_label, title])
+
+
 @chart.command(name="promote")
 @click.argument("account_names", required=True, type=str, nargs=-1)
 @click.option("--title", type=str, required=False, help="Account title.")
@@ -443,9 +471,9 @@ def echo_statement(statement, chart_, plain, json_flag, rich):
     if json_flag:
         click.echo(statement.json())
     elif rich:
-        click.echo(statement.print_rich(chart_.names))
+        click.echo(statement.print_rich(chart_.titles))
     elif plain:
-        click.echo(statement.view(chart_.names))
+        click.echo(statement.view(chart_.titles))
 
 
 @report.command(name="balance-sheet")

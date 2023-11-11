@@ -70,7 +70,7 @@ from abacus import Chart, Entry, BalanceSheet, IncomeStatement
 chart = Chart(
     assets=["cash", "ar", "goods", "ppe"],
     expenses=["cogs", "sga"],
-    equity=["equity"],
+    capital=["equity"],
     retained_earnings_account="re",
     liabilities=["dividend_due", "ap"],
     income=["sales"]
@@ -90,7 +90,7 @@ You can do the same at once when creating `Chart`:
 chart = Chart(
     assets=["cash", "ar", "goods", "ppe"],
     expenses=["cogs", "sga"],
-    equity=["equity"],
+    capital=["equity"],
     retained_earnings_account="re",
     liabilities=["dividend_due", "ap"],
     income=["sales"],

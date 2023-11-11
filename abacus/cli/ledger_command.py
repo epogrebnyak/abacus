@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from abacus import Amount, Chart, Entry, Ledger, MultipleEntry
+from abacus import Amount, Chart, Entry, MultipleEntry
 from abacus.cli.base import BaseCommand
 from abacus.engine.entries import LineJSON
 
@@ -27,14 +27,15 @@ class LedgerCommand(BaseCommand):
         credit_tuples: List[Tuple[str, int]],
     ):
         me = MultipleEntry(debit_entries=debit_tuples, credit_entries=credit_tuples)
-        entries = me.entries(chart.null_account)
+        entries = me.entries(chart.base_chart.null_account)
         return self.post_many(entries, "single")
 
     def post_starting_balances(self, chart: Chart, starting_balances_dict: Dict):
-        # check all accounts are present in chart
+        # 1. check all accounts are present in chart
         _ = chart.ledger(starting_balances_dict)
+        # 2. do actual job
         me = chart.ledger().make_multiple_entry(starting_balances_dict)
-        entries = me.entries(chart.null_account)
+        entries = me.entries(chart.base_chart.null_account)
         return self.post_many(entries, "starting")
 
     def post_entry(self, debit: str, credit: str, amount: str):
@@ -57,7 +58,7 @@ class LedgerCommand(BaseCommand):
 
     def post_closing_entries(self, chart):
         closing_entries = (
-            Ledger.new(chart)
+            chart.ledger()
             .post_many(entries=self.store.yield_entries())
             .closing_entries(chart)
         )

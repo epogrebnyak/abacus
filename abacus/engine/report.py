@@ -230,7 +230,7 @@ def to_columns(lines: List[Line]) -> Tuple[Column, Column]:
 
 def yield_tuples_for_trial_balance(chart, ledger):
     def t(account_name):
-        return chart.viewer.get_account_type(account_name).__name__
+        return ""
 
     def must_exclude(t_account):
         return isinstance(t_account, NullAccount) or isinstance(
@@ -250,11 +250,20 @@ def nth(data: List[List | Tuple], n: int, f=str) -> Column:
     return Column([f(d[n]) for d in data])
 
 
+def long_name(chart, account_name):
+    label = chart.get_label(account_name)
+    title = chart.get_title(account_name)
+    return f"{label} ({title})"
+
+
 def view_trial_balance(chart, ledger) -> str:
     data = list(yield_tuples_for_trial_balance(chart, ledger))
-    namer = chart.namer
+
+    def nameit(x):
+        return long_name(chart, x)
+
     col_1 = (
-        Column([namer.compose_name_long(d[0]) for d in data])
+        Column([nameit(d[0]) for d in data])
         .align_left(".")
         .add_space(1)
         .header("Account")

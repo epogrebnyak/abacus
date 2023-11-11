@@ -305,7 +305,7 @@ chart = (
     Chart(
         assets=["cash", "ar", "goods"],
         expenses=["cogs", "sga"],
-        equity=["equity", "re"],
+        capital=["equity", "re"],
         income=["sales"],
     )
     .offset("sales", "discounts")

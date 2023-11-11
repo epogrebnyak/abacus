@@ -4,7 +4,7 @@ from typing import Dict, Iterable, List, Tuple, Type
 
 from pydantic import BaseModel
 
-from abacus import AbacusError  # type: ignore
+from abacus import AbacusError, Amount, Entry  # type: ignore
 from abacus.engine.accounts import (  # type: ignore
     Asset,
     Capital,
@@ -144,6 +144,15 @@ class BaseChart(BaseModel):
         yield IncomeSummaryName(self.income_summary_account, None)
         yield NullName(self.null_account, None)
 
+    def yield_contra_account_pairs(
+        self, name_class: Type[Name]
+    ) -> Iterable[Tuple[str, str]]:
+        for name in self.yield_names():
+            if isinstance(name, name_class):
+                if name.contra_accounts is not None:
+                    for contra_name in name.contra_accounts:
+                        yield name.account_name, contra_name
+
     @property
     def label_dict(self) -> Dict[str, "Label | ContraLabel"]:
         attributes = ["assets", "expenses", "capital", "liabilities", "income"]
@@ -166,15 +175,17 @@ class BaseChart(BaseModel):
 
     def get_label(self, account_name: str) -> str:
         """Return 'asset:cash' for 'cash'."""
+        if account_name == self.retained_earnings_account:
+            return f"capital:{account_name}"
         return str(self.label_dict[account_name])
 
     def ledger_items(self) -> Iterable[Tuple[str, Type[TAccount]]]:
-        """Yield all account names and contructores for T-accounts."""
+        """Yield all account names and constructors for T-accounts."""
         for name in self.yield_names():
             for account_name, t_account_cls in name.accounts():
                 yield account_name, t_account_cls
 
-    def ledger(self):
+    def empty_ledger(self):
         """Create ledger object from chart."""
         from abacus.engine.ledger import Ledger
 
@@ -219,11 +230,7 @@ def detect_prefix(prefix_str: str) -> Prefix:
 
 
 def make_label(prefix_str: str, account_name: str) -> Label:
-    for prefix, prefix_strings in mapping():
-        for string in prefix_strings:
-            if prefix_str == string:
-                return Label(prefix, account_name)
-    raise AbacusError(f"Invalid account prefix: {prefix_str}")
+    return Label(detect_prefix(prefix_str), account_name)
 
 
 class Chart(BaseModel):
@@ -286,6 +293,21 @@ class Chart(BaseModel):
         self.titles[account_name] = title
         return self
 
+    def asset(self, account_name: str):
+        return self.add_regular("assets", account_name)
+
+    def capital(self, account_name: str):
+        return self.add_regular("capital", account_name)
+
+    def liability(self, account_name: str):
+        return self.add_regular("liabilities", account_name)
+
+    def income(self, account_name: str):
+        return self.add_regular("income", account_name)
+
+    def expense(self, account_name: str):
+        return self.add_regular("expenses", account_name)
+
     def add(self, label: str, title: str | None = None):
         """Add account to chart by label like `asset:cash`."""
         match extract(label):
@@ -318,9 +340,35 @@ class Chart(BaseModel):
             self.base_chart.contra_accounts[account_name] = [contra_account_name]
         return self
 
-    def get_title(self, account_name):
-        default_name = account_name.replace("_", " ").title()
+    def get_title(self, account_name: str):
+        """Produce name like 'Dividends due'."""
+        default_name = account_name.replace("_", " ").strip().capitalize()
         return self.titles.get(account_name, default_name)
+
+    def get_label(self, account_name: str):
+        """Produce label like 'liabilities:dd'."""
+        return self.base_chart.get_label(account_name)
+
+    def print(self):
+        print_chart(self)
+
+    def make_entries_for_operations(
+        self, operation_names: List[str], amounts: List[str]
+    ):
+        return [
+            Entry(*self.operations[n], Amount(amount))
+            for n, amount in zip(operation_names, amounts)
+        ]
+
+    def ledger(self, starting_balances: Dict[str, Amount] = {}):
+        """Create ledger from chart."""
+        from abacus.engine.ledger import to_multiple_entry
+
+        ledger = self.base_chart.empty_ledger()
+        me = to_multiple_entry(ledger, starting_balances)
+        entries = me.entries(self.base_chart.null_account)
+        ledger.post_many(entries)
+        return ledger
 
 
 @dataclass
@@ -357,4 +405,32 @@ class Check:
             )
 
 
-print()
+def print_re(chart):
+    print(
+        "Retained earnings account:",
+        chart.get_title(chart.base_chart.retained_earnings_account) + ".",
+    )
+
+
+def contra_phrase(account_name, contra_account_names):
+    return account_name + " is offset by " + ", ".join(contra_account_names)
+
+
+def print_chart(chart: Chart):
+    def name(account_name):
+        return chart.get_title(account_name)
+
+    print("Accounts")
+    for attribute in ("assets", "capital", "liabilities", "income", "expenses"):
+        account_names = getattr(chart.base_chart, attribute)
+        if account_names:
+            print(attribute.capitalize() + ":", ", ".join(map(name, account_names)))
+    if chart.base_chart.contra_accounts:
+        print("Contra accounts:")
+        for key, names in chart.base_chart.contra_accounts.items():
+            print("  -", contra_phrase(name(key), map(name, names)))
+    print_re(chart)
+    if chart.operations:
+        print("Operation aliases:")
+        for key, (debit, credit) in chart.operations.items():
+            print("  -", key, f"(debit is {debit}, credit is {credit})")

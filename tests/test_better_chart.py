@@ -20,7 +20,7 @@ from abacus.engine.better_chart import (
 )
 
 base_chart = BaseChart(
-    assets=["cash"], capital=["equity"], contra_accounts=dict(equity=["ts"])
+    assets=["cash"], capital=["equity"], contra_accounts={"equity": ["ts"]}
 )
 
 

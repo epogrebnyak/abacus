@@ -11,7 +11,7 @@ from abacus.engine.accounts import (
     RetainedEarnings,
 )
 from abacus.engine.base import Entry, MultipleEntry
-from abacus.engine.chart import Chart
+from abacus.engine.better_chart import BaseChart, Chart
 from abacus.engine.ledger import Ledger, to_multiple_entry, unsafe_post_entries
 
 
@@ -28,7 +28,7 @@ def test_ledger(ledger):
 
 
 def test_ledger_new():
-    assert Ledger.new(Chart(assets=["cash"], equity=["equity"])).data == {
+    assert Chart().asset("cash").capital("equity").ledger().data == {
         "cash": Asset(debits=[], credits=[]),
         "equity": Capital(debits=[], credits=[]),
         "re": RetainedEarnings(debits=[], credits=[]),
@@ -38,7 +38,7 @@ def test_ledger_new():
 
 
 def test_ledger_post():
-    ledger1 = Ledger.new(Chart(assets=["cash"], equity=["equity"]))
+    ledger1 = Chart().asset("cash").capital("equity").ledger()
     ledger1.post(Entry(debit="cash", credit="equity", amount=799))
     ledger1.post(Entry(debit="cash", credit="equity", amount=201))
     assert ledger1["cash"].debits == ledger1["equity"].credits == [799, 201]
@@ -46,7 +46,7 @@ def test_ledger_post():
 
 
 def test_ledger_deep_copy():
-    ledger1 = Ledger.new(Chart(assets=["cash"], equity=["equity"]))
+    ledger1 = Chart().asset("cash").capital("equity").ledger()
     ledger1.post(Entry(debit="cash", credit="equity", amount=799))
     ledger1.post(Entry(debit="cash", credit="equity", amount=201))
     ledger2 = ledger1.deep_copy()
@@ -74,13 +74,15 @@ def test_ledger_report_income_statement(chart, ledger):
 
 def test_journal_with_starting_balance():
     chart = Chart(
-        assets=["cash"],
-        equity=["equity"],
-        expenses=["salaries", "rent"],
-        liabilities=[],
-        income=["services"],
+        base_chart=BaseChart(
+            assets=["cash"],
+            capital=["equity"],
+            expenses=["salaries", "rent"],
+            liabilities=[],
+            income=["services"],
+        )
     )
-    ledger = Ledger.new(chart)
+    ledger = chart.ledger()
 
     # Account balances are known from previous period end
     starting_balances = {"cash": 1400, "equity": 1500, "re": -100}
@@ -92,12 +94,14 @@ def test_journal_with_starting_balance():
 
 def test_post_many():
     chart = Chart(
-        assets=["cash", "goods_for_sale"],
-        expenses=["cogs", "sga"],
-        equity=["equity"],
-        income=["sales"],
-        liabilities=[],
-    ).offset("sales", ["discounts", "cashback"])
+        base_chart=BaseChart(
+            assets=["cash", "goods_for_sale"],
+            expenses=["cogs", "sga"],
+            capital=["equity"],
+            income=["sales"],
+            liabilities=[],
+        )
+    ).offset_many("sales", ["discounts", "cashback"])
 
     starting_balances = {"cash": 10, "goods_for_sale": 10, "equity": 20}
     ledger = chart.ledger(starting_balances)
@@ -115,10 +119,7 @@ def test_post_many():
 
 
 def test_make_ledger():
-    chart = Chart(
-        assets=["cash"],
-        equity=["equity"],
-    )
+    chart = Chart().asset("cash").capital("equity")
     assert chart.ledger() == {
         "cash": Asset(debits=[], credits=[]),
         "equity": Capital(debits=[], credits=[]),
@@ -142,14 +143,16 @@ def test_unsafe_process_entries():
 def test_create_ledger_again():
     (
         Chart(
-            assets=["cash", "goods", "ppe"],
-            equity=["equity", "re"],
-            income=["sales"],
-            expenses=["cogs", "sga"],
+            base_chart=BaseChart(
+                assets=["cash", "goods", "ppe"],
+                capital=["equity", "re"],
+                income=["sales"],
+                expenses=["cogs", "sga"],
+            )
         )
-        .offset("ppe", ["depreciation"])
+        .offset("ppe", "depreciation")
         # https://stripe.com/docs/revenue-recognition/methodology
-        .offset("sales", ["refunds", "voids"])
+        .offset_many("sales", ["refunds", "voids"])
         .ledger()
     ) == {
         "cash": Asset(debits=[], credits=[]),
@@ -169,10 +172,8 @@ def test_create_ledger_again():
 
 
 def test_make_ledger_with_netting():
-    chart = Chart(
-        assets=["ppe"], expenses=[], equity=["shares"], liabilities=[], income=["sales"]
-    )
-    chart.contra_accounts = {
+    chart = Chart().asset("ppe").capital("shares").income("sales")
+    chart.base_chart.contra_accounts = {
         "sales": ["refunds", "voids"],
         "shares": ["treasury_shares"],
         "ppe": ["depreciation"],

@@ -2,24 +2,25 @@ import pytest  # type: ignore
 from pytest import fixture  # type: ignore
 
 from abacus.engine.base import Entry
-from abacus.engine.chart import Chart
-from abacus.engine.ledger import Ledger
+from abacus.engine.better_chart import BaseChart, Chart
 
 
 @fixture
 def chart():
     return Chart(
-        assets=["cash", "ar", "goods"],
-        equity=["equity"],
-        income=["sales"],
-        expenses=["cogs", "sga"],
-        contra_accounts={"sales": ["refunds", "voids"]},
+        base_chart=BaseChart(
+            assets=["cash", "ar", "goods"],
+            capital=["equity"],
+            income=["sales"],
+            expenses=["cogs", "sga"],
+            contra_accounts={"sales": ["refunds", "voids"]},
+        )
     )
 
 
 @fixture
 def ledger(chart):
-    return Ledger.new(chart).post_many(
+    return chart.ledger().post_many(
         [
             Entry("cash", "equity", 1000),
             Entry("ar", "sales", 250),

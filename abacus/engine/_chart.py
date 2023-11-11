@@ -211,7 +211,7 @@ class Chart(BaseModel):
         """Create ledger from chart."""
         from abacus.engine.ledger import Ledger, to_multiple_entry
 
-        ledger = Ledger.new(self)
+        ledger = Ledger(self.ledger_dict())
         entries = to_multiple_entry(ledger, starting_balances).entries(
             self.null_account
         )

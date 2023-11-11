@@ -29,7 +29,7 @@ from abacus import Chart
 chart = Chart(
     assets=["cash", "ar", "goods"],
     expenses=["cogs", "sga"],
-    equity=["equity"],
+    capital=["equity"],
     liabilities=["dividend_due"],
     income=["sales"])
 chart = chart.set_retained_earnings("re").offset("sales", "discounts")
