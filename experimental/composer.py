@@ -202,7 +202,7 @@ class Chart(BaseModel):
         return [
             (a, b)
             for (a, b, this_cls) in contra_account_pairs_all(self)
-            if equal(this_cls, cls)
+            if this_cls.__name__ == cls.__name__ # same class
         ]
 
 
@@ -211,10 +211,6 @@ def naming(label):
         return label.contra, label
     else:
         return label.name, label
-
-
-def equal(a, b):
-    return a.__name__ == b.__name__
 
 
 def to_chart(composer: Composer) -> Chart:
@@ -302,6 +298,7 @@ def contra_account_pairs_all(
     for name in chart.income:
         yield from chart._recontra(name, accounts.ContraIncome)
 
+#TODO: move below to tests
 
 incoming = (
     base()
@@ -358,7 +355,5 @@ assert chart.contra_account_pairs(accounts.ContraIncome) == [
     ("sales", "voids"),
 ]
 assert list(to_labels(chart))[-1] == Offset(name="sales", contra="voids")
-
-
 assert chart.get_label("sales") == "income:sales"
 assert chart.get_label("refunds") == "contra:sales:refunds"
