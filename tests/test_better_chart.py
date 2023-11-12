@@ -11,11 +11,8 @@ from abacus.engine.better_chart import (
     BaseChart,
     CapitalName,
     Chart,
-    ContraLabel,
     IncomeSummaryName,
-    Label,
     NullName,
-    Prefix,
     RetainedEarningsName,
 )
 
@@ -59,11 +56,6 @@ def test_filter_acocunts():
 def test_get_account():
     assert base_chart.get_label("cash") == "asset:cash"
     assert base_chart.get_label("ts") == "contra:equity:ts"
-
-
-def test_label_string():
-    assert str(Label(Prefix.ASSET, "cash")) == "asset:cash"
-    assert str(ContraLabel("sales", "refunds")) == "contra:sales:refunds"
 
 
 def test_chart_equiality():
