@@ -24,8 +24,8 @@ from abacus.engine.label_layer import (
     ContraLabel,
     Label,
     Prefix,
-    Unique,
     RegularLabel,
+    Unique,
     UniqueLabel,
     extract,
 )
@@ -106,7 +106,7 @@ class BaseChart(BaseModel):
         return Check(self)
 
     def elevate(self):
-        return Chart(base_chart=self).name("re", "Retained earnings")
+        return Chart(base_chart=self)
 
     def append(self, attribute: str, account_name: str):
         """Append account name to given prefix attribute."""
@@ -168,27 +168,23 @@ class BaseChart(BaseModel):
                     for contra_name in name.contra_accounts:
                         yield name.account_name, contra_name
 
-    def yield_labels(self) -> Iterable[Tuple[str, "Label | ContraLabel"]]:
-        prefixes = [
-            Prefix.ASSET,
-            Prefix.EXPENSE,
-            Prefix.CAPITAL,
-            Prefix.LIABILITY,
-            Prefix.INCOME,
-        ]
-        for prefix in prefixes:
+    def yield_labels(self) -> Iterable[Tuple[str, Label]]:
+        for prefix in list(Prefix):
             for account_name in getattr(self, prefix.attribute()):
                 yield account_name, RegularLabel(prefix, account_name)
-                for contra_account_name in self.contra_accounts.get(account_name, []):
-                    yield contra_account_name, ContraLabel(
-                        account_name, contra_account_name
-                    )
+                for contra_name in self.contra_accounts.get(account_name, []):
+                    yield contra_name, ContraLabel(account_name, contra_name)
+        yield self.retained_earnings_account, UniqueLabel(
+            Unique.RE, self.retained_earnings_account
+        )
+        yield self.income_summary_account, UniqueLabel(
+            Unique.ISA, self.income_summary_account
+        )
+        yield self.null_account, UniqueLabel(Unique.NULL, self.null_account)
 
     def get_label(self, account_name: str) -> str:
         """Return 'asset:cash' for 'cash' and similar."""
         result = dict(self.yield_labels())
-        r = self.retained_earnings_account
-        result[r] = RegularLabel(Prefix.CAPITAL, r)
         return str(result[account_name])
 
     def ledger_items(self) -> Iterable[Tuple[str, Type[TAccount]]]:
@@ -257,7 +253,7 @@ class Chart(BaseModel):
         if len(contra_account_names) == 1 and title:
             self.name(contra_account_names[0], title)
         for contra_account_name in contra_account_names:
-            self.add_contra(account_name, contra_account_name)
+            self.base_chart.add_contra(account_name, contra_account_name)
         return self
 
     @property
@@ -274,49 +270,44 @@ class Chart(BaseModel):
         return self
 
     def asset(self, account_name: str):
+        """Add asset account to chart."""
         self.base_chart.add_regular("assets", account_name)
         return self
 
     def capital(self, account_name: str):
+        """Add capital account to chart."""
         self.base_chart.add_regular("capital", account_name)
         return self
 
     def liability(self, account_name: str):
+        """Add liability account to chart."""
         self.base_chart.add_regular("liabilities", account_name)
         return self
 
     def income(self, account_name: str):
+        """Add income account to chart."""
         self.base_chart.add_regular("income", account_name)
         return self
 
     def expense(self, account_name: str):
+        """Add expense account to chart."""
         self.base_chart.add_regular("expenses", account_name)
         return self
 
-    def add(self, label: str, title: str | None = None):
+    def add(self, label_str: str, title: str | None = None):
         """Add account to chart by label like `asset:cash`."""
-        match extract(label):
+        match extract(label_str):
             case RegularLabel(prefix, account_name):
                 self.base_chart.add_regular(prefix.attribute(), account_name)
                 adding = account_name
             case ContraLabel(account_name, contra_account_name):
                 self.base_chart.add_contra(account_name, contra_account_name)
                 adding = contra_account_name
+            case UniqueLabel(prefix, account_name):
+                self.base_chart.add_unique(prefix, account_name)
+                adding = account_name
         if title:
             self.name(adding, title)
-        return self
-
-    def add_many(self, labels: List[str]):
-        for label in labels:
-            self.add(label)
-        return self
-
-    def add_contra(self, account_name, contra_account_name):
-        self.check.exists(account_name).does_not_exist(contra_account_name)
-        try:
-            self.base_chart.contra_accounts[account_name] += [contra_account_name]
-        except KeyError:
-            self.base_chart.contra_accounts[account_name] = [contra_account_name]
         return self
 
     def get_title(self, account_name: str):
@@ -325,7 +316,7 @@ class Chart(BaseModel):
         return self.titles.get(account_name, default_name)
 
     def get_label(self, account_name: str):
-        """Produce label like 'liabilities:dd'."""
+        """Produce label like 'liability:dd'."""
         return self.base_chart.get_label(account_name)
 
     def print(self):

@@ -1,13 +1,13 @@
+from abacus.engine.better_chart import BaseChart
 from abacus.engine.label_layer import (
     ContraLabel,
     Prefix,
     RegularLabel,
-    extract,
-    UniqueLabel,
     Unique,
+    UniqueLabel,
+    extract,
     to_chart,
 )
-from abacus.engine.better_chart import BaseChart
 
 
 def test_extract_on_re():

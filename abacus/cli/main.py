@@ -10,6 +10,7 @@ from click_option_group import RequiredMutuallyExclusiveOptionGroup, optgroup
 from abacus import AbacusError, Chart
 from abacus.cli.chart_command import ChartCommand
 from abacus.cli.ledger_command import LedgerCommand
+from abacus.engine.better_chart import default_chart
 
 
 def cwd() -> Path:
@@ -188,7 +189,7 @@ def chart():
 @chart.command(name="init")
 def init_chart():
     """Create chart of accounts file (chart.json) in current folder."""
-    handler = ChartCommand(path=get_chart_path(), chart=Chart())
+    handler = ChartCommand(path=get_chart_path(), chart=default_chart())
     handler.assert_does_not_exist().write().echo()
 
 

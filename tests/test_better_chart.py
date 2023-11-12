@@ -84,24 +84,6 @@ def test_chart_equiality():
     assert a == c
 
 
-def test_add_many():
-    a = (
-        Chart()
-        .add("asset:cash")
-        .name("cash", title="Cash and equivalents")
-        .add("capital:equity")
-        .add("contra:equity:ts", title="Treasury shares")
-    )
-    b = BaseChart(
-        assets=["cash"],
-        capital=["equity"],
-        contra_accounts={"equity": ["ts"]},
-    )
-    d1 = Chart().add_many(["asset:cash", "capital:equity", "contra:equity:ts"])
-    d2 = Chart().add_many(map(str, a.labels))
-    assert d1 == d2 == Chart(base_chart=b)
-
-
 def test_chaining():
     chart0 = (
         Chart()

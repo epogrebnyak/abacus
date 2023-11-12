@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import List
 
 from abacus import AbacusError
 
@@ -97,13 +98,10 @@ def detect_prefix(prefix_str: str) -> Prefix:
     return {x: prefix for prefix, xs in mapping() for x in xs}[prefix_str.lower()]
 
 
-from typing import List
-
-
-def to_chart(labels: List[str]) -> "BaseChart":
+def to_chart(labels: List[str]):
+    """Return a BaseChart instance from a list of account labels."""
     from abacus.engine.better_chart import BaseChart
 
-    """Return a BaseChart instance from a list of account labels."""
     base_chart = BaseChart()
     for label in labels:
         print(label)

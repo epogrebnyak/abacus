@@ -308,6 +308,9 @@ chart = (
         capital=["equity", "re"],
         income=["sales"],
     ).elevate()
+    .set_isa("current_profit")
+    .set_null("null")
+    .set_re("re")
     .offset("sales", "discounts")
     .name("cogs", "Cost of goods sold")
     .name("sga", "Selling, general and adm.expenses")
