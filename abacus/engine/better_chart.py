@@ -127,6 +127,9 @@ class BaseChart(BaseModel):
     null_account = "null"
     contra_accounts: Dict[str, List[str]] = {}
 
+    def elevate(self):
+        return Chart(base_chart=self).name("re", "Retained earnings")
+
     def append(self, attribute: str, account_name: str):
         """Append account name to given prefix attribute."""
         account_names = getattr(self, attribute)
@@ -147,15 +150,14 @@ class BaseChart(BaseModel):
     def yield_contra_account_pairs(
         self, name_class: Type[Name]
     ) -> Iterable[Tuple[str, str]]:
+        """Used for closing accounts."""
         for name in self.yield_names():
             if isinstance(name, name_class):
                 if name.contra_accounts is not None:
                     for contra_name in name.contra_accounts:
                         yield name.account_name, contra_name
 
-    @property
-    def label_dict(self) -> Dict[str, "Label | ContraLabel"]:
-        attributes = ["assets", "expenses", "capital", "liabilities", "income"]
+    def yield_labels(self) -> Iterable[Tuple[str, "Label | ContraLabel"]]:
         prefixes = [
             Prefix.ASSET,
             Prefix.EXPENSE,
@@ -163,21 +165,20 @@ class BaseChart(BaseModel):
             Prefix.LIABILITY,
             Prefix.INCOME,
         ]
-        res: Dict[str, Label | ContraLabel] = {}
-        for attribute, prefix in zip(attributes, prefixes):
-            for account_name in getattr(self, attribute):
-                res[account_name] = Label(prefix, account_name)
+        for prefix in prefixes:
+            for account_name in getattr(self, to_attribute(prefix)):
+                yield account_name, Label(prefix, account_name)
                 for contra_account_name in self.contra_accounts.get(account_name, []):
-                    res[contra_account_name] = ContraLabel(
+                    yield contra_account_name, ContraLabel(
                         account_name, contra_account_name
                     )
-        return res
 
     def get_label(self, account_name: str) -> str:
-        """Return 'asset:cash' for 'cash'."""
-        if account_name == self.retained_earnings_account:
-            return f"capital:{account_name}"
-        return str(self.label_dict[account_name])
+        """Return 'asset:cash' for 'cash' and similar."""
+        res = dict(self.yield_labels())
+        r = self.retained_earnings_account
+        res[r] = Label(Prefix.CAPITAL, r)
+        return str(res[account_name])
 
     def ledger_items(self) -> Iterable[Tuple[str, Type[TAccount]]]:
         """Yield all account names and constructors for T-accounts."""
@@ -286,7 +287,7 @@ class Chart(BaseModel):
 
     @property
     def labels(self) -> Iterable[Label | ContraLabel]:
-        return self.base_chart.label_dict.values()
+        return [label for _, label in self.base_chart.yield_labels()]
 
     def name(self, account_name: str, title: str):
         """Set title for an account."""
