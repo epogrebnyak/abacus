@@ -206,6 +206,13 @@ class Chart(BaseModel):
         ]
 
 
+def naming(label):
+    if isinstance(label, Offset):
+        return label.contra, label
+    else:
+        return label.name, label
+
+
 def equal(a, b):
     return a.__name__ == b.__name__
 
@@ -229,6 +236,15 @@ def to_chart(composer: Composer) -> Chart:
     )
 
 
+def aggregate_offsets(composer: Composer) -> dict[str, list[str]]:
+    return {
+        fst: [x[1] for x in xs]
+        for fst, xs in groupby(
+            [(off.name, off.contra) for off in incoming.filter(Offset)], lambda x: x[0]
+        )
+    }
+
+
 def to_labels(chart) -> list[Label | Offset]:
     return chain(
         map(AssetLabel, chart.assets),
@@ -247,22 +263,6 @@ def to_labels(chart) -> list[Label | Offset]:
             for contra in contra_names
         ],
     )
-
-
-def naming(label):
-    if isinstance(label, Offset):
-        return label.contra, label
-    else:
-        return label.name, label
-
-
-def aggregate_offsets(composer: Composer) -> dict[str, list[str]]:
-    return {
-        fst: [x[1] for x in xs]
-        for fst, xs in groupby(
-            [(off.name, off.contra) for off in incoming.filter(Offset)], lambda x: x[0]
-        )
-    }
 
 
 def t_account_tuples(chart: Chart) -> Iterable[tuple[str, Type[accounts.TAccount]]]:
