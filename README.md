@@ -468,6 +468,11 @@ inspect commands, accelerates the development workflow.
 
 ## Changelog
 
+### 0.7.8
+
+- adds label handling like `asset:cash`, `contra:sales:refunds` and `re:retained_earnings`
+- fixes VAT example 
+
 ### 0.7.6
 
 - `ledger post-compound` method added
