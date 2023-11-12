@@ -1,4 +1,4 @@
-from abacus import BaseChart, Entry, BalanceSheet, IncomeStatement
+from abacus import BalanceSheet, BaseChart, Entry, IncomeStatement
 
 chart = (
     BaseChart(
@@ -6,7 +6,8 @@ chart = (
         expenses=["cogs", "sga"],
         capital=["equity", "re"],
         income=["sales"],
-    ).elevate()
+    )
+    .elevate()
     .set_isa("current_profit")
     .set_null("null")
     .set_re("re")
