@@ -88,22 +88,6 @@ class NullName(Name):
         yield self.account_name, NullAccount
 
 
-def make_chart(assets=None, expenses=None, capital=None, liabilities=None, income=None):
-    return (
-        BaseChart(
-            assets=assets if assets else [],
-            expenses=expenses if expenses else [],
-            capital=capital if capital else [],
-            liabilities=liabilities if liabilities else [],
-            income=income if income else [],
-        )
-        .elevate()
-        .set_isa("current_profit")
-        .set_null("null")
-        .set_re("retained_earnings")
-    )
-
-
 class BaseChart(BaseModel):
     """Chart of accounts."""
 
