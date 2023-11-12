@@ -1,15 +1,21 @@
 from abacus.engine.better_chart import BaseChart, Chart
 from abacus.engine.report import BalanceSheet, IncomeStatement
 
-chart = Chart(
-    base_chart=BaseChart(
-        assets=["cash", "receivables", "goods_for_sale"],
-        expenses=["cogs", "sga"],
-        capital=["equity"],
-        liabilities=["divp", "payables"],
-        income=["sales"],
+chart = (
+    Chart(
+        base_chart=BaseChart(
+            assets=["cash", "receivables", "goods_for_sale"],
+            expenses=["cogs", "sga"],
+            capital=["equity"],
+            liabilities=["divp", "payables"],
+            income=["sales"],
+        )
     )
+    .set_isa("current_profit")
+    .set_re("re")
+    .set_null("null")
 )
+
 chart.operations = operations = dict(
     pay_shareholder_capital=("cash", "equity"),
     buy_goods_for_cash=("goods_for_sale", "cash"),

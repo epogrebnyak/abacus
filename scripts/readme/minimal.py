@@ -6,7 +6,8 @@ chart = (
         expenses=["cogs", "sga"],
         capital=["equity", "re"],
         income=["sales"],
-    ).elevate()
+    )
+    .elevate()
     .offset("sales", "discounts")
     .name("cogs", "Cost of goods sold")
     .name("sga", "Selling, general and adm.expenses")

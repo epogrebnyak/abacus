@@ -17,7 +17,12 @@ from abacus.engine.better_chart import (
 )
 
 base_chart = BaseChart(
-    assets=["cash"], capital=["equity"], contra_accounts={"equity": ["ts"]}
+    assets=["cash"],
+    capital=["equity"],
+    contra_accounts={"equity": ["ts"]},
+    retained_earnings_account="re",
+    income_summary_account="current_profit",
+    null_account="null",
 )
 
 

@@ -1,11 +1,11 @@
 import pytest  # type: ignore
 
 from abacus import BalanceSheet, Chart, Entry, IncomeStatement
-from abacus.engine.better_chart import BaseChart
+from abacus.engine.better_chart import BaseChart, default_chart
 
 
 def test_create_balance_sheet():
-    chart = Chart().asset("cash").capital("equity")
+    chart = default_chart().asset("cash").capital("equity")
     ledger = chart.ledger().post(Entry("cash", "equity", 1000))
     assert ledger.balance_sheet(chart) == BalanceSheet(
         assets={"cash": 1000}, capital={"equity": 1000, "re": 0}, liabilities={}
@@ -14,14 +14,19 @@ def test_create_balance_sheet():
 
 @pytest.fixture
 def chart0():
-    return Chart(
-        base_chart=BaseChart(
-            assets=["cash", "receivables", "goods_for_sale"],
-            expenses=["cogs", "sga"],
-            capital=["equity"],
-            liabilities=["divp", "payables"],
-            income=["sales"],
+    return (
+        Chart(
+            base_chart=BaseChart(
+                assets=["cash", "receivables", "goods_for_sale"],
+                expenses=["cogs", "sga"],
+                capital=["equity"],
+                liabilities=["divp", "payables"],
+                income=["sales"],
+            )
         )
+        .set_isa("current_profit")
+        .set_re("re")
+        .set_null("null")
     )
 
 

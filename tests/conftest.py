@@ -7,14 +7,19 @@ from abacus.engine.better_chart import BaseChart, Chart
 
 @fixture
 def chart():
-    return Chart(
-        base_chart=BaseChart(
-            assets=["cash", "ar", "goods"],
-            capital=["equity"],
-            income=["sales"],
-            expenses=["cogs", "sga"],
-            contra_accounts={"sales": ["refunds", "voids"]},
+    return (
+        Chart(
+            base_chart=BaseChart(
+                assets=["cash", "ar", "goods"],
+                capital=["equity"],
+                income=["sales"],
+                expenses=["cogs", "sga"],
+                contra_accounts={"sales": ["refunds", "voids"]},
+            )
         )
+        .set_isa("curent_profit")
+        .set_re("re")
+        .set_null("null")
     )
 
 

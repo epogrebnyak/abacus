@@ -11,7 +11,7 @@ from abacus.engine.accounts import (
     RetainedEarnings,
 )
 from abacus.engine.base import Entry, MultipleEntry
-from abacus.engine.better_chart import BaseChart, Chart
+from abacus.engine.better_chart import BaseChart, Chart, default_chart
 from abacus.engine.ledger import Ledger, to_multiple_entry, unsafe_post_entries
 
 
@@ -28,7 +28,7 @@ def test_ledger(ledger):
 
 
 def test_ledger_new():
-    assert Chart().asset("cash").capital("equity").ledger().data == {
+    assert (default_chart().asset("cash").capital("equity").ledger()).data == {
         "cash": Asset(debits=[], credits=[]),
         "equity": Capital(debits=[], credits=[]),
         "re": RetainedEarnings(debits=[], credits=[]),
@@ -73,14 +73,19 @@ def test_ledger_report_income_statement(chart, ledger):
 
 
 def test_journal_with_starting_balance():
-    chart = Chart(
-        base_chart=BaseChart(
-            assets=["cash"],
-            capital=["equity"],
-            expenses=["salaries", "rent"],
-            liabilities=[],
-            income=["services"],
+    chart = (
+        Chart(
+            base_chart=BaseChart(
+                assets=["cash"],
+                capital=["equity"],
+                expenses=["salaries", "rent"],
+                liabilities=[],
+                income=["services"],
+            )
         )
+        .set_null("null")
+        .set_re("re")
+        .set_isa("current_profit")
     )
     ledger = chart.ledger()
 
@@ -119,7 +124,7 @@ def test_post_many():
 
 
 def test_make_ledger():
-    chart = Chart().asset("cash").capital("equity")
+    chart = default_chart().asset("cash").capital("equity")
     assert chart.ledger() == {
         "cash": Asset(debits=[], credits=[]),
         "equity": Capital(debits=[], credits=[]),
@@ -172,7 +177,7 @@ def test_create_ledger_again():
 
 
 def test_make_ledger_with_netting():
-    chart = Chart().asset("ppe").capital("shares").income("sales")
+    chart = default_chart().asset("ppe").capital("shares").income("sales")
     chart.base_chart.contra_accounts = {
         "sales": ["refunds", "voids"],
         "shares": ["treasury_shares"],

@@ -24,6 +24,7 @@ from abacus.engine.label_layer import (
     ContraLabel,
     Label,
     Prefix,
+    Unique,
     RegularLabel,
     UniqueLabel,
     extract,
@@ -87,6 +88,22 @@ class NullName(Name):
         yield self.account_name, NullAccount
 
 
+def make_chart(assets=None, expenses=None, capital=None, liabilities=None, income=None):
+    return (
+        BaseChart(
+            assets=assets if assets else [],
+            expenses=expenses if expenses else [],
+            capital=capital if capital else [],
+            liabilities=liabilities if liabilities else [],
+            income=income if income else [],
+        )
+        .elevate()
+        .set_isa("current_profit")
+        .set_null("null")
+        .set_re("retained_earnings")
+    )
+
+
 class BaseChart(BaseModel):
     """Chart of accounts."""
 
@@ -95,9 +112,9 @@ class BaseChart(BaseModel):
     capital: List[str] = []
     liabilities: List[str] = []
     income: List[str] = []
-    income_summary_account: str = "current_profit"
-    retained_earnings_account: str = "re"  # FIXME: change to retained_earnings
-    null_account = "null"
+    income_summary_account: str = ""  # = "current_profit"
+    retained_earnings_account: str = ""  # "re"  # FIXME: change to retained_earnings
+    null_account: str = ""  # = "null"
     contra_accounts: Dict[str, List[str]] = {}
 
     @property
@@ -119,7 +136,18 @@ class BaseChart(BaseModel):
             case ContraLabel(account_name, contra_account_name):
                 self.add_contra(account_name, contra_account_name)
             case UniqueLabel(prefix, account_name):
-                raise NotImplementedError
+                self.add_unique(prefix, account_name)
+
+    def add_unique(self, prefix, account_name):
+        self.check.does_not_exist(account_name)
+        match prefix:
+            case Unique.ISA:
+                self.income_summary_account = account_name
+            case Unique.RE:
+                self.retained_earnings_account = account_name
+            case Unique.NULL:
+                self.null_account = account_name
+        return self
 
     def add_regular(self, attribute: str, account_name: str):
         self.check.does_not_exist_in_attribute(account_name, attribute)
@@ -401,3 +429,7 @@ def print_chart(chart: Chart):
         print("Operation aliases:")
         for key, (debit, credit) in chart.operations.items():
             print("  -", key, f"(debit is {debit}, credit is {credit})")
+
+
+def default_chart(isa="current_profit", re="re", null="null") -> Chart:
+    return Chart().set_isa(isa).set_re(re).set_null(null)

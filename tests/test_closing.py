@@ -40,6 +40,9 @@ def chart2():
             income=["sales"],
             expenses=["cogs", "sga"],
             contra_accounts={"sales": ["refunds", "cashback"]},
+            retained_earnings_account="re",
+            null_account="null",
+            income_summary_account="current_profit",
         )
     )
 
@@ -77,6 +80,9 @@ def test_closing_entries():
                 capital=["equity"],
                 liabilities=["dividend_due", "payables"],
                 income=["sales"],
+                retained_earnings_account="re",
+                null_account="null",
+                income_summary_account="current_profit",
             )
         )
         .offset("ppe", "depreciation")

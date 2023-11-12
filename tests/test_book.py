@@ -9,11 +9,14 @@ chart = (
     .add("expense:salaries")
     .add("expense:rent")
     .add("income:services")
-).offset("services", "cashback")
-
+    .offset("services", "cashback")
+    .set_re("retained_earnings")
+    .set_null("null")
+    .set_isa("current_profit")
+)
 
 # Account balances are known from previous period end
-starting_balances = {"cash": 1400, "equity": 1500, "re": -100}
+starting_balances = {"cash": 1400, "equity": 1500, "retained_earnings": -100}
 
 # Create general ledger and post new entries
 ledger = (
@@ -34,7 +37,9 @@ def test_closing_entries():
             Entry(debit="current_profit", credit="salaries", amount=400),
             Entry(debit="current_profit", credit="rent", amount=200),
         ],
-        closing_isa=Entry(debit="current_profit", credit="re", amount=200),
+        closing_isa=Entry(
+            debit="current_profit", credit="retained_earnings", amount=200
+        ),
     )
 
 
@@ -50,13 +55,15 @@ def test_closing_entries_for_bs():
         Entry(debit="services", credit="current_profit", amount=800),
         Entry(debit="current_profit", credit="salaries", amount=400),
         Entry(debit="current_profit", credit="rent", amount=200),
-        Entry(debit="current_profit", credit="re", amount=200),
+        Entry(debit="current_profit", credit="retained_earnings", amount=200),
     ]
 
 
 def test_balance_sheet():
     assert ledger.balance_sheet(chart) == BalanceSheet(
-        assets={"cash": 1600}, capital={"equity": 1500, "re": 100}, liabilities={}
+        assets={"cash": 1600},
+        capital={"equity": 1500, "retained_earnings": 100},
+        liabilities={},
     )
 
 
@@ -67,7 +74,7 @@ def test_balances():
         "cashback": 0,
         "cash": 1600,
         "equity": 1500,
-        "re": 100,
+        "retained_earnings": 100,
         "rent": 0,
         "salaries": 0,
         "services": 0,
