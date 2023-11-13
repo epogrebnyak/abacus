@@ -5,6 +5,7 @@ from typing import Iterable, Type
 from pydantic import BaseModel
 
 import abacus.engine.accounts as accounts
+from abacus.engine.accounts import TAccount, RegularAccount, ContraAccount
 from abacus import Ledger
 
 
@@ -61,6 +62,204 @@ class IncomeSummaryLabel(Label):
 
 
 class NullLabel(Label):
+    pass
+
+
+@dataclass
+class Glinka:
+    """Composer with two methods."""
+
+    asset: str = "asset"
+    capital: str = "capital"
+    liability: str = "liability"
+    income: str = "income"
+    expense: str = "expense"
+    contra: str = "contra"
+    income_summary: str = "isa"
+    retained_earnings: str = "re"
+    null: str = "null"
+
+    def as_string(self, label: Label | Offset) -> str:
+        def and_name(prefix):
+            return prefix + ":" + label.name
+
+        match label:
+            case AssetLabel(name):
+                return and_name(self.asset)
+            case LiabilityLabel(name):
+                return and_name(self.liability)
+            case CapitalLabel(name):
+                return and_name(self.capital)
+            case IncomeLabel(name):
+                return and_name(self.income)
+            case ExpenseLabel(name):
+                return and_name(self.expense)
+            case IncomeSummaryLabel(name):
+                return and_name(self.income_summary)
+            case RetainedEarningsLabel(name):
+                return and_name(self.retained_earnings)
+            case NullLabel(name):
+                return and_name(self.null)
+            case Offset(name, contra):
+                return f"{self.contra}:{name}:{contra}"
+            case _:
+                raise ValueError(f"Invalid label: {label}.")
+
+    def extract(self, label_str: str) -> Label | Offset:
+        match label_str.strip().lower().split(":"):
+            case [self.asset, name]:
+                return AssetLabel(name)
+            case [self.liability, name]:
+                return LiabilityLabel(name)
+            case [self.capital, name]:
+                return CapitalLabel(name)
+            case [self.income, name]:
+                return IncomeLabel(name)
+            case [self.expense, name]:
+                return ExpenseLabel(name)
+            case [self.income_summary, name]:
+                return IncomeSummaryLabel(name)
+            case [self.retained_earnings, name]:
+                return RetainedEarningsLabel(name)
+            case [self.null, name]:
+                return NullLabel(name)
+            case [self.contra, name, contra_name]:
+                return Offset(name, contra_name)
+            case _:
+                raise ValueError(f"Invalid label: {label_str}.")
+
+
+g = Glinka()
+for string in ("expense:cogs", "contra:sales:refunds", "liability:loan"):
+    assert g.as_string(g.extract(string)) == string
+
+
+@dataclass
+class ContraPair:
+    name: str
+    contra: str
+    contra_cls: Type[ContraAccount]
+
+
+class BaseChart(BaseModel):
+    income_summary_account: str
+    retained_earnings_account: str
+    null_account: str
+    assets: list[str] = []
+    expenses: list[str] = []
+    capital: list[str] = []
+    liabilities: list[str] = []
+    income: list[str] = []
+    contra_accounts: dict[str, list[str]] = {}
+
+    def safe_append(self, attribute, value):
+        if value not in getattr(self, attribute):
+            getattr(self, attribute).append(value)
+
+    def add(self, label_str: str, composer=Glinka()):
+        return self.promote(composer.extract(label_str))
+
+    def promote(self, label: Label | Offset):
+        match label:
+            case AssetLabel(name):
+                self.safe_append("assets", name)
+            case LiabilityLabel(name):
+                self.safe_append("liabilities", name)
+            case CapitalLabel(name):
+                self.safe_append("capital", name)
+            case IncomeLabel(name):
+                self.safe_append("income", name)
+            case ExpenseLabel(name):
+                self.safe_append("expenses", name)
+            case IncomeSummaryLabel(name):
+                self.income_summary_account = name
+            case RetainedEarningsLabel(name):
+                self.retained_earnings_account = name
+            case NullLabel(name):
+                self.null_account = name
+            case Offset(name, contra):
+                self.contra_accounts.setdefault(name, []).append(contra)
+        return self
+    
+    def t_accounts(self):
+        mapper = [
+            ("assets", accounts.Asset, accounts.ContraAsset),
+            ("capital", accounts.Capital, accounts.ContraCapital),
+            ("liabilities", accounts.Liability, accounts.ContraLiability),
+            ("income", accounts.Income, accounts.ContraIncome),
+            ("expenses", accounts.Expense, accounts.ContraExpense),
+        ]
+        for attribute, cls, contra_cls in mapper:
+            for name in getattr(self, attribute):
+                yield name, cls
+                for contra_name in self.contra_accounts.get(name, [])
+                    yield contra_name, contra_cls            
+
+    def ledger(self):
+        return Ledger({name:t_account for name, t_account in self.t_accounts()})                
+
+    def contra_pairs(self, cls: Type[ContraAccount]):
+        mapper = {
+            "ContraAsset": "assets",
+            "ContraLiability": "liabilities",
+            "ContraCapital": "capital",
+            "ContraExpense": "expenses",
+            "ContraIncome": "income",
+        }
+        names = getattr(self.base, mapper[cls.__name__])
+        return [
+            (name, contra_name)
+            for name in names
+            for contra_name in self.contra_accounts.get(name, [])
+        ]
+
+
+def base():
+    return BaseChart(
+        income_summary_account="isa",
+        retained_earnings_account="re",
+        null_account="null",
+    )
+
+
+b = (
+    base()
+    .add("income:sales")
+    .add("contra:sales:refunds")
+    .promote(Offset("sales", "voids"))
+)
+assert b.contra_accounts == {"sales": ["refunds", "voids"]}
+
+
+class SuperChart:
+    base: BaseChart = base()
+    titles: dict[str, str] = {}
+    operations: dict[str, tuple[str, str]] = {}
+    composer: composer = Glinka()
+
+    def add(self, label_str: str):
+        self.base.add(label_str, self.composer)
+        return self
+
+    def offset(self, name: str, contra: str):
+        self.base.promote(Offset(name, contra))
+        return self
+
+    def name(self, name: str, title: str):
+        self.titles[name] = title
+        return self
+
+    def alias(self, operation: str, debit: str, credit: str):
+        self.operations[operation] = (debit, credit)
+        return self
+
+    @property
+    def viewer(self):
+        return Viewer(self.base)
+
+
+@dataclass
+class Viewer:
     pass
 
 
@@ -202,7 +401,7 @@ class Chart(BaseModel):
         return [
             (a, b)
             for (a, b, this_cls) in contra_account_pairs_all(self)
-            if this_cls.__name__ == cls.__name__ # same class
+            if this_cls.__name__ == cls.__name__  # same class
         ]
 
 
@@ -298,7 +497,8 @@ def contra_account_pairs_all(
     for name in chart.income:
         yield from chart._recontra(name, accounts.ContraIncome)
 
-#TODO: move below to tests
+
+# TODO: move below to tests
 
 incoming = (
     base()
