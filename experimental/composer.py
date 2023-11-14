@@ -65,8 +65,7 @@ class NullLabel(Label):
     pass
 
 
-@dataclass
-class Glinka:
+class Glinka(BaseModel):
     """Composer with two methods."""
 
     asset: str = "asset"
@@ -192,7 +191,7 @@ class BaseChart(BaseModel):
         for attribute, cls, contra_cls in mapper:
             for name in getattr(self, attribute):
                 yield name, cls
-                for contra_name in self.contra_accounts.get(name, [])
+                for contra_name in self.contra_accounts.get(name, []):
                     yield contra_name, contra_cls            
 
     def ledger(self):
@@ -206,12 +205,35 @@ class BaseChart(BaseModel):
             "ContraExpense": "expenses",
             "ContraIncome": "income",
         }
-        names = getattr(self.base, mapper[cls.__name__])
+        names = getattr(self, mapper[cls.__name__])
         return [
             (name, contra_name)
             for name in names
             for contra_name in self.contra_accounts.get(name, [])
         ]
+    
+  
+    def label(self, account_name) -> Label | Offset:
+        if account_name in self.assets:
+            return AssetLabel(account_name)
+        elif account_name in self.liabilities:
+            return LiabilityLabel(account_name)
+        elif account_name in self.capital:
+            return CapitalLabel(account_name)
+        elif account_name in self.income:
+            return IncomeLabel(account_name)
+        elif account_name in self.expenses:
+            return ExpenseLabel(account_name)
+        elif account_name == self.income_summary_account:
+            return IncomeSummaryLabel(account_name)
+        elif account_name == self.retained_earnings_account:
+            return RetainedEarningsLabel(account_name)
+        elif account_name == self.null_account:
+            return NullLabel(account_name)
+        for name, contra_names in self.contra_accounts.items():
+            if account_name in contra_names:
+                return Offset(name, account_name)
+        raise ValueError(f"Invalid account name: {account_name}.")       
 
 
 def base():
@@ -231,7 +253,7 @@ b = (
 assert b.contra_accounts == {"sales": ["refunds", "voids"]}
 
 
-class SuperChart:
+class SuperChart(BaseModel):
     base: BaseChart = base()
     titles: dict[str, str] = {}
     operations: dict[str, tuple[str, str]] = {}
@@ -241,9 +263,22 @@ class SuperChart:
         self.base.add(label_str, self.composer)
         return self
 
+    def add_many(self, labels: list[str], prefix: str = ""):
+        if prefix and not prefix.endswith(":"):
+            prefix = prefix.strip() + ":"
+        for label in labels:
+            self.add(prefix + label)
+        return self
+
     def offset(self, name: str, contra: str):
         self.base.promote(Offset(name, contra))
         return self
+
+    def offset_many(self, name: str, contra_names: str):
+        for contra in contra_names:
+            self.offset(name, contra)
+        return self
+
 
     def name(self, name: str, title: str):
         self.titles[name] = title
@@ -252,15 +287,9 @@ class SuperChart:
     def alias(self, operation: str, debit: str, credit: str):
         self.operations[operation] = (debit, credit)
         return self
-
-    @property
-    def viewer(self):
-        return Viewer(self.base)
-
-
-@dataclass
-class Viewer:
-    pass
+    
+    def label(self, account_name) -> str:
+        return self.composer.as_string(self.base.label(account_name))
 
 
 @dataclass
@@ -500,8 +529,8 @@ def contra_account_pairs_all(
 
 # TODO: move below to tests
 
-incoming = (
-    base()
+chart0 = (
+    SuperChart()
     .add("asset:cash")
     .add("capital:equity")
     .add_many(["cogs", "sga"], prefix="expense")
@@ -521,39 +550,13 @@ incoming = (
     .add_many(["dd", "ar"], prefix="liability")
 )
 
-assert incoming.as_string(AssetLabel("cash")) == "asset:cash"
-assert aggregate_offsets(incoming) == {"equity": ["ts"], "sales": ["refunds", "voids"]}
-assert to_chart(incoming).dict() == {
-    "income_summary_account": "current_profit",
-    "retained_earnings_account": "retained_earnings",
-    "null_account": "null",
-    "assets": ["cash", "ar", "inventory"],
-    "expenses": ["cogs", "sga"],
-    "capital": ["equity"],
-    "liabilities": ["dd", "ar"],
-    "income": ["sales"],
-    "contra_accounts": {"equity": ["ts"], "sales": ["refunds", "voids"]},
-    "titles": {
-        "cogs": "Cost of goods sold",
-        "sga": "Selling, general, and adm. expenses",
-        "ts": "Treasury share",
-    },
-    "operations": {
-        "invoice": ("ar", "sales"),
-        "accept": ("cash", "ar"),
-        "cost": ("cogs", "inventory"),
-        "purchase": ("inventory", "cash"),
-        "refund": ("refunds", "cash"),
-    },
-}
-
-
-chart = to_chart(incoming)
-assert isinstance(chart.ledger(), Ledger)
-assert chart.contra_account_pairs(accounts.ContraIncome) == [
-    ("sales", "refunds"),
-    ("sales", "voids"),
-]
-assert list(to_labels(chart))[-1] == Offset(name="sales", contra="voids")
-assert chart.get_label("sales") == "income:sales"
-assert chart.get_label("refunds") == "contra:sales:refunds"
+assert chart0.composer.as_string(AssetLabel("cash")) == "asset:cash"
+assert chart0.dict() == {'base': {'income_summary_account': 'isa', 'retained_earnings_account': 're', 'null_account': 'null', 'assets': ['cash', 'ar', 'inventory'], 'expenses': ['cogs', 'sga'], 'capital': ['equity'], 'liabilities': ['dd', 'ar'], 'income': ['sales'], 'contra_accounts': {'equity': ['ts'], 'sales': ['refunds', 'voids']}}, 'titles': {'cogs': 'Cost of goods sold', 'sga': 'Selling, general, and adm. expenses', 'ts': 'Treasury share'}, 'operations': {'invoice': ('ar', 'sales'), 'accept': ('cash', 'ar'), 'cost': ('cogs', 'inventory'), 'purchase': ('inventory', 'cash'), 'refund': ('refunds', 'cash')}, 'composer': {'asset': 'asset', 'capital': 'capital', 'liability': 'liability', 'income': 'income', 'expense': 'expense', 'contra': 'contra', 'income_summary': 'isa', 'retained_earnings': 're', 'null': 'null'}}
+assert list(chart0.base.ledger().keys()) == ['cash', 'ar', 'inventory', 'equity', 'ts', 'dd', 'sales', 'refunds', 'voids', 'cogs', 'sga']
+assert isinstance(chart0.base.ledger(), Ledger)
+assert chart0.base.contra_pairs(accounts.ContraIncome) == [
+     ("sales", "refunds"),
+     ("sales", "voids"),
+ ]
+assert str(chart0.label("sales")) == "income:sales"
+assert str(chart0.label("refunds")) == "contra:sales:refunds"
