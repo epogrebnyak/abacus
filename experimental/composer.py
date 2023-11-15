@@ -66,7 +66,7 @@ class Composer(BaseModel):
     null: str = "null"
 
     def as_string(self, label: Label | Offset) -> str:
-        def and_name(prefix):
+        def and_name(prefix: str) -> str:
             return prefix + ":" + label.name
 
         match label:
@@ -127,8 +127,9 @@ class BaseChart(BaseModel):
     contra_accounts: dict[str, list[str]] = {}
 
     def safe_append(self, attribute, value):
-        if value not in getattr(self, attribute):
-            getattr(self, attribute).append(value)
+        if value in self.account_names():
+            raise ValueError(f"Duplicate account name: {value}.")
+        getattr(self, attribute).append(value)
 
     def add(self, label_str: str, composer=Composer()):
         return self.promote(composer.extract(label_str))
@@ -172,8 +173,11 @@ class BaseChart(BaseModel):
         yield self.retained_earnings_account, accounts.RetainedEarnings
         yield self.null_account, accounts.NullAccount
 
+    def account_names(self):    
+        return [name for name, _ in  self.t_accounts().keys()]
+
     def ledger(self):
-        return Ledger({name: t_account for name, t_account in self.t_accounts()})
+        return Ledger({name: t_account() for name, t_account in self.t_accounts()})
 
     def contra_pairs(self, cls: Type[ContraAccount]):
         mapper = {
@@ -253,8 +257,8 @@ class Chart(BaseModel):
 
     def alias(self, operation: str, debit: str, credit: str):
         self.operations[operation] = (debit, credit)
-        return self
-
+        return self    
+    
     def label(self, account_name) -> str:
         return self.composer.as_string(self.base.label(account_name))
 
@@ -356,7 +360,9 @@ assert list(chart0.base.ledger().keys()) == [
     "retained_earnings",
     "null",
 ]
+
 assert isinstance(chart0.base.ledger(), Ledger)
+assert chart0.base.ledger()['cash'] == accounts.Asset(debits=[], credits=[])
 assert chart0.base.contra_pairs(accounts.ContraIncome) == [
     ("sales", "refunds"),
     ("sales", "voids"),

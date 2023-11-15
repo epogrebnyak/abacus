@@ -10,11 +10,6 @@ from abacus.engine.better_chart import Chart
 class Ledger(UserDict[AccountName, TAccount]):
     """General ledger that holds all accounts. Accounts are referenced by name."""
 
-    # @classmethod
-    # def new(cls, chart: Chart) -> "Ledger":
-    #     """Create an empty ledger from chart."""
-    #     return chart.base_chart.empty_ledger()
-
     def apply(self, attribute: str):
         """Apply an *attribute* to all accounts in ledger and return a new ledger."""
         return Ledger(
