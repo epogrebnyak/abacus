@@ -100,8 +100,6 @@ class Asset(DebitAccount, RegularAccount):
     pass
 
 
-class Expense(DebitAccount, RegularAccount):
-    pass
 
 
 class Capital(CreditAccount, RegularAccount):
@@ -112,8 +110,6 @@ class Liability(CreditAccount, RegularAccount):
     pass
 
 
-class Income(CreditAccount, RegularAccount):
-    pass
 
 
 class Unique:
@@ -135,6 +131,14 @@ class Transferable(TAccount):
             case _:
                 raise TypeError
 
+
+
+
+class Expense(DebitAccount, RegularAccount, Transferable):
+    pass
+
+class Income(CreditAccount, RegularAccount, Transferable):
+    pass
 
 # Can equally be CreditAccount or DebitAccount, making it a ContraAccount
 # keeps null at the bottom of trail balance, so it is less distracting.

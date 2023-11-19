@@ -53,7 +53,7 @@ class NullLabel(Label):
 
 
 class Composer(BaseModel):
-    """Extract and compose labels."""
+    """Extract and compose labels using prefixes, example is asset:cash."""
 
     asset: str = "asset"
     capital: str = "capital"
@@ -173,11 +173,11 @@ class BaseChart(BaseModel):
         yield self.retained_earnings_account, accounts.RetainedEarnings
         yield self.null_account, accounts.NullAccount
 
-    def account_names(self):    
-        return [name for name, _ in  self.t_accounts().keys()]
+    def account_names(self):
+        return [name for name, _ in self.t_accounts()]
 
-    def ledger(self):
-        return Ledger({name: t_account() for name, t_account in self.t_accounts()})
+    def ledger(self, cls=Ledger):
+        return cls({name: t_account() for name, t_account in self.t_accounts()})
 
     def contra_pairs(self, cls: Type[ContraAccount]):
         mapper = {
@@ -257,8 +257,8 @@ class Chart(BaseModel):
 
     def alias(self, operation: str, debit: str, credit: str):
         self.operations[operation] = (debit, credit)
-        return self    
-    
+        return self
+
     def label(self, account_name) -> str:
         return self.composer.as_string(self.base.label(account_name))
 
@@ -297,7 +297,7 @@ chart0 = (
     .alias("cost", "cogs", "inventory")
     .alias("purchase", "inventory", "cash")
     .alias("refund", "refunds", "cash")
-    .add_many(["dd", "ar"], prefix="liability")
+    .add_many(["dd", "ap"], prefix="liability")
 )
 
 assert chart0.operations == {
@@ -316,7 +316,7 @@ assert chart0.dict() == {
         "assets": ["cash", "ar", "inventory"],
         "expenses": ["cogs", "sga"],
         "capital": ["equity"],
-        "liabilities": ["dd", "ar"],
+        "liabilities": ["dd", "ap"],
         "income": ["sales"],
         "contra_accounts": {"equity": ["ts"], "sales": ["refunds", "voids"]},
     },
@@ -351,6 +351,7 @@ assert list(chart0.base.ledger().keys()) == [
     "equity",
     "ts",
     "dd",
+    "ap",
     "sales",
     "refunds",
     "voids",
@@ -362,7 +363,7 @@ assert list(chart0.base.ledger().keys()) == [
 ]
 
 assert isinstance(chart0.base.ledger(), Ledger)
-assert chart0.base.ledger()['cash'] == accounts.Asset(debits=[], credits=[])
+assert chart0.base.ledger()["cash"] == accounts.Asset(debits=[], credits=[])
 assert chart0.base.contra_pairs(accounts.ContraIncome) == [
     ("sales", "refunds"),
     ("sales", "voids"),
