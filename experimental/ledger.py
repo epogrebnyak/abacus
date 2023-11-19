@@ -61,6 +61,9 @@ class Ledger:
 
 from dataclasses import dataclass
 
+def closing_contra_entries(chart, ledger, contra_cls):
+    for name, contra_name in chart.contra_pairs(contra_cls):
+        yield ledger.data[contra_name].transfer(contra_name, name)  # type: ignore
 
 def close_first(chart, ledger):
     """Close contra income and contra expense accounts."""
@@ -77,20 +80,20 @@ def close_to_isa(chart, ledger, cls):
 
 
 def close_second(chart, dummy_ledger):
-    """Close income and expense to income summary account ("isa"),
+    """Close income and expense accounts to income summary account ("isa"),
     then close isa to retained earnings."""
     # Close income and expense to isa
     a = close_to_isa(chart, dummy_ledger, Income)
     b = close_to_isa(chart, dummy_ledger, Expense)
     closing_entries = list(a) + list(b)
     dummy_ledger.post_many(closing_entries)
-    # Close to retained earnings
+    # Close isa to retained earnings
     isa, re = chart.income_summary_account, chart.retained_earnings_account
     transfer_entry = Entry(
         debit=isa, credit=re, amount=dummy_ledger.data[isa].balance()
     )
     closing_entries.append(transfer_entry)
-    return dummy_ledger.post_many([transfer_entry]), closing_entries
+    return dummy_ledger.post_many(closing_entries), closing_entries
 
 
 def close_last(chart, ledger):
@@ -101,10 +104,6 @@ def close_last(chart, ledger):
     closing_entries = list(c3) + list(c4) + list(c5)
     return ledger.post_many(closing_entries), closing_entries
 
-
-def closing_contra_entries(chart, ledger, contra_cls):
-    for name, contra_name in chart.contra_pairs(contra_cls):
-        yield ledger.data[contra_name].transfer(contra_name, name)  # type: ignore
 
 
 @dataclass
