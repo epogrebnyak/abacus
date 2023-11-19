@@ -12,7 +12,7 @@ from abacus.engine.accounts import (
     ContraLiability,
     ContraCapital,
     Income,
-    Expense
+    Expense,
 )
 from abacus.engine.base import AbacusError, AccountName, Amount, Entry, MultipleEntry
 from abacus.engine.better_chart import Chart
@@ -61,13 +61,70 @@ class LedgerBase(UserDict[AccountName, TAccount]):
         b = closing_entries(chart, dummy_ledger, Expense)
         dummy_ledger.post_many(a).post_many(b)
         # close to retained earnings
-        return dummy_ledger.post(debit=chart.base.income_summary_account, credit=chart.base.retained_earnings_account, amount=dummy_ledger[chart.base.income_summary_account].balance())
+        return dummy_ledger.post(
+            debit=chart.base.income_summary_account,
+            credit=chart.base.retained_earnings_account,
+            amount=dummy_ledger[chart.base.income_summary_account].balance(),
+        )
 
-    def close_final(self, chart):   
+    def close_final(self, chart):
         c3 = closing_contra_entries(chart, self, ContraAsset)
         c4 = closing_contra_entries(chart, self, ContraLiability)
         c5 = closing_contra_entries(chart, self, ContraCapital)
         return self.post_many(c3).post_many(c4).post_many(c5)
+
+from dataclasses import dataclass
+
+@dataclass
+class Closer:
+    ledger0: LedgerBase
+    chart: Chart
+
+    def closing_entries_for_income_statement(self) -> List[Entry]:
+        _, a = close_first(self.chart, self.ledger0)
+        return a
+    
+    def closing_entries(self) -> List[Entry]:
+        dummy_ledger, a = close_first(self.chart, self.ledger0)
+        _, b = close_second(self.chart, dummy_ledger)
+        return a + b
+
+    def closing_entries_for_balance_sheet(self) -> List[Entry]:
+        dummy_ledger, a = close_first(self.chart, self.ledger0)
+        dummy_ledger, b = close_second(self.chart, dummy_ledger)
+        _, c = close_last(self.chart, dummy_ledger)
+        return a + b + c
+
+
+def close_first(chart, ledger):
+    """Close contra income and contra expense accounts."""
+    c1 = closing_contra_entries(chart, ledger, ContraIncome)
+    c2 = closing_contra_entries(chart, ledger, ContraExpense)
+    closing_entries = list(c1) + list(c2)
+    return ledger.condense().post_many(closing_entries), closing_entries
+
+
+def close_second(chart, dummy_ledger):
+    # close income and expense to isa
+    a = closing_entries(chart, dummy_ledger, Income)
+    b = closing_entries(chart, dummy_ledger, Expense)
+    closing_entries = list(a) + list(b)
+    dummy_ledger.post_many(closing_entries)
+    # close to retained earnings
+    isa, re = chart.base.income_summary_account, chart.base.retained_earnings_account
+    transfer_entry = Entry(debit=isa, credit=re, amount=dummy_ledger[isa].balance())
+    closing_entries.append(transfer_entry)
+    return dummy_ledger.post_many([transfer_entry]), closing_entries
+
+
+def close_last(chart, ledger):
+    # close permanent contra accounts
+    c3 = closing_contra_entries(chart, ledger, ContraAsset)
+    c4 = closing_contra_entries(chart, ledger, ContraLiability)
+    c5 = closing_contra_entries(chart, ledger, ContraCapital)
+    closing_entries = list(c3) + list(c4) + list(c5)
+    return ledger.post_many(closing_entries), closing_entries
+
 
 def closing_entries(chart, ledger, cls):
     for name, account in ledger.items():
@@ -110,7 +167,12 @@ ledger2 = (
     .post("cogs", "goods", 170)
     .post("ts", "cash", 500)
 )
-assert ledger2.close_most(chart2).close_final(chart2).nonzero_balances() == {'cash': 400, 'goods': 130, 'equity': 500, 'retained_earnings': 30}
+assert ledger2.close_most(chart2).close_final(chart2).nonzero_balances() == {
+    "cash": 400,
+    "goods": 130,
+    "equity": 500,
+    "retained_earnings": 30,
+}
 
 
 class Ledger(UserDict[AccountName, TAccount]):
