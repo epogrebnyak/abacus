@@ -1,11 +1,10 @@
-from dataclasses import dataclass, field
-from itertools import chain, groupby
-from typing import Iterable, Type
+from dataclasses import dataclass
+from typing import Type
 
 from pydantic import BaseModel
 
-import abacus.engine.accounts as accounts
-from abacus.engine.accounts import TAccount, RegularAccount, ContraAccount
+import abacus.engine.accounts as accounts # type: ignore
+from abacus.engine.accounts import ContraAccount # type: ignore
 
 
 @dataclass
@@ -52,7 +51,7 @@ class NullLabel(Label):
 
 
 class Composer(BaseModel):
-    """Extract and compose labels using prefixes, example is asset:cash."""
+    """Extract and compose labels using prefixes as in asset:cash."""
 
     asset: str = "asset"
     capital: str = "capital"
@@ -225,7 +224,27 @@ class Chart(BaseModel):
     base: BaseChart = base()
     titles: dict[str, str] = {}
     operations: dict[str, tuple[str, str]] = {}
-    composer: composer = Composer()
+    composer: Composer = Composer()
+
+    def asset(self, name: str):
+        self.base.promote(AssetLabel(name))
+        return self
+
+    def liability(self, name: str):
+        self.base.promote(LiabilityLabel(name))
+        return self
+
+    def capital(self, name: str):
+        self.base.promote(CapitalLabel(name))
+        return self
+
+    def income(self, name: str):
+        self.base.promote(IncomeLabel(name))
+        return self
+
+    def expense(self, name: str):
+        self.base.promote(ExpenseLabel(name))
+        return self
 
     def add(self, label_str: str):
         self.base.add(label_str, self.composer)
@@ -265,112 +284,3 @@ class Chart(BaseModel):
             data={name: t_account() for name, t_account in self.base.t_accounts()},
             base_chart=self.base,
         )
-
-
-# TODO: move below to tests
-if __name__ == "__main__":
-    g = Composer()
-    for string in ("expense:cogs", "contra:sales:refunds", "liability:loan"):
-        assert g.as_string(g.extract(string)) == string
-
-    b = (
-        base()
-        .add("income:sales")
-        .add("contra:sales:refunds")
-        .promote(Offset("sales", "voids"))
-    )
-    assert b.contra_accounts == {"sales": ["refunds", "voids"]}
-
-    chart0 = (
-        Chart()
-        .add("asset:cash")
-        .add("capital:equity")
-        .add_many(["cogs", "sga"], prefix="expense")
-        .name("cogs", "Cost of goods sold")
-        .name("sga", "Selling, general, and adm. expenses")
-        .add("contra:equity:ts")
-        .name("ts", "Treasury share")
-        .add("income:sales")
-        .add_many(["refunds", "voids"], prefix="contra:sales")
-        .add("asset:ar")
-        .alias("invoice", "ar", "sales")
-        .alias("accept", "cash", "ar")
-        .add("asset:inventory")
-        .alias("cost", "cogs", "inventory")
-        .alias("purchase", "inventory", "cash")
-        .alias("refund", "refunds", "cash")
-        .add_many(["dd", "ap"], prefix="liability")
-    )
-
-    assert chart0.operations == {
-        "invoice": ("ar", "sales"),
-        "accept": ("cash", "ar"),
-        "cost": ("cogs", "inventory"),
-        "purchase": ("inventory", "cash"),
-        "refund": ("refunds", "cash"),
-    }
-    assert chart0.composer.as_string(AssetLabel("cash")) == "asset:cash"
-    assert chart0.dict() == {
-        "base": {
-            "income_summary_account": "current_profit",
-            "retained_earnings_account": "retained_earnings",
-            "null_account": "null",
-            "assets": ["cash", "ar", "inventory"],
-            "expenses": ["cogs", "sga"],
-            "capital": ["equity"],
-            "liabilities": ["dd", "ap"],
-            "income": ["sales"],
-            "contra_accounts": {"equity": ["ts"], "sales": ["refunds", "voids"]},
-        },
-        "titles": {
-            "cogs": "Cost of goods sold",
-            "sga": "Selling, general, and adm. expenses",
-            "ts": "Treasury share",
-        },
-        "operations": {
-            "invoice": ("ar", "sales"),
-            "accept": ("cash", "ar"),
-            "cost": ("cogs", "inventory"),
-            "purchase": ("inventory", "cash"),
-            "refund": ("refunds", "cash"),
-        },
-        "composer": {
-            "asset": "asset",
-            "capital": "capital",
-            "liability": "liability",
-            "income": "income",
-            "expense": "expense",
-            "contra": "contra",
-            "income_summary": "isa",
-            "retained_earnings": "re",
-            "null": "null",
-        },
-    }
-    assert list(chart0.ledger().data.keys()) == [
-        "cash",
-        "ar",
-        "inventory",
-        "equity",
-        "ts",
-        "dd",
-        "ap",
-        "sales",
-        "refunds",
-        "voids",
-        "cogs",
-        "sga",
-        "current_profit",
-        "retained_earnings",
-        "null",
-    ]
-
-    from ledger import Ledger
-
-    assert isinstance(chart0.ledger(), Ledger)
-    assert chart0.ledger().data["cash"] == accounts.Asset(debits=[], credits=[])
-    assert chart0.base.contra_pairs(accounts.ContraIncome) == [
-        ("sales", "refunds"),
-        ("sales", "voids"),
-    ]
-    assert str(chart0.label("sales")) == "income:sales"
-    assert str(chart0.label("refunds")) == "contra:sales:refunds"

@@ -1,22 +1,20 @@
 """Ledger data structure, can be created from chart, used to post entries and produce reports."""
-from collections import UserDict
-from typing import Dict, Iterable, List, Tuple, Type
-
-from abacus.engine.accounts import (
-    CreditAccount,
-    DebitAccount,
-    TAccount,
-    ContraIncome,
-    ContraExpense,
-    ContraAsset,
-    ContraLiability,
-    ContraCapital,
-    Income,
-    Expense,
-)
-from abacus.engine.base import AbacusError, AccountName, Amount, Entry, MultipleEntry
-from composer import Chart, BaseChart
 from dataclasses import dataclass
+from typing import Callable, Dict, Iterable, List
+
+from composer import BaseChart, Chart
+
+from abacus.engine.accounts import ( # type: ignore
+    ContraAsset,
+    ContraCapital,
+    ContraExpense,
+    ContraIncome,
+    ContraLiability,
+    Expense,
+    Income,
+    TAccount,
+) # type: ignore
+from abacus.engine.base import AbacusError, Entry # type: ignore
 
 
 @dataclass
@@ -26,6 +24,9 @@ class Ledger:
 
     def post(self, debit, credit, amount) -> None:
         return self.post_many([Entry(debit, credit, amount)])
+
+    def post_one(self, entry: Entry):
+        return self.post_many([entry])
 
     def post_many(self, entries: Iterable[Entry]):
         failed = []
@@ -39,7 +40,7 @@ class Ledger:
             raise AbacusError(failed)
         return self
 
-    def apply(self, f):
+    def apply(self, f: Callable):
         self.data = {name: f(taccount) for name, taccount in self.data.items()}
         return self
 
@@ -59,11 +60,12 @@ class Ledger:
         return Closer(self.condense(), self.base_chart)
 
 
-from dataclasses import dataclass
+
 
 def closing_contra_entries(chart, ledger, contra_cls):
     for name, contra_name in chart.contra_pairs(contra_cls):
         yield ledger.data[contra_name].transfer(contra_name, name)  # type: ignore
+
 
 def close_first(chart, ledger):
     """Close contra income and contra expense accounts."""
@@ -105,7 +107,6 @@ def close_last(chart, ledger):
     return ledger.post_many(closing_entries), closing_entries
 
 
-
 @dataclass
 class Closer:
     ledger0: Ledger
@@ -128,95 +129,3 @@ class Closer:
         dummy_ledger, entries_2 = close_second(self.base_chart, dummy_ledger)
         _, entries_3 = close_last(self.base_chart, dummy_ledger)
         return entries_1 + entries_2 + entries_3
-
-
-closer = (
-    Chart()
-    .add("asset:cash")
-    .add("capital:equity")
-    .offset("equity", "ts")
-    .add("expense:cogs")
-    .add("income:sales")
-    .offset("sales", "refunds")
-    .ledger()
-    .post("cash", "equity", 1000)
-    .post("ts", "cash", 200)
-    .post("cash", "sales", 110)
-    .post("refunds", "cash", 10)
-    .post("cogs", "null", 60)
-    .close()
-)
-
-assert closer.closing_entries_for_income_statement() == [
-    Entry(debit="sales", credit="refunds", amount=10)
-]
-
-assert closer.closing_entries_for_end_balances() == [
-    Entry(debit="sales", credit="refunds", amount=10),
-    Entry(debit="sales", credit="current_profit", amount=100),
-    Entry(debit="current_profit", credit="cogs", amount=60),
-    Entry(debit="current_profit", credit="retained_earnings", amount=40),
-]
-
-assert closer.closing_entries_for_balance_sheet() == [
-    Entry(debit="sales", credit="refunds", amount=10),
-    Entry(debit="sales", credit="current_profit", amount=100),
-    Entry(debit="current_profit", credit="cogs", amount=60),
-    Entry(debit="current_profit", credit="retained_earnings", amount=40),
-    Entry(debit="equity", credit="ts", amount=200),
-]
-
-
-if __name__ == "__main__":
-    from composer import Chart
-
-    chart0 = Chart().add("asset:cash").add("capital:equity").add("contra:equity:ts")
-    assert chart0.ledger().post("cash", "equity", 1000).post(
-        "ts", "cash", 200
-    ).nonzero_balances() == {"cash": 800, "equity": 1000, "ts": 200}
-    assert chart0.ledger().post_many(
-        [Entry("cash", "equity", 1000), Entry("ts", "cash", 200)]
-    ).nonzero_balances() == {"cash": 800, "equity": 1000, "ts": 200}
-
-    chart2 = (
-        Chart()
-        .add("asset:cash")
-        .add("asset:goods")
-        .add("capital:equity")
-        .add("contra:equity:ts")
-        .add("income:sales")
-        .add("expense:cogs")
-        .offset("sales", "refunds")
-    )
-    ledger2 = (
-        chart2.ledger()
-        .post("cash", "equity", 1000)
-        .post("goods", "cash", 300)
-        .post("cash", "sales", 250)
-        .post("refunds", "cash", 50)
-        .post("cogs", "goods", 170)
-        .post("ts", "cash", 500)
-    )
-    # assert ledger2.close_most(chart2).close_final(chart2).nonzero_balances() == {
-    #     "cash": 400,
-    #     "goods": 130,
-    #     "equity": 500,
-    #     "retained_earnings": 30,
-    # }
-
-
-# def to_multiple_entry(ledger: Ledger, starting_balances: dict) -> MultipleEntry:
-#     debit_entries = []
-#     credit_entries = []
-#     for account_name in starting_balances.keys():
-#         try:
-#             ledger[account_name]
-#         except KeyError:
-#             raise AbacusError(f"Account {account_name} does not exist in ledger.")
-#     for account_name, amount in starting_balances.items():
-#         match ledger[account_name]:
-#             case DebitAccount(_, _):
-#                 debit_entries.append((account_name, amount))
-#             case CreditAccount(_, _):
-#                 credit_entries.append((account_name, amount))
-#     return MultipleEntry(debit_entries, credit_entries).validate()
