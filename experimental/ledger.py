@@ -1,4 +1,5 @@
 """Ledger data structure, can be created from chart, used to post entries and produce reports."""
+
 from dataclasses import dataclass
 from typing import Callable, Dict, Iterable, List
 
@@ -58,6 +59,20 @@ class Ledger:
 
     def manage(self):
         return ClosingEntryManager(self.condense(), self.base_chart)
+
+    def report(self):
+        return Reporter(self, self.base_chart)
+
+    def subset(self, cls):
+        """Filter ledger by account type."""
+        return Ledger(
+            data={
+                account_name: t_account
+                for account_name, t_account in self.data.items()
+                if isinstance(t_account, cls)
+            },
+            base_chart=self.base_chart,
+        )
 
 
 def closing_contra_entries(chart, ledger, contra_cls):
@@ -129,3 +144,48 @@ class ClosingEntryManager:
 
     def closing_entries_for_balance_sheet(self) -> List[Entry]:
         return self.do(close_first, close_second, close_last)
+
+
+# Next add reporter, will need subset() method for ledger
+@dataclass
+class Reporter:
+    ledger: Ledger
+    titles: Dict[str, str]
+
+    def income_statement(self):
+        from abacus.engine.report import IncomeStatement
+
+        closing_entries = self.ledger.manage().closing_entries_for_income_statement()
+        ledger = self.ledger.condense().post_many(closing_entries)
+        return IncomeStatement.new(ledger)
+
+    def balance_sheet(self):
+        from abacus.engine.report import BalanceSheet
+
+        closing_entries = self.ledger.manage().closing_entries_for_balance_sheet()
+        ledger = self.ledger.condense().post_many(closing_entries)
+        return BalanceSheet.new(ledger)
+
+    # def trial_balance(self, chart: Chart):
+    #     from abacus.engine.report import view_trial_balance
+
+    #     return view_trial_balance(chart, self)
+
+
+chart = (
+    Chart()
+    .asset("cash")
+    .capital("equity")
+    .liability("loan")
+    .income("sales")
+    .expense("sga")
+)
+ledger = (
+    chart.ledger()
+    .post("cash", "equity", 5000)
+    .post("cash", "sales", 250)
+    .post("sga", "cash", 100)
+    .post("cash", "loan", 1000)
+)
+print(ledger.report().income_statement())
+print(ledger.report().balance_sheet())
