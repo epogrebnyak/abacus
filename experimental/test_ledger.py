@@ -1,7 +1,7 @@
 import pytest
-from composer import Chart # type: ignore
+from composer import Chart  # type: ignore
 
-from abacus import Entry # type: ignore
+from abacus import Entry  # type: ignore
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def closer0():
         .post("refunds", "cash", 5)
     )
 
-    return ledger.close()
+    return ledger.manage()
 
 
 def test_closing_entries_for_income_statement(closer0):

@@ -1,7 +1,7 @@
 import pytest
-from composer import AssetLabel, Chart, Composer, Offset, base # type: ignore
+from composer import AssetLabel, Chart, Composer, Offset, base  # type: ignore
 
-import abacus.engine.accounts as accounts # type: ignore
+import abacus.engine.accounts as accounts  # type: ignore
 
 
 def test_as_string_and_extract():
@@ -32,8 +32,6 @@ def test_contra_accounts():
         .promote(Offset("sales", "voids"))
     )
     assert b.contra_accounts == {"sales": ["refunds", "voids"]}
-
-
 
 
 @pytest.fixture

@@ -3,8 +3,8 @@ from typing import Type
 
 from pydantic import BaseModel
 
-import abacus.engine.accounts as accounts # type: ignore
-from abacus.engine.accounts import ContraAccount # type: ignore
+import abacus.engine.accounts as accounts  # type: ignore
+from abacus.engine.accounts import ContraAccount  # type: ignore
 
 
 @dataclass
