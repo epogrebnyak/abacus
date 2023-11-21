@@ -1,7 +1,16 @@
 import pytest
-from composer import AssetLabel, Chart, Composer, Offset, base  # type: ignore
+from composer import AssetLabel, Chart, Composer, Offset, base, create_chart  # type: ignore
 
 import abacus.engine.accounts as accounts  # type: ignore
+
+
+def test_make_chart_runs():
+    assert create_chart(
+        assets=["cash"],
+        capital=["equity"],
+        income=["services"],
+        expenses=["marketing", "salaries"],
+    )
 
 
 def test_as_string_and_extract():

@@ -1,20 +1,22 @@
-from composer import Chart
+from composer import create_chart
 
-chart = (
-    Chart()
-    .asset("cash")
-    .capital("equity")
-    .income("services")
-    .expense("marketing")
-    .expense("salaries")
+# Create a chart of accounts
+chart = create_chart(
+    assets=["cash"],
+    capital=["equity"],
+    income=["services"],
+    expenses=["marketing", "salaries"],
 )
-ledger = (
-    chart.ledger()
-    .post("cash", "equity", 5000)
-    .post("marketing", "cash", 1000)
-    .post("cash", "services", 3500)
-    .post("salaries", "cash", 2000)
-)
+# Create a ledger using the chart
+ledger = chart.ledger()
+
+# Post entries to ledger
+ledger.post(debit="cash", credit="equity", amount=5000)
+ledger.post(debit="marketing", credit="cash", amount=1000)
+ledger.post(debit="cash", credit="services", amount=3500)
+ledger.post(debit="salaries", credit="cash", amount=2000)
+
+# Print balance sheet and income statement
 report = ledger.report()
 report.balance_sheet().print_rich(width=45)
 report.income_statement().print_rich(width=45)

@@ -284,3 +284,15 @@ class Chart(BaseModel):
             data={name: t_account() for name, t_account in self.base.t_accounts()},
             chart=self,
         )
+
+
+def create_chart(
+    assets=None, liabilities=None, capital=None, income=None, expenses=None
+):
+    base_chart = base()
+    base_chart.assets = assets if assets else []
+    base_chart.liabilities = liabilities if liabilities else []
+    base_chart.capital = capital if capital else []
+    base_chart.income = income if income else []
+    base_chart.expenses = expenses if expenses else []
+    return Chart(base=base_chart)
