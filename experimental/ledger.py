@@ -17,6 +17,8 @@ from abacus.engine.accounts import (  # type: ignore
 )  # type: ignore
 from abacus.engine.base import AbacusError, Entry  # type: ignore
 
+#from collections import UserDict
+#class BaseLedger(UserDict[str, TAccount]): ...
 
 @dataclass
 class Ledger:
