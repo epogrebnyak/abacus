@@ -26,6 +26,7 @@ and income statement for the firm.
 ```python
 from composer import Chart
 
+# Create a chart of accounts
 chart = (
     Chart()
     .asset("cash")
@@ -34,6 +35,7 @@ chart = (
     .expense("marketing")
     .expense("salaries")
 )
+# Start a ledger using the chart and post entries to ledger
 ledger = (
     chart.ledger()
     .post("cash", "equity", 5000)
@@ -41,6 +43,7 @@ ledger = (
     .post("cash", "services", 3500)
     .post("salaries", "cash", 2000)
 )
+# Print balance sheet and income statement 
 report = ledger.report()
 report.balance_sheet().print_rich(width=45)
 report.income_statement().print_rich(width=45)
