@@ -17,16 +17,14 @@ from abacus.engine.accounts import (  # type: ignore
 )  # type: ignore
 from abacus.engine.base import AbacusError, Entry  # type: ignore
 
-#from collections import UserDict
-#class BaseLedger(UserDict[str, TAccount]): ...
 
 @dataclass
 class Ledger:
     data: Dict[str, TAccount]
-    base_chart: Chart
+    chart: Chart
 
     def post(self, debit, credit, amount) -> None:
-        return self.post_many([Entry(debit, credit, amount)])
+        return self.post_one(Entry(debit, credit, amount))
 
     def post_one(self, entry: Entry):
         return self.post_many([entry])
@@ -48,7 +46,7 @@ class Ledger:
         return self
 
     def deep_copy(self):
-        return Ledger({k: v.deep_copy() for k, v in self.data.items()}, self.base_chart)
+        return Ledger({k: v.deep_copy() for k, v in self.data.items()}, self.chart.base)
 
     def condense(self):
         return self.apply(lambda taccount: taccount.condense())
@@ -60,20 +58,25 @@ class Ledger:
         return {k: v for k, v in self.balances().items() if v != 0}
 
     def manage(self):
-        return ClosingEntryManager(self.condense(), self.base_chart)
+        return ClosingEntryManager(self.condense(), self.chart.base)
+
+    def runner(self):
+        return LedgerRunner(self.chart.base, self)
 
     def report(self):
-        return Reporter(self, self.base_chart)
+        return Reporter(self, self.chart.titles)
+
+    def replicate(self, dictionary):
+        return Ledger(dictionary, self.chart)
 
     def subset(self, cls):
         """Filter ledger by account type."""
-        return Ledger(
-            data={
+        return self.replicate(
+            {
                 account_name: t_account
                 for account_name, t_account in self.data.items()
                 if isinstance(t_account, cls)
-            },
-            base_chart=self.base_chart,
+            }
         )
 
 
@@ -121,13 +124,25 @@ def close_last(chart, ledger):
     return ledger.post_many(closing_entries), closing_entries
 
 
-def jobs(chart: BaseChart, ledger: Ledger, fs: List[Callable]):
-    dummy_ledger = ledger.condense().deep_copy()
-    result = []
-    for f in fs:
-        dummy_ledger, closing_entries = f(chart, dummy_ledger)
-        result.extend(closing_entries)
-    return result
+class LedgerRunner:
+    def __init__(self, base_chart, ledger):
+        self.base_chart = base_chart
+        self.current_ledger = ledger.condense().deep_copy()
+        self.closing_entries = []
+
+    def apply(self, f: Callable):
+        self.current_ledger, closing_entries = f(self.base_chart, self.current_ledger)
+        self.closing_entries.extend(closing_entries)
+        return self
+
+    def close_for_income_statement(self) -> List[Entry]:
+        return self.apply(close_first)
+
+    def close_for_end_balances(self) -> List[Entry]:
+        return self.apply(close_first).apply(close_second)
+
+    def close_for_balance_sheet(self) -> List[Entry]:
+        return self.apply(close_first).apply(close_second).apply(close_last)
 
 
 @dataclass
@@ -135,38 +150,44 @@ class ClosingEntryManager:
     ledger0: Ledger
     base_chart: BaseChart
 
-    def do(self, *fs: List[Callable]):
-        return jobs(self.base_chart, self.ledger0, fs)
+    @property
+    def runner(self):
+        return LedgerRunner(self.base_chart, self.ledger0)
 
     def closing_entries_for_income_statement(self) -> List[Entry]:
-        return self.do(close_first)
+        return self.runner.close_for_income_statement().closing_entries
 
     def closing_entries_for_end_balances(self) -> List[Entry]:
-        return self.do(close_first, close_second)
+        return self.runner.close_for_end_balances().closing_entries
 
     def closing_entries_for_balance_sheet(self) -> List[Entry]:
-        return self.do(close_first, close_second, close_last)
+        return self.runner.close_for_balance_sheet().closing_entries
 
 
-# Next add reporter, will need subset() method for ledger
 @dataclass
 class Reporter:
     ledger: Ledger
     titles: Dict[str, str]
 
-    def income_statement(self):
-        from abacus.engine.report import IncomeStatement
+    def _prepare_ledger(self, method_name: str):
+        closing_entries = getattr(self.ledger.manage(), method_name)
+        return self.ledger.condense().post_many(closing_entries)
 
-        closing_entries = self.ledger.manage().closing_entries_for_income_statement()
-        ledger = self.ledger.condense().post_many(closing_entries)
-        return IncomeStatement.new(ledger)
+    def income_statement(self, header="Income Statement"):
+        from abacus.engine.report import IncomeStatement, IncomeStatementViewer
 
-    def balance_sheet(self):
-        from abacus.engine.report import BalanceSheet
+        statement = IncomeStatement.new(
+            self.ledger.runner().close_for_income_statement().current_ledger
+        )
+        return IncomeStatementViewer(statement, self.titles, header)
 
-        closing_entries = self.ledger.manage().closing_entries_for_balance_sheet()
-        ledger = self.ledger.condense().post_many(closing_entries)
-        return BalanceSheet.new(ledger)
+    def balance_sheet(self, header="Balance Sheet"):
+        from abacus.engine.report import BalanceSheet, BalanceSheetViewer
+
+        statement = BalanceSheet.new(
+            self.ledger.runner().close_for_balance_sheet().current_ledger
+        )
+        return BalanceSheetViewer(statement, self.titles, header)
 
     # def trial_balance(self, chart: Chart):
     #     from abacus.engine.report import view_trial_balance
@@ -174,20 +195,16 @@ class Reporter:
     #     return view_trial_balance(chart, self)
 
 
-chart = (
-    Chart()
-    .asset("cash")
-    .capital("equity")
-    .liability("loan")
-    .income("sales")
-    .expense("sga")
-)
-ledger = (
-    chart.ledger()
-    .post("cash", "equity", 5000)
-    .post("cash", "sales", 250)
-    .post("sga", "cash", 100)
-    .post("cash", "loan", 1000)
-)
-print(ledger.report().income_statement())
-print(ledger.report().balance_sheet())
+#                Balance Sheet
+#  Assets    5500  Capital                5500
+#    Cash    5500    Equity               5000
+#                    Retained earnings     500
+#                  Liabilities               0
+#  Total:    5500  Total:                 5500
+#               Income Statement
+#  Income                                 3500
+#    Services                             3500
+#  Expenses                               3000
+#    Salaries                             2000
+#    Marketing                            1000
+#  Current profit                          500

@@ -282,5 +282,5 @@ class Chart(BaseModel):
 
         return Ledger(
             data={name: t_account() for name, t_account in self.base.t_accounts()},
-            base_chart=self.base,
+            chart=self,
         )

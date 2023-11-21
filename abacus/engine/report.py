@@ -67,14 +67,35 @@ class BalanceSheet(BaseModel, Report):
     def view(self, rename_dict) -> str:
         return view_balance_sheet(self, rename_dict)
 
-    def print_rich(self, rename_dict: Dict[str, str]) -> None:
-        left, right = left_and_right(self, rename_dict)
-        table = make_balance_sheet_table("Balance sheet", 80)
-        for line_1, line_2 in zip(left, right):
-            a, b = unpack(line_1)
-            c, d = unpack(line_2)
-            table.add_row(a, b, c, d)
-        Console().print(table)
+    def print_rich(
+        self, rename_dict: Dict[str, str], title="Balance sheet", width=80
+    ) -> None:
+        print_rich_balance_sheet(self, rename_dict, title, width)
+
+
+def print_rich_balance_sheet(
+    statement, rename_dict: Dict[str, str], title="Balance sheet", width=80
+) -> None:
+    left, right = left_and_right(statement, rename_dict)
+    table = start_balance_sheet_table(title, width)
+    for line_1, line_2 in zip(left, right):
+        a, b = unpack(line_1)
+        c, d = unpack(line_2)
+        table.add_row(a, b, c, d)
+    Console().print(table)
+
+
+@dataclass
+class BalanceSheetViewer:
+    statement: BalanceSheet
+    titles: Dict[str, str]
+    header: str
+
+    def __str__(self) -> str:
+        return self.header + "\n" + view_balance_sheet(self.statement, self.titles)
+
+    def print_rich(self, width=80) -> None:
+        print_rich_balance_sheet(self.statement, self.titles, self.header, width=width)
 
 
 class IncomeStatement(BaseModel, Report):
@@ -96,6 +117,19 @@ class IncomeStatement(BaseModel, Report):
 
     def print_rich(self, rename_dict: Dict[str, str]) -> None:
         print_income_statement_rich(self, rename_dict)
+
+
+@dataclass
+class IncomeStatementViewer:
+    statement: IncomeStatement
+    titles: Dict[str, str]
+    header: str
+
+    def __str__(self) -> str:
+        return self.header + "\n" + view_income_statement(self.statement, self.titles)
+
+    def print_rich(self, width=80) -> None:
+        print_income_statement_rich(self.statement, self.titles, self.header, width)
 
 
 def clean(s: str, rename_dict: Dict) -> str:
@@ -200,9 +234,14 @@ def view_income_statement(report: IncomeStatement, rename_dict: Dict[str, str]) 
     return col.printable()
 
 
-def print_income_statement_rich(report: IncomeStatement, rename_dict: Dict[str, str]):
+def print_income_statement_rich(
+    report: IncomeStatement,
+    rename_dict: Dict[str, str],
+    title: str = "Income Statement",
+    width: int = 80,
+):
     left = income_statement_lines(report, rename_dict)
-    table = Table(title="Income Statement", box=None, width=80, show_header=False)
+    table = Table(title=title, box=None, width=width, show_header=False)
     table.add_column("")
     table.add_column("", justify="right", style="green")
     for line in left:
@@ -273,7 +312,7 @@ def view_trial_balance(chart, ledger) -> str:
     return (col_1 + col_2 + col_3).printable()
 
 
-def make_balance_sheet_table(title, width) -> Table:
+def start_balance_sheet_table(title, width) -> Table:
     table = Table(title=title, box=None, width=width, show_header=False)
     table.add_column("")
     table.add_column("", justify="right", style="green")

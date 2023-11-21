@@ -13,6 +13,62 @@ With `abacus` you can:
 - close accounts at period end,
 - produce balance sheet and income statement.
 
+## Minimal example
+
+A professional services firm opens with an initial investment of $5000 from shareholders, 
+spends $1000 on a marketing campaign,
+earns $3500 in cash from clients,
+and pays $2000 in salaries.
+
+Here is a Python code resulting in balance sheet and income statement for the firm:
+
+```python
+from composer import Chart
+
+chart = (
+    Chart()
+    .asset("cash")
+    .capital("equity")
+    .income("services")
+    .expense("marketing")
+    .expense("salaries")
+)
+ledger = (
+    chart.ledger()
+    .post("cash", "equity", 5000)
+    .post("marketing", "cash", 1000)
+    .post("cash", "services", 3500)
+    .post("salaries", "cash", 2000)
+)
+report = ledger.report()
+report.balance_sheet().print_rich(width=45)
+report.income_statement().print_rich(width=45)
+```
+
+<details>
+    <summary>See the program output
+    </summary>
+
+```
+                Balance Sheet
+  Assets    5500  Capital                5500
+    Cash    5500    Equity               5000
+                    Retained earnings     500
+                  Liabilities               0
+  Total:    5500  Total:                 5500
+
+               Income Statement
+  Income                                 3500
+    Services                             3500
+  Expenses                               3000
+    Salaries                             2000
+    Marketing                            1000
+  Current profit                          500
+```
+
+</details>
+
+
 ## Quotes about `abacus`
 
 [![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
