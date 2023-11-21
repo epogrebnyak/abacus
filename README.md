@@ -20,7 +20,8 @@ spends $1000 on a marketing campaign,
 earns $3500 in cash from clients,
 and pays $2000 in salaries.
 
-Here is a Python code resulting in balance sheet and income statement for the firm:
+[Python code](experimental/readme.py) below will produce balance sheet 
+and income statement for the firm.
 
 ```python
 from composer import Chart
