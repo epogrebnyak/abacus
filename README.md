@@ -20,8 +20,7 @@ spends $1000 on a marketing campaign,
 earns $3500 in cash from clients,
 and pays $2000 in salaries.
 
-[Python code](experimental/readme.py) below will produce balance sheet 
-and income statement for the firm.
+The Python code below will produce the balance sheet and income statement for the firm.
 
 ```python
 from composer import create_chart
@@ -49,6 +48,8 @@ report.balance_sheet().print_rich(width=45)
 report.income_statement().print_rich(width=45)
 
 ```
+
+This code can be found at [experimental/readme.py](experimental/readme.py).
 
 <details>
     <summary>See the program output
