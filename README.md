@@ -33,6 +33,7 @@ chart = create_chart(
     income=["services"],
     expenses=["marketing", "salaries"],
 )
+
 # Create a ledger using the chart
 ledger = chart.ledger()
 
