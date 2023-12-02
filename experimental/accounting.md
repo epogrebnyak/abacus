@@ -1,10 +1,8 @@
 ## Understanding extended accounting equation
 
 1. A firm keeps records of the resources that the firm owns (assets) and sources of funds -- shareholder equity (or capital) and liabilities (debt). This is a firm financial position, or balance sheet view of the firm.
-
-A firm also keeps records of income and expenses that indicate does the firm make a profit or run a loss. This is income statement view of the firm.
-
-Balance sheet and income statement are derived from the same data linked together in an accounting equation as explained below.
+   A firm also keeps records of income and expenses that indicate does the firm make a profit or run a loss. This is income statement view of the firm.
+   Balance sheet and income statement are derived from the same data linked together in an accounting equation as explained below.
 
 2. Capital and liabilities indicate who has claims on the firm. A claim shows where the money came from and where the money should be distributed if the firm is liquidated. Claims have order of precedence – which are fulfilled first in a liquidation.
 
