@@ -21,7 +21,7 @@
    Substituting `Profit = Income - Expenses` into the equation and rearranging we get the extended form of the accounting identity:
 
 ```
-Assets + Expenses = Equity + Liabilities + Income.
+Assets + Expenses = Equity + Liabilities + Income
 ```
 
 9. The extended accounting equation above always holds true. Whenever a new accounting transaction is recorded you are just changing some variables in this equation. In a double entry, you change two variables, in a compound entry you change several variables. If you try to record just one change, for example, just receipt of cash from a customer as increase in Assets, the equation will break. For cash receipt from customer, you should record an increase in Income and an equal increase in Assets.
