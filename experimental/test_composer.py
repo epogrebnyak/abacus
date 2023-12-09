@@ -1,7 +1,100 @@
 import pytest
-from composer import AssetLabel, Chart, Composer, Offset, base, create_chart  # type: ignore
+from composer import ChartList, CapitalLabel, RetainedEarningsLabel, NullLabel, IncomeSummaryLabel, AssetLabel, Chart, Composer, Offset, base, base_chart_list, create_chart  # type: ignore
 
 import abacus.engine.accounts as accounts  # type: ignore
+
+
+@pytest.fixture
+def chart_list():
+    return (
+        base_chart_list()
+        .safe_append(AssetLabel("cash"))
+        .add("capital:equity")
+        .safe_append(Offset("equity", "ts"))
+    )
+
+
+def test_to_base_chart():
+    bc = base()
+    bc.assets = ["cash"]
+    bc.capital = ["equity"]
+    assert bc.to_chart_list() == ChartList(
+        accounts=[
+            IncomeSummaryLabel(name="current_profit"),
+            RetainedEarningsLabel(name="retained_earnings"),
+            NullLabel(name="null"),
+            AssetLabel(name="cash"),
+            CapitalLabel(name="equity"),
+            Offset(name="equity", contra="ts"),
+        ]
+    )
+
+
+#
+# [('cash', <class 'abacus.engine.accounts.Asset'>), ('equity', <class 'abacus.engine.accounts.Capital'>), ('ts', <class 'abacus.engine.accounts.ContraCapital'>), ('current_profit', <class 'abacus.engine.accounts.IncomeSummaryAccount'>), ('retained_earnings', <class 'abacus.engine.accounts.RetainedEarnings'>), ('null', <class 'abacus.engine.accounts.NullAccount'>)]
+#
+# [('equity', 'ts')]
+# ['cash']
+# ['equity']
+# income_summary_account='current_profit' retained_earnings_account='retained_earnings' null_account='null' assets=['cash'] expenses=[] capital=['equity'] liabilities=[] income=[] contra_accounts={'equity': ['ts']}
+
+
+def test_names(chart_list):
+    assert chart_list.names() == [
+        "current_profit",
+        "retained_earnings",
+        "null",
+        "cash",
+        "equity",
+        "ts",
+    ]
+
+
+def test_labels(chart_list):
+    assert [x.name for x in chart_list.labels] == [
+        "current_profit",
+        "retained_earnings",
+        "null",
+        "cash",
+        "equity",
+    ]
+
+
+def test_ledger_dict(chart_list):
+    assert chart_list.ledger_dict() == {
+        "cash": accounts.Asset(debits=[], credits=[]),
+        "equity": accounts.Capital(debits=[], credits=[]),
+        "ts": accounts.ContraCapital(debits=[], credits=[]),
+        "current_profit": accounts.IncomeSummaryAccount(debits=[], credits=[]),
+        "retained_earnings": accounts.RetainedEarnings(debits=[], credits=[]),
+        "null": accounts.NullAccount(debits=[], credits=[]),
+    }
+
+
+def test_contra_pairs(chart_list):
+    assert chart_list.contra_pairs(accounts.ContraCapital) == [("equity", "ts")]
+
+
+def test_assets_property(chart_list):
+    assert chart_list.assets == ["cash"]
+
+
+def test_capital_property(chart_list):
+    assert chart_list.capital == ["equity"]
+
+
+def test_to_base_chart(chart_list):
+    assert chart_list.to_base_chart()
+
+
+def test_double_append_raises(chart_list):
+    with pytest.raises(ValueError):
+        chart_list.add("asset:cash")
+
+
+def test_double_offset_raises(chart_list):
+    with pytest.raises(ValueError):
+        chart_list.add("contra:equity:ts")
 
 
 def test_make_chart_runs():

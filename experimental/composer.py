@@ -12,10 +12,18 @@ class Offset:
     name: str
     contra: str
 
+    def unique_name(self):
+        return self.contra
+
 
 @dataclass
 class Label:
+    """Parent class to hold an account name."""
+
     name: str
+
+    def unique_name(self):
+        return self.name
 
 
 class AssetLabel(Label):
@@ -51,7 +59,12 @@ class NullLabel(Label):
 
 
 class Composer(BaseModel):
-    """Extract and compose labels using prefixes as in asset:cash."""
+    """Extract and compose labels using prefixes.
+
+    Example: in 'asset:cash' prefix is 'asset'
+            and 'cash' is the name of the account.
+
+    """
 
     asset: str = "asset"
     capital: str = "capital"
@@ -63,54 +76,210 @@ class Composer(BaseModel):
     retained_earnings: str = "re"
     null: str = "null"
 
-    def as_string(self, label: Label | Offset) -> str:
-        def and_name(prefix: str) -> str:
-            return prefix + ":" + label.name
-
+    def get_prefix(self, label: Label) -> str:
         match label:
-            case AssetLabel(name):
-                return and_name(self.asset)
-            case LiabilityLabel(name):
-                return and_name(self.liability)
-            case CapitalLabel(name):
-                return and_name(self.capital)
-            case IncomeLabel(name):
-                return and_name(self.income)
-            case ExpenseLabel(name):
-                return and_name(self.expense)
-            case IncomeSummaryLabel(name):
-                return and_name(self.income_summary)
-            case RetainedEarningsLabel(name):
-                return and_name(self.retained_earnings)
-            case NullLabel(name):
-                return and_name(self.null)
-            case Offset(name, contra):
-                return f"{self.contra}:{name}:{contra}"
+            case AssetLabel(_):
+                return self.asset
+            case LiabilityLabel(_):
+                return self.liability
+            case CapitalLabel(_):
+                return self.capital
+            case IncomeLabel(_):
+                return self.income
+            case ExpenseLabel(_):
+                return self.expense
+            case IncomeSummaryLabel(_):
+                return self.income_summary
+            case RetainedEarningsLabel(_):
+                return self.retained_earnings
+            case NullLabel(_):
+                return self.null
             case _:
                 raise ValueError(f"Invalid label: {label}.")
 
+    def label_class(self, string: str):
+        match string:
+            case self.asset:
+                return AssetLabel
+            case self.liability:
+                return LiabilityLabel
+            case self.capital:
+                return CapitalLabel
+            case self.income:
+                return IncomeLabel
+            case self.expense:
+                return ExpenseLabel
+            case self.income_summary:
+                return IncomeSummaryLabel
+            case self.retained_earnings:
+                return RetainedEarningsLabel
+            case self.null:
+                return NullLabel
+            case _:
+                raise ValueError(f"Invalid label: {string}.")
+
+    def as_string(self, label: Label | Offset) -> str:
+        if isinstance(label, Offset):
+            return f"{self.contra}:{label.name}:{label.contra}"
+        elif isinstance(label, Label):
+            return self.get_prefix(label) + ":" + label.name
+        else:
+            raise ValueError(f"Invalid label: {label}.")
+
     def extract(self, label_str: str) -> Label | Offset:
         match label_str.strip().lower().split(":"):
-            case [self.asset, name]:
-                return AssetLabel(name)
-            case [self.liability, name]:
-                return LiabilityLabel(name)
-            case [self.capital, name]:
-                return CapitalLabel(name)
-            case [self.income, name]:
-                return IncomeLabel(name)
-            case [self.expense, name]:
-                return ExpenseLabel(name)
-            case [self.income_summary, name]:
-                return IncomeSummaryLabel(name)
-            case [self.retained_earnings, name]:
-                return RetainedEarningsLabel(name)
-            case [self.null, name]:
-                return NullLabel(name)
+            case [prefix, name]:
+                return self.label_class(prefix)(name)
             case [self.contra, name, contra_name]:
                 return Offset(name, contra_name)
             case _:
                 raise ValueError(f"Invalid label: {label_str}.")
+
+
+@dataclass
+class ChartList:
+    accounts: list[Label | Offset]
+
+    def names(self):
+        return [account.unique_name() for account in self.accounts]
+
+    @property
+    def labels(self):
+        return [account for account in self.accounts if isinstance(account, Label)]
+
+    def safe_append(self, label):
+        if label.unique_name() in self.names():
+            raise ValueError(f"Duplicate account name: {label.unique_name()}.")
+        self.accounts.append(label)
+        return self
+
+    def add(self, label_str: str, composer=Composer()):
+        return self.safe_append(label=composer.extract(label_str))
+
+    def filter(self, cls: Type[Label] | Type[Offset]):
+        return [account for account in self.accounts if isinstance(account, cls)]
+
+    def filter_name(self, cls: Type[Label]):
+        return [account.name for account in self.accounts if isinstance(account, cls)]
+
+    def to_base_chart(self):
+        return BaseChart(
+            income_summary_account=self.isa,
+            retained_earnings_account=self.re,
+            null_account=self.null,
+            assets=self.assets,
+            liabilities=self.liabilities,
+            capital=self.capital,
+            income=self.income,
+            expenses=self.expenses,
+            contra_accounts=self.contra_accounts,
+        )
+
+    @property
+    def isa(self):
+        return self.get_exactly_one(IncomeSummaryLabel).name
+
+    @property
+    def re(self):
+        return self.get_exactly_one(RetainedEarningsLabel).name
+
+    @property
+    def null(self):
+        return self.get_exactly_one(NullLabel).name
+
+    @property
+    def assets(self):
+        return self.filter_name(AssetLabel)
+
+    @property
+    def liabilities(self):
+        return self.filter_name(LiabilityLabel)
+
+    @property
+    def capital(self):
+        return self.filter_name(CapitalLabel)
+
+    @property
+    def income(self):
+        return self.filter_name(IncomeLabel)
+
+    @property
+    def expenses(self):
+        return self.filter_name(ExpenseLabel)
+
+    @property
+    def contra_accounts(self):
+        return {
+            label.name: [offset.contra for offset in self.offsets(label.name)]
+            for label in self.labels
+            if self.offsets(label.name)
+        }
+
+    def offsets(self, name: str):
+        return [offset for offset in self.filter(Offset) if offset.name == name]
+
+    def get_exactly_one(self, cls: Type[Label]):
+        matches = self.filter(cls)
+        if len(matches) != 1:
+            raise ValueError(
+                f"Expected exactly one {cls.__name__}, found {len(matches)}."
+            )
+        return matches[0]
+
+    def stream(self, label_class, account_class, contra_account_class):
+        for label in self.filter(label_class):
+            yield label.name, account_class
+            for offset in self.offsets(label.name):
+                yield offset.contra, contra_account_class
+
+    def t_accounts(self):
+        yield from self.stream(AssetLabel, accounts.Asset, accounts.ContraAsset)
+        yield from self.stream(CapitalLabel, accounts.Capital, accounts.ContraCapital)
+        yield from self.stream(
+            LiabilityLabel, accounts.Liability, accounts.ContraLiability
+        )
+        yield from self.stream(IncomeLabel, accounts.Income, accounts.ContraIncome)
+        yield from self.stream(ExpenseLabel, accounts.Expense, accounts.ContraExpense)
+        yield self.get_exactly_one(
+            IncomeSummaryLabel
+        ).name, accounts.IncomeSummaryAccount
+        yield self.get_exactly_one(
+            RetainedEarningsLabel
+        ).name, accounts.RetainedEarnings
+        yield self.get_exactly_one(NullLabel).name, accounts.NullAccount
+
+    def ledger_dict(self):
+        return {name: t_account() for name, t_account in self.t_accounts()}
+
+    def contra_pairs(self, cls: Type[ContraAccount]) -> list[str, str]:
+        mapper = {
+            "ContraAsset": AssetLabel,
+            "ContraLiability": LiabilityLabel,
+            "ContraCapital": CapitalLabel,
+            "ContraExpense": ExpenseLabel,
+            "ContraIncome": IncomeLabel,
+        }
+        return [
+            (label.name, offset.contra)
+            for label in self.filter(mapper[cls.__name__])
+            for offset in self.offsets(label.name)
+        ]
+
+    def as_dict(self):
+        return {account.unique_name(): account for account in self.accounts}
+
+    def label(self, name):
+        return self.as_dict()[name]
+
+
+def base_chart_list():
+    return ChartList(
+        [
+            IncomeSummaryLabel("current_profit"),
+            RetainedEarningsLabel("retained_earnings"),
+            NullLabel("null"),
+        ]
+    )
 
 
 class BaseChart(BaseModel):
@@ -124,13 +293,36 @@ class BaseChart(BaseModel):
     income: list[str] = []
     contra_accounts: dict[str, list[str]] = {}
 
+    def to_chart_list(self):
+        chart_list = ChartList(
+            [
+                IncomeSummaryLabel(self.income_summary_account),
+                RetainedEarningsLabel(self.retained_earnings_account),
+                NullLabel(self.null_account),
+            ]
+        )
+        for name in self.assets:
+            chart_list.safe_append(AssetLabel(name))
+        for name in self.liabilities:
+            chart_list.safe_append(LiabilityLabel(name))
+        for name in self.capital:
+            chart_list.safe_append(CapitalLabel(name))
+        for name in self.income:
+            chart_list.safe_append(IncomeLabel(name))
+        for name in self.expenses:
+            chart_list.safe_append(ExpenseLabel(name))
+        for name, contra_names in self.contra_accounts.items():
+            for contra in contra_names:
+                chart_list.safe_append(Offset(name, contra))
+        return chart_list
+
     def safe_append(self, attribute, value):
         if value in self.account_names():
             raise ValueError(f"Duplicate account name: {value}.")
         getattr(self, attribute).append(value)
 
     def add(self, label_str: str, composer=Composer()):
-        return self.promote(composer.extract(label_str))
+        return self.promote(label=composer.extract(label_str))
 
     def promote(self, label: Label | Offset):
         match label:
@@ -220,6 +412,64 @@ def base():
     )
 
 
+class ReChart(BaseModel):
+    base: ChartList = base_chart_list()
+    titles: dict[str, str] = {}
+    operations: dict[str, tuple[str, str]] = {}
+    composer: Composer = Composer()
+
+    def asset(self, name: str):
+        self.base.safe_append(AssetLabel(name))
+        return self
+
+    def liability(self, name: str):
+        self.base.safe_append(LiabilityLabel(name))
+        return self
+
+    def capital(self, name: str):
+        self.base.safe_append(CapitalLabel(name))
+        return self
+
+    def income(self, name: str):
+        self.base.safe_append(IncomeLabel(name))
+        return self
+
+    def expense(self, name: str):
+        self.base.safe_append(ExpenseLabel(name))
+        return self
+
+    def add(self, label_str: str):
+        self.base.add(label_str, self.composer)
+        return self
+
+    def add_many(self, labels: list[str], prefix: str = ""):
+        if prefix and not prefix.endswith(":"):
+            prefix = prefix.strip() + ":"
+        for label in labels:
+            self.add(prefix + label)
+        return self
+
+    def offset(self, name: str, contra: str):
+        self.base.safe_append(Offset(name, contra))
+        return self
+
+    def offset_many(self, name: str, contra_names: str):
+        for contra in contra_names:
+            self.offset(name, contra)
+        return self
+
+    def name(self, name: str, title: str):
+        self.titles[name] = title
+        return self
+
+    def alias(self, operation: str, debit: str, credit: str):
+        self.operations[operation] = (debit, credit)
+        return self
+
+    def label(self, account_name) -> str:
+        return self.composer.as_string(self.base.label(account_name))
+
+
 class Chart(BaseModel):
     base: BaseChart = base()
     titles: dict[str, str] = {}
@@ -296,3 +546,7 @@ def create_chart(
     base_chart.income = income if income else []
     base_chart.expenses = expenses if expenses else []
     return Chart(base=base_chart)
+
+
+# TODO: must check downstream usage of Ledger.chart (creation vs presentation part)
+#       "and decide if it should be a Chart or a BaseChart"
