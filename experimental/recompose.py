@@ -324,6 +324,9 @@ class BaseLedger:
 
     def nonzero_balances(self):
         return {k: v for k, v in self.balances().items() if v != 0}
+    
+    def items(self):
+        return self.data.items()
 
     def subset(self, cls):
         """Filter ledger by account type."""
@@ -429,7 +432,17 @@ class Reporter:
         statement = BalanceSheet.new(ledger)
         return BalanceSheetViewer(statement, self.titles, header)
 
+    # Needs rework 
+    # def trial_balance(self, header="Trial Balance"):
+    #     from abacus.engine.report import view_trial_balance
+
+    #     ledger, _ = chain(
+    #         self.chart, self.ledger, [close_first, close_second]
+    #     )
+    #     return view_trial_balance(self.chart, ledger)
+
 
 r = Reporter(x, ledger)
 print(r.income_statement())
 print(r.balance_sheet())
+#print(r.trial_balance())
