@@ -410,6 +410,23 @@ def chain(chart, ledger, functions):
     return ledger, closing_entries
 
 
+def view_trial_balance(chart, ledger) -> str:
+    data = list(yield_tuples_for_trial_balance(chart, ledger))
+
+    def nameit(x):
+        return x
+
+    col_1 = (
+        Column([nameit(d[0]) for d in data])
+        .align_left(".")
+        .add_space(1)
+        .header("Account")
+    )
+    col_2 = nth(data, 1).align_right().add_space_left(2).header("Debit").add_space(2)
+    col_3 = nth(data, 2).align_right().add_space_left(2).header("Credit")
+    return (col_1 + col_2 + col_3).printable()
+
+
 @dataclass
 class Reporter:
     chart: ChartList
@@ -432,17 +449,40 @@ class Reporter:
         statement = BalanceSheet.new(ledger)
         return BalanceSheetViewer(statement, self.titles, header)
 
-    # Needs rework 
-    # def trial_balance(self, header="Trial Balance"):
-    #     from abacus.engine.report import view_trial_balance
+    def trial_balance(self, header="Trial Balance"):
+        ledger, _ = chain(
+            self.chart, self.ledger, []
+        )
+        return view_trial_balance(self.chart, ledger)
 
-    #     ledger, _ = chain(
-    #         self.chart, self.ledger, [close_first, close_second]
-    #     )
-    #     return view_trial_balance(self.chart, ledger)
 
+def yield_tuples_for_trial_balance(chart, ledger):
+
+    def must_exclude(t_account):
+        return any([isinstance(t_account, e) for e in [accounts.NullAccount, 
+                                                       accounts.IncomeSummaryAccount]])    
+    for account_name, t_account in ledger.items():
+        if isinstance(t_account, accounts.DebitAccount) and not must_exclude(t_account):
+            yield account_name, t_account.balance(), 0
+    for account_name, t_account in ledger.items():
+        if isinstance(t_account, accounts.CreditAccount) and not must_exclude(t_account):
+            yield account_name, 0, t_account.balance()
+
+from abacus.engine.report import Column
+
+def nth(data, n: int, f=str) -> Column:
+    """Make a column from nth element of each tuple or list in `data`."""
+    return Column([f(d[n]) for d in data])
+
+
+# def long_name(chart, account_name):
+#     label = chart.get_label(account_name)
+#     title = chart.get_title(account_name)
+#     return f"{label} ({title})"
 
 r = Reporter(x, ledger)
 print(r.income_statement())
 print(r.balance_sheet())
-#print(r.trial_balance())
+print(r.trial_balance())
+
+
