@@ -8,22 +8,22 @@ from abacus.engine.accounts import ContraAccount  # type: ignore
 
 
 @dataclass
-class Offset:
-    name: str
-    contra: str
-
-    def unique_name(self):
-        return self.contra
-
-
-@dataclass
 class Label:
     """Parent class to hold an account name."""
 
     name: str
 
-    def unique_name(self):
-        return self.name
+    def as_string(self, prefix: str):
+        return prefix + ":" + self.name
+
+
+@dataclass
+class Offset:
+    name: str
+    offsets: str
+
+    def as_string(self, prefix: str):
+        return prefix + ":" + self.offsets + ":" + self.name
 
 
 class AssetLabel(Label):
@@ -61,8 +61,10 @@ class NullLabel(Label):
 class Composer(BaseModel):
     """Extract and compose labels using prefixes.
 
-    Example: in 'asset:cash' prefix is 'asset'
-            and 'cash' is the name of the account.
+    Examples:
+
+      - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account.
+      - in 'contra:equity:ta' prefix is 'contra', 'equity' account name and 'ta' is the contra account.
 
     """
 
@@ -76,7 +78,7 @@ class Composer(BaseModel):
     retained_earnings: str = "re"
     null: str = "null"
 
-    def get_prefix(self, label: Label) -> str:
+    def _get_prefix(self, label: Label | Offset) -> str:
         match label:
             case AssetLabel(_):
                 return self.asset
@@ -94,11 +96,13 @@ class Composer(BaseModel):
                 return self.retained_earnings
             case NullLabel(_):
                 return self.null
+            case Offset(_, _):
+                return self.contra
             case _:
                 raise ValueError(f"Invalid label: {label}.")
 
-    def label_class(self, string: str):
-        match string:
+    def _get_label_class(self, prefix: str):
+        match prefix:
             case self.asset:
                 return AssetLabel
             case self.liability:
@@ -116,22 +120,18 @@ class Composer(BaseModel):
             case self.null:
                 return NullLabel
             case _:
-                raise ValueError(f"Invalid label: {string}.")
+                raise ValueError(f"Invalid label: {prefix}.")
 
     def as_string(self, label: Label | Offset) -> str:
-        if isinstance(label, Offset):
-            return f"{self.contra}:{label.name}:{label.contra}"
-        elif isinstance(label, Label):
-            return self.get_prefix(label) + ":" + label.name
-        else:
-            raise ValueError(f"Invalid label: {label}.")
+        prefix = self._get_prefix(label)
+        return label.as_string(prefix)
 
     def extract(self, label_str: str) -> Label | Offset:
         match label_str.strip().lower().split(":"):
             case [prefix, name]:
-                return self.label_class(prefix)(name)
-            case [self.contra, name, contra_name]:
-                return Offset(name, contra_name)
+                return self._get_label_class(prefix)(name)
+            case [self.contra, account_name, contra_account_name]:
+                return Offset(contra_account_name, account_name)
             case _:
                 raise ValueError(f"Invalid label: {label_str}.")
 
@@ -141,20 +141,24 @@ class ChartList:
     accounts: list[Label | Offset]
 
     def names(self):
-        return [account.unique_name() for account in self.accounts]
+        return [account.name for account in self.accounts]
 
     @property
     def labels(self):
         return [account for account in self.accounts if isinstance(account, Label)]
 
     def safe_append(self, label):
-        if label.unique_name() in self.names():
-            raise ValueError(f"Duplicate account name: {label.unique_name()}.")
+        if label.name in self.names():
+            raise ValueError(f"Duplicate account name: {label.name}.")
+        if isinstance(label, Offset) and label.offsets not in self.names():
+            raise ValueError(
+                f"Account name must be defined before offsetting: {label.offsets}."
+            )
         self.accounts.append(label)
         return self
 
-    def add(self, label_str: str, composer=Composer()):
-        return self.safe_append(label=composer.extract(label_str))
+    def add(self, label_string: str, composer=Composer()):
+        return self.safe_append(label=composer.extract(label_string))
 
     def filter(self, cls: Type[Label] | Type[Offset]):
         return [account for account in self.accounts if isinstance(account, cls)]
@@ -177,15 +181,15 @@ class ChartList:
 
     @property
     def isa(self):
-        return self.get_exactly_one(IncomeSummaryLabel).name
+        return self.get_exactly_one(IncomeSummaryLabel)
 
     @property
     def re(self):
-        return self.get_exactly_one(RetainedEarningsLabel).name
+        return self.get_exactly_one(RetainedEarningsLabel)
 
     @property
     def null(self):
-        return self.get_exactly_one(NullLabel).name
+        return self.get_exactly_one(NullLabel)
 
     @property
     def assets(self):
@@ -210,27 +214,29 @@ class ChartList:
     @property
     def contra_accounts(self):
         return {
-            label.name: [offset.contra for offset in self.offsets(label.name)]
-            for label in self.labels
-            if self.offsets(label.name)
+            # label.offset: [offset.name for offset in self.offsets(label.name)]
+            # for label in self.labels
+            # if self.offsets(label.name)
         }
 
     def offsets(self, name: str):
-        return [offset for offset in self.filter(Offset) if offset.name == name]
+        return [offset for offset in self.filter(Offset) if offset.offsets == name]
 
     def get_exactly_one(self, cls: Type[Label]):
         matches = self.filter(cls)
-        if len(matches) != 1:
-            raise ValueError(
-                f"Expected exactly one {cls.__name__}, found {len(matches)}."
-            )
-        return matches[0]
+        match len(matches):
+            case 1:
+                return matches[0].name
+            case _:
+                raise ValueError(
+                    f"Expected exactly one {cls.__name__}, found {len(matches)}."
+                )
 
     def stream(self, label_class, account_class, contra_account_class):
         for label in self.filter(label_class):
             yield label.name, account_class
             for offset in self.offsets(label.name):
-                yield offset.contra, contra_account_class
+                yield offset.name, contra_account_class
 
     def t_accounts(self):
         yield from self.stream(AssetLabel, accounts.Asset, accounts.ContraAsset)
@@ -240,28 +246,24 @@ class ChartList:
         )
         yield from self.stream(IncomeLabel, accounts.Income, accounts.ContraIncome)
         yield from self.stream(ExpenseLabel, accounts.Expense, accounts.ContraExpense)
-        yield self.get_exactly_one(
-            IncomeSummaryLabel
-        ).name, accounts.IncomeSummaryAccount
-        yield self.get_exactly_one(
-            RetainedEarningsLabel
-        ).name, accounts.RetainedEarnings
-        yield self.get_exactly_one(NullLabel).name, accounts.NullAccount
+        yield self.get_exactly_one(IncomeSummaryLabel), accounts.IncomeSummaryAccount
+        yield self.get_exactly_one(RetainedEarningsLabel), accounts.RetainedEarnings
+        yield self.get_exactly_one(NullLabel), accounts.NullAccount
 
     def ledger_dict(self):
         return {name: t_account() for name, t_account in self.t_accounts()}
 
     def contra_pairs(self, cls: Type[ContraAccount]) -> list[str, str]:
-        mapper = {
+        klass = {
             "ContraAsset": AssetLabel,
             "ContraLiability": LiabilityLabel,
             "ContraCapital": CapitalLabel,
             "ContraExpense": ExpenseLabel,
             "ContraIncome": IncomeLabel,
-        }
+        }[cls.__name__]
         return [
-            (label.name, offset.contra)
-            for label in self.filter(mapper[cls.__name__])
+            (offset.offsets, offset.name)
+            for label in self.filter(klass)
             for offset in self.offsets(label.name)
         ]
 

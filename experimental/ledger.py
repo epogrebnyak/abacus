@@ -14,7 +14,7 @@ from abacus.engine.accounts import (  # type: ignore
     Expense,
     Income,
     TAccount,
-)  # type: ignore
+)
 from abacus.engine.base import AbacusError, Entry  # type: ignore
 
 
