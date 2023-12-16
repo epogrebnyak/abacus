@@ -116,7 +116,8 @@ def prefix(composer: Composer, label: Label | Offset) -> str:
             raise ValueError(f"Invalid label: {label}.")
 
 
-def label_class(composer: Composer, prefix: str):
+def label_class(composer: Composer, prefix: str) -> Type[Label | Offset]:
+    """Return label or offset class contructor given the prefix string."""
     match prefix:
         case composer.asset:
             return AssetLabel
@@ -169,7 +170,7 @@ class ChartList:
     def add_many(self, *label_strings: list[str], composer=Composer()):
         for s in label_strings:
             self.add(s, composer)
-        return self    
+        return self
 
     def filter(self, cls: Type[Label] | Type[Offset]):
         return [account for account in self.accounts if isinstance(account, cls)]
@@ -277,7 +278,7 @@ def base_chart_list():
 
 def make_chart(*strings: list[str]):
     return base_chart_list().add_many(*strings)
-    
+
 
 x = make_chart("asset:cash", "capital:equity", "contra:equity:ts")
 print(x)
@@ -424,12 +425,7 @@ def chain(chart, ledger, functions):
 def view_trial_balance(chart, ledger) -> str:
     data = list(yield_tuples_for_trial_balance(chart, ledger))
 
-    col_1 = (
-        Column([d[0] for d in data])
-        .align_left(".")
-        .add_space(1)
-        .header("Account")
-    )
+    col_1 = Column([d[0] for d in data]).align_left(".").add_space(1).header("Account")
     col_2 = nth(data, 1).align_right().add_space_left(2).header("Debit").add_space(2)
     col_3 = nth(data, 2).align_right().add_space_left(2).header("Credit")
     return (col_1 + col_2 + col_3).printable()
@@ -453,6 +449,7 @@ class _TrialBalance(BaseModel):
 def make_trial_balance(chart, ledger):
     return _TrialBalance(lines=list(yield_tuples_for_trial_balance(chart, ledger)))
 
+
 @dataclass
 class Reporter:
     chart: ChartList
@@ -464,7 +461,7 @@ class Reporter:
 
         ledger, _ = chain(self.chart, self.ledger, [close_first])
         print("closing entries", _)
-        print(ledger.data['salaries'])
+        print(ledger.data["salaries"])
         statement = IncomeStatement.new(ledger)
         return IncomeStatementViewer(statement, self.titles, header)
 
@@ -475,15 +472,15 @@ class Reporter:
             self.chart, self.ledger, [close_first, close_second, close_last]
         )
         print(_)
-        print(ledger.data['salaries'])
+        print(ledger.data["salaries"])
         statement = BalanceSheet.new(ledger)
         return BalanceSheetViewer(statement, self.titles, header)
 
     def trial_balance(self, header="Trial Balance"):
-        #ledger, _ = chain(self.chart, self.ledger, [])        
-        print(ledger.data['salaries'])
+        # ledger, _ = chain(self.chart, self.ledger, [])
+        print(ledger.data["salaries"])
         return view_trial_balance(self.chart, self.ledger)
-    
+
     def tb(self):
         return make_trial_balance(self.chart, self.ledger)
 
@@ -517,7 +514,7 @@ def nth(data, n: int, f=str) -> Column:
 
 r = Reporter(x, ledger)
 print(r.tb())
-# income statement and balance sheet corrupt initial ledger! 
+# income statement and balance sheet corrupt initial ledger!
 print(r.income_statement())
 print(r.balance_sheet())
 print(r.trial_balance())
