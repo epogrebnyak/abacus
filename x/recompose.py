@@ -79,62 +79,63 @@ class Composer(BaseModel):
     retained_earnings: str = "re"
     null: str = "null"
 
-    def _get_prefix(self, label: Label | Offset) -> str:
-        match label:
-            case AssetLabel(_):
-                return self.asset
-            case LiabilityLabel(_):
-                return self.liability
-            case CapitalLabel(_):
-                return self.capital
-            case IncomeLabel(_):
-                return self.income
-            case ExpenseLabel(_):
-                return self.expense
-            case IncomeSummaryLabel(_):
-                return self.income_summary
-            case RetainedEarningsLabel(_):
-                return self.retained_earnings
-            case NullLabel(_):
-                return self.null
-            case Offset(_, _):
-                return self.contra
-            case _:
-                raise ValueError(f"Invalid label: {label}.")
-
-    def _get_label_class(self, prefix: str):
-        match prefix:
-            case self.asset:
-                return AssetLabel
-            case self.liability:
-                return LiabilityLabel
-            case self.capital:
-                return CapitalLabel
-            case self.income:
-                return IncomeLabel
-            case self.expense:
-                return ExpenseLabel
-            case self.income_summary:
-                return IncomeSummaryLabel
-            case self.retained_earnings:
-                return RetainedEarningsLabel
-            case self.null:
-                return NullLabel
-            case _:
-                raise ValueError(f"Invalid label: {prefix}.")
-
     def as_string(self, label: Label | Offset) -> str:
-        prefix = self._get_prefix(label)
-        return label.as_string(prefix)
+        return label.as_string(prefix(self, label))
 
-    def extract(self, label_str: str) -> Label | Offset:
-        match label_str.strip().lower().split(":"):
+    def extract(self, label_string: str) -> Label | Offset:
+        match label_string.strip().lower().split(":"):
             case [prefix, name]:
-                return self._get_label_class(prefix)(name)
+                return label_class(self, prefix)(name)
             case [self.contra, account_name, contra_account_name]:
                 return Offset(contra_account_name, account_name)
             case _:
-                raise ValueError(f"Invalid label: {label_str}.")
+                raise ValueError(f"Invalid label: {label_string}.")
+
+
+def prefix(composer: Composer, label: Label | Offset) -> str:
+    match label:
+        case AssetLabel(_):
+            return composer.asset
+        case LiabilityLabel(_):
+            return composer.liability
+        case CapitalLabel(_):
+            return composer.capital
+        case IncomeLabel(_):
+            return composer.income
+        case ExpenseLabel(_):
+            return composer.expense
+        case IncomeSummaryLabel(_):
+            return composer.income_summary
+        case RetainedEarningsLabel(_):
+            return composer.retained_earnings
+        case NullLabel(_):
+            return composer.null
+        case Offset(_, _):
+            return composer.contra
+        case _:
+            raise ValueError(f"Invalid label: {label}.")
+
+
+def label_class(composer: Composer, prefix: str):
+    match prefix:
+        case composer.asset:
+            return AssetLabel
+        case composer.liability:
+            return LiabilityLabel
+        case composer.capital:
+            return CapitalLabel
+        case composer.income:
+            return IncomeLabel
+        case composer.expense:
+            return ExpenseLabel
+        case composer.income_summary:
+            return IncomeSummaryLabel
+        case composer.retained_earnings:
+            return RetainedEarningsLabel
+        case composer.null:
+            return NullLabel
+        case _:
+            raise ValueError(f"Invalid label: {prefix}.")
 
 
 @dataclass
@@ -164,6 +165,11 @@ class ChartList:
 
     def add(self, label_string: str, composer=Composer()):
         return self.safe_append(label=composer.extract(label_string))
+
+    def add_many(self, *label_strings: list[str], composer=Composer()):
+        for s in label_strings:
+            self.add(s, composer)
+        return self    
 
     def filter(self, cls: Type[Label] | Type[Offset]):
         return [account for account in self.accounts if isinstance(account, cls)]
@@ -217,6 +223,7 @@ class ChartList:
                 )
 
     def stream(self, label_class, account_class, contra_account_class):
+        """Yield tuples of account names and account or contra account classes."""
         for label in self.filter(label_class):
             yield label.name, account_class
             for offset in self._find_offsets(label.name):
@@ -268,7 +275,11 @@ def base_chart_list():
     )
 
 
-x = base_chart_list().add("asset:cash").add("capital:equity").add("contra:equity:ts")
+def make_chart(*strings: list[str]):
+    return base_chart_list().add_many(*strings)
+    
+
+x = make_chart("asset:cash", "capital:equity", "contra:equity:ts")
 print(x)
 print(x["ts"] == [Offset("ts", "equity")])
 print(x["ts"].as_string("contra") == "contra:equity:ts")
@@ -324,7 +335,7 @@ class BaseLedger:
 
     def nonzero_balances(self):
         return {k: v for k, v in self.balances().items() if v != 0}
-    
+
     def items(self):
         return self.data.items()
 
@@ -344,7 +355,7 @@ def closing_contra_entries(chart, ledger, contra_cls):
         yield ledger.data[offset.name].transfer(offset.name, offset.offsets)  # type: ignore
 
 
-x.add("income:sales").add("contra:sales:refunds").add("expense:salaries")
+x.add_many("income:sales", "contra:sales:refunds", "expense:salaries")
 ledger = x.ledger()
 ledger.post("cash", "equity", 12_000)
 ledger.post("ts", "cash", 2_000)
@@ -370,7 +381,7 @@ def close_first(chart, ledger):
     c1 = closing_contra_entries(chart, ledger, accounts.ContraIncome)
     c2 = closing_contra_entries(chart, ledger, accounts.ContraExpense)
     closing_entries = list(c1) + list(c2)
-    return ledger.condense().post_many(closing_entries), closing_entries
+    return ledger.post_many(closing_entries), closing_entries
 
 
 def close_second(chart, dummy_ledger):
@@ -402,22 +413,19 @@ def close_last(chart, ledger):
 
 
 def chain(chart, ledger, functions):
-    ledger = ledger.condense().deep_copy()
+    _ledger = ledger.condense().deep_copy()
     closing_entries = []
     for f in functions:
-        ledger, entries = f(chart, ledger)
-        closing_entries.append(entries)
-    return ledger, closing_entries
+        _ledger, entries = f(chart, _ledger)
+        closing_entries += entries
+    return _ledger, closing_entries
 
 
 def view_trial_balance(chart, ledger) -> str:
     data = list(yield_tuples_for_trial_balance(chart, ledger))
 
-    def nameit(x):
-        return x
-
     col_1 = (
-        Column([nameit(d[0]) for d in data])
+        Column([d[0] for d in data])
         .align_left(".")
         .add_space(1)
         .header("Account")
@@ -426,6 +434,24 @@ def view_trial_balance(chart, ledger) -> str:
     col_3 = nth(data, 2).align_right().add_space_left(2).header("Credit")
     return (col_1 + col_2 + col_3).printable()
 
+
+class _BalanceSheet(BaseModel):
+    assets: dict[str, int]
+    capital: dict[str, int]
+    liabilities: dict[str, int]
+
+
+class _IncomeStatement(BaseModel):
+    income: dict[str, int]
+    expenses: dict[str, int]
+
+
+class _TrialBalance(BaseModel):
+    lines: list[tuple[str, int, int]]
+
+
+def make_trial_balance(chart, ledger):
+    return _TrialBalance(lines=list(yield_tuples_for_trial_balance(chart, ledger)))
 
 @dataclass
 class Reporter:
@@ -437,6 +463,8 @@ class Reporter:
         from abacus.engine.report import IncomeStatement, IncomeStatementViewer
 
         ledger, _ = chain(self.chart, self.ledger, [close_first])
+        print("closing entries", _)
+        print(ledger.data['salaries'])
         statement = IncomeStatement.new(ledger)
         return IncomeStatementViewer(statement, self.titles, header)
 
@@ -446,43 +474,51 @@ class Reporter:
         ledger, _ = chain(
             self.chart, self.ledger, [close_first, close_second, close_last]
         )
+        print(_)
+        print(ledger.data['salaries'])
         statement = BalanceSheet.new(ledger)
         return BalanceSheetViewer(statement, self.titles, header)
 
     def trial_balance(self, header="Trial Balance"):
-        ledger, _ = chain(
-            self.chart, self.ledger, []
-        )
-        return view_trial_balance(self.chart, ledger)
+        #ledger, _ = chain(self.chart, self.ledger, [])        
+        print(ledger.data['salaries'])
+        return view_trial_balance(self.chart, self.ledger)
+    
+    def tb(self):
+        return make_trial_balance(self.chart, self.ledger)
 
 
 def yield_tuples_for_trial_balance(chart, ledger):
-
     def must_exclude(t_account):
-        return any([isinstance(t_account, e) for e in [accounts.NullAccount, 
-                                                       accounts.IncomeSummaryAccount]])    
+        return any(
+            [
+                isinstance(t_account, e)
+                for e in [accounts.NullAccount, accounts.IncomeSummaryAccount]
+            ]
+        )
+
     for account_name, t_account in ledger.items():
         if isinstance(t_account, accounts.DebitAccount) and not must_exclude(t_account):
             yield account_name, t_account.balance(), 0
     for account_name, t_account in ledger.items():
-        if isinstance(t_account, accounts.CreditAccount) and not must_exclude(t_account):
+        if isinstance(t_account, accounts.CreditAccount) and not must_exclude(
+            t_account
+        ):
             yield account_name, 0, t_account.balance()
 
+
 from abacus.engine.report import Column
+
 
 def nth(data, n: int, f=str) -> Column:
     """Make a column from nth element of each tuple or list in `data`."""
     return Column([f(d[n]) for d in data])
 
 
-# def long_name(chart, account_name):
-#     label = chart.get_label(account_name)
-#     title = chart.get_title(account_name)
-#     return f"{label} ({title})"
-
 r = Reporter(x, ledger)
+print(r.tb())
+# income statement and balance sheet corrupt initial ledger! 
 print(r.income_statement())
 print(r.balance_sheet())
 print(r.trial_balance())
-
-
+print(r.tb())
