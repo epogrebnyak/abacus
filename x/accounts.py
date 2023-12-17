@@ -50,9 +50,12 @@ class TAccount(ABC):
         self.credits.append(amount)
         return self
 
+    def debit_and_credit(self):
+        return sum(self.debits), sum(self.credits)
+
     def deep_copy(self):
         """Replicate this account as new data structure."""
-        return self.__class__(self.debits.copy(), self.credits.copy())
+        return self.__class__([x for x in self.debits], [x for x in self.credits])
 
     def condense(self):
         """Create a new account of the same type with only one value as account balance."""

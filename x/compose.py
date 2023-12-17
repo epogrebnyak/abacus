@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Iterable, Type
 from pydantic import BaseModel
 
-import accounts as accounts  # type: ignore
+import accounts  # type: ignore
 from accounts import ContraAccount, TAccount  # type: ignore
 from base import AbacusError, Entry
 from report import Column
@@ -10,7 +10,7 @@ from report import Column
 
 @dataclass
 class Label:
-    """Parent class to hold an account name."""
+    """Parent class to hold an account name. Child classes are AssetLabel, LiabilityLabel, etc."""
 
     name: str
 
@@ -20,6 +20,8 @@ class Label:
 
 @dataclass
 class Offset:
+    """Class to add contra account."""
+
     name: str
     offsets: str
 
@@ -61,11 +63,10 @@ class NullLabel(Label):
 
 class Composer(BaseModel):
     """Extract and compose labels using prefixes.
-    This class helps in internationalisation - it will allow
-    labels like 'актив:касса'.
+
+    This class helps in internationalisation - it will allow labels like 'актив:касса'.
 
     Examples:
-
       - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account.
       - in 'contra:equity:ta' prefix is 'contra', 'equity' account name and 'ta' is the contra account.
 
@@ -91,10 +92,11 @@ class Composer(BaseModel):
             case [self.contra, account_name, contra_account_name]:
                 return Offset(contra_account_name, account_name)
             case _:
-                raise ValueError(f"Invalid label: {label_string}.")
+                raise AbacusError(f"Invalid label: {label_string}.")
 
 
 def prefix(composer: Composer, label: Label | Offset) -> str:
+    """Return prefix string given a label or offset."""
     match label:
         case AssetLabel(_):
             return composer.asset
@@ -115,7 +117,7 @@ def prefix(composer: Composer, label: Label | Offset) -> str:
         case Offset(_, _):
             return composer.contra
         case _:
-            raise ValueError(f"Invalid label: {label}.")
+            raise AbacusError(f"Invalid label: {label}.")
 
 
 def label_class(composer: Composer, prefix: str) -> Type[Label | Offset]:
@@ -138,7 +140,7 @@ def label_class(composer: Composer, prefix: str) -> Type[Label | Offset]:
         case composer.null:
             return NullLabel
         case _:
-            raise ValueError(f"Invalid label: {prefix}.")
+            raise AbacusError(f"Invalid label: {prefix}.")
 
 
 @dataclass
@@ -158,11 +160,11 @@ class ChartList:
 
     def safe_append(self, label):
         if label.name in self.names():
-            raise ValueError(
+            raise AbacusError(
                 f"Duplicate account name detected, name already in use: {label.name}."
             )
         if isinstance(label, Offset) and label.offsets not in self.names():
-            raise ValueError(
+            raise AbacusError(
                 f"Account name must be defined before offsets: {label.offsets}."
             )
         self.accounts.append(label)
@@ -223,7 +225,7 @@ class ChartList:
             case 1:
                 return matches[0].name
             case _:
-                raise ValueError(
+                raise AbacusError(
                     f"Expected exactly one {cls.__name__}, found {len(matches)}."
                 )
 
@@ -270,12 +272,8 @@ class ChartList:
         return {account.name: account for account in self.accounts}[account_name]
 
 
-assert ChartList([]).add("capital:equity").add("contra:equity:ts")["ts"] == Offset(
-    name="ts", offsets="equity"
-)
-
-
 def base_chart_list():
+    """Default chart that has required accounts."""
     return ChartList(
         [
             IncomeSummaryLabel("current_profit"),
@@ -389,7 +387,9 @@ def close_last(chart, ledger):
 
 
 def chain(chart, ledger, functions):
-    _ledger = ledger.condense().deep_copy()
+    # this line is expected to make deep copy of ledger instance
+    # apparently this does not work
+    _ledger = ledger.condense()  # .deep_copy()
     closing_entries = []
     for f in functions:
         _ledger, entries = f(chart, _ledger)
@@ -417,12 +417,17 @@ class _IncomeStatement(BaseModel):
     expenses: dict[str, int]
 
 
-class _TrialBalance(BaseModel):
-    lines: list[tuple[str, int, int]]
+from collections import UserDict
+
+
+class TB(UserDict[str, tuple[int, int]]):
+    ...
 
 
 def make_trial_balance(chart, ledger):
-    return _TrialBalance(lines=list(yield_tuples_for_trial_balance(chart, ledger)))
+    return TB(
+        {name: (a, b) for name, a, b in yield_tuples_for_trial_balance(chart, ledger)}
+    )
 
 
 @dataclass
@@ -435,8 +440,6 @@ class Reporter:
         from report import IncomeStatement, IncomeStatementViewer
 
         ledger, _ = chain(self.chart, self.ledger, [close_first])
-        print("closing entries", _)
-        print(ledger.data["salaries"])
         statement = IncomeStatement.new(ledger)
         return IncomeStatementViewer(statement, self.titles, header)
 
@@ -446,8 +449,6 @@ class Reporter:
         ledger, _ = chain(
             self.chart, self.ledger, [close_first, close_second, close_last]
         )
-        print(_)
-        print(ledger.data["salaries"])
         statement = BalanceSheet.new(ledger)
         return BalanceSheetViewer(statement, self.titles, header)
 
