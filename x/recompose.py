@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Type
-
 from pydantic import BaseModel
 
-import abacus.engine.accounts as accounts  # type: ignore
-from abacus.engine.accounts import ContraAccount  # type: ignore
-from abacus.engine.accounts import AbacusError, Entry, TAccount
+import accounts as accounts  # type: ignore
+from accounts import ContraAccount, TAccount  # type: ignore
+from base import AbacusError, Entry
+from report import Column
 
 
 @dataclass
@@ -61,6 +61,8 @@ class NullLabel(Label):
 
 class Composer(BaseModel):
     """Extract and compose labels using prefixes.
+    This class helps in internationalisation - it will allow
+    labels like 'актив:касса'.
 
     Examples:
 
@@ -156,10 +158,12 @@ class ChartList:
 
     def safe_append(self, label):
         if label.name in self.names():
-            raise ValueError(f"Duplicate account name: {label.name}.")
+            raise ValueError(
+                f"Duplicate account name detected, name already in use: {label.name}."
+            )
         if isinstance(label, Offset) and label.offsets not in self.names():
             raise ValueError(
-                f"Account name must be defined before offsetting: {label.offsets}."
+                f"Account name must be defined before offsets: {label.offsets}."
             )
         self.accounts.append(label)
         return self
@@ -262,8 +266,13 @@ class ChartList:
             for offset in self._find_offsets(label.name)
         ]
 
-    def __getitem__(self, name: str) -> Label | Offset:
-        return {account.name: account for account in self.accounts}[name]
+    def __getitem__(self, account_name: str) -> Label | Offset:
+        return {account.name: account for account in self.accounts}[account_name]
+
+
+assert ChartList([]).add("capital:equity").add("contra:equity:ts")["ts"] == Offset(
+    name="ts", offsets="equity"
+)
 
 
 def base_chart_list():
@@ -278,25 +287,6 @@ def base_chart_list():
 
 def make_chart(*strings: list[str]):
     return base_chart_list().add_many(*strings)
-
-
-x = make_chart("asset:cash", "capital:equity", "contra:equity:ts")
-print(x)
-print(x["ts"] == [Offset("ts", "equity")])
-print(x["ts"].as_string("contra") == "contra:equity:ts")
-print(
-    x.names() == ["current_profit", "retained_earnings", "null", "cash", "equity", "ts"]
-)
-print(
-    ChartList(x.labels).names()
-    == ["current_profit", "retained_earnings", "null", "cash", "equity"]
-)
-print(ChartList(x.offsets).names() == ["ts"])
-print(
-    x.ledger_dict().keys()
-    == {"current_profit", "retained_earnings", "null", "cash", "equity", "ts"}
-)
-print(x.contra_pairs(accounts.ContraCapital) == [Offset("ts", "equity")])
 
 
 @dataclass
@@ -354,21 +344,6 @@ class BaseLedger:
 def closing_contra_entries(chart, ledger, contra_cls):
     for offset in chart.contra_pairs(contra_cls):
         yield ledger.data[offset.name].transfer(offset.name, offset.offsets)  # type: ignore
-
-
-x.add_many("income:sales", "contra:sales:refunds", "expense:salaries")
-ledger = x.ledger()
-ledger.post("cash", "equity", 12_000)
-ledger.post("ts", "cash", 2_000)
-ledger.post("cash", "sales", 3_499)
-ledger.post("refunds", "cash", 499)
-ledger.post("salaries", "cash", 2_001)
-assert list(closing_contra_entries(x, ledger, accounts.ContraCapital)) == [
-    Entry(debit="equity", credit="ts", amount=2000)
-]
-assert list(closing_contra_entries(x, ledger, accounts.ContraIncome)) == [
-    Entry(debit="sales", credit="refunds", amount=499)
-]
 
 
 def close_to_income_summary_account(chart, ledger, cls):
@@ -457,7 +432,7 @@ class Reporter:
     titles: dict[str, str] = field(default_factory=dict)
 
     def income_statement(self, header="Income Statement"):
-        from abacus.engine.report import IncomeStatement, IncomeStatementViewer
+        from report import IncomeStatement, IncomeStatementViewer
 
         ledger, _ = chain(self.chart, self.ledger, [close_first])
         print("closing entries", _)
@@ -466,7 +441,7 @@ class Reporter:
         return IncomeStatementViewer(statement, self.titles, header)
 
     def balance_sheet(self, header="Balance Sheet"):
-        from abacus.engine.report import BalanceSheet, BalanceSheetViewer
+        from report import BalanceSheet, BalanceSheetViewer
 
         ledger, _ = chain(
             self.chart, self.ledger, [close_first, close_second, close_last]
@@ -478,7 +453,7 @@ class Reporter:
 
     def trial_balance(self, header="Trial Balance"):
         # ledger, _ = chain(self.chart, self.ledger, [])
-        print(ledger.data["salaries"])
+        print(self.ledger.data["salaries"])
         return view_trial_balance(self.chart, self.ledger)
 
     def tb(self):
@@ -504,18 +479,6 @@ def yield_tuples_for_trial_balance(chart, ledger):
             yield account_name, 0, t_account.balance()
 
 
-from abacus.engine.report import Column
-
-
 def nth(data, n: int, f=str) -> Column:
     """Make a column from nth element of each tuple or list in `data`."""
     return Column([f(d[n]) for d in data])
-
-
-r = Reporter(x, ledger)
-print(r.tb())
-# income statement and balance sheet corrupt initial ledger!
-print(r.income_statement())
-print(r.balance_sheet())
-print(r.trial_balance())
-print(r.tb())
