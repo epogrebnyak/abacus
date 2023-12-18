@@ -5,11 +5,7 @@ from compose import (  # type: ignore
     CapitalLabel,
     ChartList,
     Composer,
-    IncomeSummaryLabel,
-    NullLabel,
-    Offset,
-    RetainedEarningsLabel,
-    base_chart_list,
+    ContraLabel,
     make_chart,
     closing_contra_entries,
     chain,
@@ -24,17 +20,18 @@ import accounts  # type: ignore
 @pytest.fixture
 def chart_list():
     return (
-        base_chart_list()
+        # intentionally using a mix of methods
+        make_chart()
         .safe_append(AssetLabel("cash"))
         .add("capital:equity")
-        .safe_append(Offset(name="ts", links_to="equity"))
+        .safe_append(ContraLabel(name="ts", offsets="equity"))
     )
 
 
 def test_returns_offset():
-    assert ChartList([CapitalLabel("equity"), Offset("ts", "equity")])["ts"] == Offset(
-        name="ts", links_to="equity"
-    )
+    assert make_chart("asset:cash", "capital:equity", "contra:equity:ts")[
+        "ts"
+    ] == ContraLabel(name="ts", offsets="equity")
 
 
 def test_make_chart(chart_list):
@@ -54,16 +51,13 @@ def test_names(chart_list):
 
 def test_labels(chart_list):
     assert [x.name for x in chart_list.labels] == [
-        "current_profit",
-        "retained_earnings",
-        "null",
         "cash",
         "equity",
     ]
 
 
 def test_offsets(chart_list):
-    assert [x.name for x in chart_list.offsets] == ["ts"]
+    assert [x.name for x in chart_list.contra_labels] == ["ts"]
 
 
 def test_ledger_dict(chart_list):
@@ -78,7 +72,9 @@ def test_ledger_dict(chart_list):
 
 
 def test_contra_pairs(chart_list):
-    assert chart_list.contra_pairs(accounts.ContraCapital) == [Offset("ts", "equity")]
+    assert chart_list.contra_pairs(accounts.ContraCapital) == [
+        ContraLabel("ts", "equity")
+    ]
 
 
 def test_assets_property(chart_list):
@@ -99,9 +95,9 @@ def test_double_offset_raises(chart_list):
         chart_list.add("contra:equity:ts")
 
 
-def test_no_account_to_link_to_raises(chart_list):
+def test_no_account_to_link_to_raises():
     with pytest.raises(AbacusError):
-        ChartList(accounts=[]).add("contra:equity:ts")
+        make_chart().add("contra:equity:ts")
 
 
 def test_as_string_and_extract():
@@ -112,7 +108,7 @@ def test_as_string_and_extract():
 
 @pytest.fixture
 def ledger0(chart_list):
-    chart_list.add_many("income:sales", "contra:sales:refunds", "expense:salaries")
+    chart_list.add_many(["income:sales", "contra:sales:refunds", "expense:salaries"])
     ledger = chart_list.ledger()
     ledger.post("cash", "equity", 12_000)
     ledger.post("ts", "cash", 2_000)
