@@ -27,13 +27,13 @@ def chart_list():
         base_chart_list()
         .safe_append(AssetLabel("cash"))
         .add("capital:equity")
-        .safe_append(Offset(name="ts", offsets="equity"))
+        .safe_append(Offset(name="ts", links_to="equity"))
     )
 
 
 def test_returns_offset():
     assert ChartList([CapitalLabel("equity"), Offset("ts", "equity")])["ts"] == Offset(
-        name="ts", offsets="equity"
+        name="ts", links_to="equity"
     )
 
 

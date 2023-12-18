@@ -23,10 +23,10 @@ class Offset:
     """Class to add contra account."""
 
     name: str
-    offsets: str
+    links_to: str
 
     def as_string(self, prefix: str):
-        return prefix + ":" + self.offsets + ":" + self.name
+        return prefix + ":" + self.links_to + ":" + self.name
 
 
 class AssetLabel(Label):
@@ -163,9 +163,9 @@ class ChartList:
             raise AbacusError(
                 f"Duplicate account name detected, name already in use: {label.name}."
             )
-        if isinstance(label, Offset) and label.offsets not in self.names():
+        if isinstance(label, Offset) and label.links_to not in self.names():
             raise AbacusError(
-                f"Account name must be defined before offsets: {label.offsets}."
+                f"Account name must be defined before offsets: {label.links_to}."
             )
         self.accounts.append(label)
         return self
@@ -217,7 +217,7 @@ class ChartList:
         return self.filter_name(ExpenseLabel)
 
     def _find_offsets(self, name: str):
-        return [offset for offset in self.filter(Offset) if offset.offsets == name]
+        return [offset for offset in self.filter(Offset) if offset.links_to == name]
 
     def _get_exactly_one(self, cls: Type[Label]):
         matches = self.filter(cls)
@@ -343,7 +343,7 @@ class BaseLedger:
 
 def closing_contra_entries(chart, ledger, contra_cls):
     for offset in chart.contra_pairs(contra_cls):
-        yield ledger.data[offset.name].transfer(offset.name, offset.offsets)  # type: ignore
+        yield ledger.data[offset.name].transfer(offset.name, offset.links_to)  # type: ignore
 
 
 def close_to_income_summary_account(chart, ledger, cls):
