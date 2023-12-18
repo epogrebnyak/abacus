@@ -1,16 +1,7 @@
-from compose import (
-    BaseLedger,
-    ChartList,
-    Reporter,
-    make_chart,
-    close_first,
-    close_second,
-    close_last,
-    chain,
-)
+from compose import BaseChart, BaseLedger, Pipeline, Reporter, make_chart
 
 
-def ledger0(x: ChartList) -> BaseLedger:
+def ledger0(x: BaseChart) -> BaseLedger:
     ledger = x.ledger()
     ledger.post("cash", "equity", 12_000)
     ledger.post("ts", "cash", 2_000)
@@ -21,14 +12,13 @@ def ledger0(x: ChartList) -> BaseLedger:
 
 
 # created chart
-x = make_chart(
-    "asset:cash",
-    "capital:equity",
-    "contra:equity:ts",
-    "income:sales",
-    "contra:sales:refunds",
-    "expense:salaries",
-)
+x = make_chart(  # type: ignore
+    "asset:cash",  # type: ignore
+    "capital:equity",  # type: ignore
+    "contra:equity:ts",  # type: ignore
+    "income:sales",  # type: ignore
+    "contra:sales:refunds",  # type: ignore
+)  # type: ignore
 # created ledger
 # THIS LEDGER IS EXPECTED TO BE UNCHANGED
 ledger = ledger0(x)
@@ -38,7 +28,7 @@ assert ledger.data["refunds"].debit_and_credit() == (499, 0)
 
 # BUT THE ledger variable get altered by the chain() function
 # all of below should print true
-ledger2, entries = chain(x, ledger, [close_first, close_second, close_last])
+Pipeline(x, ledger).close_first().close_second().close_last()
 print(ledger.data["salaries"].debit_and_credit() == (2001, 0))
 print(ledger.data["sales"].debit_and_credit() == (0, 3499))
 print(ledger.data["refunds"].debit_and_credit() == (499, 0))
@@ -52,14 +42,14 @@ assert r.tb()["sales"] == (0, 3499)
 assert r.tb()["refunds"] == (499, 0)
 
 # income statement calculation corrupts r.ledger
-r.income_statement()
+print(r.income_statement())
 print(r.tb()["salaries"] == (2001, 0))
 print(r.tb()["sales"] == (0, 3499))  # must be True, now it is False
 print(r.tb()["refunds"] == (499, 0))  # must be True, now it is False
 
 
 # balance sheet calculation corrupts initial ledger further
-r.balance_sheet()
+print(r.balance_sheet())
 print(r.tb()["salaries"] == (2001, 0))  # must be True, now it is False
 print(r.tb()["sales"] == (0, 3499))  # must be True, now it is False
 print(r.tb()["refunds"] == (499, 0))  # must be True, now it is False

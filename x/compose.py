@@ -1,10 +1,11 @@
+from collections import UserDict
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Type
-from pydantic import BaseModel
 
 import accounts  # type: ignore
 from accounts import ContraAccount, TAccount  # type: ignore
 from base import AbacusError, Entry
+from pydantic import BaseModel
 from report import Column
 
 
@@ -121,7 +122,7 @@ def label_class(composer: Composer, prefix: str) -> Type[Label | ContraLabel]:
 
 
 @dataclass
-class ChartList:
+class BaseChart:
     income_summary_account: str
     retained_earnings_account: str
     null_account: str
@@ -223,7 +224,8 @@ class ChartList:
         return BaseLedger(self.ledger_dict())
 
     def contra_pairs(self, cls: Type[ContraAccount]) -> list[ContraLabel]:
-        """Retrun list of account name-contra account name pairs for a given contra account class."""
+        """Return a list of account name - contra account name pairs for a given contra account class.
+        Used in creating closing entries"""
         klass = {
             "ContraAsset": AssetLabel,
             "ContraLiability": LiabilityLabel,
@@ -241,13 +243,15 @@ class ChartList:
         return {account.name: account for account in self.accounts}[account_name]
 
 
-def make_chart(*strings: list[str]):
-    return ChartList(
+def make_chart(*strings: list[str]):  # type: ignore
+    return BaseChart(
         income_summary_account="current_profit",
         retained_earnings_account="retained_earnings",
         null_account="null",
         accounts=[],
-    ).add_many(strings)
+    ).add_many(
+        strings
+    )  # type: ignore
 
 
 @dataclass
@@ -304,60 +308,63 @@ class BaseLedger:
         )
 
 
-def closing_contra_entries(chart, ledger, contra_cls):
-    """Yield entries that will close contra accounts of a given type `contra_cls`."""
-    for contra_label in chart.contra_pairs(contra_cls):
-        yield ledger.data[contra_label.name].transfer(contra_label.name, contra_label.offsets)  # type: ignore
+class Pipeline:
+    """A pipeline that will accumulate ledger transformations."""
 
+    def __init__(self, chart: BaseChart, ledger: BaseLedger):
+        self.chart = chart
+        self.ledger = ledger.deep_copy()
+        self.closing_entries: list[Entry] = []
 
-def close_to_income_summary_account(chart, ledger, cls):
-    """Yield entries that will close income or expense accounts to income summary account."""
-    for name, account in ledger.data.items():
-        if isinstance(account, cls):
-            yield account.transfer(name, chart.income_summary_account)
+    def close_contra(self, contra_cls):
+        """Close contra accounts of a given type `contra_cls`"""
+        for contra_label in self.chart.contra_pairs(contra_cls):
+            entry = self.ledger.data[contra_label.name].transfer(
+                contra_label.name, contra_label.offsets
+            )
+            self.ledger.post_one(entry)
+            self.closing_entries.append(entry)
+        return self
 
+    def close_to_isa(self, cls):
+        """Close income or expense accounts to income summary account."""
+        for name, account in self.ledger.data.items():
+            if isinstance(account, cls):
+                entry = account.transfer(name, self.chart.income_summary_account)
+                self.ledger.post_one(entry)
+                self.closing_entries.append(entry)
+        return self
 
-def close_first(chart: ChartList, ledger: BaseLedger) -> tuple[BaseLedger, list[Entry]]:
-    """Close contra income and contra expense accounts."""
-    c1 = closing_contra_entries(chart, ledger, accounts.ContraIncome)
-    c2 = closing_contra_entries(chart, ledger, accounts.ContraExpense)
-    closing_entries = list(c1) + list(c2)
-    return ledger.post_many(closing_entries), closing_entries
+    def close_isa_to_re(self):
+        isa, re = (
+            self.chart.income_summary_account,
+            self.chart.retained_earnings_account,
+        )
+        entry = Entry(debit=isa, credit=re, amount=self.ledger.data[isa].balance())
+        self.closing_entries.append(entry)
+        self.ledger.post_one(entry)
+        return self
 
+    def close_first(self):
+        """Close contra income and contra expense accounts."""
+        self.close_contra(accounts.ContraIncome)
+        self.close_contra(accounts.ContraExpense)
+        return self
 
-def close_second(
-    chart: ChartList, dummy_ledger: BaseLedger
-) -> tuple[BaseLedger, list[Entry]]:
-    """Close income and expense accounts to income summary account ("income_summary_account"),
-    then close income_summary_account to retained earnings."""
-    # Close income and expense to income_summary_account
-    a = close_to_income_summary_account(chart, dummy_ledger, accounts.Income)
-    b = close_to_income_summary_account(chart, dummy_ledger, accounts.Expense)
-    closing_entries = list(a) + list(b)
-    dummy_ledger.post_many(closing_entries)
-    # Close income_summary_account to retained earnings
-    isa, re = chart.income_summary_account, chart.retained_earnings_account
-    b = dummy_ledger.data[isa].balance()
-    closing_entries.append(Entry(debit=isa, credit=re, amount=b))
-    return dummy_ledger.post_many(closing_entries), closing_entries
+    def close_second(self):
+        """Close income and expense accounts to income summary account,
+        then close income summary account to retained earnings."""
+        self.close_to_isa(accounts.Income)
+        self.close_to_isa(accounts.Expense)
+        self.close_isa_to_re()
+        return self
 
-
-def close_last(chart: ChartList, ledger: BaseLedger) -> tuple[BaseLedger, list[Entry]]:
-    """Close permanent contra accounts."""
-    c3 = closing_contra_entries(chart, ledger, accounts.ContraAsset)
-    c4 = closing_contra_entries(chart, ledger, accounts.ContraLiability)
-    c5 = closing_contra_entries(chart, ledger, accounts.ContraCapital)
-    closing_entries = list(c3) + list(c4) + list(c5)
-    return ledger.post_many(closing_entries), closing_entries
-
-
-def chain(chart, ledger, functions):
-    _ledger = ledger.condense()
-    closing_entries = []
-    for f in functions:
-        _ledger, entries = f(chart, _ledger)
-        closing_entries += entries
-    return _ledger, closing_entries
+    def close_last(self):
+        """Close permanent contra accounts."""
+        self.close_contra(accounts.ContraAsset)
+        self.close_contra(accounts.ContraLiability)
+        self.close_contra(accounts.ContraCapital)
+        return self
 
 
 def view_trial_balance(chart, ledger) -> str:
@@ -380,9 +387,6 @@ class _IncomeStatement(BaseModel):
     expenses: dict[str, int]
 
 
-from collections import UserDict
-
-
 class TB(UserDict[str, tuple[int, int]]):
     ...
 
@@ -395,29 +399,25 @@ def make_trial_balance(chart, ledger):
 
 @dataclass
 class Reporter:
-    chart: ChartList
+    chart: BaseChart
     ledger: BaseLedger
     titles: dict[str, str] = field(default_factory=dict)
 
     def income_statement(self, header="Income Statement"):
         from report import IncomeStatement, IncomeStatementViewer
 
-        ledger, _ = chain(self.chart, self.ledger, [close_first])
-        statement = IncomeStatement.new(ledger)
+        p = Pipeline(self.chart, self.ledger).close_first()
+        statement = IncomeStatement.new(p.ledger)
         return IncomeStatementViewer(statement, self.titles, header)
 
     def balance_sheet(self, header="Balance Sheet"):
         from report import BalanceSheet, BalanceSheetViewer
 
-        ledger, _ = chain(
-            self.chart, self.ledger, [close_first, close_second, close_last]
-        )
-        statement = BalanceSheet.new(ledger)
+        p = Pipeline(self.chart, self.ledger).close_first().close_second().close_last()
+        statement = BalanceSheet.new(p.ledger)
         return BalanceSheetViewer(statement, self.titles, header)
 
     def trial_balance(self, header="Trial Balance"):
-        # ledger, _ = chain(self.chart, self.ledger, [])
-        print(self.ledger.data["salaries"])
         return view_trial_balance(self.chart, self.ledger)
 
     def tb(self):
