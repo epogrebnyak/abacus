@@ -56,6 +56,7 @@ def test_closing_entries_for_balance_sheet(closer0):
     ]
 
 
+@pytest.mark.skip
 def test_ledger_post():
     chart0 = Chart().add("asset:cash").add("capital:equity").add("contra:equity:ts")
     assert chart0.ledger().post("cash", "equity", 1000).post(

@@ -139,9 +139,7 @@ def test_ledger0_initial_values(ledger0):
 
 
 def test_chain_must_not_corrupt_the_argument(chart_list, ledger0):
-    _, _ = chain(
-        chart_list, ledger0, [close_first, close_second, close_last]
-    )
+    _, _ = chain(chart_list, ledger0, [close_first, close_second, close_last])
     assert ledger0.data["salaries"].debit_and_credit() == (2001, 0)
     assert ledger0.data["sales"].debit_and_credit() == (0, 3499)
     assert ledger0.data["refunds"].debit_and_credit() == (499, 0)

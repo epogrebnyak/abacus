@@ -309,18 +309,20 @@ class BaseLedger:
             raise AbacusError(failed)
         return self
 
-    def apply(self, f: Callable):
-        self.data = {name: f(taccount) for name, taccount in self.data.items()}
-        return self
+    def create_with(self, f: Callable):
+        # xopowen: при создании нового элемента ссылочные элементы в словаре копировались ссылочно
+        # что приводило к созданию экземляров с одними данными
+        """Create new ledger with each account transformed by `f`."""
+        return BaseLedger({name: f(taccount) for name, taccount in self.data.items()})
 
     def deep_copy(self):
-        return self.apply(lambda taccount: taccount.deep_copy())
+        return self.create_with(lambda taccount: taccount.deep_copy())
 
     def condense(self):
-        return self.apply(lambda taccount: taccount.condense())
+        return self.create_with(lambda taccount: taccount.condense())
 
     def balances(self):
-        return self.apply(lambda taccount: taccount.balance()).data
+        return self.create_with(lambda taccount: taccount.balance()).data
 
     def nonzero_balances(self):
         return {k: v for k, v in self.balances().items() if v != 0}

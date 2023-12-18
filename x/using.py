@@ -46,22 +46,23 @@ print(ledger.data["sales"].debit_and_credit() == (0, 3499))
 print(ledger.data["refunds"].debit_and_credit() == (499, 0))
 
 
-# r = Reporter(x, ledger=ledger0(x))
-# print(r.tb())
-# # this should not change
-# assert r.tb()["salaries"] == (2001, 0)
-# assert r.tb()["sales"] == (0, 3499)
-# assert r.tb()["refunds"] == (499, 0)
+r = Reporter(x, ledger=ledger0(x))
+print(r.tb())
+# this should not change
+assert r.tb()["salaries"] == (2001, 0)
+assert r.tb()["sales"] == (0, 3499)
+assert r.tb()["refunds"] == (499, 0)
 
-# # income statement calculation corrupts r.ledger
-# r.income_statement()
-# print(r.tb()["salaries"] == (2001, 0))
-# print(r.tb()["sales"] == (0, 3499))  # must be True, now it is False
-# print(r.tb()["refunds"] == (499, 0))  # must be True, now it is False
+# income statement calculation corrupts r.ledger
+r.income_statement()
+print(r.tb()["salaries"] == (2001, 0))
+print(r.tb()["sales"] == (0, 3499))  # must be True, now it is False
+print(r.tb()["refunds"] == (499, 0))  # must be True, now it is False
 
 
-# # balance sheet calculation corrupts initial ledger further
-# r.balance_sheet()
-# print(r.tb()["salaries"] == (2001, 0))  # must be True, now it is False
-# print(r.tb()["sales"] == (0, 3499))  # must be True, now it is False
-# print(r.tb()["refunds"] == (499, 0))  # must be True, now it is False
+# balance sheet calculation corrupts initial ledger further
+r.balance_sheet()
+print(r.tb()["salaries"] == (2001, 0))  # must be True, now it is False
+print(r.tb()["sales"] == (0, 3499))  # must be True, now it is False
+print(r.tb()["refunds"] == (499, 0))  # must be True, now it is False
+print(r.tb())
