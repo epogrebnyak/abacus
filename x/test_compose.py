@@ -7,6 +7,7 @@ from compose import (  # type: ignore
     ContraLabel,
     Pipeline,
     make_chart,
+    Reporter,
 )
 
 
@@ -127,8 +128,39 @@ def test_ledger0_initial_values(ledger0):
     assert ledger0.data["refunds"].debit_and_credit() == (499, 0)
 
 
-def test_chaining_in_pipeline_must_not_corrupt_the_argument(chart0, ledger0):
+def test_chaining_in_pipeline_must_not_corrupt_input_argument(chart0, ledger0):
     Pipeline(chart0, ledger0).close_first().close_second().close_last()
     assert ledger0.data["salaries"].debit_and_credit() == (2001, 0)
     assert ledger0.data["sales"].debit_and_credit() == (0, 3499)
     assert ledger0.data["refunds"].debit_and_credit() == (499, 0)
+
+
+def test_balance_sheet(chart0, ledger0):
+    assert Reporter(chart0, ledger0).balance_sheet().statement.dict() == {
+        "assets": {"cash": 10999},
+        "capital": {"equity": 10000, "retained_earnings": 999},
+        "liabilities": {},
+    }
+
+
+def test_income_statement(chart0, ledger0):
+    assert Reporter(chart0, ledger0).income_statement().statement.dict() == {
+        "income": {"sales": 3000},
+        "expenses": {"salaries": 2001},
+    }
+
+
+def test_trial_balance_view(chart0, ledger0):
+    assert Reporter(chart0, ledger0).trial_balance() == {
+        "cash": (10999, 0),
+        "ts": (2000, 0),
+        "refunds": (499, 0),
+        "salaries": (2001, 0),
+        "equity": (0, 12000),
+        "sales": (0, 3499),
+        "retained_earnings": (0, 0),
+    }
+
+
+def test_trial_balance_view(chart0, ledger0):
+    assert isinstance(Reporter(chart0, ledger0).trial_balance().view(), str)

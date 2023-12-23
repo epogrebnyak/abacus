@@ -307,6 +307,16 @@ class BaseLedger:
             }
         )
 
+    def balance_sheet(self):
+        from report import balance_sheet
+
+        return balance_sheet(self)
+
+    def income_statement(self):
+        from report import income_statement
+
+        return income_statement(self)
+
 
 class Pipeline:
     """A pipeline to accumulate ledger transformations."""
@@ -365,33 +375,49 @@ class Pipeline:
         self.close_contra(accounts.ContraCapital)
         return self
 
-    def balance_sheet(self):
-        from report import balance_sheet
 
-        return balance_sheet(self.ledger)
+class TrialBalance(UserDict[str, tuple[int, int]]):
+    def column_1(self):
+        names = [
+            name.replace("_", " ").strip().capitalize() for name in self.data.keys()
+        ]
+        return Column(names).align_left(".").add_space(1).header("Account")
 
-    def income_statement(self):
-        from report import income_statement
+    def column_2(self):
+        return (
+            Column([str(d) for (d, _) in self.data.values()])
+            .align_right()
+            .add_space_left(2)
+            .header("Debit")
+            .add_space(2)
+        )
 
-        return income_statement(self.ledger)
+    def column_3(self):
+        return (
+            Column([str(c) for (_, c) in self.data.values()])
+            .align_right()
+            .add_space_left(2)
+            .header("Credit")
+        )
+
+    def table(self):
+        return self.column_1() + self.column_2() + self.column_3()
+
+    def view(self):
+        return self.table().printable()
 
 
-def view_trial_balance(chart, ledger) -> str:
-    data = list(yield_tuples_for_trial_balance(chart, ledger))
-
-    col_1 = Column([d[0] for d in data]).align_left(".").add_space(1).header("Account")
-    col_2 = nth(data, 1).align_right().add_space_left(2).header("Debit").add_space(2)
-    col_3 = nth(data, 2).align_right().add_space_left(2).header("Credit")
-    return (col_1 + col_2 + col_3).printable()
+def yield_tuples(ledger):
+    for name, taccount in ledger.subset(accounts.DebitAccount).data.items():
+        yield name, taccount.balance(), 0
+    for name, taccount in ledger.subset(accounts.CreditAccount).data.items():
+        yield name, 0, taccount.balance()
 
 
-class TB(UserDict[str, tuple[int, int]]):
-    ...
-
-
-def make_trial_balance(chart, ledger):
-    return TB(
-        {name: (a, b) for name, a, b in yield_tuples_for_trial_balance(chart, ledger)}
+def trial_balance(chart, ledger):
+    ignore = [chart.null_account, chart.income_summary_account]
+    return TrialBalance(
+        {name: (a, b) for name, a, b in yield_tuples(ledger) if name not in ignore}
     )
 
 
@@ -407,38 +433,11 @@ class Reporter:
 
     def income_statement(self, header="Income Statement"):
         p = self.pipeline.close_first()
-        return p.income_statement().viewer(self.titles, header)
+        return p.ledger.income_statement().viewer(self.titles, header)
 
     def balance_sheet(self, header="Balance Sheet"):
         p = self.pipeline.close_first().close_second().close_last()
-        return p.balance_sheet().viewer(self.titles, header)
+        return p.ledger.balance_sheet().viewer(self.titles, header)
 
     def trial_balance(self, header="Trial Balance"):
-        return view_trial_balance(self.chart, self.ledger)
-
-    def tb(self):
-        return make_trial_balance(self.chart, self.ledger)
-
-
-def yield_tuples_for_trial_balance(chart, ledger):
-    def must_exclude(t_account):
-        return any(
-            [
-                isinstance(t_account, e)
-                for e in [accounts.NullAccount, accounts.IncomeSummaryAccount]
-            ]
-        )
-
-    for account_name, t_account in ledger.data.items():
-        if isinstance(t_account, accounts.DebitAccount) and not must_exclude(t_account):
-            yield account_name, t_account.balance(), 0
-    for account_name, t_account in ledger.data.items():
-        if isinstance(t_account, accounts.CreditAccount) and not must_exclude(
-            t_account
-        ):
-            yield account_name, 0, t_account.balance()
-
-
-def nth(data, n: int, f=str) -> Column:
-    """Make a column from nth element of each tuple or list in `data`."""
-    return Column([f(d[n]) for d in data])
+        return trial_balance(self.chart, self.ledger)
