@@ -41,11 +41,8 @@ class Report:
                 lines.append(AccountLine(name, str(value)))
         return lines
 
-    def view(self, rename_dict: Dict[str, str]) -> str:
+    def viewer(self, titles: dict[str, str], header: str):
         raise NotImplementedError
-
-    def print(self, rename_dict: Dict[str, str]) -> None:
-        print(self.view(rename_dict))
 
 
 class BalanceSheet(BaseModel, Report):
@@ -53,21 +50,16 @@ class BalanceSheet(BaseModel, Report):
     capital: Dict[AccountName, Amount]
     liabilities: Dict[AccountName, Amount]
 
-    @classmethod
-    def new(cls, ledger):
-        return BalanceSheet(
-            assets=ledger.subset(Asset).balances(),
-            capital=ledger.subset(Capital).balances(),
-            liabilities=ledger.subset(Liability).balances(),
-        )
+    def viewer(self, titles, header):
+        return BalanceSheetViewer(self, titles, header)
 
-    def view(self, rename_dict) -> str:
-        return view_balance_sheet(self, rename_dict)
 
-    def print_rich(
-        self, rename_dict: Dict[str, str], title="Balance sheet", width=80
-    ) -> None:
-        print_rich_balance_sheet(self, rename_dict, title, width)
+def balance_sheet(ledger) -> BalanceSheet:
+    return BalanceSheet(
+        assets=ledger.subset(Asset).balances(),
+        capital=ledger.subset(Capital).balances(),
+        liabilities=ledger.subset(Liability).balances(),
+    )
 
 
 def print_rich_balance_sheet(
@@ -99,21 +91,18 @@ class IncomeStatement(BaseModel, Report):
     income: Dict[AccountName, Amount]
     expenses: Dict[AccountName, Amount]
 
-    @classmethod
-    def new(cls, ledger) -> "IncomeStatement":
-        return IncomeStatement(
-            income=ledger.subset(Income).balances(),
-            expenses=ledger.subset(Expense).balances(),
-        )
-
     def current_profit(self):
         return total(self.income) - total(self.expenses)
 
-    def view(self, rename_dict) -> str:
-        return view_income_statement(self, rename_dict)
+    def viewer(self, titles: dict[str, str], header: str):
+        return IncomeStatementViewer(self, titles, header)
 
-    def print_rich(self, rename_dict: Dict[str, str]) -> None:
-        print_income_statement_rich(self, rename_dict)
+
+def income_statement(ledger) -> IncomeStatement:
+    return IncomeStatement(
+        income=ledger.subset(Income).balances(),
+        expenses=ledger.subset(Expense).balances(),
+    )
 
 
 @dataclass

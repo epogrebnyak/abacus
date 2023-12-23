@@ -53,11 +53,13 @@ class CapitalLabel(Label):
 class Composer(BaseModel):
     """Extract and compose labels using prefixes.
 
-    This class helps in internationalisation - it will allow labels like 'актив:касса'.
+    This class helps in internationalisation - it allows
+    working with labels like 'актив:касса'.
 
     Examples:
       - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account.
-      - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and 'ta' is the new contra account.
+      - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and
+        'ta' is the new contra account.
 
     """
 
@@ -126,35 +128,35 @@ class BaseChart:
     income_summary_account: str
     retained_earnings_account: str
     null_account: str
-    accounts: list[Label | ContraLabel]
+    labels: list[Label]
+    contra_labels: list[ContraLabel]
 
-    def names(self):
+    @property
+    def all_labels(self):
+        return self.labels + self.contra_labels
+
+    def names(self) -> list[str]:
         return [
             self.income_summary_account,
             self.retained_earnings_account,
             self.null_account,
-        ] + [account.name for account in self.accounts]
-
-    @property
-    def labels(self):
-        return [account for account in self.accounts if isinstance(account, Label)]
-
-    @property
-    def contra_labels(self):
-        return [
-            account for account in self.accounts if isinstance(account, ContraLabel)
-        ]
+        ] + [account.name for account in self.all_labels]
 
     def safe_append(self, label):
         if label.name in self.names():
             raise AbacusError(
                 f"Duplicate account name detected, name already in use: {label.name}."
             )
-        if isinstance(label, ContraLabel) and label.offsets not in self.names():
-            raise AbacusError(
-                f"Account name must be defined before adding contra account: {label.offsets}."
-            )
-        self.accounts.append(label)
+        match label:
+            case Label(_):
+                self.labels.append(label)
+            case ContraLabel(_, offsets):
+                if offsets in self.names():
+                    self.contra_labels.append(label)
+                else:
+                    raise AbacusError(
+                        f"Must define account name before adding contra account to it: {label.offsets}."
+                    )
         return self
 
     def add(self, label_string: str, composer=Composer()):
@@ -165,42 +167,42 @@ class BaseChart:
             self.add(s, composer)
         return self
 
-    def filter(self, cls: Type[Label] | Type[ContraLabel]):
-        return [account for account in self.accounts if isinstance(account, cls)]
+    def _filter(self, cls):
+        return [label for label in self.labels if isinstance(label, cls)]
 
-    def filter_name(self, cls: Type[Label]):
-        return [account.name for account in self.accounts if isinstance(account, cls)]
+    def _filter_name(self, cls: Type[Label]):
+        return [account.name for account in self.labels if isinstance(account, cls)]
 
     @property
     def assets(self):
-        return self.filter_name(AssetLabel)
+        return self._filter_name(AssetLabel)
 
     @property
     def liabilities(self):
-        return self.filter_name(LiabilityLabel)
+        return self._filter_name(LiabilityLabel)
 
     @property
     def capital(self):
-        return self.filter_name(CapitalLabel)
+        return self._filter_name(CapitalLabel)
 
     @property
     def income(self):
-        return self.filter_name(IncomeLabel)
+        return self._filter_name(IncomeLabel)
 
     @property
     def expenses(self):
-        return self.filter_name(ExpenseLabel)
+        return self._filter_name(ExpenseLabel)
 
     def _find_contra_labels(self, name: str):
         return [
             contra_label
-            for contra_label in self.filter(ContraLabel)
+            for contra_label in self.contra_labels
             if contra_label.offsets == name
         ]
 
     def stream(self, label_class, account_class, contra_account_class):
         """Yield tuples of account names and account or contra account classes."""
-        for label in self.filter(label_class):
+        for label in self._filter(label_class):
             yield label.name, account_class
             for contra_label in self._find_contra_labels(label.name):
                 yield contra_label.name, contra_account_class
@@ -235,12 +237,12 @@ class BaseChart:
         }[cls.__name__]
         return [
             contra_label
-            for label in self.filter(klass)
+            for label in self._filter(klass)
             for contra_label in self._find_contra_labels(label.name)
         ]
 
     def __getitem__(self, account_name: str) -> Label | ContraLabel:
-        return {account.name: account for account in self.accounts}[account_name]
+        return {account.name: account for account in self.all_labels}[account_name]
 
 
 def make_chart(*strings: list[str]):  # type: ignore
@@ -248,7 +250,8 @@ def make_chart(*strings: list[str]):  # type: ignore
         income_summary_account="current_profit",
         retained_earnings_account="retained_earnings",
         null_account="null",
-        accounts=[],
+        labels=[],
+        contra_labels=[],
     ).add_many(
         strings
     )  # type: ignore
@@ -294,9 +297,6 @@ class BaseLedger:
     def nonzero_balances(self):
         return {k: v for k, v in self.balances().items() if v != 0}
 
-    def items(self):
-        return self.data.items()
-
     def subset(self, cls):
         """Filter ledger by account type."""
         return BaseLedger(
@@ -309,21 +309,23 @@ class BaseLedger:
 
 
 class Pipeline:
-    """A pipeline that will accumulate ledger transformations."""
+    """A pipeline to accumulate ledger transformations."""
 
     def __init__(self, chart: BaseChart, ledger: BaseLedger):
         self.chart = chart
         self.ledger = ledger.deep_copy()
         self.closing_entries: list[Entry] = []
 
+    def append_and_post(self, entry: Entry):
+        self.ledger.post_one(entry)
+        self.closing_entries.append(entry)
+
     def close_contra(self, contra_cls):
         """Close contra accounts of a given type `contra_cls`"""
         for contra_label in self.chart.contra_pairs(contra_cls):
-            entry = self.ledger.data[contra_label.name].transfer(
-                contra_label.name, contra_label.offsets
-            )
-            self.ledger.post_one(entry)
-            self.closing_entries.append(entry)
+            account = self.ledger.data[contra_label.name]
+            entry = account.transfer(contra_label.name, contra_label.offsets)
+            self.append_and_post(entry)
         return self
 
     def close_to_isa(self, cls):
@@ -331,18 +333,15 @@ class Pipeline:
         for name, account in self.ledger.data.items():
             if isinstance(account, cls):
                 entry = account.transfer(name, self.chart.income_summary_account)
-                self.ledger.post_one(entry)
-                self.closing_entries.append(entry)
+                self.append_and_post(entry)
         return self
 
     def close_isa_to_re(self):
-        isa, re = (
-            self.chart.income_summary_account,
-            self.chart.retained_earnings_account,
-        )
+        """Close income summary account to retained earnings account."""
+        isa = self.chart.income_summary_account
+        re = self.chart.retained_earnings_account
         entry = Entry(debit=isa, credit=re, amount=self.ledger.data[isa].balance())
-        self.closing_entries.append(entry)
-        self.ledger.post_one(entry)
+        self.append_and_post(entry)
         return self
 
     def close_first(self):
@@ -366,6 +365,16 @@ class Pipeline:
         self.close_contra(accounts.ContraCapital)
         return self
 
+    def balance_sheet(self):
+        from report import balance_sheet
+
+        return balance_sheet(self.ledger)
+
+    def income_statement(self):
+        from report import income_statement
+
+        return income_statement(self.ledger)
+
 
 def view_trial_balance(chart, ledger) -> str:
     data = list(yield_tuples_for_trial_balance(chart, ledger))
@@ -374,17 +383,6 @@ def view_trial_balance(chart, ledger) -> str:
     col_2 = nth(data, 1).align_right().add_space_left(2).header("Debit").add_space(2)
     col_3 = nth(data, 2).align_right().add_space_left(2).header("Credit")
     return (col_1 + col_2 + col_3).printable()
-
-
-class _BalanceSheet(BaseModel):
-    assets: dict[str, int]
-    capital: dict[str, int]
-    liabilities: dict[str, int]
-
-
-class _IncomeStatement(BaseModel):
-    income: dict[str, int]
-    expenses: dict[str, int]
 
 
 class TB(UserDict[str, tuple[int, int]]):
@@ -403,19 +401,17 @@ class Reporter:
     ledger: BaseLedger
     titles: dict[str, str] = field(default_factory=dict)
 
-    def income_statement(self, header="Income Statement"):
-        from report import IncomeStatement, IncomeStatementViewer
+    @property
+    def pipeline(self):
+        return Pipeline(self.chart, self.ledger)
 
-        p = Pipeline(self.chart, self.ledger).close_first()
-        statement = IncomeStatement.new(p.ledger)
-        return IncomeStatementViewer(statement, self.titles, header)
+    def income_statement(self, header="Income Statement"):
+        p = self.pipeline.close_first()
+        return p.income_statement().viewer(self.titles, header)
 
     def balance_sheet(self, header="Balance Sheet"):
-        from report import BalanceSheet, BalanceSheetViewer
-
-        p = Pipeline(self.chart, self.ledger).close_first().close_second().close_last()
-        statement = BalanceSheet.new(p.ledger)
-        return BalanceSheetViewer(statement, self.titles, header)
+        p = self.pipeline.close_first().close_second().close_last()
+        return p.balance_sheet().viewer(self.titles, header)
 
     def trial_balance(self, header="Trial Balance"):
         return view_trial_balance(self.chart, self.ledger)
@@ -433,10 +429,10 @@ def yield_tuples_for_trial_balance(chart, ledger):
             ]
         )
 
-    for account_name, t_account in ledger.items():
+    for account_name, t_account in ledger.data.items():
         if isinstance(t_account, accounts.DebitAccount) and not must_exclude(t_account):
             yield account_name, t_account.balance(), 0
-    for account_name, t_account in ledger.items():
+    for account_name, t_account in ledger.data.items():
         if isinstance(t_account, accounts.CreditAccount) and not must_exclude(
             t_account
         ):
