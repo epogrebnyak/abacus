@@ -22,7 +22,6 @@ from report import Column
 #     то и можно распознать строку типа "актив:наличные".
 
 
-
 @dataclass
 class BaseLabel(ABC):
     name: str
@@ -34,6 +33,9 @@ class BaseLabel(ABC):
 
     @abstractmethod
     def as_string(self, prefix: str = ""):
+        """Return label as string like `asset:cash`.
+        Providing custom `prefix` allows internationalisation.
+        """
         ...
 
     def __str__(self):
@@ -71,7 +73,7 @@ class IncomeLabel(RegularLabel):
 
 @dataclass
 class ContraLabel(BaseLabel):
-    """Class to add contra account name."""
+    """Class to hold a contra account name."""
 
     prefix = "contra"
     offsets: str
@@ -89,13 +91,14 @@ class ContraLabel(BaseLabel):
 class Composer(BaseModel):
     """Create or serialise labels using prefixes.
 
+    Examples:
+      - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account;
+      - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and 'ta' is the new contra account.
+
     This class allows working with labels in
     languges other than English, for example
     like 'актив:касса' becomes possible.
 
-    Examples:
-      - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account;
-      - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and 'ta' is the new contra account.
     """
 
     asset: str = AssetLabel.prefix
@@ -117,21 +120,22 @@ class Composer(BaseModel):
         ]
 
     def get_label_contructor(self, prefix: str) -> Type[RegularLabel | ContraLabel]:
-        """Returns constructor for account or contra account label or raises exception."""
+        """Returns constructor for regular or contra account label based on `prefix`
+        or raises exception."""
         try:
             return dict(self.mapping)[prefix]
         except KeyError:
             raise AbacusError(f"Invalid prefix: {prefix}.")
 
     def get_prefix(self, label: RegularLabel | ContraLabel) -> str:
-        """Returns prefix string for a given account or contra account label."""
+        """Returns prefix string for a given regular or contra account label."""
         for prefix, label_class in self.mapping:
             if isinstance(label, label_class):
                 return prefix
         raise AbacusError(f"No prefix found for: {label}.")
 
     def extract(self, label_string: str) -> RegularLabel | ContraLabel:
-        """Return Label or ContraLabel based on `label_string`.
+        """Return RegularLabel or ContraLabel based on `label_string`.
 
         For example, for `asset:cash` string should produce `AssetLabel("cash")`.
         """
@@ -139,7 +143,7 @@ class Composer(BaseModel):
             case [prefix, name]:
                 return self.get_label_contructor(prefix)(name)  # type: ignore
             case [self.contra, account_name, contra_account_name]:
-                return ContraLabel(contra_account_name, account_name)
+                return ContraLabel(name=contra_account_name, offsets=account_name)
             case _:
                 raise AbacusError(f"Cannot parse label string: {label_string}.")
 
@@ -161,10 +165,8 @@ class BaseChart:
     regular_labels: list[RegularLabel] = field(default_factory=list)
     contra_labels: list[ContraLabel] = field(default_factory=list)
 
-    # xopowen: эти функции очень связана с BaseChart возможно соить их поместить в него как staticmethod
-    # также хаменить BaseChart на self.__class__ для возможности насделования
     @classmethod
-    def use(cls, *strings: list[str]):
+    def use(cls, *strings):  # type: ignore
         return cls().add_many(strings)
 
     @property
@@ -180,7 +182,7 @@ class BaseChart:
         ] + [account.name for account in self.labels]
 
     # уязвиемое место по возможности стоить подробно тестировать
-    def safe_append(self, label):
+    def safe_append(self, label: RegularLabel | ContraLabel):
         if label.name in self.names:
             raise AbacusError(
                 f"Duplicate account name detected, name already in use: {label.name}."
@@ -193,14 +195,14 @@ class BaseChart:
                     self.contra_labels.append(label)
                 else:
                     raise AbacusError(
-                        f"Must define account name before adding contra account to it: {label.offsets}."
+                        f"Must define account name before adding contra account: {label.offsets}."
                     )
         return self
 
     def add(self, label_string: str, composer: Composer | None = None):
         return self.add_many([label_string], composer)
 
-    def add_many(self, label_strings: list[str], composer: Composer | None = None):
+    def add_many(self, label_strings: list[str], composer: Composer | None = None):  # type: ignore
         if composer is None:
             composer = Composer()
         for s in label_strings:
@@ -235,7 +237,7 @@ class BaseChart:
         return self._filter_name(ExpenseLabel)
 
     def _find_contra_labels(self, name: str) -> list[ContraLabel]:
-        """Retrun a list of contra labels that offset a specific account *name*."""
+        """Return a list of contra labels that offset a specific account *name*."""
         return [
             contra_label
             for contra_label in self.contra_labels
@@ -351,6 +353,12 @@ class BaseLedger:
 
         return income_statement(self)
 
+    def yield_tuples(self):
+        for name, taccount in self.subset(accounts.DebitAccount).data.items():
+            yield name, taccount.balance(), 0
+        for name, taccount in self.subset(accounts.CreditAccount).data.items():
+            yield name, 0, taccount.balance()
+
 
 class Pipeline:
     """A pipeline to accumulate ledger transformations."""
@@ -410,65 +418,54 @@ class Pipeline:
         return self
 
 
-# FIXME: добавить класс TrialBalanceViewer
 class TrialBalance(UserDict[str, tuple[int, int]]):
-    # xopowen
-    # возможноли в будущем увиличение количчества column ?
-    # что они должны показыват? стоит изменить имена
-    # EP: нужно буджет перенести в TrialBalanceViewer
+    def viewer(self, titles: dict[str, str] = {}):
+        return TrialBalanceViewer(self.data, titles)
 
-    def account_names_column(self):
-        names = [
-            name.replace("_", " ").strip().capitalize() for name in self.data.keys()
+
+@dataclass
+class TrialBalanceViewer:
+    trial_balance: dict[str, tuple[int, int]]
+    titles: dict[str, str] = field(default_factory=dict)
+    headers: tuple[str, str, str] = "Account", "Debit", "Credit"
+
+    def account_names(self):
+        return [
+            self.titles.get(name, name).replace("_", " ").strip().capitalize()
+            for name in self.trial_balance.keys()
         ]
-        return Column(names).align_left(".").add_space(1).header("Account")
 
-    def debit_column(self):
+    def account_names_column(self, header):
         return (
-            Column([str(d) for (d, _) in self.data.values()])
-            .align_right()
-            .add_space_left(2)
-            .header("Debit")
-            .add_space(2)
+            Column(self.account_names())
+            .add_space(1)
+            .align_left(".")
+            .add_right("...")
+            .header(header)
         )
 
-    def credit_column(self):
-        return (
-            Column([str(c) for (_, c) in self.data.values()])
-            .align_right()
-            .add_space_left(2)
-            .header("Credit")
-        )
+    @property
+    def debits(self) -> list[str]:
+        return [str(d) for (d, _) in self.trial_balance.values()]
+
+    @property
+    def credits(self) -> list[str]:
+        return [str(c) for (_, c) in self.trial_balance.values()]
+
+    def numeric_column(self, values, header):
+        return Column(values).align_right().add_space_left(2).header(header)
 
     def table(self):
-        return self.account_names_column() + self.debit_column() + self.credit_column()
+        return (
+            self.account_names_column(self.headers[0])
+            + self.numeric_column(self.debits, self.headers[1])
+            + self.numeric_column(self.credits, self.headers[2])
+        )
 
-    def view(self):
+    def __str__(self) -> str:
         return self.table().printable()
 
 
-##эту фозможно стоить прекрепить к классу связаному по смыслу как  staticmethod
-# xopowen
-# EP: по сути да, иногда я спицально откреплял, чтобы self, не маячил
-#     возможно для читаемости нужно к классу ledger прикрепить
-def yield_tuples(ledger):
-    for name, taccount in ledger.subset(accounts.DebitAccount).data.items():
-        yield name, taccount.balance(), 0
-    for name, taccount in ledger.subset(accounts.CreditAccount).data.items():
-        yield name, 0, taccount.balance()
-
-
-##эту фозможно стоить прекрепить к классу связаному по смыслу как  staticmethod
-# xopowen
-def trial_balance(chart, ledger):
-    ignore = [chart.null_account, chart.income_summary_account]
-    return TrialBalance(
-        {name: (a, b) for name, a, b in yield_tuples(ledger) if name not in ignore}
-    )
-
-
-# xopowen
-# лично мне этот класс нравится больше всех. локаничный
 @dataclass
 class Reporter:
     chart: BaseChart
@@ -480,10 +477,6 @@ class Reporter:
         return Pipeline(self.chart, self.ledger)
 
     def income_statement(self, header="Income Statement"):
-        # есть ли смысл создавать дополнителную ссылку ?
-        # EP: допольнительную переменную p? я хочу показать p отличается в разных методах
-        #     намерение такое было
-        # xopowen
         p = self.pipeline.close_first()
         return p.ledger.income_statement().viewer(self.titles, header)
 
@@ -491,8 +484,16 @@ class Reporter:
         p = self.pipeline.close_first().close_second().close_last()
         return p.ledger.balance_sheet().viewer(self.titles, header)
 
-    # xopowen
-    # возможно не дописана ЕП:++
-    # отрефакторю как TrialBalanceViewer будет
-    def trial_balance(self, header="Trial Balance"):
-        return trial_balance(self.chart, self.ledger)
+    # не симметрично - нет header для всей таблицы
+    def trial_balance(self):
+        ignore = [self.chart.null_account, self.chart.income_summary_account]
+        return TrialBalance(
+            {
+                name: (a, b)
+                for name, a, b in self.ledger.yield_tuples()
+                if name not in ignore
+            }
+        )
+
+    def trial_balance_viewer(self):
+        return self.trial_balance().viewer(self.titles)

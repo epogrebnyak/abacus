@@ -139,8 +139,7 @@ class Income(CreditAccount, RegularAccount, Transferable):
     pass
 
 
-# Can equally be CreditAccount or DebitAccount, making it a ContraAccount
-# keeps null at the bottom of trail balance, so it is less distracting.
+# Can equally be CreditAccount or DebitAccount.
 class NullAccount(CreditAccount, Unique, Temporary):
     pass
 
