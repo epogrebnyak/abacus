@@ -6,7 +6,7 @@ from compose import (  # type: ignore
     Composer,
     ContraLabel,
     Pipeline,
-    make_chart,
+    BaseChart,
     Reporter,
 )
 
@@ -27,7 +27,7 @@ from compose import (  # type: ignore
 def chart0():
     return (
         # intentionally using a mix of methods
-        make_chart()
+        BaseChart()
         .safe_append(AssetLabel("cash"))
         .add("capital:equity")
         .safe_append(ContraLabel(name="ts", offsets="equity"))
@@ -35,13 +35,13 @@ def chart0():
 
 
 def test_returns_offset():
-    assert make_chart("asset:cash", "capital:equity", "contra:equity:ts")[
+    assert BaseChart.use("asset:cash", "capital:equity", "contra:equity:ts")[
         "ts"
     ] == ContraLabel(name="ts", offsets="equity")
 
 
-def test_make_chart(chart0):
-    assert make_chart("asset:cash", "capital:equity", "contra:equity:ts") == chart0
+def test_base_chart_use(chart0):
+    assert BaseChart.use("asset:cash", "capital:equity", "contra:equity:ts") == chart0
 
 
 def test_names(chart0):
@@ -55,8 +55,8 @@ def test_names(chart0):
     ]
 
 
-def test_labels(chart0):
-    assert [x.name for x in chart0.labels] == [
+def test_regular_labels(chart0):
+    assert [x.name for x in chart0.regular_labels] == [
         "cash",
         "equity",
     ]
@@ -101,7 +101,7 @@ def test_double_offset_raises(chart0):
 
 def test_no_account_to_link_to_raises():
     with pytest.raises(AbacusError):
-        make_chart().add("contra:equity:ts")
+        BaseChart().add("contra:equity:ts")
 
 
 def test_as_string_and_extract():
@@ -176,6 +176,17 @@ def test_trial_balance_view(chart0, ledger0):
 
 def test_trial_balance_view_is_string(chart0, ledger0):
     assert isinstance(Reporter(chart0, ledger0).trial_balance().view(), str)
+
+
+def test_default_as_string_on_contra_label():
+    assert (
+        ContraLabel(name="depreciation", offsets="ppe").as_string()
+        == "contra:ppe:depreciation"
+    )
+
+
+def test_default_as_string_on_regular_label():
+    assert str(AssetLabel("cash")) == "asset:cash"
 
 
 def test_composer_as_string():

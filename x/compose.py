@@ -9,11 +9,6 @@ from base import AbacusError, Entry
 from pydantic import BaseModel
 from report import Column
 
-# TODO: требуется code review c позиций читаемости
-#       и поддерживаемости кода
-#       под ревью compose.py, test_compose.py, using.py
-#       приветствуются идеи новых тестов
-
 # xopowen
 # у вас разделение логики идёт по типам классов.я про Label и наследников.
 # я не совсем уверин в правелности данного подхода.
@@ -26,65 +21,71 @@ from report import Column
 #     типа "asset:cash". Если создать Composer с другими префиксами,
 #     то и можно распознать строку типа "актив:наличные".
 
-
-@dataclass
-class Label:
-    """Class to hold an account name. Subclasses used to indicate account type."""
-
-    name: str
-
-    def as_string(self, prefix: str):
-        return prefix + ":" + self.name
-
-
-# xopowen
-# этот класс тоже может наследуется от Label
-# EP: можно наследовать он базового класса, от самоого Label нельзя,
-#     потому что перестанет работать (в коде ниже)
-# match label:
-# case Label(_):
-#     self.labels.append(label)
-# case ContraLabel(_, offsets):
-#     if offsets in self.names:
-#         self.contra_labels.append(label)
-#  но в целом согласен не так уж красиво
+from abc import ABC, abstractmethod
+from typing import ClassVar
 
 
 @dataclass
-class ContraLabel:
-    """Class to add contra account."""
-
+class BaseLabel(ABC):
     name: str
+    prefix: ClassVar[str]
+
+    def use_prefix(self, prefix: str):
+        """Use default prefix from class attribute if no alternative prefix provided."""
+        return prefix if prefix else self.prefix
+
+    @abstractmethod
+    def as_string(self, prefix: str = ""):
+        ...
+
+    def __str__(self):
+        return self.as_string()
+
+
+@dataclass
+class RegularLabel(BaseLabel):
+    """Class to hold a regular account name.
+    Subclasses used to indicate account type."""
+
+    def as_string(self, prefix: str = ""):
+        return self.use_prefix(prefix) + ":" + self.name
+
+
+class AssetLabel(RegularLabel):
+    prefix = "asset"
+
+
+class CapitalLabel(RegularLabel):
+    prefix = "capital"
+
+
+class LiabilityLabel(RegularLabel):
+    prefix = "liability"
+
+
+class ExpenseLabel(RegularLabel):
+    prefix = "expense"
+
+
+class IncomeLabel(RegularLabel):
+    prefix = "income"
+
+
+@dataclass
+class ContraLabel(BaseLabel):
+    """Class to add contra account name."""
+
+    prefix = "contra"
     offsets: str
 
-    def as_string(self, prefix: str):
-        return prefix + ":" + self.offsets + ":" + self.name
+    def as_string(self, prefix: str = ""):
+        return self.use_prefix(prefix) + ":" + self.offsets + ":" + self.name
 
 
-class AssetLabel(Label):
-    pass
-
-
-class LiabilityLabel(Label):
-    pass
-
-
-class ExpenseLabel(Label):
-    pass
-
-
-class IncomeLabel(Label):
-    pass
-
-
-class CapitalLabel(Label):
-    pass
-
-
-#     # FIXME: special treatment needed for "capital:retained_earnings"
-#     # income_summary: str = "income_summary_account"
-#     # retained_earnings: str = "re"
-#     # null: str = "null"
+# NOTE: may need special treatment needed for "capital:retained_earnings"
+# income_summary: str = "income_summary_account"
+# retained_earnings: str = "re"
+# null: str = "null"
 
 
 class Composer(BaseModel):
@@ -99,12 +100,12 @@ class Composer(BaseModel):
       - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and 'ta' is the new contra account.
     """
 
-    asset: str = "asset"
-    capital: str = "capital"
-    liability: str = "liability"
-    income: str = "income"
-    expense: str = "expense"
-    contra: str = "contra"
+    asset: str = AssetLabel.prefix
+    capital: str = CapitalLabel.prefix
+    liability: str = LiabilityLabel.prefix
+    income: str = IncomeLabel.prefix
+    expense: str = ExpenseLabel.prefix
+    contra: str = ContraLabel.prefix
 
     @property
     def mapping(self):
@@ -117,21 +118,21 @@ class Composer(BaseModel):
             (self.contra, ContraLabel),
         ]
 
-    def get_label_contructor(self, prefix: str) -> Type[Label] | Type[ContraLabel]:
-        """Returns constructor for account or contra account label or raise KeyError."""
+    def get_label_contructor(self, prefix: str) -> Type[RegularLabel | ContraLabel]:
+        """Returns constructor for account or contra account label or raises exception."""
         try:
             return dict(self.mapping)[prefix]
         except KeyError:
             raise AbacusError(f"Invalid prefix: {prefix}.")
 
-    def get_prefix(self, label: Label | ContraLabel) -> str:
+    def get_prefix(self, label: RegularLabel | ContraLabel) -> str:
         """Returns prefix string for a given account or contra account label."""
         for prefix, label_class in self.mapping:
             if isinstance(label, label_class):
                 return prefix
         raise AbacusError(f"No prefix found for: {label}.")
 
-    def extract(self, label_string: str) -> Label | ContraLabel:
+    def extract(self, label_string: str) -> RegularLabel | ContraLabel:
         """Return Label or ContraLabel based on `label_string`.
 
         For example, for `asset:cash` string should produce `AssetLabel("cash")`.
@@ -144,29 +145,33 @@ class Composer(BaseModel):
             case _:
                 raise AbacusError(f"Cannot parse label string: {label_string}.")
 
-    def as_string(self, label: Label | ContraLabel) -> str:
+    def as_string(self, label: RegularLabel | ContraLabel) -> str:
         return label.as_string(prefix=self.get_prefix(label))
 
 
 # xopowen
-# довольно опшынй класс.
-# EP: пышный - факт.
-
+# довольно пышный  класс
 # с точки зрения читабильности вопросов нет
-# для потдершки нужно много тестов.
+# для поддершки нужно много тестов
 
 
 @dataclass
 class BaseChart:
-    income_summary_account: str
-    retained_earnings_account: str
-    null_account: str
-    labels: list[Label]
-    contra_labels: list[ContraLabel]
+    income_summary_account: str = "current_profit"
+    retained_earnings_account: str = "retained_earnings"
+    null_account: str = "null"
+    regular_labels: list[RegularLabel] = field(default_factory=list)
+    contra_labels: list[ContraLabel] = field(default_factory=list)
+
+    # xopowen: эти функции очень связана с BaseChart возможно соить их поместить в него как staticmethod
+    # также хаменить BaseChart на self.__class__ для возможности насделования
+    @classmethod
+    def use(cls, *strings: list[str]):
+        return cls().add_many(strings)
 
     @property
-    def all_labels(self):
-        return self.labels + self.contra_labels
+    def labels(self) -> list[RegularLabel | ContraLabel]:
+        return self.regular_labels + self.contra_labels
 
     @property
     def names(self) -> list[str]:
@@ -174,18 +179,17 @@ class BaseChart:
             self.income_summary_account,
             self.retained_earnings_account,
             self.null_account,
-        ] + [account.name for account in self.all_labels]
+        ] + [account.name for account in self.labels]
 
     # уязвиемое место по возможности стоить подробно тестировать
-    # ЕП: согалсоен
     def safe_append(self, label):
         if label.name in self.names:
             raise AbacusError(
                 f"Duplicate account name detected, name already in use: {label.name}."
             )
         match label:
-            case Label(_):
-                self.labels.append(label)
+            case RegularLabel(_):
+                self.regular_labels.append(label)
             case ContraLabel(_, offsets):
                 if offsets in self.names:
                     self.contra_labels.append(label)
@@ -195,27 +199,23 @@ class BaseChart:
                     )
         return self
 
-    # xopowen
-    # если указать composer=Composer() то composer будит ссылатся на 1 объект Composer
-    # возможно стоит заменить на  composer=None и внутри проверять на None и если None то создавать объект
     def add(self, label_string: str, composer: Composer | None = None):
-        if composer is None:
-            composer = Composer()
-        return self.safe_append(label=composer.extract(label_string))
+        return self.add_many([label_string], composer)
 
     def add_many(self, label_strings: list[str], composer: Composer | None = None):
         if composer is None:
             composer = Composer()
         for s in label_strings:
-            self.add(s, composer)
+            self.safe_append(label=composer.extract(s))
         return self
 
-    def _filter(self, cls):
+    def _filter(self, cls: Type[RegularLabel] | Type[ContraLabel]):
         return [label for label in self.labels if isinstance(label, cls)]
 
-    def _filter_name(self, cls: Type[Label]):
+    def _filter_name(self, cls: Type[RegularLabel]):
         return [account.name for account in self.labels if isinstance(account, cls)]
 
+    # TODO: create WritableChart class
     @property
     def assets(self):
         return self._filter_name(AssetLabel)
@@ -236,7 +236,8 @@ class BaseChart:
     def expenses(self):
         return self._filter_name(ExpenseLabel)
 
-    def _find_contra_labels(self, name: str):
+    def _find_contra_labels(self, name: str) -> list[ContraLabel]:
+        """Retrun a list of contra labels that offset a specific account *name*."""
         return [
             contra_label
             for contra_label in self.contra_labels
@@ -284,23 +285,9 @@ class BaseChart:
             for contra_label in self._find_contra_labels(label.name)
         ]
 
-    def __getitem__(self, account_name: str) -> Label | ContraLabel:
-        return {account.name: account for account in self.all_labels}[account_name]
-
-
-# эти функции очень связана с BaseChart возможно соить их поместить в него как staticmethod
-# также хаменить BaseChart на self.__class__ для возможности насделования
-# xopowen
-def make_chart(*strings: list[str]):  # type: ignore
-    return BaseChart(
-        income_summary_account="current_profit",
-        retained_earnings_account="retained_earnings",
-        null_account="null",
-        labels=[],
-        contra_labels=[],
-    ).add_many(
-        strings
-    )  # type: ignore
+    def __getitem__(self, account_name: str) -> RegularLabel | ContraLabel:
+        # NOTE: will not show retained earnigns, isa and null accounts
+        return {account.name: account for account in self.labels}[account_name]
 
 
 @dataclass
