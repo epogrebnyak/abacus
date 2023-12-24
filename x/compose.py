@@ -8,6 +8,10 @@ from base import AbacusError, Entry
 from pydantic import BaseModel
 from report import Column
 
+# TODO: требуется code review c позиций читаемости 
+#       и поддерживаемости кода
+#       под ревью compose.py, test_compose.py, using.py
+#       приветствуются идеи новых тестов
 
 @dataclass
 class Label:
@@ -375,7 +379,7 @@ class Pipeline:
         self.close_contra(accounts.ContraCapital)
         return self
 
-
+#FIXME: добавить класс TrialBalanceViewer 
 class TrialBalance(UserDict[str, tuple[int, int]]):
     def column_1(self):
         names = [
