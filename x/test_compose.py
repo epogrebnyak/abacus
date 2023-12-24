@@ -58,7 +58,7 @@ def test_make_chart(chart0):
 
 
 def test_names(chart0):
-    assert chart0.names() == [
+    assert chart0.names == [
         "current_profit",
         "retained_earnings",
         "null",
@@ -187,5 +187,22 @@ def test_trial_balance_view(chart0, ledger0):
     }
 
 
-def test_trial_balance_view(chart0, ledger0):
+def test_trial_balance_view_is_string(chart0, ledger0):
     assert isinstance(Reporter(chart0, ledger0).trial_balance().view(), str)
+
+
+def test_composer_as_string():
+    composer = Composer(asset="актив")
+    assert composer.as_string(AssetLabel("каccа")) == "актив:каccа"
+
+
+def test_composer_extract_in_russian():
+    composer = Composer(asset="актив")
+    assert composer.extract("актив:каccа") == AssetLabel("каccа")
+
+
+def test_composer_extract_contra_account_in_russian():
+    composer = Composer(contra="контрсчет")
+    assert composer.extract("контрсчет:ОС:амортизация") == ContraLabel(
+        "амортизация", "ОС"
+    )

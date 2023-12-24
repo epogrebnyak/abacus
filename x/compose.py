@@ -80,73 +80,23 @@ class IncomeLabel(Label):
 class CapitalLabel(Label):
     pass
 
-#diplicated class
-# class Composer(BaseModel):
-#     """Extract and compose labels using prefixes.
-#
-#     This class helps in internationalisation - it allows
-#     working with labels like 'актив:касса'.
-#
-#     Examples:
-#       - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account.
-#       - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and
-#         'ta' is the new contra account.
-#
-#     """
-#
-#     asset: str = "asset"
-#     capital: str = "capital"
-#     liability: str = "liability"
-#     income: str = "income"
-#     expense: str = "expense"
-#     contra: str = "contra"
+
 #     # FIXME: special treatment needed for "capital:retained_earnings"
 #     # income_summary: str = "income_summary_account"
 #     # retained_earnings: str = "re"
 #     # null: str = "null"
-#
-#     def as_string(self, label: Label | ContraLabel) -> str:
-#         return label.as_string(prefix(self, label))
-#
-#     # xopowen
-#     # extract следует уточнить что именно извлекается
-#     # EP: с такиим докстрингом норм?
-#     def extract(self, label_string: str) -> Label | ContraLabel:
-#         """Extract Label or ContraLabel from a string.
-#
-#         Example `asset:cash` becomes AssetLabel("cash").
-#         """
-#         match label_string.strip().lower().split(":"):
-#             case [prefix, name]:
-#                 return label_class(self, prefix)(name)  # type: ignore
-#             case [self.contra, account_name, contra_account_name]:
-#                 return ContraLabel(contra_account_name, account_name)
-#             case _:
-#                 raise AbacusError(f"Invalid label: {label_string}.")
-
-
-# эти функции кажется связана по смыслу с composer возможно стоить их поместить в него как staticmethod
-# xopowen
-# возможна пробеммы при расщирении функционала
-# EP: согласен,
-#     они были внутри Composer, но там как-то не понраились
-#     оставил внутри  Composer только публичные методы
-#     сама идея очень простая, что мы каждому классу-контруктору Label
-#     задаем строку-префикс, либо английский, либо национальный
-#     но реализация хромает пока
 
 
 class Composer(BaseModel):
-    """Extract and compose labels using prefixes.
+    """Create or serialise labels using prefixes.
 
-    This class helps in internationalisation - it allows
-    working with labels like 'актив:касса'.
+    This class allows working with labels in
+    languges other than English, for example
+    like 'актив:касса' becomes possible.
 
     Examples:
-      - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account.
-      - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and
-        'ta' is the new contra account.
-
+      - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account;
+      - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and 'ta' is the new contra account.
     """
     asset: str = "asset"
     capital: str = "capital"
@@ -165,26 +115,27 @@ class Composer(BaseModel):
             (self.expense, ExpenseLabel),
             (self.contra, ContraLabel),
         ]
-    #TODO: test this method
+
     def get_label_contructor(self, prefix: str) -> Type[Label] | Type[ContraLabel]:
-        '''get constructor for create a label or raise KeyError'''
+        """Returns constructor for account or contra account label or raise KeyError."""
         try:
             return dict(self.mapping)[prefix]
         except KeyError:
             raise AbacusError(f"Invalid prefix: {prefix}.")
 
     def get_prefix(self, label: Label | ContraLabel) -> str:
+        """Returns prefix string for a given account or contra account label."""
         for prefix, label_class in self.mapping:
             if isinstance(label, label_class):
                 return prefix
         raise AbacusError(f"No prefix found for: {label}.")
 
     def extract(self, label_string: str) -> Label | ContraLabel:
-        """Extract Label or ContraLabel from a string.
+        """Return Label or ContraLabel based on `label_string`.
 
-        Example `asset:cash` becomes AssetLabel("cash").
+        For example, for `asset:cash` string should produce `AssetLabel("cash")`.
         """
-        match label_string.strip().lower().split(":"):
+        match label_string.split(":"):
             case [prefix, name]:
                 return self.get_label_contructor(prefix)(name)  # type: ignore
             #xopowen
@@ -198,42 +149,6 @@ class Composer(BaseModel):
 
     def as_string(self, label: Label | ContraLabel) -> str:
         return label.as_string(prefix=self.get_prefix(label))
-
-
-def prefix(composer: Composer, label: Label | ContraLabel) -> str:
-    """Return prefix string given a label or contra label."""
-    match label:
-        case AssetLabel(_):
-            return composer.asset
-        case LiabilityLabel(_):
-            return composer.liability
-        case CapitalLabel(_):
-            return composer.capital
-        case IncomeLabel(_):
-            return composer.income
-        case ExpenseLabel(_):
-            return composer.expense
-        case ContraLabel(_, _):
-            return composer.contra
-        case _:
-            raise AbacusError(f"Invalid label: {label}.")
-
-
-def label_class(composer: Composer, prefix: str) -> Type[Label | ContraLabel]:
-    """Return label or contra label class contructor given the prefix string."""
-    match prefix:
-        case composer.asset:
-            return AssetLabel
-        case composer.liability:
-            return LiabilityLabel
-        case composer.capital:
-            return CapitalLabel
-        case composer.income:
-            return IncomeLabel
-        case composer.expense:
-            return ExpenseLabel
-        case _:
-            raise AbacusError(f"Invalid label: {prefix}.")
 
 
 # xopowen
@@ -256,9 +171,7 @@ class BaseChart:
     def all_labels(self):
         return self.labels + self.contra_labels
 
-    # xopowen
-    # думаю это тоже @property.
-    # TODO: меняем на property
+    @property
     def names(self) -> list[str]:
         return [
             self.income_summary_account,
@@ -269,7 +182,7 @@ class BaseChart:
     # уязвиемое место по возможности стоить подробно тестировать
     # ЕП: согалсоен
     def safe_append(self, label):
-        if label.name in self.names():
+        if label.name in self.names:
             raise AbacusError(
                 f"Duplicate account name detected, name already in use: {label.name}."
             )
@@ -277,13 +190,14 @@ class BaseChart:
             case Label(_):
                 self.labels.append(label)
             case ContraLabel(_, offsets):
-                if offsets in self.names():
+                if offsets in self.names:
                     self.contra_labels.append(label)
                 else:
                     raise AbacusError(
                         f"Must define account name before adding contra account to it: {label.offsets}."
                     )
         return self
+
     # xopowen
     # если указать composer=Composer() то composer будит ссылатся на 1 объект Composer
     # возможно стоит заменить на  composer=None и внутри проверять на None и если None то создавать объект
