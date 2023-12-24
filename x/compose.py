@@ -1,8 +1,6 @@
 from collections import UserDict
 
-# xopowen
-# проверте возможно ли заменит на from pydantic.dataclasses import dataclass
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field  # NOTE: may use pydantic.dataclasses
 from typing import Callable, Iterable, Type
 
 import accounts  # type: ignore
@@ -16,15 +14,22 @@ from report import Column
 #       под ревью compose.py, test_compose.py, using.py
 #       приветствуются идеи новых тестов
 
-#xopowen
-#у вас разделение логики идёт по типам классов.я про Label и наследников.
-#я не совсем уверин в правелности данного подхода.
-#тип Label зависит от prefix может это стоит учитывать пи создании Label
-#но это личное впеетление на читабелность это не влияет. Но может повлият на поддерживаемости
+# xopowen
+# у вас разделение логики идёт по типам классов.я про Label и наследников.
+# я не совсем уверин в правелности данного подхода.
+# тип Label зависит от prefix может это стоит учитывать пи создании Label
+# но это личное впеетление на читабелность это не влияет. Но может повлият на поддерживаемости
+
+# EP: c Label также не уверен что все совершенно правильно,
+#     логика следующая - есть дефолтные префиксы на английском,
+#     префиксы определят как распознатся текстовый идентификатор
+#     типа "asset:cash". Если создать Composer с другими префиксами,
+#     то и можно распознать строку типа "актив:наличные".
+
 
 @dataclass
 class Label:
-    """Base class to hold an account name."""
+    """Class to hold an account name. Subclasses used to indicate account type."""
 
     name: str
 
@@ -34,6 +39,17 @@ class Label:
 
 # xopowen
 # этот класс тоже может наследуется от Label
+# EP: можно наследовать он базового класса, от самоого Label нельзя,
+#     потому что перестанет работать (в коде ниже)
+# match label:
+# case Label(_):
+#     self.labels.append(label)
+# case ContraLabel(_, offsets):
+#     if offsets in self.names():
+#         self.contra_labels.append(label)
+#  но в целом согласен не так уж красиво
+
+
 @dataclass
 class ContraLabel:
     """Class to add contra account."""
@@ -92,9 +108,14 @@ class Composer(BaseModel):
     def as_string(self, label: Label | ContraLabel) -> str:
         return label.as_string(prefix(self, label))
 
-   #xopowen
-   #extract следует уточнить что именно извлекается
+    # xopowen
+    # extract следует уточнить что именно извлекается
+    # EP: с такиим докстрингом норм?
     def extract(self, label_string: str) -> Label | ContraLabel:
+        """Extract Label or ContraLabel from a string.
+
+        Example `asset:cash` becomes AssetLabel("cash").
+        """
         match label_string.strip().lower().split(":"):
             case [prefix, name]:
                 return label_class(self, prefix)(name)  # type: ignore
@@ -103,9 +124,66 @@ class Composer(BaseModel):
             case _:
                 raise AbacusError(f"Invalid label: {label_string}.")
 
-#эти функции кажется связана по смыслу с composer возможно стоить их поместить в него как staticmethod
-#xopowen
-#возможна пробеммы при расщирении функционала
+
+# эти функции кажется связана по смыслу с composer возможно стоить их поместить в него как staticmethod
+# xopowen
+# возможна пробеммы при расщирении функционала
+# EP: согласен,
+#     они были внутри Composer, но там как-то не понраились
+#     оставил внутри  Composer только публичные методы
+#     сама идея очень простая, что мы каждому классу-контруктору Label
+#     задаем строку-префикс, либо английский, либо национальный
+#     но реализация хромает пока
+
+
+class Composer2(BaseModel):
+    asset: str = "asset"
+    capital: str = "capital"
+    liability: str = "liability"
+    income: str = "income"
+    expense: str = "expense"
+    contra: str = "contra"
+
+    @property
+    def mapping(self):
+        return [
+            (self.asset, AssetLabel),
+            (self.liability, LiabilityLabel),
+            (self.capital, CapitalLabel),
+            (self.income, IncomeLabel),
+            (self.expense, ExpenseLabel),
+            (self.contra, ContraLabel),
+        ]
+
+    def get_label_contructor(self, prefix: str) -> Type[Label] | Type[ContraLabel]:
+        try:
+            return dict(self.mapping)[prefix]
+        except KeyError:
+            raise AbacusError(f"Invalid prefix: {prefix}.")
+
+    def get_prefix(self, label: Label | ContraLabel) -> str:
+        for prefix, label_class in self.mapping:
+            if isinstance(label, label_class):
+                return prefix
+        raise AbacusError(f"No prefix found for: {label}.")
+
+    def extract(self, label_string: str) -> Label | ContraLabel:
+        """Extract Label or ContraLabel from a string.
+
+        Example `asset:cash` becomes AssetLabel("cash").
+        """
+        match label_string.strip().lower().split(":"):
+            case [prefix, name]:
+                return self.get_label_contructor(prefix)(name)  # type: ignore
+            case [self.contra, account_name, contra_account_name]:
+                return ContraLabel(contra_account_name, account_name)
+            case _:
+                raise AbacusError(f"Cannot parse label string: {label_string}.")
+
+    def as_string(self, label: Label | ContraLabel) -> str:
+        return label.as_string(prefix=self.get_prefix(label))
+
+
 def prefix(composer: Composer, label: Label | ContraLabel) -> str:
     """Return prefix string given a label or contra label."""
     match label:
@@ -141,10 +219,14 @@ def label_class(composer: Composer, prefix: str) -> Type[Label | ContraLabel]:
         case _:
             raise AbacusError(f"Invalid label: {prefix}.")
 
-#xopowen
-#довольно опшынй класс.
-#с точки зрения читабильности вопросов нет
-#для потдершки нужно много тестов.
+
+# xopowen
+# довольно опшынй класс.
+# EP: пышный - факт.
+
+# с точки зрения читабильности вопросов нет
+# для потдершки нужно много тестов.
+
 
 @dataclass
 class BaseChart:
@@ -157,15 +239,19 @@ class BaseChart:
     @property
     def all_labels(self):
         return self.labels + self.contra_labels
-    #xopowen
-    #думаю это тоже @property.
+
+    # xopowen
+    # думаю это тоже @property.
+    # TODO: меняем на property
     def names(self) -> list[str]:
         return [
             self.income_summary_account,
             self.retained_earnings_account,
             self.null_account,
         ] + [account.name for account in self.all_labels]
-    #уязвиемое место по возможности стоить подробно тестировать
+
+    # уязвиемое место по возможности стоить подробно тестировать
+    # ЕП: согалсоен
     def safe_append(self, label):
         if label.name in self.names():
             raise AbacusError(
@@ -182,12 +268,17 @@ class BaseChart:
                         f"Must define account name before adding contra account to it: {label.offsets}."
                     )
         return self
-    #усли указать composer=Composer() то composer будит ссылатся на 1 объект Composer
-    #возможно стоит заменить на  composer=None и внутри проверять на None и если None то создавать объект
-    def add(self, label_string: str, composer=Composer()):
+
+    # усли указать composer=Composer() то composer будит ссылатся на 1 объект Composer
+    # возможно стоит заменить на  composer=None и внутри проверять на None и если None то создавать объект
+    def add(self, label_string: str, composer: Composer | None = None):
+        if composer is None:
+            composer = Composer()
         return self.safe_append(label=composer.extract(label_string))
 
-    def add_many(self, label_strings: list[str], composer=Composer()):
+    def add_many(self, label_strings: list[str], composer: Composer | None = None):
+        if composer is None:
+            composer = Composer()
         for s in label_strings:
             self.add(s, composer)
         return self
@@ -269,9 +360,10 @@ class BaseChart:
     def __getitem__(self, account_name: str) -> Label | ContraLabel:
         return {account.name: account for account in self.all_labels}[account_name]
 
-#эти функции очень связана с BaseChart возможно соить их поместить в него как staticmethod
-#также хаменить BaseChart на self.__class__ для возможности насделования
-#xopowen
+
+# эти функции очень связана с BaseChart возможно соить их поместить в него как staticmethod
+# также хаменить BaseChart на self.__class__ для возможности насделования
+# xopowen
 def make_chart(*strings: list[str]):  # type: ignore
     return BaseChart(
         income_summary_account="current_profit",
@@ -312,7 +404,7 @@ class BaseLedger:
             data={name: f(taccount) for name, taccount in self.data.items()}
         )
 
-    #TODO test this
+    # TODO test this
     def deep_copy(self):
         return self.create_with(lambda taccount: taccount.deep_copy())
 
@@ -405,20 +497,21 @@ class Pipeline:
         self.close_contra(accounts.ContraCapital)
         return self
 
-#FIXME: добавить класс TrialBalanceViewer
+
+# FIXME: добавить класс TrialBalanceViewer
 class TrialBalance(UserDict[str, tuple[int, int]]):
-    #xopowen
-    #возможноли в будущем увиличение количчества column ?
-    #что они должны показыват? стоит изменить имена
+    # xopowen
+    # возможноли в будущем увиличение количчества column ?
+    # что они должны показыват? стоит изменить имена
+    # EP: нужно буджет перенести в TrialBalanceViewer
 
-
-    def column_1(self):
+    def account_names_column(self):
         names = [
             name.replace("_", " ").strip().capitalize() for name in self.data.keys()
         ]
         return Column(names).align_left(".").add_space(1).header("Account")
 
-    def column_2(self):
+    def debit_column(self):
         return (
             Column([str(d) for (d, _) in self.data.values()])
             .align_right()
@@ -427,7 +520,7 @@ class TrialBalance(UserDict[str, tuple[int, int]]):
             .add_space(2)
         )
 
-    def column_3(self):
+    def credit_column(self):
         return (
             Column([str(c) for (_, c) in self.data.values()])
             .align_right()
@@ -436,21 +529,25 @@ class TrialBalance(UserDict[str, tuple[int, int]]):
         )
 
     def table(self):
-        return self.column_1() + self.column_2() + self.column_3()
+        return self.account_names_column() + self.debit_column() + self.credit_column()
 
     def view(self):
         return self.table().printable()
 
+
 ##эту фозможно стоить прекрепить к классу связаному по смыслу как  staticmethod
-#xopowen
+# xopowen
+# EP: по сути да, иногда я спицально откреплял, чтобы self, не маячил
+#     возможно для читаемости нужно к классу ledger прикрепить
 def yield_tuples(ledger):
     for name, taccount in ledger.subset(accounts.DebitAccount).data.items():
         yield name, taccount.balance(), 0
     for name, taccount in ledger.subset(accounts.CreditAccount).data.items():
         yield name, 0, taccount.balance()
 
+
 ##эту фозможно стоить прекрепить к классу связаному по смыслу как  staticmethod
-#xopowen
+# xopowen
 def trial_balance(chart, ledger):
     ignore = [chart.null_account, chart.income_summary_account]
     return TrialBalance(
@@ -458,8 +555,8 @@ def trial_balance(chart, ledger):
     )
 
 
-#xopowen
-#лично мне этот класс нравится больше всех. локаничный
+# xopowen
+# лично мне этот класс нравится больше всех. локаничный
 @dataclass
 class Reporter:
     chart: BaseChart
@@ -471,16 +568,19 @@ class Reporter:
         return Pipeline(self.chart, self.ledger)
 
     def income_statement(self, header="Income Statement"):
-        #есть ли смысл создавать дополнителную ссылку ?
-        #xopowen
+        # есть ли смысл создавать дополнителную ссылку ?
+        # EP: допольнительную переменную p? я хочу показать p отличается в разных методах
+        #     намерение такое было
+        # xopowen
         p = self.pipeline.close_first()
         return p.ledger.income_statement().viewer(self.titles, header)
 
     def balance_sheet(self, header="Balance Sheet"):
         p = self.pipeline.close_first().close_second().close_last()
         return p.ledger.balance_sheet().viewer(self.titles, header)
-    #xopowen
-    #возможно не дописана
+
+    # xopowen
+    # возможно не дописана ЕП:++
+    # отрефакторю как TrialBalanceViewer будет
     def trial_balance(self, header="Trial Balance"):
         return trial_balance(self.chart, self.ledger)
-

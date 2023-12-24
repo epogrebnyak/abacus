@@ -10,9 +10,9 @@ from compose import (  # type: ignore
     Reporter,
 )
 
-#стоит разделить тесты на модульные(классы) и связные(свясь друг с другом).
-#так будит удобнее понимать что вы тестируйте
-#pytest.mark.parametrize("input_value", make_chart("asset:cash", "capital:equity", "contra:equity:ts"))
+# стоит разделить тесты на модульные(классы) и связные(свясь друг с другом).
+# так будит удобнее понимать что вы тестируйте
+# pytest.mark.parametrize("input_value", make_chart("asset:cash", "capital:equity", "contra:equity:ts"))
 # def test_make_chart():
 #     make = make_chart("asset:cash", "capital:equity", "contra:equity:ts")
 #     # проверка равенства
@@ -20,7 +20,7 @@ from compose import (  # type: ignore
 #     # прооверка на разность ссылок
 #     assert make is not chart0
 
-#больше коминтариев в тестах. стоитиспользовать pytest.mark.
+# больше коминтариев в тестах. стоитиспользовать pytest.mark.
 
 
 @pytest.fixture
