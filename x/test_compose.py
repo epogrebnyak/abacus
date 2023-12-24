@@ -1,3 +1,5 @@
+from typing import Type
+
 import accounts  # type: ignore
 import pytest
 from base import AbacusError, Entry
@@ -8,6 +10,7 @@ from compose import (  # type: ignore
     Pipeline,
     make_chart,
     Reporter,
+    Label
 )
 
 # стоит разделить тесты на модульные(классы) и связные(свясь друг с другом).
@@ -33,6 +36,16 @@ def chart0():
         .safe_append(ContraLabel(name="ts", offsets="equity"))
     )
 
+def test_composer_get_label_contructor():
+    """test correct return of method Composer.get_label_contructor"""
+    composer = Composer()
+    #test raise error
+    with pytest.raises(AbacusError):
+        composer.get_label_contructor('')
+    #test return class
+    assert  composer.get_label_contructor(composer.contra) == ContraLabel
+    # test not equal links
+    assert composer  is not Composer()
 
 def test_returns_offset():
     assert make_chart("asset:cash", "capital:equity", "contra:equity:ts")[

@@ -167,7 +167,7 @@ class Composer(BaseModel):
         ]
     #TODO: test this method
     def get_label_contructor(self, prefix: str) -> Type[Label] | Type[ContraLabel]:
-        '''get contructor for create label or raise KeyError'''
+        '''get constructor for create a label or raise KeyError'''
         try:
             return dict(self.mapping)[prefix]
         except KeyError:
@@ -187,6 +187,10 @@ class Composer(BaseModel):
         match label_string.strip().lower().split(":"):
             case [prefix, name]:
                 return self.get_label_contructor(prefix)(name)  # type: ignore
+            #xopowen
+            #так как  ContraLabel всё равно есть в mapping
+            # case[self.contra, account_name, contra_account_name]:
+                # return self.get_label_contructor(contra_account_name)(account_name)
             case [self.contra, account_name, contra_account_name]:
                 return ContraLabel(contra_account_name, account_name)
             case _:
