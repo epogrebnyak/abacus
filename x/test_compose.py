@@ -1,39 +1,65 @@
+from typing import Type
+
 import accounts  # type: ignore
 import pytest
 from base import AbacusError, Entry
-from compose import (  # type: ignore
+from compose import (
     AssetLabel,
-    Composer,
+    BaseChart,
+    Composer,  # type: ignore
     ContraLabel,
     Pipeline,
-    make_chart,
     Reporter,
 )
+
+# стоит разделить тесты на модульные(классы) и связные(свясь друг с другом).
+# так будит удобнее понимать что вы тестируйте
+# pytest.mark.parametrize("input_value", make_chart("asset:cash", "capital:equity", "contra:equity:ts"))
+# def test_make_chart():
+#     make = make_chart("asset:cash", "capital:equity", "contra:equity:ts")
+#     # проверка равенства
+#     assert make == chart0
+#     # прооверка на разность ссылок
+#     assert make is not chart0
+
+# больше коминтариев в тестах. стоитиспользовать pytest.mark.
 
 
 @pytest.fixture
 def chart0():
     return (
         # intentionally using a mix of methods
-        make_chart()
+        BaseChart()
         .safe_append(AssetLabel("cash"))
         .add("capital:equity")
         .safe_append(ContraLabel(name="ts", offsets="equity"))
     )
 
 
+def test_composer_get_label_contructor():
+    """test correct return of method Composer.get_label_contructor"""
+    composer = Composer()
+    # test raise error
+    with pytest.raises(AbacusError):
+        composer.get_label_contructor("")
+    # test return class
+    assert composer.get_label_contructor(composer.contra) == ContraLabel
+    # test not equal links
+    assert composer is not Composer()
+
+
 def test_returns_offset():
-    assert make_chart("asset:cash", "capital:equity", "contra:equity:ts")[
+    assert BaseChart.use("asset:cash", "capital:equity", "contra:equity:ts")[
         "ts"
     ] == ContraLabel(name="ts", offsets="equity")
 
 
-def test_make_chart(chart0):
-    assert make_chart("asset:cash", "capital:equity", "contra:equity:ts") == chart0
+def test_base_chart_use(chart0):
+    assert BaseChart.use("asset:cash", "capital:equity", "contra:equity:ts") == chart0
 
 
 def test_names(chart0):
-    assert chart0.names() == [
+    assert chart0.names == [
         "current_profit",
         "retained_earnings",
         "null",
@@ -43,8 +69,8 @@ def test_names(chart0):
     ]
 
 
-def test_labels(chart0):
-    assert [x.name for x in chart0.labels] == [
+def test_regular_labels(chart0):
+    assert [x.name for x in chart0.regular_labels] == [
         "cash",
         "equity",
     ]
@@ -89,7 +115,7 @@ def test_double_offset_raises(chart0):
 
 def test_no_account_to_link_to_raises():
     with pytest.raises(AbacusError):
-        make_chart().add("contra:equity:ts")
+        BaseChart().add("contra:equity:ts")
 
 
 def test_as_string_and_extract():
@@ -162,5 +188,33 @@ def test_trial_balance_view(chart0, ledger0):
     }
 
 
-def test_trial_balance_view(chart0, ledger0):
-    assert isinstance(Reporter(chart0, ledger0).trial_balance().view(), str)
+def test_trial_balance_view_is_string(chart0, ledger0):
+    assert isinstance(str(Reporter(chart0, ledger0).trial_balance().viewer()), str)
+
+
+def test_default_as_string_on_contra_label():
+    assert (
+        ContraLabel(name="depreciation", offsets="ppe").as_string()
+        == "contra:ppe:depreciation"
+    )
+
+
+def test_default_as_string_on_regular_label():
+    assert str(AssetLabel("cash")) == "asset:cash"
+
+
+def test_composer_as_string():
+    composer = Composer(asset="актив")
+    assert composer.as_string(AssetLabel("каccа")) == "актив:каccа"
+
+
+def test_composer_extract_in_russian():
+    composer = Composer(asset="актив")
+    assert composer.extract("актив:каccа") == AssetLabel("каccа")
+
+
+def test_composer_extract_contra_account_in_russian():
+    composer = Composer(contra="контрсчет")
+    assert composer.extract("контрсчет:ОС:амортизация") == ContraLabel(
+        "амортизация", "ОС"
+    )

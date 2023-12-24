@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod
 from collections import UserDict
-from dataclasses import dataclass, field
-from typing import Callable, Iterable, Type
+from dataclasses import dataclass, field  # NOTE: may use pydantic.dataclasses
+from typing import Callable, ClassVar, Iterable, Type
 
 import accounts  # type: ignore
 from accounts import ContraAccount, TAccount  # type: ignore
@@ -8,175 +9,213 @@ from base import AbacusError, Entry
 from pydantic import BaseModel
 from report import Column
 
-# TODO: требуется code review c позиций читаемости 
-#       и поддерживаемости кода
-#       под ревью compose.py, test_compose.py, using.py
-#       приветствуются идеи новых тестов
+# xopowen
+# у вас разделение логики идёт по типам классов.я про Label и наследников.
+# я не совсем уверин в правелности данного подхода.
+# тип Label зависит от prefix может это стоит учитывать пи создании Label
+# но это личное впеетление на читабелность это не влияет. Но может повлият на поддерживаемости
 
-@dataclass
-class Label:
-    """Base class to hold an account name."""
-
-    name: str
-
-    def as_string(self, prefix: str):
-        return prefix + ":" + self.name
+# EP: c Label также не уверен что все совершенно правильно,
+#     логика следующая - есть дефолтные префиксы на английском,
+#     префиксы определят как распознатся текстовый идентификатор
+#     типа "asset:cash". Если создать Composer с другими префиксами,
+#     то и можно распознать строку типа "актив:наличные".
 
 
 @dataclass
-class ContraLabel:
-    """Class to add contra account."""
-
+class BaseLabel(ABC):
     name: str
+    prefix: ClassVar[str]
+
+    def use_prefix(self, prefix: str):
+        """Use default prefix from class attribute if no alternative prefix provided."""
+        return prefix if prefix else self.prefix
+
+    @abstractmethod
+    def as_string(self, prefix: str = ""):
+        """Return label as string like `asset:cash`.
+        Providing custom `prefix` allows internationalisation.
+        """
+        ...
+
+    def __str__(self):
+        return self.as_string()
+
+
+@dataclass
+class RegularLabel(BaseLabel):
+    """Class to hold a regular account name.
+    Subclasses used to indicate account type."""
+
+    def as_string(self, prefix: str = ""):
+        return self.use_prefix(prefix) + ":" + self.name
+
+
+class AssetLabel(RegularLabel):
+    prefix = "asset"
+
+
+class CapitalLabel(RegularLabel):
+    prefix = "capital"
+
+
+class LiabilityLabel(RegularLabel):
+    prefix = "liability"
+
+
+class ExpenseLabel(RegularLabel):
+    prefix = "expense"
+
+
+class IncomeLabel(RegularLabel):
+    prefix = "income"
+
+
+@dataclass
+class ContraLabel(BaseLabel):
+    """Class to hold a contra account name."""
+
+    prefix = "contra"
     offsets: str
 
-    def as_string(self, prefix: str):
-        return prefix + ":" + self.offsets + ":" + self.name
+    def as_string(self, prefix: str = ""):
+        return self.use_prefix(prefix) + ":" + self.offsets + ":" + self.name
 
 
-class AssetLabel(Label):
-    pass
-
-
-class LiabilityLabel(Label):
-    pass
-
-
-class ExpenseLabel(Label):
-    pass
-
-
-class IncomeLabel(Label):
-    pass
-
-
-class CapitalLabel(Label):
-    pass
+# NOTE: may need special treatment needed for "capital:retained_earnings"
+# income_summary: str = "income_summary_account"
+# retained_earnings: str = "re"
+# null: str = "null"
 
 
 class Composer(BaseModel):
-    """Extract and compose labels using prefixes.
-
-    This class helps in internationalisation - it allows
-    working with labels like 'актив:касса'.
+    """Create or serialise labels using prefixes.
 
     Examples:
-      - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account.
-      - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and
-        'ta' is the new contra account.
+      - in 'asset:cash' prefix is 'asset' and 'cash' is the name of the account;
+      - in 'contra:equity:ta' prefix is 'contra', 'equity' is account name and 'ta' is the new contra account.
+
+    This class allows working with labels in
+    languges other than English, for example
+    like 'актив:касса' becomes possible.
 
     """
 
-    asset: str = "asset"
-    capital: str = "capital"
-    liability: str = "liability"
-    income: str = "income"
-    expense: str = "expense"
-    contra: str = "contra"
-    # FIXME: special treatment needed for "capital:retained_earnings"
-    # income_summary: str = "income_summary_account"
-    # retained_earnings: str = "re"
-    # null: str = "null"
+    asset: str = AssetLabel.prefix
+    capital: str = CapitalLabel.prefix
+    liability: str = LiabilityLabel.prefix
+    income: str = IncomeLabel.prefix
+    expense: str = ExpenseLabel.prefix
+    contra: str = ContraLabel.prefix
 
-    def as_string(self, label: Label | ContraLabel) -> str:
-        return label.as_string(prefix(self, label))
+    @property
+    def mapping(self):
+        return [
+            (self.asset, AssetLabel),
+            (self.liability, LiabilityLabel),
+            (self.capital, CapitalLabel),
+            (self.income, IncomeLabel),
+            (self.expense, ExpenseLabel),
+            (self.contra, ContraLabel),
+        ]
 
-    def extract(self, label_string: str) -> Label | ContraLabel:
-        match label_string.strip().lower().split(":"):
+    def get_label_contructor(self, prefix: str) -> Type[RegularLabel | ContraLabel]:
+        """Returns constructor for regular or contra account label based on `prefix`
+        or raises exception."""
+        try:
+            return dict(self.mapping)[prefix]
+        except KeyError:
+            raise AbacusError(f"Invalid prefix: {prefix}.")
+
+    def get_prefix(self, label: RegularLabel | ContraLabel) -> str:
+        """Returns prefix string for a given regular or contra account label."""
+        for prefix, label_class in self.mapping:
+            if isinstance(label, label_class):
+                return prefix
+        raise AbacusError(f"No prefix found for: {label}.")
+
+    def extract(self, label_string: str) -> RegularLabel | ContraLabel:
+        """Return RegularLabel or ContraLabel based on `label_string`.
+
+        For example, for `asset:cash` string should produce `AssetLabel("cash")`.
+        """
+        match label_string.split(":"):
             case [prefix, name]:
-                return label_class(self, prefix)(name)  # type: ignore
+                return self.get_label_contructor(prefix)(name)  # type: ignore
             case [self.contra, account_name, contra_account_name]:
-                return ContraLabel(contra_account_name, account_name)
+                return ContraLabel(name=contra_account_name, offsets=account_name)
             case _:
-                raise AbacusError(f"Invalid label: {label_string}.")
+                raise AbacusError(f"Cannot parse label string: {label_string}.")
+
+    def as_string(self, label: RegularLabel | ContraLabel) -> str:
+        return label.as_string(prefix=self.get_prefix(label))
 
 
-def prefix(composer: Composer, label: Label | ContraLabel) -> str:
-    """Return prefix string given a label or contra label."""
-    match label:
-        case AssetLabel(_):
-            return composer.asset
-        case LiabilityLabel(_):
-            return composer.liability
-        case CapitalLabel(_):
-            return composer.capital
-        case IncomeLabel(_):
-            return composer.income
-        case ExpenseLabel(_):
-            return composer.expense
-        case ContraLabel(_, _):
-            return composer.contra
-        case _:
-            raise AbacusError(f"Invalid label: {label}.")
-
-
-def label_class(composer: Composer, prefix: str) -> Type[Label | ContraLabel]:
-    """Return label or contra label class contructor given the prefix string."""
-    match prefix:
-        case composer.asset:
-            return AssetLabel
-        case composer.liability:
-            return LiabilityLabel
-        case composer.capital:
-            return CapitalLabel
-        case composer.income:
-            return IncomeLabel
-        case composer.expense:
-            return ExpenseLabel
-        case _:
-            raise AbacusError(f"Invalid label: {prefix}.")
+# xopowen
+# довольно пышный  класс
+# с точки зрения читабильности вопросов нет
+# для поддершки нужно много тестов
 
 
 @dataclass
 class BaseChart:
-    income_summary_account: str
-    retained_earnings_account: str
-    null_account: str
-    labels: list[Label]
-    contra_labels: list[ContraLabel]
+    income_summary_account: str = "current_profit"
+    retained_earnings_account: str = "retained_earnings"
+    null_account: str = "null"
+    regular_labels: list[RegularLabel] = field(default_factory=list)
+    contra_labels: list[ContraLabel] = field(default_factory=list)
+
+    @classmethod
+    def use(cls, *strings):  # type: ignore
+        return cls().add_many(strings)
 
     @property
-    def all_labels(self):
-        return self.labels + self.contra_labels
+    def labels(self) -> list[RegularLabel | ContraLabel]:
+        return self.regular_labels + self.contra_labels
 
+    @property
     def names(self) -> list[str]:
         return [
             self.income_summary_account,
             self.retained_earnings_account,
             self.null_account,
-        ] + [account.name for account in self.all_labels]
+        ] + [account.name for account in self.labels]
 
-    def safe_append(self, label):
-        if label.name in self.names():
+    # уязвиемое место по возможности стоить подробно тестировать
+    def safe_append(self, label: RegularLabel | ContraLabel):
+        if label.name in self.names:
             raise AbacusError(
                 f"Duplicate account name detected, name already in use: {label.name}."
             )
         match label:
-            case Label(_):
-                self.labels.append(label)
+            case RegularLabel(_):
+                self.regular_labels.append(label)
             case ContraLabel(_, offsets):
-                if offsets in self.names():
+                if offsets in self.names:
                     self.contra_labels.append(label)
                 else:
                     raise AbacusError(
-                        f"Must define account name before adding contra account to it: {label.offsets}."
+                        f"Must define account name before adding contra account: {label.offsets}."
                     )
         return self
 
-    def add(self, label_string: str, composer=Composer()):
-        return self.safe_append(label=composer.extract(label_string))
+    def add(self, label_string: str, composer: Composer | None = None):
+        return self.add_many([label_string], composer)
 
-    def add_many(self, label_strings: list[str], composer=Composer()):
+    def add_many(self, label_strings: list[str], composer: Composer | None = None):  # type: ignore
+        if composer is None:
+            composer = Composer()
         for s in label_strings:
-            self.add(s, composer)
+            self.safe_append(label=composer.extract(s))
         return self
 
-    def _filter(self, cls):
+    def _filter(self, cls: Type[RegularLabel] | Type[ContraLabel]):
         return [label for label in self.labels if isinstance(label, cls)]
 
-    def _filter_name(self, cls: Type[Label]):
+    def _filter_name(self, cls: Type[RegularLabel]):
         return [account.name for account in self.labels if isinstance(account, cls)]
 
+    # TODO: create WritableChart class
     @property
     def assets(self):
         return self._filter_name(AssetLabel)
@@ -197,7 +236,8 @@ class BaseChart:
     def expenses(self):
         return self._filter_name(ExpenseLabel)
 
-    def _find_contra_labels(self, name: str):
+    def _find_contra_labels(self, name: str) -> list[ContraLabel]:
+        """Return a list of contra labels that offset a specific account *name*."""
         return [
             contra_label
             for contra_label in self.contra_labels
@@ -245,20 +285,9 @@ class BaseChart:
             for contra_label in self._find_contra_labels(label.name)
         ]
 
-    def __getitem__(self, account_name: str) -> Label | ContraLabel:
-        return {account.name: account for account in self.all_labels}[account_name]
-
-
-def make_chart(*strings: list[str]):  # type: ignore
-    return BaseChart(
-        income_summary_account="current_profit",
-        retained_earnings_account="retained_earnings",
-        null_account="null",
-        labels=[],
-        contra_labels=[],
-    ).add_many(
-        strings
-    )  # type: ignore
+    def __getitem__(self, account_name: str) -> RegularLabel | ContraLabel:
+        # NOTE: will not show retained earnigns, isa and null accounts
+        return {account.name: account for account in self.labels}[account_name]
 
 
 @dataclass
@@ -289,12 +318,15 @@ class BaseLedger:
             data={name: f(taccount) for name, taccount in self.data.items()}
         )
 
+    # TODO test this
     def deep_copy(self):
         return self.create_with(lambda taccount: taccount.deep_copy())
 
+    # TODO test this
     def condense(self):
         return self.create_with(lambda taccount: taccount.condense())
 
+    # TODO test this
     def balances(self):
         return self.create_with(lambda taccount: taccount.balance()).data
 
@@ -320,6 +352,12 @@ class BaseLedger:
         from report import income_statement
 
         return income_statement(self)
+
+    def yield_tuples(self):
+        for name, taccount in self.subset(accounts.DebitAccount).data.items():
+            yield name, taccount.balance(), 0
+        for name, taccount in self.subset(accounts.CreditAccount).data.items():
+            yield name, 0, taccount.balance()
 
 
 class Pipeline:
@@ -379,50 +417,53 @@ class Pipeline:
         self.close_contra(accounts.ContraCapital)
         return self
 
-#FIXME: добавить класс TrialBalanceViewer 
+
 class TrialBalance(UserDict[str, tuple[int, int]]):
-    def column_1(self):
-        names = [
-            name.replace("_", " ").strip().capitalize() for name in self.data.keys()
+    def viewer(self, titles: dict[str, str] = {}):
+        return TrialBalanceViewer(self.data, titles)
+
+
+@dataclass
+class TrialBalanceViewer:
+    trial_balance: dict[str, tuple[int, int]]
+    titles: dict[str, str] = field(default_factory=dict)
+    headers: tuple[str, str, str] = "Account", "Debit", "Credit"
+
+    def account_names(self):
+        return [
+            self.titles.get(name, name).replace("_", " ").strip().capitalize()
+            for name in self.trial_balance.keys()
         ]
-        return Column(names).align_left(".").add_space(1).header("Account")
 
-    def column_2(self):
+    def account_names_column(self, header):
         return (
-            Column([str(d) for (d, _) in self.data.values()])
-            .align_right()
-            .add_space_left(2)
-            .header("Debit")
-            .add_space(2)
+            Column(self.account_names())
+            .add_space(1)
+            .align_left(".")
+            .add_right("...")
+            .header(header)
         )
 
-    def column_3(self):
-        return (
-            Column([str(c) for (_, c) in self.data.values()])
-            .align_right()
-            .add_space_left(2)
-            .header("Credit")
-        )
+    @property
+    def debits(self) -> list[str]:
+        return [str(d) for (d, _) in self.trial_balance.values()]
+
+    @property
+    def credits(self) -> list[str]:
+        return [str(c) for (_, c) in self.trial_balance.values()]
+
+    def numeric_column(self, values, header):
+        return Column(values).align_right().add_space_left(2).header(header)
 
     def table(self):
-        return self.column_1() + self.column_2() + self.column_3()
+        return (
+            self.account_names_column(self.headers[0])
+            + self.numeric_column(self.debits, self.headers[1])
+            + self.numeric_column(self.credits, self.headers[2])
+        )
 
-    def view(self):
+    def __str__(self) -> str:
         return self.table().printable()
-
-
-def yield_tuples(ledger):
-    for name, taccount in ledger.subset(accounts.DebitAccount).data.items():
-        yield name, taccount.balance(), 0
-    for name, taccount in ledger.subset(accounts.CreditAccount).data.items():
-        yield name, 0, taccount.balance()
-
-
-def trial_balance(chart, ledger):
-    ignore = [chart.null_account, chart.income_summary_account]
-    return TrialBalance(
-        {name: (a, b) for name, a, b in yield_tuples(ledger) if name not in ignore}
-    )
 
 
 @dataclass
@@ -443,5 +484,16 @@ class Reporter:
         p = self.pipeline.close_first().close_second().close_last()
         return p.ledger.balance_sheet().viewer(self.titles, header)
 
-    def trial_balance(self, header="Trial Balance"):
-        return trial_balance(self.chart, self.ledger)
+    # не симметрично - нет header для всей таблицы
+    def trial_balance(self):
+        ignore = [self.chart.null_account, self.chart.income_summary_account]
+        return TrialBalance(
+            {
+                name: (a, b)
+                for name, a, b in self.ledger.yield_tuples()
+                if name not in ignore
+            }
+        )
+
+    def trial_balance_viewer(self):
+        return self.trial_balance().viewer(self.titles)
