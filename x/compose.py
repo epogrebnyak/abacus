@@ -28,22 +28,18 @@ from typing import ClassVar
 @dataclass
 class BaseLabel(ABC):
     name: str
+    prefix: ClassVar[str]
 
-    def as_string(self, prefix: str):
-        return prefix + ":" + self.name
+    def use_prefix(self, prefix: str):
+        """Use default prefix from class attribute if no alternative prefix provided."""
+        return prefix if prefix else self.prefix
 
+    @abstractmethod
+    def as_string(self, prefix: str = ""):
+        ...
 
-# xopowen
-# этот класс тоже может наследуется от Label
-# EP: можно наследовать он базового класса, от самоого Label нельзя,
-#     потому что перестанет работать (в коде ниже)
-# match label:
-# case Label(_):
-#     self.labels.append(label)
-# case ContraLabel(_, offsets):
-#     if offsets in self.names:
-#         self.contra_labels.append(label)
-#  но в целом согласен не так уж красиво
+    def __str__(self):
+        return self.as_string()
 
 
 @dataclass
@@ -144,10 +140,6 @@ class Composer(BaseModel):
         match label_string.split(":"):
             case [prefix, name]:
                 return self.get_label_contructor(prefix)(name)  # type: ignore
-            #xopowen
-            #так как  ContraLabel всё равно есть в mapping
-            # case[self.contra, account_name, contra_account_name]:
-                # return self.get_label_contructor(contra_account_name)(account_name)
             case [self.contra, account_name, contra_account_name]:
                 return ContraLabel(contra_account_name, account_name)
             case _:
