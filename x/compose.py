@@ -1,7 +1,7 @@
+from abc import ABC, abstractmethod
 from collections import UserDict
-
 from dataclasses import dataclass, field  # NOTE: may use pydantic.dataclasses
-from typing import Callable, Iterable, Type
+from typing import Callable, ClassVar, Iterable, Type
 
 import accounts  # type: ignore
 from accounts import ContraAccount, TAccount  # type: ignore
@@ -21,8 +21,6 @@ from report import Column
 #     типа "asset:cash". Если создать Composer с другими префиксами,
 #     то и можно распознать строку типа "актив:наличные".
 
-from abc import ABC, abstractmethod
-from typing import ClassVar
 
 
 @dataclass

@@ -5,12 +5,11 @@ import pytest
 from base import AbacusError, Entry
 from compose import (  # type: ignore
     AssetLabel,
+    BaseChart,
     Composer,
     ContraLabel,
     Pipeline,
-    BaseChart,
     Reporter,
-    Label
 )
 
 # стоит разделить тесты на модульные(классы) и связные(свясь друг с другом).
