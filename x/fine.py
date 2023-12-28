@@ -1,7 +1,8 @@
-from enum import Enum
-from dataclasses import dataclass, field
-from typing import Any, Type
+from abc import ABC, abstractmethod
 from collections import UserDict
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Type
 
 
 class T(Enum):
@@ -27,13 +28,6 @@ class Account:
     name: str
     contra_accounts: list[str] = field(default_factory=list)
 
-    def offset(self, name: str):
-        return self.offset_many([name])
-
-    def offset_many(self, names: list[str]):
-        self.contra_accounts.extend(names)
-        return self
-
     @staticmethod
     def from_string(s) -> "Account":
         if isinstance(s, str):
@@ -45,57 +39,131 @@ Amount = int
 
 
 @dataclass
-class TAccount:
+class TAccount(ABC):
     debits: list[Amount] = field(default_factory=list)
     credits: list[Amount] = field(default_factory=list)
 
+    def debit(self, amount: Amount):
+        self.debits.append(amount)
+
+    def credit(self, amount: Amount):
+        self.credits.append(amount)
+
+    @abstractmethod
+    def balance(self) -> Amount:
+        ...
+
 
 class DebitAccount(TAccount):
-    ...
+    def balance(self):
+        return sum(self.debits) - sum(self.credits)
 
 
 class CreditAccount(TAccount):
+    def balance(self):
+        return sum(self.credits) - sum(self.debits)
+
+
+class RegularAccount:
     ...
 
-class TemporaryAccount:...
 
-class TemporaryCreditAccount(TemporaryAccount, CreditAccount):...
+class Asset(RegularAccount, DebitAccount):
+    ...
 
-class TemporaryDebitAccount(TemporaryAccount, DebitAccount):...
+
+class Capital(RegularAccount, CreditAccount):
+    ...
+
+
+class Liability(RegularAccount, CreditAccount):
+    ...
+
+
+class Income(RegularAccount, CreditAccount):
+    ...
+
+
+class Expense(RegularAccount, DebitAccount):
+    ...
+
+
+class ContraAccount:
+    ...
+
+
+class ContraAsset(ContraAccount, CreditAccount):
+    ...
+
+
+class ContraCapital(ContraAccount, DebitAccount):
+    ...
+
+
+class ContraLiability(ContraAccount, DebitAccount):
+    ...
+
+
+class ContraIncome(ContraAccount, DebitAccount):
+    ...
+
+
+class ContraExpense(ContraAccount, CreditAccount):
+    ...
+
+
+class TemporaryAccount:
+    ...
+
+
+class TemporaryCreditAccount(TemporaryAccount, CreditAccount):
+    ...
+
+
+class TemporaryDebitAccount(TemporaryAccount, DebitAccount):
+    ...
+
 
 @dataclass
 class Temporary:
     t: Type[TAccount]
 
 
-def reverse(t: Type[TAccount]) -> Type[TAccount]:
-    match t():
-        case DebitAccount():
-            return CreditAccount
-        case CreditAccount():
-            return DebitAccount
-
-
-def taccount(t):
+def taccount(t: Type[Contra | Regular | Temporary]) -> Type[TAccount]:
     match t:
         case Regular(T.Asset):
-            return DebitAccount
+            return Asset
         case Regular(T.Capital):
-            return CreditAccount
+            return Capital
         case Regular(T.Liability):
-            return CreditAccount
+            return Liability
         case Regular(T.Income):
-            return CreditAccount
+            return Income
         case Regular(T.Expense):
-            return DebitAccount
-        case Contra(y):
-            return reverse(taccount(Regular(y)))
+            return Expense
+        case Contra(_):
+            return contra(t)
         case Temporary(x):
             return x
         case _:
             raise ValueError(f"Invalid type: {t}")
 
-# TODO: will need ContraCapital, etc
+
+def contra(t: Type[Contra]) -> Type[TAccount]:
+    match t:
+        case Contra(T.Asset):
+            return ContraAsset
+        case Contra(T.Capital):
+            return ContraCapital
+        case Contra(T.Liability):
+            return ContraLiability
+        case Contra(T.Income):
+            return ContraIncome
+        case Contra(T.Expense):
+            return ContraExpense
+        case _:
+            raise ValueError(f"Invalid type: {t}")
+
 
 @dataclass
 class Chart:
@@ -109,8 +177,12 @@ class Chart:
     expenses: list[str | Account] = field(default_factory=list)
 
     def __post_init__(self):
+        self.validate()
+
+    def validate(self):
         if len(self.to_dict()) != len(list(self.dict_items())):
             raise ValueError("Chart should not contain duplicate account names.")
+        return self
 
     def to_dict(self):
         return dict(self.dict_items())
@@ -148,8 +220,6 @@ chart = Chart(
     expenses=["salaries"],
 )
 
-for x, y in chart.to_dict().items():
-    print(x, y)
 
 for a, b in chart.ledger().items():
     print(a, b)

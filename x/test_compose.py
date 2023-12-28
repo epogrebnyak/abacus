@@ -1,16 +1,8 @@
-from typing import Type
-
 import accounts  # type: ignore
 import pytest
 from base import AbacusError, Entry
-from compose import (
-    AssetLabel,
-    BaseChart,
-    Composer,  # type: ignore
-    ContraLabel,
-    Pipeline,
-    Reporter,
-)
+from compose import Composer  # type: ignore
+from compose import AssetLabel, BaseChart, ContraLabel, Pipeline, Reporter
 
 # стоит разделить тесты на модульные(классы) и связные(свясь друг с другом).
 # так будит удобнее понимать что вы тестируйте
