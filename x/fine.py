@@ -57,6 +57,11 @@ class DebitAccount(TAccount):
 class CreditAccount(TAccount):
     ...
 
+class TemporaryAccount:...
+
+class TemporaryCreditAccount(TemporaryAccount, CreditAccount):...
+
+class TemporaryDebitAccount(TemporaryAccount, DebitAccount):...
 
 @dataclass
 class Temporary:
@@ -90,6 +95,7 @@ def taccount(t):
         case _:
             raise ValueError(f"Invalid type: {t}")
 
+# TODO: will need ContraCapital, etc
 
 @dataclass
 class Chart:
@@ -116,8 +122,8 @@ class Chart:
         yield from self.stream(self.liabilities, T.Liability)
         yield from self.stream(self.income, T.Income)
         yield from self.stream(self.expenses, T.Expense)
-        yield self.income_summary_account, Temporary(CreditAccount)
-        yield self.null_account, Temporary(CreditAccount)
+        yield self.income_summary_account, Temporary(TemporaryCreditAccount)
+        yield self.null_account, Temporary(TemporaryCreditAccount)
 
     def stream(self, xs, t):
         for x in xs:
@@ -136,8 +142,8 @@ class Ledger(UserDict[str, TAccount]):
 
 chart = Chart(
     assets=["cash", "ar", "inventory"],
-    capital=[Account("equity").offset("ts")],
-    income=[Account("sales").offset_many(["refunds", "voids"])],
+    capital=[Account("equity", contra_accounts=["ts"])],
+    income=[Account("sales", contra_accounts=["refunds", "voids"])],
     liabilities=["ap", "dd"],
     expenses=["salaries"],
 )
@@ -147,3 +153,5 @@ for x, y in chart.to_dict().items():
 
 for a, b in chart.ledger().items():
     print(a, b)
+
+# Next: entry, post and report
