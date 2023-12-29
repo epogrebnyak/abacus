@@ -14,14 +14,50 @@ class T(Enum):
     Expense = "expense"
 
 
+class Holder(ABC):
+    
+    @abstractmethod
+    def t_account(self) -> Type["TAccount"]:
+        ... 
+
 @dataclass
-class Regular:
+class Regular(Holder):
     t: T
+
+    @property
+    def t_account(self) -> Type["TAccount"]:
+        match self:
+            case Regular(T.Asset):
+                return Asset
+            case Regular(T.Capital):
+                return Capital
+            case Regular(T.Liability):
+                return Liability
+            case Regular(T.Income):
+                return Income
+            case Regular(T.Expense):
+                return Expense
 
 
 @dataclass
-class Contra:
+class Contra(Holder):
     t: T
+
+    @property
+    def t_account(self) -> Type["TAccount"]:
+        match self:
+            case Contra(T.Asset):
+                return ContraAsset
+            case Contra(T.Capital):
+                return ContraCapital
+            case Contra(T.Liability):
+                return ContraLiability
+            case Contra(T.Income):
+                return ContraIncome
+            case Contra(T.Expense):
+                return ContraExpense
+            case _:
+                raise ValueError(f"Invalid type: {self.t}")
 
 
 @dataclass
@@ -136,44 +172,12 @@ class TemporaryDebitAccount(TemporaryAccount, DebitAccount):
 
 
 @dataclass
-class Temporary:
+class Temporary(Holder):
     t: Type[TAccount]
 
-
-def taccount(t: Type[Contra | Regular | Temporary]) -> Type[TAccount]:
-    match t:
-        case Regular(T.Asset):
-            return Asset
-        case Regular(T.Capital):
-            return Capital
-        case Regular(T.Liability):
-            return Liability
-        case Regular(T.Income):
-            return Income
-        case Regular(T.Expense):
-            return Expense
-        case Contra(_):
-            return contra(t)
-        case Temporary(x):
-            return x
-        case _:
-            raise ValueError(f"Invalid type: {t}")
-
-
-def contra(t: Type[Contra]) -> Type[TAccount]:
-    match t:
-        case Contra(T.Asset):
-            return ContraAsset
-        case Contra(T.Capital):
-            return ContraCapital
-        case Contra(T.Liability):
-            return ContraLiability
-        case Contra(T.Income):
-            return ContraIncome
-        case Contra(T.Expense):
-            return ContraExpense
-        case _:
-            raise ValueError(f"Invalid type: {t}")
+    @property
+    def t_account(self):
+        return self.t
 
 
 @dataclass
@@ -216,7 +220,7 @@ class Chart:
                 yield b, Contra(t)
 
     def ledger(self):
-        return Ledger({name: taccount(t)() for name, t in self.dict_items()})
+        return Ledger({name: t.t_account() for name, t in self.dict_items()})
 
 
 @dataclass
@@ -238,25 +242,34 @@ class Ledger(UserDict[str, TAccount]):
     def post(self, debit: str, credit: str, amount: Amount):
         return self.post_one(Entry(debit, credit, amount))
 
-
     def post_one(self, entry: Entry):
         self.data[entry.debit].debit(entry.amount)
         self.data[entry.credit].credit(entry.amount)
-        return self 
+        return self
 
     def post_many(self, entries: list[Entry]):
         for entry in entries:
             self.post_one(entry)
-        return self    
+        return self
 
-    @property    
+    @property
     def balances(self):
         return AccountBalances(
             {name: account.balance() for name, account in self.items()}
         )
 
+    def subset(self, cls: Type[TAccount]):
+        """Filter ledger by account type."""
+        return self.__class__(
+            {
+                account_name: t_account
+                for account_name, t_account in self.data.items()
+                if isinstance(t_account, cls)
+            }
+        )
 
-def contra_pairs(chart: Chart, contra_t: Type[ContraAccount]):
+
+def contra_pairs(chart: Chart, contra_t: Type[ContraAccount]) -> list[tuple[str, str]]:
     attr = {
         "ContraAsset": "assets",
         "ContraLiability": "liabilities",
@@ -283,11 +296,12 @@ class Pipeline:
         self.ledger.post_one(entry)
         self.closing_entries.append(entry)
 
-    def close_contra(self, contra_t: Type[ContraAccount]):
-        """Close contra accounts of type `contra_t`."""
-        for from_, to_ in contra_pairs(self.chart, contra_t):
-            account = self.ledger.data[from_]
-            entry = account.transfer_balance(from_, to_)
+    def close_contra(self, t: Type[ContraAccount]):
+        """Close contra accounts of type `t`."""
+        for account, contra_account in contra_pairs(self.chart, t):
+            entry = self.ledger.data[contra_account].transfer_balance(
+                contra_account, account
+            )
             self.append_and_post(entry)
         return self
 
@@ -332,35 +346,56 @@ class Pipeline:
         return self
 
 
-chart = Chart(
-    assets=["cash", "ar", "inventory"],
-    capital=[Account("equity", contra_accounts=["ts"])],
-    income=[Account("sales", contra_accounts=["refunds", "voids"])],
-    liabilities=["ap", "dd"],
-    expenses=["salaries"],
-)
+@dataclass
+class Reporter:
+    chart: Chart
+    ledger: Ledger
 
-ledger = chart.ledger().post_many([
-    Entry("cash", "equity", 120),
-    Entry("ts", "cash", 20),
-  #  Entry("cash", "sales", 130),
-  #  Entry("refunds", "cash", 20),
-  #  Entry("voids", "cash", 10),
-  #  Entry("salaries", "cash", 50),
-])
+    @property
+    def pipeline(self):
+        return Pipeline(self.chart, self.ledger)
 
-# initial ledger does not change after copy
-le0 = Chart(assets=["cash"], capital=["equity"]).ledger().post("cash", "equity", 100)
-assert le0.balances.nonzero() == {'cash': 100, 'equity': 100}
-le1 = deepcopy(le0)
-le1 = le1.post("cash", "equity", 200)
-assert le0.balances.nonzero() == {'cash': 100, 'equity': 100}
+    @property
+    def balance_sheet(self):
+        p = self.pipeline.close_first().close_second().close_last()
+        return BalanceSheet.new(p.ledger)
 
-# correct up to this point
+    @property
+    def income_statement(self):
+        p = self.pipeline.close_first()
+        return IncomeStatement.new(p.ledger)
 
-book = Pipeline(chart, ledger).close_first().close_second().close_last().ledger
-print(book.balances.nonzero())  
-# Incorrect:
-# {'cash': 150, 'ts': -100, 're': -50, 'refunds': -110, 'voids': 10}
 
-# # Next: entry, post and report
+class Statement:
+    ...
+
+
+@dataclass
+class BalanceSheet(Statement):
+    assets: AccountBalances
+    capital: AccountBalances
+    liabilities: AccountBalances
+
+    @classmethod
+    def new(cls, ledger: Ledger):
+        return cls(
+            assets=ledger.subset(Asset).balances,
+            capital=ledger.subset(Capital).balances,
+            liabilities=ledger.subset(Liability).balances,
+        )
+
+
+@dataclass
+class IncomeStatement(Statement):
+    income: AccountBalances
+    expenses: AccountBalances
+
+    @classmethod
+    def new(cls, ledger: Ledger):
+        return cls(
+            income=ledger.subset(Income).balances,
+            expenses=ledger.subset(Expense).balances,
+        )
+
+    def current_account(self):
+        return sum(self.income.values()) - sum(self.expenses.values())
