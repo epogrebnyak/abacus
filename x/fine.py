@@ -29,7 +29,7 @@ chart.save("chart.json")
 ledger.balances.save("end_balances.json")
 ```
 
-Cool things implemented:
+Cool things implemented in this library:
 
 - proper closing of accounts at accounting period end,
 - contra accounts — there can be a "refunds" account that offsets "income:sales",
@@ -38,7 +38,8 @@ Cool things implemented:
 Things that were made intentionally simple:
 
 - no sub-accounts, the only level of account hierarchy;
-- account names must be unique, cannot use "asset:other" and "expense:other";
+- account names must be unique, cannot use "asset:other" and "expense:other"
+  (must be "asset:other_assets" and "expense:other_expenses");
 - no cashflow statement yet;
 - the entry does not store date or title, only amounts and account names;
 - one currency.
