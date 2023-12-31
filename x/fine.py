@@ -1,23 +1,47 @@
 """Simple double-entry accounting system.
 
-To use:
+
+To use the library:
+
 - create a chart of accounts using `Chart` class,
 - create ledger from Chart,
 - post accoutning entries to ledger,
-- use `Reporter` class to generate financial statements,
-- accounts and financial statements can be saved to file or printed to screen. 
+- use `Reporter` class to generate financial statements
+- print to screen or save to file.
+
+Trivial example: the company has just cash and equity accounts 
+and received $499 and $501 from two investors. What is the company 
+balance sheet?
+
+```python
+chart = Chart(assets=["cash"], capital=["equity"])
+ledger = chart.ledger()
+ledger.post(debit="cash", credit="equity", amount=499)
+ledger.post(debit="cash", credit="equity", amount=501)
+reporter = Reporter(chart, ledger)
+print(reporter.balance_sheet)
+```
+
+Chart and balances can be saved to file:
+
+```python 
+chart.save("chart.json")
+ledger.balances.save("end_balances.json")
+```
 
 Cool things implemented:
+
 - proper closing of accounts at accounting period end,
-- contra accounts - there can be a "refunds" account that offsets "income:sales",
-- multiple entries - debit and credit several accounts in one transaction.
+- contra accounts — there can be a "refunds" account that offsets "income:sales",
+- multiple entries — debit and credit several accounts in one transaction.
 
 Things that were made intentionally simple:
+
 - no sub-accounts, the only level of account hierarchy;
 - account names must be unique, cannot use "asset:other" and "expense:other";
 - no cashflow statement yet;
 - the entry does not store date or title, only amounts and account names;
-- one currency, no currency conversion.
+- one currency.
 
 """
 from copy import deepcopy
