@@ -1,3 +1,25 @@
+"""Simple double-entry accounting system.
+
+To use:
+- create a chart of accounts using `Chart` class,
+- create ledger from Chart,
+- post accoutning entries to ledger,
+- use `Reporter` class to generate financial statements,
+- accounts and financial statements can be saved to file or printed to screen. 
+
+Cool things implemented:
+- proper closing of accounts at accounting period end,
+- contra accounts - there can be a "refunds" account that offsets "income:sales",
+- multiple entries - debit and credit several accounts in one transaction.
+
+Things that were made intentionally simple:
+- no sub-accounts, the only level of account hierarchy;
+- account names must be unique, cannot use "asset:other" and "expense:other";
+- no cashflow statement yet;
+- the entry does not store date or title, only amounts and account names;
+- one currency, no currency conversion.
+
+"""
 from copy import deepcopy
 from abc import ABC, abstractmethod
 from collections import UserDict
