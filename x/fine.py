@@ -19,13 +19,13 @@ Assumptions — things that were made intentionally simple:
 2. as a consequence account names must be unique, cannot use "asset:other" 
    and "expense:other",  these names must be "asset:other_assets" and 
    "expense:other_expenses",
-3. no cashflow statement yet;
-4. the accounting entry contains only amount and debit and credit account names;
+3. no cashflow statement yet,
+4. the accounting entry contains only amount and debit and credit account names,
 5. one currency.
 
 Todo next:
 
-- multiple entries — debit and credit several accounts in one transaction.
+- multiple entries — debit and credit several accounts in one transaction
 - save reports to file 
 - read reports from file
 - entries store 
@@ -37,7 +37,7 @@ from collections import UserDict
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Type
+from typing import Type, Iterable
 
 
 class AbacusError(Exception):
@@ -159,6 +159,23 @@ class TAccount(ABC):
         This account name is `my_name` and destination account name is `dest_name`.
         """
         ...
+
+    def condense(self):
+        """Create a new account of the same type with only one value as account balance."""
+        return self.empty().topup(self.balance())
+
+    def empty(self):
+        """Create a new empty account of the same type."""
+        return self.__class__()
+
+    def topup(self, balance):
+        """Add starting balance to a proper side of account."""
+        match self:
+            case DebitAccount(_, _):
+                self.debit(balance)
+            case CreditAccount(_, _):
+                self.credit(balance)
+        return self
 
 
 class DebitAccount(TAccount):
@@ -320,26 +337,36 @@ class AccountBalances(UserDict[str, Amount]):
     def nonzero(self):
         return {name: balance for name, balance in self.items() if balance}
 
+    # TODO:
     def save(self, path: str):
         pass
 
 
 class Ledger(UserDict[str, TAccount]):
     def post(self, debit: str, credit: str, amount: Amount):
+        """Post to ledger using account names and amount."""
         return self.post_one(Entry(debit, credit, amount))
 
     def post_one(self, entry: Entry):
-        self.data[entry.debit].debit(entry.amount)
-        self.data[entry.credit].credit(entry.amount)
-        return self
+        """Post one double entry to ledger."""
+        return self.post_many(entries=[entry])
 
-    def post_many(self, entries: list[Entry]):
+    def post_many(self, entries: Iterable[Entry]):
+        """Post several double entries to ledger."""
+        failed = []
         for entry in entries:
-            self.post_one(entry)
+            try:
+                self.data[entry.debit].debit(entry.amount)
+                self.data[entry.credit].credit(entry.amount)
+            except KeyError:
+                failed.append(entry)
+        if failed:
+            raise AbacusError(failed)
         return self
 
     @property
     def balances(self):
+        """Return account balances."""
         return AccountBalances(
             {name: account.balance() for name, account in self.items()}
         )
@@ -354,12 +381,12 @@ class Ledger(UserDict[str, TAccount]):
             }
         )
 
-    def yield_tuples_for_trial_balance(self):
-        # FIXME: condense() may help reduce calculations
-        for name, balance in self.subset(DebitAccount).balances.items():
-            yield name, (balance, 0)
-        for name, balance in self.subset(CreditAccount).balances.items():
-            yield name, (0, balance)
+    def condense(self):
+        """Return a new ledger with condensed accounts that hold just one value.
+        Used to avoid copying of ledger data where only account balance is needed."""
+        return self.__class__(
+            {name: account.condense() for name, account in self.items()}
+        )
 
 
 def contra_pairs(chart: Chart, contra_t: Type[ContraAccount]) -> list[tuple[str, str]]:
@@ -462,7 +489,13 @@ class Reporter:
 
     @property
     def trial_balance(self):
-        return TrialBalance(self.ledger.yield_tuples_for_trial_balance())
+        _ledger = self.ledger.condense()
+        tb = TrialBalance()
+        for name, balance in _ledger.subset(DebitAccount).balances.items():
+            tb[name] = (balance, 0)
+        for name, balance in _ledger.subset(CreditAccount).balances.items():
+            tb[name] = (0, balance)
+        return tb
 
 
 class Statement:

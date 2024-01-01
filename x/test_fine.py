@@ -14,6 +14,7 @@ from fine import (
     contra_pairs,
     Asset,
     Capital,
+    AbacusError,
 )
 
 
@@ -39,9 +40,22 @@ def test_contra_pairs():
     ]
 
 
+@pytest.mark.unit
 def test_ledger():
     ledger = Ledger({"cash": Asset(), "equity": Capital()}).post("cash", "equity", 1000)
     assert ledger == Ledger({"cash": Asset([1000], []), "equity": Capital([], [1000])})
+
+
+@pytest.mark.unit
+def test_ledger_condense():
+    Ledger({"cash": Asset([300, 100], [200])}).condense() == Ledger(
+        {"cash": Asset([200], [])}
+    )
+
+@pytest.mark.unit
+def test_ledger_fails_on_unknown_account_name():
+    with pytest.raises(AbacusError):
+        Ledger({"cash": Asset(), "equity": Capital()}).post("cash", "xxx", 1000)
 
 
 @pytest.fixture
@@ -66,7 +80,7 @@ def entries0():
         Entry("salaries", "cash", 30),
     ]
 
-
+@pytest.mark.e2e
 def test_pipleine(chart0, entries0):
     ledger = chart0.ledger().post_many(entries0)
     p = Pipeline(chart0, ledger).close_first().close_second().close_last()

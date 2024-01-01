@@ -1,4 +1,4 @@
-from fine import Account, Chart, Entry, Pipeline, Reporter
+from fine import Account, Chart, Entry, Reporter
 
 # Trivial example: the company has cash and equity accounts
 # and received $499 and $501 from two investors. What is
