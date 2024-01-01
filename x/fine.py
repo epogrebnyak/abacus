@@ -1,7 +1,6 @@
-"""Simple double-entry accounting system.
+"""A minmal, yet valid double-entry accounting system.
 
-
-To use the library:
+To use the module:
 
 - create a chart of accounts using `Chart` class,
 - create ledger from Chart,
@@ -9,51 +8,34 @@ To use the library:
 - use `Reporter` class to generate financial statements
 - print to screen or save to file.
 
-Trivial example: the company has just cash and equity accounts 
-and received $499 and $501 from two investors. What is the company 
-balance sheet?
+Cool things implemented in this library are:
 
-```python
-chart = Chart(assets=["cash"], capital=["equity"])
-ledger = chart.ledger()
-ledger.post(debit="cash", credit="equity", amount=499)
-ledger.post(debit="cash", credit="equity", amount=501)
-reporter = Reporter(chart, ledger)
-print(reporter.balance_sheet)
-```
+1. proper closing of accounts at accounting period end,
+2. contra accounts — there can be a "refunds" account that offsets "income:sales"
+   and "depreciation" account that offsets "asset:ppe", 
+3. multiple entries — debit and credit several accounts in one transaction.
 
-Chart and balances can be saved to file:
+Assumptions — things that were made intentionally simple:
 
-```python 
-chart.save("chart.json")
-ledger.balances.save("end_balances.json")
-```
-
-Cool things implemented in this library:
-
-- proper closing of accounts at accounting period end,
-- contra accounts — there can be a "refunds" account that offsets "income:sales",
-- multiple entries — debit and credit several accounts in one transaction.
-
-Things that were made intentionally simple:
-
-- no sub-accounts, the only level of account hierarchy;
-- account names must be unique, cannot use "asset:other" and "expense:other"
-  (must be "asset:other_assets" and "expense:other_expenses");
-- no cashflow statement yet;
-- the entry does not store date or title, only amounts and account names;
-- one currency.
+1. there is the only level of account hierarchy and no sub-accounts  ,
+2. account names must be unique, cannot use "asset:other" and "expense:other",
+  these names must be "asset:other_assets" and "expense:other_expenses"),
+3. no cashflow statement yet;
+4. the entry does not store date or title, only amounts and account names;
+5. one currency.
 
 """
-from copy import deepcopy
 from abc import ABC, abstractmethod
 from collections import UserDict
+from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Type
 
 
 class T(Enum):
+    """Five types of accounts and standard prefixes for account names."""
+
     Asset = "asset"
     Liability = "liability"
     Capital = "capital"
@@ -62,17 +44,30 @@ class T(Enum):
 
 
 class Holder(ABC):
-    
+    """The `Holder` class is a wrapper to hold an account type:
+
+    - regular account via `Regular(Holder)` child class,
+    - contra account via `Contra(Holder)` child class, or
+    - temporary account like income summary and null account
+      via `Temporary(Holder)`.
+
+    This wrapping enables to pattern match on account type.
+    """
+
     @abstractmethod
-    def t_account(self) -> Type["TAccount"]:
-        ... 
+    def t_account(
+        self,
+    ) -> type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]:
+        """Provide T-account constructor."""
+        ...
+
 
 @dataclass
 class Regular(Holder):
     t: T
 
     @property
-    def t_account(self) -> Type["TAccount"]:
+    def t_account(self) -> type["RegularAccount"]:
         match self:
             case Regular(T.Asset):
                 return Asset
@@ -84,6 +79,8 @@ class Regular(Holder):
                 return Income
             case Regular(T.Expense):
                 return Expense
+            case _:
+                raise ValueError(f"Invalid type: {self}")
 
 
 @dataclass
@@ -91,7 +88,7 @@ class Contra(Holder):
     t: T
 
     @property
-    def t_account(self) -> Type["TAccount"]:
+    def t_account(self) -> Type["ContraAccount"]:
         match self:
             case Contra(T.Asset):
                 return ContraAsset
@@ -104,7 +101,7 @@ class Contra(Holder):
             case Contra(T.Expense):
                 return ContraExpense
             case _:
-                raise ValueError(f"Invalid type: {self.t}")
+                raise ValueError(f"Invalid type: {self}")
 
 
 @dataclass
@@ -124,6 +121,8 @@ Amount = int
 
 @dataclass
 class TAccount(ABC):
+    """T-account will hold amounts on debits and credit side."""
+
     debits: list[Amount] = field(default_factory=list)
     credits: list[Amount] = field(default_factory=list)
 
@@ -139,6 +138,11 @@ class TAccount(ABC):
 
     @abstractmethod
     def transfer_balance(self, my_name: str, dest_name: str) -> "Entry":
+        """Create an entry that transfers account balance from this account
+        to destination account.
+
+        This account name is `my_name` and destination account name is `dest_name`.
+        """
         ...
 
 
@@ -147,7 +151,7 @@ class DebitAccount(TAccount):
         return sum(self.debits) - sum(self.credits)
 
     def transfer_balance(self, my_name: str, dest_name: str) -> "Entry":
-        return Entry(dest_name, my_name, self.balance())
+        return Entry(debit=dest_name, credit=my_name, amount=self.balance())
 
 
 class CreditAccount(TAccount):
@@ -155,7 +159,7 @@ class CreditAccount(TAccount):
         return sum(self.credits) - sum(self.debits)
 
     def transfer_balance(self, my_name: str, dest_name: str) -> "Entry":
-        return Entry(my_name, dest_name, self.balance())
+        return Entry(debit=my_name, credit=dest_name, amount=self.balance())
 
 
 class RegularAccount:
@@ -206,24 +210,34 @@ class ContraExpense(ContraAccount, CreditAccount):
     ...
 
 
-class TemporaryAccount:
+class ExtraAccount:
     ...
 
 
-class TemporaryCreditAccount(TemporaryAccount, CreditAccount):
+class ExtraCreditAccount(ExtraAccount, CreditAccount):
     ...
 
 
-class TemporaryDebitAccount(TemporaryAccount, DebitAccount):
+class TAccountRetainedEarnings(ExtraCreditAccount):
+    ...
+
+
+class TAccountNull(ExtraCreditAccount):
+    ...
+
+
+class ExtraDebitAccount(ExtraAccount, DebitAccount):
     ...
 
 
 @dataclass
-class Temporary(Holder):
-    t: Type[TAccount]
+class Extra(Holder):
+    """Holder for extra account that does not belong to any of 5 account types."""
+
+    t: type[ExtraAccount]
 
     @property
-    def t_account(self):
+    def t_account(self) -> type[ExtraAccount]:
         return self.t
 
 
@@ -256,18 +270,20 @@ class Chart:
         yield from self.stream(self.liabilities, T.Liability)
         yield from self.stream(self.income, T.Income)
         yield from self.stream(self.expenses, T.Expense)
-        yield self.income_summary_account, Temporary(TemporaryCreditAccount)
-        yield self.null_account, Temporary(TemporaryCreditAccount)
+        yield self.income_summary_account, Extra(TAccountRetainedEarnings)
+        yield self.null_account, Extra(TAccountNull)
 
-    def stream(self, xs, t):
-        for x in xs:
-            a = Account.from_string(x)
-            yield a.name, Regular(t)
-            for b in a.contra_accounts:
-                yield b, Contra(t)
+    def pure_accounts(self, xs: list[str | Account]) -> list[Account]:
+        return [Account.from_string(x) for x in xs]
+
+    def stream(self, items, t):
+        for account in self.pure_accounts(items):
+            yield account.name, Regular(t)
+            for contra_name in account.contra_accounts:
+                yield contra_name, Contra(t)
 
     def ledger(self):
-        return Ledger({name: t.t_account() for name, t in self.dict_items()})
+        return Ledger({name: h.t_account() for name, h in self.dict_items()})
 
 
 @dataclass
@@ -317,6 +333,7 @@ class Ledger(UserDict[str, TAccount]):
 
 
 def contra_pairs(chart: Chart, contra_t: Type[ContraAccount]) -> list[tuple[str, str]]:
+    """Return list of account and contra account name pairs for a given type of contra account."""
     attr = {
         "ContraAsset": "assets",
         "ContraLiability": "liabilities",
@@ -324,10 +341,11 @@ def contra_pairs(chart: Chart, contra_t: Type[ContraAccount]) -> list[tuple[str,
         "ContraExpense": "expenses",
         "ContraIncome": "income",
     }[contra_t.__name__]
+    regular_accounts = chart.pure_accounts(getattr(chart, attr))
     return [
-        (a.name, x)
-        for a in map(Account.from_string, getattr(chart, attr))
-        for x in a.contra_accounts
+        (account.name, contra_name)
+        for account in regular_accounts
+        for contra_name in account.contra_accounts
     ]
 
 
@@ -446,3 +464,11 @@ class IncomeStatement(Statement):
 
     def current_account(self):
         return sum(self.income.values()) - sum(self.expenses.values())
+
+
+class TrialBalance(UserDict[str, tuple[Amount, Amount]]):
+    ...
+
+
+class ChartDict(UserDict[str, Holder]):
+    ...
