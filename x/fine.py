@@ -232,7 +232,12 @@ class ExtraDebitAccount(ExtraAccount, DebitAccount):
 
 @dataclass
 class Extra(Holder):
-    """Holder for extra account that does not belong to any of 5 account types."""
+    """Holder for extra account that does not belong to any of 5 account types.
+    
+    There are two such accounts where this holder is needed: income summary account 
+    and null account. Income summary account should have zero balance at the end 
+    of accounting period. Null account always has zero balance. 
+    """
 
     t: type[ExtraAccount]
 
