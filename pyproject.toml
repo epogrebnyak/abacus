@@ -1,3 +1,10 @@
+[tool.pytest.ini_options]
+markers = [
+    "e2e: end-to-end tests",
+    "unit: unit tests",
+    "regression: something was wrong before and got fixed"
+]
+
 [tool.isort]
 skip_gitignore = true
 

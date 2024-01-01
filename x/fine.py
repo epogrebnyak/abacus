@@ -1,28 +1,35 @@
-"""A minmal, yet valid double-entry accounting system.
+"""A minimal, yet valid double-entry accounting system.
 
-To use the module:
+Using this module you can:
 
 - create a chart of accounts using `Chart` class,
-- create ledger from Chart,
-- post accoutning entries to ledger,
-- use `Reporter` class to generate financial statements
-- print to screen or save to file.
+- create `Ledger` from `Chart`,
+- post accoutning entries to `Ledger`,
+- use `Reporter` class to generate trial balance, balance sheet and income statement.
 
-Cool things implemented in this library are:
+Cool and clean things implemented in this module are:
 
-1. proper closing of accounts at accounting period end,
+1. proper closing of accounts at the accounting period end,
 2. contra accounts — there can be a "refunds" account that offsets "income:sales"
-   and "depreciation" account that offsets "asset:ppe", 
-3. multiple entries — debit and credit several accounts in one transaction.
+   and "depreciation" account that offsets "asset:ppe".
 
 Assumptions — things that were made intentionally simple:
 
-1. there is the only level of account hierarchy and no sub-accounts  ,
-2. account names must be unique, cannot use "asset:other" and "expense:other",
-  these names must be "asset:other_assets" and "expense:other_expenses"),
+1. there is the only level of account hierarchy and no sub-accounts in chart,
+2. as a consequence account names must be unique, cannot use "asset:other" 
+   and "expense:other",  these names must be "asset:other_assets" and 
+   "expense:other_expenses",
 3. no cashflow statement yet;
-4. the entry does not store date or title, only amounts and account names;
+4. the accounting entry contains only amount and debit and credit account names;
 5. one currency.
+
+Todo next:
+
+- multiple entries — debit and credit several accounts in one transaction.
+- save reports to file 
+- read reports from file
+- entries store 
+- new cli  
 
 """
 from abc import ABC, abstractmethod
@@ -44,14 +51,17 @@ class T(Enum):
 
 
 class Holder(ABC):
-    """The `Holder` class is a wrapper to hold an account type:
+    """The `Holder` class is a wrapper to hold an account type
+       that would be convertible to T-account.
 
-    - regular account via `Regular(Holder)` child class,
-    - contra account via `Contra(Holder)` child class, or
-    - temporary account like income summary and null account
-      via `Temporary(Holder)`.
+    Child classes are:
 
-    This wrapping enables to pattern match on account type.
+    - `Regular(Holder)`,
+    - `Contra(Holder)`,
+    - `Extra(Holder)` for income summary and null account.
+
+    This wrapping enables to pattern match on account type
+    and make type conversions cleaner.
     """
 
     @abstractmethod
@@ -59,7 +69,6 @@ class Holder(ABC):
         self,
     ) -> type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]:
         """Provide T-account constructor."""
-        ...
 
 
 @dataclass
@@ -116,6 +125,7 @@ class Account:
         return s
 
 
+# FIXME: can use decimal.Decimal
 Amount = int
 
 
@@ -134,6 +144,7 @@ class TAccount(ABC):
 
     @abstractmethod
     def balance(self) -> Amount:
+        """Return account balance."""
         ...
 
     @abstractmethod
@@ -233,10 +244,10 @@ class ExtraDebitAccount(ExtraAccount, DebitAccount):
 @dataclass
 class Extra(Holder):
     """Holder for extra account that does not belong to any of 5 account types.
-    
-    There are two such accounts where this holder is needed: income summary account 
-    and null account. Income summary account should have zero balance at the end 
-    of accounting period. Null account always has zero balance. 
+
+    There are two such accounts where this holder is needed: income summary account
+    and null account. Income summary account should have zero balance at the end
+    of accounting period. Null account should always has zero balance.
     """
 
     t: type[ExtraAccount]
@@ -260,15 +271,18 @@ class Chart:
     def __post_init__(self):
         self.validate()
 
-    def validate(self):
+    def validate(self) -> "Chart":
         if len(self.to_dict()) != len(list(self.dict_items())):
             raise ValueError("Chart should not contain duplicate account names.")
         return self
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Holder]:
+        """Return a dictionary of account names and account types.
+        Will purge duplicate names if found in chart."""
         return dict(self.dict_items())
 
     def dict_items(self):
+        """Assign account types to account names."""
         yield from self.stream(self.assets, T.Asset)
         yield from self.stream(self.capital, T.Capital)
         yield self.retained_earnings_account, Regular(T.Capital)
@@ -281,14 +295,14 @@ class Chart:
     def pure_accounts(self, xs: list[str | Account]) -> list[Account]:
         return [Account.from_string(x) for x in xs]
 
-    def stream(self, items, t):
+    def stream(self, items, t: T):
         for account in self.pure_accounts(items):
             yield account.name, Regular(t)
             for contra_name in account.contra_accounts:
                 yield contra_name, Contra(t)
 
     def ledger(self):
-        return Ledger({name: h.t_account() for name, h in self.dict_items()})
+        return Ledger({name: holder.t_account() for name, holder in self.dict_items()})
 
 
 @dataclass
@@ -335,6 +349,13 @@ class Ledger(UserDict[str, TAccount]):
                 if isinstance(t_account, cls)
             }
         )
+
+    def yield_tuples_for_trial_balance(self):
+        # FIXME: condense() may help reduce calculations
+        for name, balance in self.subset(DebitAccount).balances.items():
+            yield name, (balance, 0)
+        for name, balance in self.subset(CreditAccount).balances.items():
+            yield name, (0, balance)
 
 
 def contra_pairs(chart: Chart, contra_t: Type[ContraAccount]) -> list[tuple[str, str]]:
@@ -435,6 +456,10 @@ class Reporter:
         p = self.pipeline.close_first()
         return IncomeStatement.new(p.ledger)
 
+    @property
+    def trial_balance(self):
+        return TrialBalance(self.ledger.yield_tuples_for_trial_balance())
+
 
 class Statement:
     ...
@@ -471,9 +496,5 @@ class IncomeStatement(Statement):
         return sum(self.income.values()) - sum(self.expenses.values())
 
 
-class TrialBalance(UserDict[str, tuple[Amount, Amount]]):
-    ...
-
-
-class ChartDict(UserDict[str, Holder]):
+class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
     ...

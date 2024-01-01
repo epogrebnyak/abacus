@@ -12,9 +12,12 @@ from fine import (
     Pipeline,
     Reporter,
     contra_pairs,
+    Asset,
+    Capital,
 )
 
 
+@pytest.mark.regression
 def test_ledger_does_not_change_after_copy():
     le0 = (
         Chart(assets=["cash"], capital=["equity"]).ledger().post("cash", "equity", 100)
@@ -25,6 +28,7 @@ def test_ledger_does_not_change_after_copy():
     assert le0.balances.nonzero() == {"cash": 100, "equity": 100}
 
 
+@pytest.mark.unit
 def test_contra_pairs():
     chart = Chart(
         income=[Account("sales", contra_accounts=["refunds", "voids"])],
@@ -33,6 +37,11 @@ def test_contra_pairs():
         ("sales", "refunds"),
         ("sales", "voids"),
     ]
+
+
+def test_ledger():
+    ledger = Ledger({"cash": Asset(), "equity": Capital()}).post("cash", "equity", 1000)
+    assert ledger == Ledger({"cash": Asset([1000], []), "equity": Capital([], [1000])})
 
 
 @pytest.fixture
@@ -70,6 +79,7 @@ def reporter0(chart0, entries0):
     return Reporter(chart0, ledger)
 
 
+@pytest.mark.e2e
 def test_balance_sheet(reporter0):
     assert reporter0.balance_sheet == BalanceSheet(
         assets={"cash": 110},
@@ -78,11 +88,30 @@ def test_balance_sheet(reporter0):
     )
 
 
+@pytest.mark.e2e
 def test_income_statement(reporter0):
     assert reporter0.income_statement == IncomeStatement(
         income={"sales": 40}, expenses={"salaries": 30}
     )
 
 
+@pytest.mark.e2e
 def test_current_account(reporter0):
     assert reporter0.income_statement.current_account() == 10
+
+
+@pytest.mark.e2e
+def test_trial_balance(reporter0):
+    assert reporter0.trial_balance.data == {
+        "cash": (110, 0),
+        "ts": (20, 0),
+        "refunds": (5, 0),
+        "voids": (2, 0),
+        "salaries": (30, 0),
+        "equity": (0, 120),
+        "re": (0, 0),
+        "dividend_due": (0, 0),
+        "sales": (0, 47),
+        "isa": (0, 0),
+        "null": (0, 0),
+    }
