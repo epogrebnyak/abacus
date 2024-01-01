@@ -1,15 +1,17 @@
 from copy import deepcopy
+
+import pytest
 from fine import (
-    Chart,
     Account,
-    Entry,
-    Ledger,
-    ContraIncome,
-    Pipeline,
-    contra_pairs,
-    Reporter,
     BalanceSheet,
-    IncomeStatement
+    Chart,
+    ContraIncome,
+    Entry,
+    IncomeStatement,
+    Ledger,
+    Pipeline,
+    Reporter,
+    contra_pairs,
 )
 
 
@@ -33,16 +35,13 @@ def test_contra_pairs():
     ]
 
 
-import pytest
-
-
 @pytest.fixture
 def chart0():
     return Chart(
         assets=["cash"],
         capital=[Account("equity", contra_accounts=["ts"])],
         income=[Account("sales", contra_accounts=["refunds", "voids"])],
-        liabilities=[],
+        liabilities=["dividend_due"],
         expenses=["salaries"],
     )
 
@@ -73,15 +72,17 @@ def reporter0(chart0, entries0):
 
 def test_balance_sheet(reporter0):
     assert reporter0.balance_sheet == BalanceSheet(
-        assets={"cash": 115}, capital={"equity": 100, "re": 15}, liabilities={"dd": 0}
+        assets={"cash": 110},
+        capital={"equity": 100, "re": 10},
+        liabilities={"dividend_due": 0},
     )
 
 
-def test_balance_sheet(reporter0):
+def test_income_statement(reporter0):
     assert reporter0.income_statement == IncomeStatement(
-        income={"sales": 40}, expenses={"salaries": 25}
+        income={"sales": 40}, expenses={"salaries": 30}
     )
 
 
 def test_current_account(reporter0):
-    assert reporter0.income_statement.current_account() == 15
+    assert reporter0.income_statement.current_account() == 10

@@ -1,5 +1,20 @@
+from fine import Account, Chart, Entry, Pipeline, Reporter
 
-from fine import Chart, Account, Entry, Pipeline, Reporter
+# Trivial example: the company has cash and equity accounts
+# and received $499 and $501 from two investors. What is
+# the company balance sheet?
+
+chart = Chart(assets=["cash"], capital=["equity"])
+ledger = chart.ledger()
+ledger.post(debit="cash", credit="equity", amount=499)
+ledger.post(debit="cash", credit="equity", amount=501)
+reporter = Reporter(chart, ledger)
+print(reporter.balance_sheet)
+
+# Chart and balances can be saved to a JSON file:
+
+# chart.save("chart.json")
+# ledger.balances.save("end_balances.json")
 
 chart = Chart(
     assets=["cash"],
@@ -19,7 +34,7 @@ ledger.post_many(
         Entry("salaries", "cash", 25),
     ]
 )
-#r = Reporter(chart, ledger)
-#print(r.balance_sheet)
-#print(r.income_statement)
-#print(r.income_statement.current_account())
+r = Reporter(chart, ledger)
+print(r.balance_sheet)
+print(r.income_statement)
+print(r.income_statement.current_account())
