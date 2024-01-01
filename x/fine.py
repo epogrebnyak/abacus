@@ -40,6 +40,10 @@ from enum import Enum
 from typing import Type
 
 
+class AbacusError(Exception):
+    """Custom error for this project."""
+
+
 class T(Enum):
     """Five types of accounts and standard prefixes for account names."""
 
@@ -273,7 +277,7 @@ class Chart:
 
     def validate(self) -> "Chart":
         if len(self.to_dict()) != len(list(self.dict_items())):
-            raise ValueError("Chart should not contain duplicate account names.")
+            raise AbacusError("Chart should not contain duplicate account names.")
         return self
 
     def to_dict(self) -> dict[str, Holder]:
