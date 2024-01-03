@@ -1,7 +1,7 @@
-from composer import create_chart
+from fine import Chart, Report
 
 # Create a chart of accounts
-chart = create_chart(
+chart = Chart(
     assets=["cash"],
     capital=["equity"],
     income=["services"],
@@ -17,9 +17,10 @@ ledger.post(debit="cash", credit="services", amount=3500)
 ledger.post(debit="salaries", credit="cash", amount=2000)
 
 # Print balance sheet and income statement
-report = ledger.report()
-report.balance_sheet().print_rich(width=45)
-report.income_statement().print_rich(width=45)
+report = Report(chart, ledger)
+print(report.trial_balance)
+print(report.balance_sheet)
+print(report.income_statement)
 
 #                Balance Sheet
 #  Assets    6500  Capital                6500

@@ -7,30 +7,20 @@ Using this module you can:
 - post accoutning entries to `Ledger`,
 - use `Reporter` class to generate trial balance, balance sheet and income statement.
 
-Cool and clean things implemented in this module are:
+Implemented in this module:
 
 1. proper closing of accounts at the accounting period end,
 2. contra accounts — there can be a "refunds" account that offsets "income:sales"
    and "depreciation" account that offsets "asset:ppe".
+3. multiple entries — debit and credit several accounts in one transaction.
 
 Assumptions — things that were made intentionally simple:
 
 1. there is the only level of account hierarchy and no sub-accounts in chart,
-2. as a consequence account names must be unique, cannot use "asset:other" 
-   and "expense:other",  these names must be "asset:other_assets" and 
-   "expense:other_expenses",
+2. account names must be unique,
 3. no cashflow statement yet,
 4. the accounting entry contains only amount and debit and credit account names,
 5. one currency.
-
-Todo next:
-
-- multiple entries — debit and credit several accounts in one transaction
-- save reports to file 
-- read reports from file
-- entries store 
-- new cli  
-
 """
 from abc import ABC, abstractmethod
 from collections import UserDict
@@ -71,7 +61,9 @@ class Holder(ABC):
     @abstractmethod
     def t_account(
         self,
-    ) -> type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]:
+    ) -> Type["TAccount"]:
+        # `mypy fine.py` gives an error here: https://github.com/epogrebnyak/abacus/issues/64
+        # type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]
         """Provide T-account constructor."""
 
 
@@ -128,6 +120,9 @@ class Account:
             return Account(s, [])
         return s
 
+    def __str__(self):
+        return self.name
+
 
 # FIXME: can use decimal.Decimal
 Amount = int
@@ -141,15 +136,16 @@ class TAccount(ABC):
     credits: list[Amount] = field(default_factory=list)
 
     def debit(self, amount: Amount):
+        """Add debit amount to account."""
         self.debits.append(amount)
 
     def credit(self, amount: Amount):
+        """Add credit amount to account."""
         self.credits.append(amount)
 
     @abstractmethod
     def balance(self) -> Amount:
         """Return account balance."""
-        ...
 
     @abstractmethod
     def transfer_balance(self, my_name: str, dest_name: str) -> "Entry":
@@ -158,7 +154,6 @@ class TAccount(ABC):
 
         This account name is `my_name` and destination account name is `dest_name`.
         """
-        ...
 
     def condense(self):
         """Create a new account of the same type with only one value as account balance."""
@@ -266,8 +261,10 @@ class ExtraDebitAccount(ExtraAccount, DebitAccount):
 class Extra(Holder):
     """Holder for extra account that does not belong to any of 5 account types.
 
-    There are two such accounts where this holder is needed: income summary account
-    and null account. Income summary account should have zero balance at the end
+    There are two such accounts where this holder is needed:
+    income summary account and null account.
+
+    Income summary account should have zero balance at the end
     of accounting period. Null account should always has zero balance.
     """
 
@@ -280,6 +277,14 @@ class Extra(Holder):
 
 @dataclass
 class Chart:
+    """Chart of accounts.
+
+    Example:
+    ```
+    chart = Chart(assets=["cash"], capital=["equity"])
+    ```
+    """
+
     income_summary_account: str = "isa"
     retained_earnings_account: str = "re"
     null_account: str = "null"
@@ -299,7 +304,8 @@ class Chart:
 
     def to_dict(self) -> dict[str, Holder]:
         """Return a dictionary of account names and account types.
-        Will purge duplicate names if found in chart."""
+        Will purge duplicate names if found in chart.
+        """
         return dict(self.dict_items())
 
     def dict_items(self):
@@ -343,6 +349,15 @@ class AccountBalances(UserDict[str, Amount]):
 
 
 class Ledger(UserDict[str, TAccount]):
+    @classmethod
+    def new(cls, chart: Chart, balances: AccountBalances | None):
+        """Create a new ledger from chart, possibly using starting balances."""
+        ledger = chart.ledger()
+        if balances:
+            me = MultipleEntry.from_balances(chart, balances)
+            ledger.post_many(me.to_entries(chart.null_account))
+        return ledger
+
     def post(self, debit: str, credit: str, amount: Amount):
         """Post to ledger using account names and amount."""
         return self.post_one(Entry(debit, credit, amount))
@@ -383,7 +398,7 @@ class Ledger(UserDict[str, TAccount]):
 
     def condense(self):
         """Return a new ledger with condensed accounts that hold just one value.
-        Used to avoid copying of ledger data where only account balance is needed."""
+        Used to avoid copying of ledger data where only account balances are needed."""
         return self.__class__(
             {name: account.condense() for name, account in self.items()}
         )
@@ -469,7 +484,7 @@ class Pipeline:
 
 
 @dataclass
-class Reporter:
+class Report:
     chart: Chart
     ledger: Ledger
 
@@ -529,9 +544,64 @@ class IncomeStatement(Statement):
             expenses=ledger.subset(Expense).balances,
         )
 
-    def current_account(self):
+    def current_profit(self):
         return sum(self.income.values()) - sum(self.expenses.values())
 
 
 class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
     ...
+
+
+def sum_second(xs):
+    return sum(x for _, x in xs)
+
+
+@dataclass
+class MultipleEntry:
+    """An entry that affects several accounts at once."""
+
+    debits: list[tuple[str, Amount]]
+    credits: list[tuple[str, Amount]]
+
+    def __post_init__(self):
+        self.validate()
+
+    def validate(self):
+        """Assert sum of debit entries equals sum of credit entries."""
+        if sum_second(self.debits) == sum_second(self.credits):
+            return self
+        else:
+            raise AbacusError(["Invalid multiple entry", self])
+
+    def to_entries(self, null_account_name: str) -> list[Entry]:
+        """Return list of double entries that make up multiple entry.
+        The double entries will correspond to null account.
+        """
+        a = [
+            Entry(account_name, null_account_name, amount)
+            for (account_name, amount) in self.debits
+        ]
+        b = [
+            Entry(null_account_name, account_name, amount)
+            for (account_name, amount) in self.credits
+        ]
+        return a + b
+
+    @classmethod
+    def from_balances(cls, chart: Chart, balances: AccountBalances) -> "MultipleEntry":
+        ledger = chart.ledger()
+
+        def is_debit(name):
+            return isinstance(ledger.data[name], DebitAccount)
+
+        def is_credit(name):
+            return isinstance(ledger.data[name], CreditAccount)
+
+        return cls(
+            debits=[
+                (name, balance) for name, balance in balances.items() if is_debit(name)
+            ],
+            credits=[
+                (name, balance) for name, balance in balances.items() if is_credit(name)
+            ],
+        )

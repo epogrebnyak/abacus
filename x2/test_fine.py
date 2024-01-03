@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 import pytest
-from fine import (
+from x2.fine import (
     Account,
     BalanceSheet,
     Chart,
@@ -10,7 +10,7 @@ from fine import (
     IncomeStatement,
     Ledger,
     Pipeline,
-    Reporter,
+    Report,
     contra_pairs,
     Asset,
     Capital,
@@ -41,7 +41,14 @@ def test_contra_pairs():
 
 
 @pytest.mark.unit
-def test_ledger():
+def test_ledger_creation_with_starting_balances():
+    chart = Chart(assets=["cash"], capital=["equity"])
+    ledger = Ledger.new(chart, {"cash": 100, "equity": 100})
+    assert ledger.balances.nonzero() == {"cash": 100, "equity": 100}
+
+
+@pytest.mark.unit
+def test_post_to_ledger():
     ledger = Ledger({"cash": Asset(), "equity": Capital()}).post("cash", "equity", 1000)
     assert ledger == Ledger({"cash": Asset([1000], []), "equity": Capital([], [1000])})
 
@@ -51,6 +58,7 @@ def test_ledger_condense():
     Ledger({"cash": Asset([300, 100], [200])}).condense() == Ledger(
         {"cash": Asset([200], [])}
     )
+
 
 @pytest.mark.unit
 def test_ledger_fails_on_unknown_account_name():
@@ -80,6 +88,7 @@ def entries0():
         Entry("salaries", "cash", 30),
     ]
 
+
 @pytest.mark.e2e
 def test_pipleine(chart0, entries0):
     ledger = chart0.ledger().post_many(entries0)
@@ -88,14 +97,14 @@ def test_pipleine(chart0, entries0):
 
 
 @pytest.fixture
-def reporter0(chart0, entries0):
+def Report0(chart0, entries0):
     ledger = chart0.ledger().post_many(entries0)
-    return Reporter(chart0, ledger)
+    return Report(chart0, ledger)
 
 
 @pytest.mark.e2e
-def test_balance_sheet(reporter0):
-    assert reporter0.balance_sheet == BalanceSheet(
+def test_balance_sheet(Report0):
+    assert Report0.balance_sheet == BalanceSheet(
         assets={"cash": 110},
         capital={"equity": 100, "re": 10},
         liabilities={"dividend_due": 0},
@@ -103,20 +112,20 @@ def test_balance_sheet(reporter0):
 
 
 @pytest.mark.e2e
-def test_income_statement(reporter0):
-    assert reporter0.income_statement == IncomeStatement(
+def test_income_statement(Report0):
+    assert Report0.income_statement == IncomeStatement(
         income={"sales": 40}, expenses={"salaries": 30}
     )
 
 
 @pytest.mark.e2e
-def test_current_account(reporter0):
-    assert reporter0.income_statement.current_account() == 10
+def test_current_profit(Report0):
+    assert Report0.income_statement.current_profit() == 10
 
 
 @pytest.mark.e2e
-def test_trial_balance(reporter0):
-    assert reporter0.trial_balance.data == {
+def test_trial_balance(Report0):
+    assert Report0.trial_balance.data == {
         "cash": (110, 0),
         "ts": (20, 0),
         "refunds": (5, 0),
@@ -129,3 +138,27 @@ def test_trial_balance(reporter0):
         "isa": (0, 0),
         "null": (0, 0),
     }
+
+
+from x2.fine import AccountBalances, MultipleEntry
+
+
+@pytest.mark.unit
+def test_multiple_entry_raises():
+    with pytest.raises(AbacusError):
+        MultipleEntry(debits=[("cash", 10)], credits=[("eq", 18)])
+
+
+@pytest.mark.unit
+def test_multiple_entry_promotes():
+    me = MultipleEntry(debits=[("cash", 10)], credits=[("eq", 10)])
+    assert me.to_entries("null") == [Entry("cash", "null", 10), Entry("null", "eq", 10)]
+
+
+@pytest.mark.unit
+def test_multiple_entry_from_account_balances():
+    ch = Chart(assets=["cash", "inv"], capital=[Account("eq", ["ta"])])
+    ab = AccountBalances({"cash": 10, "inv": 5, "eq": 18, "ta": 3})
+    assert MultipleEntry.from_balances(ch, ab) == MultipleEntry(
+        debits=[("cash", 10), ("inv", 5), ("ta", 3)], credits=[("eq", 18)]
+    )

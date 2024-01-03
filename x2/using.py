@@ -1,4 +1,4 @@
-from fine import Account, Chart, Entry, Reporter
+from x2.fine import Account, Chart, Entry, Reporter
 
 # Trivial example: the company has cash and equity accounts
 # and received $499 and $501 from two investors. What is
@@ -37,5 +37,9 @@ ledger.post_many(
 r = Reporter(chart, ledger)
 print(r.balance_sheet)
 print(r.income_statement)
-print(r.income_statement.current_account())
+print(r.income_statement.current_profit())
 print(r.trial_balance)
+
+from x2.fine import T
+
+print(T("asset"))
