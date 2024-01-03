@@ -1,6 +1,5 @@
 """Write and read accounting entries from a file."""
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -8,18 +7,6 @@ from typing import Iterable
 from fine import Entry, Chart
 
 __all__ = ["LineJSON"]
-
-
-def touches_isa(chart: Chart, entry: Entry) -> bool:
-    """True if entry touches income summary account."""
-    isa = chart.base_chart.income_summary_account
-    return (entry.debit == isa) or (entry.credit == isa)
-
-
-def income_statement_stream(entries, chart):
-    for entry in entries:
-        if not touches_isa(chart, entry):
-            yield entry
 
 
 @dataclass
@@ -61,9 +48,17 @@ class LineJSON:
     def yield_entries(self) -> Iterable[Entry]:
         with self._open("r") as file:
             for line in file:
-                yield Entry(**json.loads(line.strip()))
+                yield Entry.from_string(line)
 
     def yield_entries_for_income_statement(self, chart: Chart) -> Iterable[Entry]:
         """Filter entries that will not close income accounts.
         Used to produce income statement."""
-        return income_statement_stream(self.yield_entries(), chart)
+        from itertools import ifilterfalse
+
+        isa = chart.base_chart.income_summary_account
+
+        def touches_isa(entry):
+            """True if entry touches income summary account."""
+            return (entry.debit == isa) or (entry.credit == isa)
+    
+        return ifilterfalse(touches_isa, self.yield_entries())

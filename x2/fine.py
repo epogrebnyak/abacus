@@ -335,6 +335,9 @@ class Chart:
         return Ledger({name: holder.t_account() for name, holder in self.dict_items()})
 
 
+import json
+
+
 @dataclass
 class Entry:
     """Double entry — reflects account name to be debited,
@@ -343,6 +346,13 @@ class Entry:
     debit: str
     credit: str
     amount: Amount
+
+    def to_json(self):
+        return json.dumps(self.__dict__)
+
+    @classmethod
+    def from_string(cls, line: str):
+        return cls(**json.loads(line))
 
 
 class AccountBalances(UserDict[str, Amount]):

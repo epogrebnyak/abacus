@@ -22,6 +22,7 @@ from fine import (
 )
 import fine
 
+
 @pytest.mark.regression
 def test_ledger_does_not_change_after_copy():
     le0 = (
@@ -164,6 +165,7 @@ def test_multiple_entry_from_account_balances():
         debits=[("cash", 10), ("inv", 5), ("ta", 3)], credits=[("eq", 18)]
     )
 
+
 # стоит разделить тесты на модульные(классы) и связные(свясь друг с другом).
 # так будит удобнее понимать что вы тестируйте
 # pytest.mark.parametrize("input_value", make_chart("asset:cash", "capital:equity", "contra:equity:ts"))
@@ -255,3 +257,9 @@ def test_trial_balance_view(chart2, ledger2):
         "isa": (0, 0),
         "null": (0, 0),
     }
+
+
+def test_serialisation():
+    e = Entry("a", "b", 1)
+    assert e.from_string(e.to_json()) == e
+    assert e.to_json() == '{"debit": "a", "credit": "b", "amount": 1}'
