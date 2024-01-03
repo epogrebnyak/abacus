@@ -4,8 +4,8 @@ Using this module you can:
 
 - create a chart of accounts using `Chart` class,
 - create `Ledger` from `Chart`,
-- post accoutning entries to `Ledger`,
-- use `Reporter` class to generate trial balance, balance sheet and income statement.
+- post entries to `Ledger`,
+- use `Report` class to generate trial balance, balance sheet and income statement.
 
 Implemented in this module:
 
@@ -16,11 +16,10 @@ Implemented in this module:
 
 Assumptions — things that were made intentionally simple:
 
-1. there is the only level of account hierarchy and no sub-accounts in chart,
+1. there is only one level of account hierarchy and no sub-accounts in chart,
 2. account names must be unique,
 3. no cashflow statement yet,
-4. the accounting entry contains only amount and debit and credit account names,
-5. one currency.
+4. one currency.
 """
 from abc import ABC, abstractmethod
 from collections import UserDict
@@ -52,7 +51,7 @@ class Holder(ABC):
 
     - `Regular(Holder)`,
     - `Contra(Holder)`,
-    - `Extra(Holder)` for income summary and null account.
+    - `Wrap(Holder)` for income summary and null account.
 
     This wrapping enables to pattern match on account type
     and make type conversions cleaner.
@@ -258,11 +257,14 @@ class ExtraDebitAccount(ExtraAccount, DebitAccount):
 
 
 @dataclass
-class Extra(Holder):
-    """Holder for extra account that does not belong to any of 5 account types.
+class Wrap(Holder):
+    """Holder for accounts that do not belong to any of 5 account types.
 
     There are two such accounts where this holder is needed:
-    income summary account and null account.
+    - income summary account,
+    - null account.
+
+    This holder wraps the contructor for t-account used in ledger.
 
     Income summary account should have zero balance at the end
     of accounting period. Null account should always has zero balance.
@@ -280,7 +282,8 @@ class Chart:
     """Chart of accounts.
 
     Example:
-    ```
+
+    ```python
     chart = Chart(assets=["cash"], capital=["equity"])
     ```
     """
@@ -316,8 +319,8 @@ class Chart:
         yield from self.stream(self.liabilities, T.Liability)
         yield from self.stream(self.income, T.Income)
         yield from self.stream(self.expenses, T.Expense)
-        yield self.income_summary_account, Extra(TAccountRetainedEarnings)
-        yield self.null_account, Extra(TAccountNull)
+        yield self.income_summary_account, Wrap(TAccountRetainedEarnings)
+        yield self.null_account, Wrap(TAccountNull)
 
     def pure_accounts(self, xs: list[str | Account]) -> list[Account]:
         return [Account.from_string(x) for x in xs]
@@ -334,6 +337,9 @@ class Chart:
 
 @dataclass
 class Entry:
+    """Double entry — reflects account name to be debited,
+    account name to be credited and transaction amount."""
+
     debit: str
     credit: str
     amount: Amount
@@ -359,7 +365,7 @@ class Ledger(UserDict[str, TAccount]):
         return ledger
 
     def post(self, debit: str, credit: str, amount: Amount):
-        """Post to ledger using account names and amount."""
+        """Post to ledger using debit and credit account names and amount."""
         return self.post_one(Entry(debit, credit, amount))
 
     def post_one(self, entry: Entry):
@@ -598,10 +604,6 @@ class MultipleEntry:
             return isinstance(ledger.data[name], CreditAccount)
 
         return cls(
-            debits=[
-                (name, balance) for name, balance in balances.items() if is_debit(name)
-            ],
-            credits=[
-                (name, balance) for name, balance in balances.items() if is_credit(name)
-            ],
+            debits=[(name, b) for name, b in balances.items() if is_debit(name)],
+            credits=[(name, b) for name, b in balances.items() if is_credit(name)],
         )
