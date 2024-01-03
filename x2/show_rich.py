@@ -1,3 +1,8 @@
+"""Rich formatting for income statement and balance sheet."""
+
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
 from show import (
     AccountLine,
     Amount,
@@ -8,9 +13,8 @@ from show import (
     income_statement_lines,
     left_and_right,
 )
-from rich.console import Console
-from rich.table import Table
-from rich.text import Text
+
+__all__ = ["rich_print"]
 
 
 def rich_print(report, rename_dict=None, width=80):
@@ -34,7 +38,7 @@ def start_balance_sheet_table(title, width) -> Table:
     return table
 
 
-def red(b: str) -> Text:
+def red(b) -> Text:
     """Make digit red if negative."""
     v = Amount(b)
     if v and v < 0:
@@ -52,7 +56,7 @@ def bold(s: Text | str) -> Text:
 
 
 def unpack(line: Line) -> tuple[Text, Text]:
-    """Convert Line to rich.Text tuple"""
+    """Convert Line to tuple of two rich.Text instances."""
     match line:
         case HeaderLine(a, b):
             return bold(a), bold(red(b))

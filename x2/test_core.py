@@ -1,9 +1,8 @@
 from copy import deepcopy
 
+import core
 import pytest
-
-from cli import UserChart
-from fine import (
+from core import (
     AbacusError,
     Account,
     AccountBalances,
@@ -20,7 +19,6 @@ from fine import (
     Report,
     contra_pairs,
 )
-import fine
 
 
 @pytest.mark.regression
@@ -176,20 +174,31 @@ def test_multiple_entry_from_account_balances():
 #     # прооверка на разность ссылок
 #     assert make is not chart0
 
+from user_chart import user_chart
+
 
 @pytest.fixture
 def chart2():
-    return (
-        UserChart("isa", "re", "null")
-        .use(
-            "asset:cash",
-            "capital:equity",
-            "contra:equity:ts",
-            "income:sales",
-            "contra:sales:refunds",
-            "expense:salaries",
-        )
-        .chart()
+    return user_chart(
+        "asset:cash",
+        "capital:equity",
+        "contra:equity:ts",
+        "income:sales",
+        "contra:sales:refunds",
+        "expense:salaries",
+    ).chart()
+
+
+def test_chart_conversion(chart2):
+    assert chart2 == Chart(
+        income_summary_account="isa",
+        retained_earnings_account="re",
+        null_account="null",
+        assets=[Account(name="cash", contra_accounts=[])],
+        capital=[Account(name="equity", contra_accounts=["ts"])],
+        liabilities=[],
+        income=[Account(name="sales", contra_accounts=["refunds"])],
+        expenses=[Account(name="salaries", contra_accounts=[])],
     )
 
 
@@ -206,17 +215,17 @@ def ledger2(chart2):
 
 def test_closing_contra_entries_1(chart2, ledger2):
     assert Pipeline(chart2, ledger2).close_contra(
-        fine.ContraCapital
+        core.ContraCapital
     ).closing_entries == [Entry(debit="equity", credit="ts", amount=2000)]
 
 
 def test_closing_contra_entries_2(chart2, ledger2):
     assert Pipeline(chart2, ledger2).close_contra(
-        fine.ContraIncome
+        core.ContraIncome
     ).closing_entries == [Entry(debit="sales", credit="refunds", amount=499)]
 
 
-def test_trial_balance(chart2, ledger2):
+def test_trial_balance_again(chart2, ledger2):
     tb = Report(chart2, ledger2).trial_balance
     assert tb["salaries"] == (2001, 0)
     assert tb["sales"] == (0, 3499)
@@ -230,7 +239,7 @@ def test_chaining_in_pipeline_must_not_corrupt_input_argument(chart2, ledger2):
     assert ledger2["refunds"].balance() == 499
 
 
-def test_balance_sheet(chart2, ledger2):
+def test_balance_sheet_again(chart2, ledger2):
     assert Report(chart2, ledger2).balance_sheet == BalanceSheet(
         assets={"cash": 10999},
         capital={"equity": 10000, "re": 999},
@@ -238,7 +247,7 @@ def test_balance_sheet(chart2, ledger2):
     )
 
 
-def test_income_statement(chart2, ledger2):
+def test_income_statement_again(chart2, ledger2):
     assert Report(chart2, ledger2).income_statement == IncomeStatement(
         income={"sales": 3000},
         expenses={"salaries": 2001},

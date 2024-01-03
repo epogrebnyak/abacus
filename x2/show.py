@@ -1,9 +1,11 @@
-"""Viewers for income statement and balance sheet reports."""
+"""Viewers for trial balance, income statement, balance sheet reports."""
 
 from dataclasses import dataclass, field
 
 from column_builder import Column
-from fine import AccountBalances, Amount, BalanceSheet, IncomeStatement, TrialBalance
+from core import AccountBalances, Amount, BalanceSheet, IncomeStatement, TrialBalance
+
+__all__ = ["show"]
 
 
 def show(report, rename_dict=None) -> str:
@@ -30,7 +32,7 @@ def use_title(s: str, rename_dict: dict[str, str]) -> str:
     return rename_dict.get(s, s).replace("_", " ").strip().capitalize()
 
 
-def total(balances: dict[str, int]) -> int:
+def total(balances) -> Amount:
     return sum(balances.values())
 
 
@@ -112,7 +114,7 @@ def offset(line: Line) -> str:
 
 def to_columns(lines: list[Line]) -> tuple[Column, Column]:
     col1 = Column(strings=[offset(line) for line in lines])
-    col2 = Column(strings=[line.value for line in lines])
+    col2 = Column(strings=[str(line.value) for line in lines])
     return col1, col2
 
 
@@ -178,29 +180,3 @@ class TrialBalanceViewer:
 
     def __str__(self) -> str:
         return self.table().printable()
-
-
-b = BalanceSheet(
-    assets={"cash": 110},
-    capital={"equity": 100, "re": 10},
-    liabilities={"dividend_due": 0},
-)
-print(show(b))
-i = IncomeStatement(income={"sales": 40}, expenses={"salaries": 30})
-print(show(i))
-t = TrialBalance(
-    {
-        "cash": (110, 0),
-        "ts": (20, 0),
-        "refunds": (5, 0),
-        "voids": (2, 0),
-        "salaries": (30, 0),
-        "equity": (0, 120),
-        "re": (0, 0),
-        "dividend_due": (0, 0),
-        "sales": (0, 47),
-        "isa": (0, 0),
-        "null": (0, 0),
-    }
-)
-print(show(t))

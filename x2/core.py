@@ -16,11 +16,13 @@ Implemented in this module:
 
 Assumptions — things that were made intentionally simple:
 
-1. there is only one level of account hierarchy and no sub-accounts in chart,
-2. account names must be unique,
+1. there is only one level of account hierarchy — no sub-accounts in chart,
+2. account names must be globally unique,
 3. no cashflow statement yet,
-4. one currency.
+4. one currency,
+5. no checks for account non-negativity.
 """
+import json
 from abc import ABC, abstractmethod
 from collections import UserDict
 from copy import deepcopy
@@ -333,9 +335,6 @@ class Chart:
 
     def ledger(self):
         return Ledger({name: holder.t_account() for name, holder in self.dict_items()})
-
-
-import json
 
 
 @dataclass

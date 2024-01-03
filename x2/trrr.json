@@ -1,0 +1,15 @@
+{
+    "income_summary_account": "isa",
+    "retained_earnings_account": "re",
+    "null_account": "null",
+    "account_labels": {
+        "cash": {
+            "t": "asset",
+            "contra_names": []
+        },
+        "equity": {
+            "t": "capital",
+            "contra_names": []
+        }
+    }
+}

@@ -1,5 +1,5 @@
-from fine import Account, Chart, Entry, Report
-from x2.print_rich import rich_print
+from core import Account, Chart, Entry, Report, T
+from show_rich import rich_print
 
 # Trivial example: the company has cash and equity accounts
 # and received $499 and $501 from two investors. What is
@@ -45,6 +45,10 @@ print(r.trial_balance)
 rich_print(r.balance_sheet, width=60)
 rich_print(r.income_statement, width=60)
 
-from fine import T
 
 print(T.Asset.value)
+from user_chart import user_chart, UserChart
+
+uc = user_chart("asset:cash", "capital:equity")
+uc.save("trrr.json")
+print(UserChart.load("trrr.json"))

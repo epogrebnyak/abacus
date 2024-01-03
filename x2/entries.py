@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-from fine import Entry, Chart
+from core import Chart, Entry
 
 __all__ = ["LineJSON"]
 
@@ -53,12 +53,12 @@ class LineJSON:
     def yield_entries_for_income_statement(self, chart: Chart) -> Iterable[Entry]:
         """Filter entries that will not close income accounts.
         Used to produce income statement."""
-        from itertools import ifilterfalse
+        from itertools import filterfalse
 
-        isa = chart.base_chart.income_summary_account
+        isa = chart.income_summary_account
 
         def touches_isa(entry):
             """True if entry touches income summary account."""
             return (entry.debit == isa) or (entry.credit == isa)
-    
-        return ifilterfalse(touches_isa, self.yield_entries())
+
+        return filterfalse(touches_isa, self.yield_entries())
