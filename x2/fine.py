@@ -26,7 +26,7 @@ from collections import UserDict
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Type, Iterable
+from typing import Iterable, Type
 
 
 class AbacusError(Exception):
@@ -49,8 +49,8 @@ class Holder(ABC):
 
     Child classes are:
 
-    - `Regular(Holder)`,
-    - `Contra(Holder)`,
+    - `Regular(Holder)` for regular accounts,
+    - `Contra(Holder)` for contra accounts,
     - `Wrap(Holder)` for income summary and null account.
 
     This wrapping enables to pattern match on account type
@@ -244,11 +244,11 @@ class ExtraCreditAccount(ExtraAccount, CreditAccount):
     ...
 
 
-class TAccountRetainedEarnings(ExtraCreditAccount):
+class IncomeSummaryAccount(ExtraCreditAccount):
     ...
 
 
-class TAccountNull(ExtraCreditAccount):
+class NullAccount(ExtraCreditAccount):
     ...
 
 
@@ -319,8 +319,8 @@ class Chart:
         yield from self.stream(self.liabilities, T.Liability)
         yield from self.stream(self.income, T.Income)
         yield from self.stream(self.expenses, T.Expense)
-        yield self.income_summary_account, Wrap(TAccountRetainedEarnings)
-        yield self.null_account, Wrap(TAccountNull)
+        yield self.income_summary_account, Wrap(IncomeSummaryAccount)
+        yield self.null_account, Wrap(NullAccount)
 
     def pure_accounts(self, xs: list[str | Account]) -> list[Account]:
         return [Account.from_string(x) for x in xs]
@@ -348,6 +348,9 @@ class Entry:
 class AccountBalances(UserDict[str, Amount]):
     def nonzero(self):
         return {name: balance for name, balance in self.items() if balance}
+
+    def total(self):
+        return sum(self.values())
 
     # TODO:
     def save(self, path: str):

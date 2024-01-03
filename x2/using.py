@@ -1,4 +1,5 @@
-from x2.fine import Account, Chart, Entry, Reporter
+from fine import Account, Chart, Entry, Report
+from x2.print_rich import rich_print
 
 # Trivial example: the company has cash and equity accounts
 # and received $499 and $501 from two investors. What is
@@ -8,8 +9,8 @@ chart = Chart(assets=["cash"], capital=["equity"])
 ledger = chart.ledger()
 ledger.post(debit="cash", credit="equity", amount=499)
 ledger.post(debit="cash", credit="equity", amount=501)
-reporter = Reporter(chart, ledger)
-print(reporter.balance_sheet)
+report = Report(chart, ledger)
+print(report.balance_sheet)
 
 # Chart and balances can be saved to a JSON file:
 
@@ -20,7 +21,7 @@ chart = Chart(
     assets=["cash"],
     capital=[Account("equity", contra_accounts=["ts"])],
     income=[Account("sales", contra_accounts=["refunds", "voids"])],
-    liabilities=["dividend _due"],
+    liabilities=["dividend_due"],
     expenses=["salaries"],
 )
 ledger = chart.ledger()
@@ -34,12 +35,16 @@ ledger.post_many(
         Entry("salaries", "cash", 30),
     ]
 )
-r = Reporter(chart, ledger)
+r = Report(chart, ledger)
 print(r.balance_sheet)
 print(r.income_statement)
 print(r.income_statement.current_profit())
 print(r.trial_balance)
 
-from x2.fine import T
 
-print(T("asset"))
+rich_print(r.balance_sheet, width=60)
+rich_print(r.income_statement, width=60)
+
+from fine import T
+
+print(T.Asset.value)

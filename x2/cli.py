@@ -1,6 +1,7 @@
-from fine import T, AbacusError, Chart, Account, T
-from typing import Iterable
 from dataclasses import dataclass, field
+from typing import Iterable
+
+from fine import AbacusError, Account, Chart, T
 
 
 @dataclass
@@ -25,14 +26,30 @@ class Offset:
     contra_name: str
 
 
+@dataclass
+class Composer:
+    contra: str = "contra"
+    translation: dict[str, str] = field(default_factory=dict)
+
+    def add(self, t: T, alt_prefix: str):
+        self.translation[alt_prefix] = t.value
+        return self
+
+    def select(self, incoming_prefix: str):
+        return T(self.translation.get(incoming_prefix, incoming_prefix))
+
+
 def extract(
-    label_string: str, contra_prefix: str = "contra"
+    label_string: str, composer: Composer | None = None
 ) -> Iterable[Label] | Iterable[Offset]:
+    if composer is None:
+        composer = Composer()
     match label_string.split(":"):
         case [prefix, name]:
+            t = composer.select(prefix)
             for name_part in name.split(","):
-                yield Label(T(prefix), name_part)
-        case [contra_prefix, name, contra_name]:
+                yield Label(t, name_part)
+        case [composer.contra, name, contra_name]:
             for contra_name_part in contra_name.split(","):
                 yield Offset(name, contra_name_part)
         case _:
@@ -70,11 +87,18 @@ class UserChart:
                 self.account_labels[name] = AccountLabel(t, [])
             case Offset(name, contra_name):
                 self.assert_unique(contra_name)
-                self.account_labels[name].offset(contra_name)
+                try:
+                    self.account_labels[name].offset(contra_name)
+                except KeyError:
+                    raise AbacusError(
+                        f"Cannot offset {name} because it is not in chart."
+                    )
 
-    def use(self, *label_strings: str):
+    def use(self, *label_strings: str, composer: Composer | None = None):
+        if composer is None:
+            composer = Composer()
         for label_string in label_strings:
-            for obj in extract(label_string):
+            for obj in extract(label_string, composer):
                 self.add_one(obj)
         return self
 
@@ -105,7 +129,3 @@ class UserChart:
             income=self.accounts(T.Income),
             expenses=self.accounts(T.Expense),
         ).validate()
-
-
-def make_chart(label_string_long: str):
-    return UserChart("isa", "re", "null").use(*label_string_long.split())

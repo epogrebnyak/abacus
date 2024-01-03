@@ -1,22 +1,26 @@
 from copy import deepcopy
 
 import pytest
-from x2.fine import (
+
+from cli import UserChart
+from fine import (
+    AbacusError,
     Account,
+    AccountBalances,
+    Asset,
     BalanceSheet,
+    Capital,
     Chart,
     ContraIncome,
     Entry,
     IncomeStatement,
     Ledger,
+    MultipleEntry,
     Pipeline,
     Report,
     contra_pairs,
-    Asset,
-    Capital,
-    AbacusError,
 )
-
+import fine
 
 @pytest.mark.regression
 def test_ledger_does_not_change_after_copy():
@@ -140,9 +144,6 @@ def test_trial_balance(Report0):
     }
 
 
-from x2.fine import AccountBalances, MultipleEntry
-
-
 @pytest.mark.unit
 def test_multiple_entry_raises():
     with pytest.raises(AbacusError):
@@ -162,3 +163,95 @@ def test_multiple_entry_from_account_balances():
     assert MultipleEntry.from_balances(ch, ab) == MultipleEntry(
         debits=[("cash", 10), ("inv", 5), ("ta", 3)], credits=[("eq", 18)]
     )
+
+# стоит разделить тесты на модульные(классы) и связные(свясь друг с другом).
+# так будит удобнее понимать что вы тестируйте
+# pytest.mark.parametrize("input_value", make_chart("asset:cash", "capital:equity", "contra:equity:ts"))
+# def test_make_chart():
+#     make = make_chart("asset:cash", "capital:equity", "contra:equity:ts")
+#     # проверка равенства
+#     assert make == chart0
+#     # прооверка на разность ссылок
+#     assert make is not chart0
+
+
+@pytest.fixture
+def chart2():
+    return (
+        UserChart("isa", "re", "null")
+        .use(
+            "asset:cash",
+            "capital:equity",
+            "contra:equity:ts",
+            "income:sales",
+            "contra:sales:refunds",
+            "expense:salaries",
+        )
+        .chart()
+    )
+
+
+@pytest.fixture
+def ledger2(chart2):
+    ledger = chart2.ledger()
+    ledger.post("cash", "equity", 12_000)
+    ledger.post("ts", "cash", 2_000)
+    ledger.post("cash", "sales", 3_499)
+    ledger.post("refunds", "cash", 499)
+    ledger.post("salaries", "cash", 2_001)
+    return ledger
+
+
+def test_closing_contra_entries_1(chart2, ledger2):
+    assert Pipeline(chart2, ledger2).close_contra(
+        fine.ContraCapital
+    ).closing_entries == [Entry(debit="equity", credit="ts", amount=2000)]
+
+
+def test_closing_contra_entries_2(chart2, ledger2):
+    assert Pipeline(chart2, ledger2).close_contra(
+        fine.ContraIncome
+    ).closing_entries == [Entry(debit="sales", credit="refunds", amount=499)]
+
+
+def test_trial_balance(chart2, ledger2):
+    tb = Report(chart2, ledger2).trial_balance
+    assert tb["salaries"] == (2001, 0)
+    assert tb["sales"] == (0, 3499)
+    assert tb["refunds"] == (499, 0)
+
+
+def test_chaining_in_pipeline_must_not_corrupt_input_argument(chart2, ledger2):
+    Pipeline(chart2, ledger2).close_first().close_second().close_last()
+    assert ledger2["salaries"].balance() == 2001
+    assert ledger2["sales"].balance() == 3499
+    assert ledger2["refunds"].balance() == 499
+
+
+def test_balance_sheet(chart2, ledger2):
+    assert Report(chart2, ledger2).balance_sheet == BalanceSheet(
+        assets={"cash": 10999},
+        capital={"equity": 10000, "re": 999},
+        liabilities={},
+    )
+
+
+def test_income_statement(chart2, ledger2):
+    assert Report(chart2, ledger2).income_statement == IncomeStatement(
+        income={"sales": 3000},
+        expenses={"salaries": 2001},
+    )
+
+
+def test_trial_balance_view(chart2, ledger2):
+    assert Report(chart2, ledger2).trial_balance == {
+        "cash": (10999, 0),
+        "ts": (2000, 0),
+        "refunds": (499, 0),
+        "salaries": (2001, 0),
+        "equity": (0, 12000),
+        "sales": (0, 3499),
+        "re": (0, 0),
+        "isa": (0, 0),
+        "null": (0, 0),
+    }

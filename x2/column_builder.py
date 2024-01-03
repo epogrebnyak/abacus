@@ -4,7 +4,7 @@ from typing import Callable, List
 
 @dataclass
 class Column:
-    """Represent a column and add methods to manipulate it (including align and concatenate)."""
+    """Represent a column and methods to manipulate it (including align and concatenate)."""
 
     strings: List[str]
 
@@ -17,12 +17,13 @@ class Column:
         return Column([f(s) for s in self.strings])
 
     def align(self, method: str, fill_char: str):
-        width = self.width  # avoid calultaing with many times
+        """Generic method to align all strings in the column."""
+        width = self.width  # avoid calultaing width too many times
 
         def f(s):
             return getattr(s, method)(width, fill_char)
 
-        return self.apply(f)
+        return Column([f(s) for s in self.strings])
 
     def align_left(self, fill_char=" "):
         """Align all strings to the left."""
