@@ -1,5 +1,0 @@
-- testing of piplene
-- viewers
-- save and read form file 
-- entries store 
-- new cli  
