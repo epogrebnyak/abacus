@@ -5,7 +5,10 @@ from dataclasses import dataclass, field
 from abacus.column_builder import Column
 from abacus.core import AccountBalances, Amount, BalanceSheet, IncomeStatement
 
-__all__ = ["show"]
+__all__ = ["echo", "show"]
+
+def echo(statement, header):
+    print(header, show(statement), sep="\n")
 
 
 def show(report, rename_dict=None) -> str:

@@ -11,22 +11,23 @@ With `abacus` you can:
 - post entries to ledger,
 - make trial balance,
 - close accounts at period end,
-- produce balance sheet and income statement.
+- produce balance sheet and income statement,
+- save account balances for the next period. 
 
 ## Minimal example
 
-A professional services firm starts business with a $5000 shareholder investment,
+A firm starts business with a $5000 shareholder investment,
 spends $1000 on marketing,
-earns $3500 from clients,
+earns $3499 from clients,
 and pays $2000 in salaries.
 
 The Python code below will produce the balance sheet and income statement for the firm.
 
 ```python
-from composer import create_chart
+from abacus import Chart, Report, echo
 
 # Create a chart of accounts
-chart = create_chart(
+chart = Chart(
     assets=["cash"],
     capital=["equity"],
     income=["services"],
@@ -39,39 +40,54 @@ ledger = chart.ledger()
 # Post entries to ledger
 ledger.post(debit="cash", credit="equity", amount=5000)
 ledger.post(debit="marketing", credit="cash", amount=1000)
-ledger.post(debit="cash", credit="services", amount=3500)
+ledger.post(debit="cash", credit="services", amount=3499)
 ledger.post(debit="salaries", credit="cash", amount=2000)
 
-# Print balance sheet and income statement
-report = ledger.report()
-report.balance_sheet().print_rich(width=45)
-report.income_statement().print_rich(width=45)
-
+# Print trial balance, balance sheet and income statement
+report = Report(chart, ledger)
+echo(report.trial_balance, "Trial balance")
+echo(report.balance_sheet, "Balance sheet")
+echo(report.income_statement, "Income statement")
+print("Account balances:", report.account_balances)
 ```
 
-This code can be found at [experimental/readme.py](experimental/readme.py).
+This code can be found at [readme.py](readme.py).
 
 <details>
     <summary>See the program output
     </summary>
 
 ```
-                Balance Sheet
-  Assets    5500  Capital                5500
-    Cash    5500    Equity               5000
-                    Retained earnings     500
-                  Liabilities               0
-  Total:    5500  Total:                 5500
+(base) Q:\abacus>poetry run python readme.py
 
-               Income Statement
-  Income                                 3500
-    Services                             3500
-  Expenses                               3000
-    Salaries                             2000
-    Marketing                            1000
-  Current profit                          500
+Trial balance
+   Account    Debit  Credit
+cash ........   5499      0
+marketing ...   1000      0
+salaries ....   2000      0
+equity ......      0   5000
+re ..........      0      0
+services ....      0   3499
+isa .........      0      0
+null ........      0      0
+
+Balance sheet
+ASSETS... 5499  CAPITAL....... 5499
+  Cash... 5499    Equity...... 5000
+.........         Re..........  499
+.........       LIABILITIES...    0
+TOTAL:... 5499  TOTAL:........ 5499
+
+Income statement
+INCOME........... 3499
+  Services....... 3499
+EXPENSES:........ 3000
+  Marketing...... 1000
+  Salaries....... 2000
+CURRENT PROFIT...  499
+
+Account balances: {'cash': 5499, 'equity': 5000, 're': 0, 'services': 3499, 'marketing': 1000, 'salaries': 2000, 'isa': 0, 'null': 0}
 ```
-
 </details>
 
 ## Quotes about `abacus`

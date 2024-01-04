@@ -268,7 +268,7 @@ class Wrap(Holder):
     - income summary account,
     - null account.
 
-    This holder wraps the contructor for t-account used in ledger.
+    This holder wraps the constructor for t-account used in ledger.
 
     Income summary account should have zero balance at the end
     of accounting period. Null account should always has zero balance.
@@ -541,7 +541,10 @@ class Report:
     @property
     def trial_balance(self):
         return TrialBalance.new(self.ledger)
-
+    
+    @property
+    def account_balances(self):
+        return self.ledger.balances
 
 class Statement:
     ...
@@ -575,7 +578,7 @@ class IncomeStatement(Statement):
         )
 
     def current_profit(self):
-        return sum(self.income.values()) - sum(self.expenses.values())
+        return sum(self.income.values()) - sum(self.expenses.values()) 
 
 
 class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):

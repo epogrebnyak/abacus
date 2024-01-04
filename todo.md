@@ -4,12 +4,13 @@ TODO:
 - [ ] runnable scripts
 - [ ] --title for entry
 - [ ] --title for account name
-- [ ] make `just grill` runnable
+- [x] make `just grill` runnable
 - [ ] _Is it difficult to program an accounting system?_ piece
-- [ ] someotherdir
+- [x] someotherdir
 
 WONTFIX:
 
+- [ ] rich vs echo 
 - [ ] ... for empty strings in reports
 - [ ] operations dictionary
 - [ ] web / streamlit interface
