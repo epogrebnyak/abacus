@@ -2,8 +2,9 @@
 markers = [
     "e2e: end-to-end tests",
     "unit: unit tests",
-    "regression: something was wrong before and got fixed"
+    "regression: something was wrong before and got fixed now"
 ]
+addopts = "--noconftest --ignore-glob=tests0/"
 
 [tool.isort]
 skip_gitignore = true
@@ -14,7 +15,7 @@ extend-exclude=["minimal.py"]
 
 [tool.poetry]
 name = "abacus-py"
-version = "0.7.8"
+version = "0.8.1"
 description = "A minimal, yet valid double-entry accounting system in Python."
 authors = ["Evgeniy Pogrebnyak <e.pogrebnyak@gmail.com>"]
 readme = "README.md"
@@ -23,30 +24,22 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-abacus = 'abacus.cli.main:abacus'
-cx = 'abacus.cli.main:cx'
-abacus-extra = 'abacus.cli.main:abacus_extra'
+cx = 'abacus.cli:cx'
 
 
 [tool.poetry.dependencies]
 python = "^3.8"
 rich = "^13.3.5"
 pydantic = "^1.10.8"
-docopt = "^0.6.2"
-types-docopt = "^0.6.11.3"
-click-option-group = "^0.5.6"
-click-default-group = "^1.2.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.0"
-pyright = "^1.1.306"
 ruff = "^0.0.265"
-mkdocs-material = "^9.1.9"
-mkdocstrings = {extras = ["python"], version = "^0.21.2"}
 isort = "^5.12.0"
 black = "^23.3.0"
-pytest-console-scripts = "^1.4.0"
 mypy = "^1.3.0"
+mkdocs-material = "^9.1.9"
+mkdocstrings = {extras = ["python"], version = "^0.21.2"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

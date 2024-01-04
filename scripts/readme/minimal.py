@@ -1,5 +1,7 @@
 from composer import create_chart
 
+from abacus import BalanceSheet, BaseChart, Entry, IncomeStatement
+
 # Create a chart of accounts
 chart = create_chart(
     assets=["cash"],
@@ -23,15 +25,14 @@ report.balance_sheet().print_rich(width=45)
 report.income_statement().print_rich(width=45)
 
 
-from abacus import BaseChart, Entry, BalanceSheet, IncomeStatement
-
 chart = (
     BaseChart(
         assets=["cash", "ar", "goods"],
         expenses=["cogs", "sga"],
         capital=["equity", "re"],
         income=["sales"],
-    ).elevate()
+    )
+    .elevate()
     .set_isa("current_profit")
     .set_null("null")
     .set_re("re")

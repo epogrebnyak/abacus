@@ -1,0 +1,40 @@
+TODO:
+- [ ] --adjust, 
+- [ ] --post-close and duplication of entries
+- [ ] add totals to trial balance
+- [ ] memo + build-you-own-x
+- [ ] RAS codes 
+- [ ] more textbook examples
+- [ ] adjustment example (with trial balance)
+- [ ] add more codes from https://www.audit-it.ru/plan_schetov/
+
+WONTFIX:
+- [ ] --requires flag in alias 
+- [ ] "run" command - injest .as file with bx ... commands
+- [ ] adjust and postclose entries
+- [ ] --title for post command
+- [ ] help messages
+- [ ] post entry with chart check
+- [ ] adjustment and post-close entries
+- [ ] `--reference` or `--refer` or --meta
+- [ ] post-close example
+- [ ] add operation title to entry title
+- [ ] add small hash for entry
+- [ ] `--cash` asset type
+- [ ] `--current-asset`, `--non-current-asset` asset type
+- [ ] `--current-liability`, `--long-term-liability`
+- [ ] write to and read from Excel file
+
+Wont fix:
+- [ ] `ledger list` must show nicer output
+- [ ] testing of a multiline string `pytest-console-plugin`
+
+FOR REVIEW:
+- [x] open ledger with starting balances
+- [x] multiple entry
+- [x] --rich or --json flags
+- [x] show operations in chart
+- [x] add account types to trial balance
+- [x] merge test suites 
+- [x] mount as bx
+- [x] change names to prefix+account name Asset:equipment (Equipment)

@@ -1,10 +1,9 @@
 from pathlib import Path
 
-import pytest  # type: ignore
+import pytest
 
-from abacus import Chart
-from abacus.engine.base import Entry
-from abacus.engine.entries import LineJSON
+from abacus.core import Chart, Entry
+from abacus.entries_store import LineJSON
 
 
 @pytest.fixture
@@ -13,21 +12,19 @@ def path(tmp_path):
 
 
 def test_yield_entries(path):
+    path.touch()
     store = LineJSON(path)
-    store.file.touch()
     e1, e2 = Entry("cash", "equity", 499), Entry("cash", "equity", 501)
     store.append_many([e1, e2])
     assert list(store.yield_entries()) == [e1, e2]
 
 
 def test_yield_entries_for_income_statement(path):
+    path.touch()
     store = LineJSON(path)
-    store.file.erase().touch()
-    e1 = Entry("cash", "equity", 100)
+    e1 = Entry("cash", "equity", 10)
     e2 = Entry("sales", "isa", 5)
     store.append(e1)
     store.append(e2)
-    chart = Chart()
-    chart.base_chart.income_summary_account = "isa"
-    assert list(store.yield_entries()) == [e1, e2]
+    chart = Chart("isa", "re", "null")
     assert list(store.yield_entries_for_income_statement(chart)) == [e1]
