@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 
 from column_builder import Column
-from core import AccountBalances, Amount, BalanceSheet, IncomeStatement, TrialBalance
+from core import AccountBalances, Amount, BalanceSheet, IncomeStatement
 
 __all__ = ["show"]
 

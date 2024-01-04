@@ -1,5 +1,6 @@
 from core import Account, Chart, Entry, Report, T
 from show_rich import rich_print
+from user_chart import UserChart, user_chart
 
 # Trivial example: the company has cash and equity accounts
 # and received $499 and $501 from two investors. What is
@@ -47,7 +48,6 @@ rich_print(r.income_statement, width=60)
 
 
 print(T.Asset.value)
-from user_chart import user_chart, UserChart
 
 uc = user_chart("asset:cash", "capital:equity")
 uc.save("trrr.json")

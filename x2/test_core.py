@@ -19,6 +19,7 @@ from core import (
     Report,
     contra_pairs,
 )
+from user_chart import user_chart
 
 
 @pytest.mark.regression
@@ -173,8 +174,6 @@ def test_multiple_entry_from_account_balances():
 #     assert make == chart0
 #     # прооверка на разность ссылок
 #     assert make is not chart0
-
-from user_chart import user_chart
 
 
 @pytest.fixture

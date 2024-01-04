@@ -4,11 +4,18 @@ import sys
 from pathlib import Path
 
 import click
-
-from core import AbacusError, Entry, IncomeStatement, BalanceSheet, TrialBalance, Chart, Pipeline
-from user_chart import user_chart, UserChart
+from core import (
+    AbacusError,
+    BalanceSheet,
+    Chart,
+    Entry,
+    IncomeStatement,
+    Pipeline,
+    TrialBalance,
+)
 from entries import LineJSON
 from show import show
+from user_chart import UserChart, user_chart
 
 
 def cwd() -> Path:
@@ -133,7 +140,7 @@ def cx_close():
     chart = get_chart()
     ledger = get_current_ledger()
     p = Pipeline(chart, ledger).close()
-
+    get_store().append_many(p.closing_entries)
 
 
 @cx.command(name="report")

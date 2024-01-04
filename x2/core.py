@@ -28,6 +28,7 @@ from collections import UserDict
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Iterable, Type
 
 
@@ -59,12 +60,11 @@ class Holder(ABC):
     and make type conversions cleaner.
     """
 
+    @property
     @abstractmethod
     def t_account(
         self,
-    ) -> Type["TAccount"]:
-        # `mypy fine.py` gives an error here: https://github.com/epogrebnyak/abacus/issues/64
-        # type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]
+    ) -> type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]:
         """Provide T-account constructor."""
 
 
@@ -354,9 +354,6 @@ class Entry:
         return cls(**json.loads(line))
 
 
-from pathlib import Path
-
-
 class AccountBalances(UserDict[str, Amount]):
     def nonzero(self):
         return {name: balance for name, balance in self.items() if balance}
@@ -398,8 +395,8 @@ class Ledger(UserDict[str, TAccount]):
         failed = []
         for entry in entries:
             try:
-                self.data[entry.debit].debit(entry.amount)
-                self.data[entry.credit].credit(entry.amount)
+                self.data[entry.debit].debit(amount=entry.amount)
+                self.data[entry.credit].credit(amount=entry.amount)
             except KeyError:
                 failed.append(entry)
         if failed:
@@ -509,6 +506,12 @@ class Pipeline:
         self.close_contra(ContraCapital)
         return self
 
+    def close(self):
+        self.close_first()
+        self.close_second()
+        self.close_last()
+        return self
+
 
 @dataclass
 class Report:
@@ -523,6 +526,10 @@ class Report:
     def balance_sheet(self):
         p = self.pipeline.close_first().close_second().close_last()
         return BalanceSheet.new(p.ledger)
+    
+    @property
+    def balance_sheet_before_closing(self):
+        return BalanceSheet.new(self.ledger)
 
     @property
     def income_statement(self):

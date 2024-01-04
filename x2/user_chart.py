@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Iterable
 
 from core import AbacusError, Account, Chart, T
-from pathlib import Path
+from pydantic import BaseModel
 
 
 @dataclass
@@ -69,9 +70,6 @@ def extract(
                 yield Offset(name, contra_name_part)
         case _:
             raise AbacusError(f"Cannot parse label string: {input_string}.")
-
-
-from pydantic import BaseModel
 
 
 class UserChart(BaseModel):

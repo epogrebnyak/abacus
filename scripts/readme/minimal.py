@@ -1,4 +1,29 @@
-from abacus import BalanceSheet, BaseChart, Entry, IncomeStatement
+from composer import create_chart
+
+# Create a chart of accounts
+chart = create_chart(
+    assets=["cash"],
+    capital=["equity"],
+    income=["services"],
+    expenses=["marketing", "salaries"],
+)
+
+# Create a ledger using the chart
+ledger = chart.ledger()
+
+# Post entries to ledger
+ledger.post(debit="cash", credit="equity", amount=5000)
+ledger.post(debit="marketing", credit="cash", amount=1000)
+ledger.post(debit="cash", credit="services", amount=3500)
+ledger.post(debit="salaries", credit="cash", amount=2000)
+
+# Print balance sheet and income statement
+report = ledger.report()
+report.balance_sheet().print_rich(width=45)
+report.income_statement().print_rich(width=45)
+
+
+from abacus import BaseChart, Entry, BalanceSheet, IncomeStatement
 
 chart = (
     BaseChart(
@@ -6,8 +31,7 @@ chart = (
         expenses=["cogs", "sga"],
         capital=["equity", "re"],
         income=["sales"],
-    )
-    .elevate()
+    ).elevate()
     .set_isa("current_profit")
     .set_null("null")
     .set_re("re")

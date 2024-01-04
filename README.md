@@ -15,9 +15,9 @@ With `abacus` you can:
 
 ## Minimal example
 
-A professional services firm starts business with a $5000 shareholder investment, 
-spends $1000 on marketing, 
-earns $3500 from clients, 
+A professional services firm starts business with a $5000 shareholder investment,
+spends $1000 on marketing,
+earns $3500 from clients,
 and pays $2000 in salaries.
 
 The Python code below will produce the balance sheet and income statement for the firm.
@@ -73,7 +73,6 @@ This code can be found at [experimental/readme.py](experimental/readme.py).
 ```
 
 </details>
-
 
 ## Quotes about `abacus`
 

@@ -1,7 +1,7 @@
 import core as core
 import pytest
-from user_chart import Composer, Label, Offset, user_chart, extract
 from core import AbacusError, Account, T
+from user_chart import Composer, Label, Offset, extract, user_chart
 
 
 def test_extact_label():

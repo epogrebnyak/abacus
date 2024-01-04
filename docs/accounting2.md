@@ -28,19 +28,19 @@ Assets + Expenses = Equity + Liabilities + Income
 
 10. You may experiment thinking of various business transactions and provide examples of four types of double entries:
 
-  - two variables of the right side are changed;
-  - two variables of the left side are changed;
-  - both left side and right side are increased;
-  - both right side and left side are decreased.
+- two variables of the right side are changed;
+- two variables of the left side are changed;
+- both left side and right side are increased;
+- both right side and left side are decreased.
 
 11. You do not specifically need debits and credits to manipulate the extended accounting equation. The debits and credits are just a convenient notation system that helps denote which accounts are increased and which decreased. Understanding the extended accounting equation if far more important and should come before the debit and credit system.
 
 12. A "real" accounting system would need several additions including:
 
-  - contra accounts;
-  - closing of accounts at period end, distribution of current profit into dividend and retained earnings;
-  - accrual basis for recording receivables and payables;
-  - depreciation and amortization concepts;
-  - deferred or accrued income and expenses and adjustment entries;
-  - valuation changes;
-  - composition of financial reports.
+- contra accounts;
+- closing of accounts at period end, distribution of current profit into dividend and retained earnings;
+- accrual basis for recording receivables and payables;
+- depreciation and amortization concepts;
+- deferred or accrued income and expenses and adjustment entries;
+- valuation changes;
+- composition of financial reports.
