@@ -354,6 +354,9 @@ class Entry:
         return cls(**json.loads(line))
 
 
+from pathlib import Path
+
+
 class AccountBalances(UserDict[str, Amount]):
     def nonzero(self):
         return {name: balance for name, balance in self.items() if balance}
@@ -361,9 +364,15 @@ class AccountBalances(UserDict[str, Amount]):
     def total(self):
         return sum(self.values())
 
-    # TODO:
-    def save(self, path: str):
-        pass
+    def json(self):
+        return json.dumps(self.data, indent=4, ensure_ascii=False)
+
+    def save(self, path: Path | str):
+        Path(path).write_text(self.json(), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path: Path | str):
+        return cls(json.loads(Path(path).read_text(encoding="utf-8")))
 
 
 class Ledger(UserDict[str, TAccount]):
@@ -522,13 +531,7 @@ class Report:
 
     @property
     def trial_balance(self):
-        _ledger = self.ledger.condense()
-        tb = TrialBalance()
-        for name, balance in _ledger.subset(DebitAccount).balances.items():
-            tb[name] = (balance, 0)
-        for name, balance in _ledger.subset(CreditAccount).balances.items():
-            tb[name] = (0, balance)
-        return tb
+        return TrialBalance.new(self.ledger)
 
 
 class Statement:
@@ -567,7 +570,18 @@ class IncomeStatement(Statement):
 
 
 class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
-    ...
+    """Trial balance is a dictionary of account names and
+    their debit-side and credit-side balances."""
+
+    @classmethod
+    def new(cls, ledger):
+        _ledger = ledger.condense()
+        tb = cls()
+        for name, balance in _ledger.subset(DebitAccount).balances.items():
+            tb[name] = (balance, 0)
+        for name, balance in _ledger.subset(CreditAccount).balances.items():
+            tb[name] = (0, balance)
+        return tb
 
 
 def sum_second(xs):
