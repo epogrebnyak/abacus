@@ -1,11 +1,11 @@
-from core import Chart, Report
+from core import Chart, Report, Account
 from show import show
 
 # Create a chart of accounts
 chart = Chart(
-    assets=["cash"],
+    assets=["cash", "prepaid_services"],
     capital=["equity"],
-    income=["services"],
+    income=[Account("services", contra_accounts=["cashback"])],
     liabilities=["loan"],
     expenses=["marketing", "salaries", "interest"],
 )
@@ -14,11 +14,13 @@ ledger = chart.ledger()
 
 # Post entries to ledger
 ledger.post(debit="cash", credit="equity", amount=1000)
-ledger.post(debit="cash", credit="loan", amount=4000)
-ledger.post(debit="marketing", credit="cash", amount=1000)
+ledger.post(debit="cash", credit="loan", amount=3000)
+ledger.post(debit="prepaid_services", credit="cash", amount=1800)
+ledger.post(debit="salaries", credit="cash", amount=1800)
 ledger.post(debit="cash", credit="services", amount=3500)
-ledger.post(debit="salaries", credit="cash", amount=2000)
-ledger.post(debit="interest", credit="cash", amount=22)
+ledger.post(debit="cashback", credit="cash", amount=200)
+ledger.post(debit="interest", credit="cash", amount=225)
+ledger.post(debit="marketing", credit="prepaid_services", amount=1200)
 
 # Print balance sheet and income statement
 report = Report(chart, ledger)
