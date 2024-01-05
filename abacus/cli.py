@@ -15,7 +15,6 @@ from abacus.core import (
     TrialBalance,
 )
 from abacus.entries_store import LineJSON
-from abacus.show import show
 from abacus.user_chart import UserChart, user_chart
 
 
@@ -178,11 +177,11 @@ def cx_report(
 ):
     """Show reports."""
     if trial_balance_flag:
-        print(show(trial_balance()))
+        trial_balance().viewer().print()
     if balance_sheet_flag:
-        print(show(balance_sheet()))
+        balance_sheet().viewer(rich=True).print()
     if income_statement_flag:
-        print(show(income_statement()))
+        income_statement().viewer(rich=True).print()
     if account_balances_flag:
         print(account_balances())
 

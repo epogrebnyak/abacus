@@ -1,6 +1,6 @@
 """Viewers for trial balance, income statement, balance sheet reports."""
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -92,6 +92,8 @@ class Column:
 
 
 class Viewer(ABC):
+
+    @abstractmethod 
     def as_column(self) -> Column | str:
         ...
 
@@ -102,11 +104,13 @@ class Viewer(ABC):
 
 
 class RichViewer(ABC):
+    
+    @abstractmethod
     def as_table(self, width: int) -> Table:
         ...
 
     def print(self, width: int = 80):
-        Console().print(self.as_table(self.header, width))
+        Console().print(self.as_table(width))
 
 
 class BalanceSheetViewerBase(object):

@@ -362,7 +362,7 @@ def use_title(s: str, rename_dict: dict[str, str]) -> str:
 
 
 class AccountBalances(UserDict[str, Amount]):
-    def rename(self, rename_dict: [str, str]):
+    def rename(self, rename_dict: dict[str, str]):
         def get(name):
             return use_title(name, rename_dict)
 
