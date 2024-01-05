@@ -1,18 +1,27 @@
 site_name: "abacus: accounting in code"
 repo_url: "https://github.com/epogrebnyak/abacus"
 site_url: "https://epogrebnyak.github.io/abacus/"
-copyright: "&copy; 2023 Evgeny Pogrebnyak"
+copyright: "&copy; 2023-2024 Evgeniy Pogrebnyak"
 nav:
   - "A minimal, yet valid double entry accounting system": index.md
-  - "Accounting equations": accounting.md
-  - "Chart of accounts": chart_of_accounts.md
-  - "Making of": rules.md
-  - "Similar projects": similar.md
-  - "API Reference": reference.md
+  - install.md
+  - quick_start.md
+  - Textbook examples:
+      - examples.md
+  - Accounting basics:
+      - accounting/introduction.md
+      - accounting/chart_of_accounts.md
+  - How `abacus` works:
+      - "API Reference": reference.md
+  - About project:
+      - motivation.md
+      - quotes.md
+      - rules.md
+      - similar.md
 
 theme:
   name: material
+  logo: assets/robot.png
 
 plugins:
   - search
-#  - mkdocstrings

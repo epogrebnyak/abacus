@@ -1,19 +1,6 @@
 # Motivation, assumptions, implementation details
 
-## Motivation
 
-### Original intent
-
-`abacus` started as a project to demonstrate principles of double-entry accounting
-through Python code, in spirit of [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x).
-You can use `abacus` to teach basics of accounting and accounting information systems (AIS).
-
-### Other uses
-
-- Use as a software component with other open source tools (such as fast `medici` ledger).
-- Convert reports between charts of accounts (eg local accounting standards to IFRS).
-- Process streams of business events in business simulations.
-- Generate prompts and enhance a large language model with structured outputs in accounting.
 
 ## Assumptions
 

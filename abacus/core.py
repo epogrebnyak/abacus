@@ -1,4 +1,4 @@
-"""A minimal, yet valid double-entry accounting system.
+"""Core elements of a minimal double-entry accounting system.
 
 Using this module you can:
 
@@ -20,7 +20,8 @@ Assumptions — things that were made intentionally simple:
 2. account names must be globally unique,
 3. no cashflow statement yet,
 4. one currency,
-5. no checks for account non-negativity.
+5. no checks for account non-negativity,
+6. simple entry format, just debit and credit account names and transaction amount. 
 """
 import json
 from abc import ABC, abstractmethod

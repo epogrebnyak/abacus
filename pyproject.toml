@@ -24,7 +24,8 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-cx = 'abacus.cli:cx'
+buh = 'abacus.cli:cx'
+abacus = 'abacus.cli:cx'
 
 
 [tool.poetry.dependencies]

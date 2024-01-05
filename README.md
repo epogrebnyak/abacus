@@ -7,9 +7,9 @@ A minimal, yet valid double-entry accounting system in Python.
 
 ## Documentation
 
-...
+See project documentation at <https://epogrebnyak.github.io/abacus/>.
 
-## Install
+## Installation
 
 ```
 pip install abacus-py
@@ -23,18 +23,18 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 `abacus-py` requires Python 3.10 or higher.
 
-## Command line tools
+## Command line tool
 
 There are two command line tools available after you install this package: `abacus` and `cx`.
 You can check them as:
 
 ```bash
 abacus --help
-cx --help
+buh --help
 ```
 
 `abacus` has a full set of commands and options, while `cx` is just several commands with a more simple syntax.
-`cx` is ideal for solving textbook exercises.
+
 Both tools enable to complete a full accounting cycle and share the same data model.
 They create and modify two files `chart.json` and `entries.linejson` in your project folder.
 

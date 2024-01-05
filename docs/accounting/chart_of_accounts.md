@@ -1,15 +1,16 @@
 # Chart of accounts
 
 Chart of accounts (CAO) is a list of accounts to be used by a company.
-Chart of accounts may be defined by the government (in Europe)
-or can be specified by the company itself according to guidelines (in the US).
+Chart of accounts may be defined by the government (as in Europe)
+or can be specified by the company itself according to guidelines (as in the US).
 Fiscal rules and reporting requirements also affect composition of a chart of accounts.
 
-Charts of accounts are not that easy to find in an open, structured and machine-readable format.
+Charts of accounts are not that easy to find in an open,
+structured and machine-readable format.
 They usually exist as a published PDF document (sometimes an Excel file)
 or may be deeply embedded in accounting software, either open source (like Odoo)
 or proprietary (Oracle, SAP, NetSuite, Xero or QuickBooks).
-[Odoo][odoo] is specific has a list of localisations for many countries.
+[Odoo][odoo] in specific has a list of localisations for many countries.
 
 [odoo]: https://www.odoo.com/documentation/16.0/applications/finance/fiscal_localizations.html
 
@@ -27,6 +28,3 @@ There are also textbook charts and sample charts like [Dunder Muffin Paper Compa
 
 `abacus` allows to create and maintain charts of accounts as JSON files.
 After a chart is specified, one can post entries and create financial reports.
-Migration between domestic and IFRS-compatible charts considered for `abacus`, but not implemented yet (see [issue #4][4]).
-
-[4]: https://github.com/epogrebnyak/abacus/issues/4
