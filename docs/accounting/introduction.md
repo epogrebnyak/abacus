@@ -61,16 +61,15 @@ Assets + Expenses = Equity + Liabilities + Income
 ## Is real accounting system different from above?
 
 12. A "real" accounting system would have more components, like keeping track
-    of original paperwork or electronic documents that validate the information 
+    of original paperwork or electronic documents that validate the information
     that enters the system.
 
-13. On account system side there may be "contra" accounts added that keep track 
-    of changes in original accounts, for example "depreciation" contra account 
-    for "property, plant, equipment" or "refunds" contra account for "sales". 
+13. On account system side there may be "contra" accounts added that keep track
+    of changes in original accounts, for example "depreciation" contra account
+    for "property, plant, equipment" or "refunds" contra account for "sales".
 
 14. On recognition, valuation and reporting sides important aspects are:
 
-   - accrual basis and recording of receivables and payables;
-   - fair value, depreciation and amortization concepts, valuation changes;
-   - deferred or accrued income and expenses and adjustment entries.
-
+- accrual basis and recording of receivables and payables;
+- fair value, depreciation and amortization concepts, valuation changes;
+- deferred or accrued income and expenses and adjustment entries.

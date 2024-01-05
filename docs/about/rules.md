@@ -1,7 +1,5 @@
 # Motivation, assumptions, implementation details
 
-
-
 ## Assumptions
 
 Below are some simplifying assumptions and behaviors made for this code.

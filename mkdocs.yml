@@ -4,24 +4,24 @@ site_url: "https://epogrebnyak.github.io/abacus/"
 copyright: "&copy; 2023-2024 Evgeniy Pogrebnyak"
 nav:
   - "A minimal, yet valid double entry accounting system": index.md
-  - install.md
   - quick_start.md
-  - Textbook examples:
-      - examples.md
+  - examples.md
+  - How `abacus` works:
+      - how-it-works/inside.md
   - Accounting basics:
       - accounting/introduction.md
       - accounting/chart_of_accounts.md
-  - How `abacus` works:
-      - "API Reference": reference.md
-  - About project:
-      - motivation.md
-      - quotes.md
-      - rules.md
-      - similar.md
+  - More about project:
+      - about/motivation.md
+      - about/quotes.md
+      - about/rules.md
+      - about/similar.md
 
 theme:
   name: material
   logo: assets/robot.png
+  features:
+    - navigation.expand
 
 plugins:
   - search

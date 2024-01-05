@@ -8,4 +8,4 @@ makes accounting calculations with code simple.
 With `abacus` you can perform a complete accounting cycle
 from defining own chart of account to making financial reports.
 
-To start using `abacus`, install it and go to Quick Start section.
+To start using `abacus` go to [Quick Start](quick_start) section.
