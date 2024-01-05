@@ -92,8 +92,7 @@ class Column:
 
 
 class Viewer(ABC):
-
-    @abstractmethod 
+    @abstractmethod
     def as_column(self) -> Column | str:
         ...
 
@@ -104,7 +103,6 @@ class Viewer(ABC):
 
 
 class RichViewer(ABC):
-    
     @abstractmethod
     def as_table(self, width: int) -> Table:
         ...
@@ -129,8 +127,8 @@ class BalanceSheetViewer(Viewer, BalanceSheetViewerBase):
 
 
 class RichBalanceSheetViewer(RichViewer, BalanceSheetViewerBase):
-    def as_table(self, title, width):
-        table = Table(title=title, box=None, width=width, show_header=False)
+    def as_table(self, width):
+        table = Table(title=self.header, box=None, width=width, show_header=False)
         table.add_column("")
         table.add_column("", justify="right", style="green")
         table.add_column("")
@@ -161,8 +159,8 @@ class IncomeStatementViewer(IncomeStatementViewerBase, Viewer):
 
 
 class RichIncomeStatementViewer(IncomeStatementViewerBase, RichViewer):
-    def as_table(self, header, width):
-        table = Table(title=header, box=None, width=width, show_header=False)
+    def as_table(self, width):
+        table = Table(title=self.header, box=None, width=width, show_header=False)
         table.add_column("")
         table.add_column("", justify="right", style="green")
         for line in self.lines:
@@ -319,6 +317,3 @@ class TrialBalanceViewer:
 
     def __str__(self) -> str:
         return str(self.table())
-
-    def print(self):
-        print(self)

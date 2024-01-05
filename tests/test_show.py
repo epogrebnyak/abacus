@@ -7,8 +7,8 @@ def test_balance_sheet_viewers():
         capital=AccountBalances({"equity": 100, "re": 10}),
         liabilities=AccountBalances({"dividend_due": 0}),
     )
-    assert b.viewer(rich=False).print() is None
-    assert b.viewer(rich=True).print() is None
+    assert b.print() is None
+    assert b.show() is None
 
 
 def test_income_statement_viewers():
@@ -16,8 +16,8 @@ def test_income_statement_viewers():
         income=AccountBalances({"sales": 40}),
         expenses=AccountBalances({"salaries": 30}),
     )
-    assert i.viewer(rich=False).print() is None
-    assert i.viewer(rich=True).print() is None
+    assert i.print() is None
+    assert i.show() is None
 
 
 def test_trial_balance_viewer():
@@ -36,7 +36,8 @@ def test_trial_balance_viewer():
             "null": (0, 0),
         }
     )
-    t.viewer().print()
+    assert t.print() is None
+    assert t.show() is None
 
 
 def test_print_all():

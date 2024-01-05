@@ -574,9 +574,10 @@ class Report:
             return str(statement.viewer().as_column()).split("\n")
 
         width = max(map(len, f(b) + f(i)))
-        self.trial_balance.viewer().print()
+        self.trial_balance.print()
         b.viewer(rich=True).print(width)
         i.viewer(rich=True).print(width)
+
 
 class Statement:
     ...
@@ -612,10 +613,10 @@ class BalanceSheet(Statement):
         else:
             return BalanceSheetViewer(self, header)
 
-    def print_rich(self, width=80):
+    def print(self, width=80):
         self.viewer(rich=True).print(width)
 
-    def print(self):
+    def show(self):
         self.viewer(rich=False).print()
 
 
@@ -649,10 +650,10 @@ class IncomeStatement(Statement):
         else:
             return IncomeStatementViewer(self, header)
 
-    def print_rich(self, width=80):
+    def print(self, width=80):
         self.viewer(rich=True).print(width)
 
-    def print(self):
+    def show(self):
         self.viewer(rich=False).print()
 
 
@@ -674,6 +675,13 @@ class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
         from abacus.show import TrialBalanceViewer as TB
 
         return TB(self, header)
+
+    def print(self):
+        # TODO: make rich print
+        print(self.viewer())
+
+    def show(self):
+        print(self.viewer())
 
 
 def sum_second(xs):
