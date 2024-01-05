@@ -184,7 +184,7 @@ def view_balance_sheet(report: BalanceSheet, rename_dict: Dict[str, str]) -> str
     col1 = a.align_left(".").add_right("... ") + b.align_right()
     c, d = to_columns(right)
     col2 = c.align_left(".").add_right("... ") + d.align_right()
-    return (col1.add_space(2) + col2).printable()
+    return str(col1.add_space(2) + col2)
 
 
 def red(b: str) -> Text:
@@ -231,7 +231,7 @@ def view_income_statement(report: IncomeStatement, rename_dict: Dict[str, str]) 
     left = income_statement_lines(report, rename_dict)
     a, b = to_columns(left)
     col = a.align_left(fill_char=".").add_right("... ") + b.align_right(fill_char=" ")
-    return col.printable()
+    return str(col)
 
 
 def print_income_statement_rich(
@@ -309,7 +309,7 @@ def view_trial_balance(chart, ledger) -> str:
     )
     col_2 = nth(data, 2).align_right().add_space_left(2).header("Debit").add_space(2)
     col_3 = nth(data, 3).align_right().add_space_left(2).header("Credit")
-    return (col_1 + col_2 + col_3).printable()
+    return str(col_1 + col_2 + col_3)
 
 
 def start_balance_sheet_table(title, width) -> Table:

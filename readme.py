@@ -23,7 +23,3 @@ echo(report.trial_balance, "Trial balance")
 echo(report.balance_sheet, "Balance sheet")
 echo(report.income_statement, "Income statement")
 print("Account balances:", report.account_balances)
-
-
-
-

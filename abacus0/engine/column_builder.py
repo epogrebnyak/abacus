@@ -75,9 +75,6 @@ class Column:
         """Add a header line to the column."""
         return self.insert_top(text.center(self.width))
 
-    def printable(self):
+    def __str__(self):
         """Return a string representation of the column, ready to print ot screen."""
         return "\n".join(self.strings)
-
-    def __str__(self):
-        return self.printable()

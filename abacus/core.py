@@ -65,9 +65,9 @@ class Holder(ABC):
     @abstractmethod
     def t_account(
         self,
-    ) -> type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]: 
-    # Type["TAccount"]:
-    # type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]:
+    ) -> type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]:
+        # Type["TAccount"]:
+        # type["RegularAccount"] | type["ContraAccount"] | type["ExtraAccount"]:
         """Provide T-account constructor."""
 
 
@@ -542,10 +542,11 @@ class Report:
     @property
     def trial_balance(self):
         return TrialBalance.new(self.ledger)
-    
+
     @property
     def account_balances(self):
         return self.ledger.balances
+
 
 class Statement:
     ...
@@ -579,7 +580,7 @@ class IncomeStatement(Statement):
         )
 
     def current_profit(self):
-        return sum(self.income.values()) - sum(self.expenses.values()) 
+        return sum(self.income.values()) - sum(self.expenses.values())
 
 
 class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
