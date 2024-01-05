@@ -1,11 +1,14 @@
 """Viewers for trial balance, income statement, balance sheet reports."""
 
+from abc import ABC
 from dataclasses import dataclass, field
 from typing import Callable
 
-from abacus.core import AccountBalances, Amount, BalanceSheet, IncomeStatement
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
 
-__all__ = ["echo", "show"]
+from abacus.core import AccountBalances, Amount, BalanceSheet, IncomeStatement
 
 
 @dataclass
@@ -88,26 +91,80 @@ class Column:
         return "\n".join(self.strings)
 
 
-def echo(statement, header):
-    print(header, show(statement), sep="\n")
+class Viewer(ABC):
+    def as_column(self) -> Column | str:
+        ...
+
+    def print(self):
+        if self.header:
+            print(self.header)
+        print(self.as_column())
 
 
-def show(report, rename_dict=None) -> str:
-    if rename_dict is None:
-        rename_dict = {}
-    match report.__class__.__name__:
-        case "BalanceSheet":
-            return view_balance_sheet(report, rename_dict)
-        case "IncomeStatement":
-            return view_income_statement(report, rename_dict)
-        case "TrialBalance":
-            return str(TrialBalanceViewer(report, rename_dict))
-        case _:
-            raise TypeError(report)
+class RichViewer(ABC):
+    def as_table(self, width: int) -> Table:
+        ...
+
+    def print(self, width: int = 80):
+        Console().print(self.as_table(self.header, width))
 
 
-def use_title(s: str, rename_dict: dict[str, str]) -> str:
-    return rename_dict.get(s, s).replace("_", " ").strip().capitalize()
+class BalanceSheetViewerBase(object):
+    def __init__(self, statement: BalanceSheet, header: str):
+        self.left, self.right = left_and_right(statement)
+        self.header = header
+
+
+class BalanceSheetViewer(Viewer, BalanceSheetViewerBase):
+    def as_column(self):
+        a, b = to_columns(self.left)
+        col1 = a.align_left(".").add_right("... ") + b.align_right()
+        c, d = to_columns(self.right)
+        col2 = c.align_left(".").add_right("... ") + d.align_right()
+        return col1.add_space(2).merge(col2)
+
+
+class RichBalanceSheetViewer(RichViewer, BalanceSheetViewerBase):
+    def as_table(self, title, width):
+        table = Table(title=title, box=None, width=width, show_header=False)
+        table.add_column("")
+        table.add_column("", justify="right", style="green")
+        table.add_column("")
+        table.add_column("", justify="right", style="green")
+        for line_1, line_2 in zip(self.left, self.right):
+            a, b = unpack(line_1)
+            c, d = unpack(line_2)
+            table.add_row(a, b, c, d)
+        return table
+
+
+class IncomeStatementViewerBase(object):
+    def __init__(self, statement: IncomeStatement, header: str):
+        self.lines = lines(
+            {"income": statement.income, "expenses:": statement.expenses}
+        )
+        h1 = HeaderLine("Current profit", str(statement.current_profit()))
+        self.lines.append(h1)
+        self.header = header
+
+
+class IncomeStatementViewer(IncomeStatementViewerBase, Viewer):
+    def as_column(self):
+        a, b = to_columns(self.lines)
+        return a.align_left(fill_char=".").add_right("... ") + b.align_right(
+            fill_char=" "
+        )
+
+
+class RichIncomeStatementViewer(IncomeStatementViewerBase, RichViewer):
+    def as_table(self, header, width):
+        table = Table(title=header, box=None, width=width, show_header=False)
+        table.add_column("")
+        table.add_column("", justify="right", style="green")
+        for line in self.lines:
+            a, b = unpack(line)
+            table.add_row(a, b)
+        return table
 
 
 def total(balances) -> Amount:
@@ -121,10 +178,6 @@ class Line:
 
     def __post_init__(self):
         self.value = str(self.value)
-
-    def rename(self, rename_dict: dict[str, str]):
-        self.text = use_title(self.text, rename_dict)
-        return self
 
 
 class HeaderLine(Line):
@@ -142,7 +195,7 @@ class EmptyLine(Line):
 def lines(base: dict[str, AccountBalances]):
     lines: list[Line] = []
     for header, balances in base.items():
-        h = HeaderLine(header, total(balances))
+        h = HeaderLine(header.capitalize(), total(balances))
         lines.append(h)
         for name, value in balances.items():
             a = AccountLine(name, value)
@@ -154,18 +207,9 @@ def empty_line() -> EmptyLine:
     return EmptyLine("", "")
 
 
-def rename(lines, rename_dict):
-    return [line.rename(rename_dict) for line in lines]
-
-
-def left_and_right(
-    report: BalanceSheet, rename_dict: dict[str, str]
-) -> tuple[list[Line], list[Line]]:
+def left_and_right(report: BalanceSheet) -> tuple[list[Line], list[Line]]:
     left = lines({"assets": report.assets})
     right = lines({"capital": report.capital, "liabilities": report.liabilities})
-    # rename lines
-    left = rename(left, rename_dict)
-    right = rename(right, rename_dict)
     # make `left` and `right` same number of lines by adding empty lines
     n = max(len(left), len(right))
     left += [empty_line()] * (n - len(left))
@@ -173,8 +217,7 @@ def left_and_right(
     # add end lines
     h1 = HeaderLine("Total:", total(report.assets))
     left.append(h1)
-    t = total(report.capital) + total(report.liabilities)
-    h2 = HeaderLine("Total:", t)
+    h2 = HeaderLine("Total:", total(report.capital) + total(report.liabilities))
     right.append(h2)
     return left, right
 
@@ -196,28 +239,42 @@ def to_columns(lines: list[Line]) -> tuple[Column, Column]:
     return col1, col2
 
 
-def view_balance_sheet(report: BalanceSheet, rename_dict: dict[str, str]) -> str:
-    left, right = left_and_right(report, rename_dict)
+def string_from_columns(left, right) -> str:
     a, b = to_columns(left)
     col1 = a.align_left(".").add_right("... ") + b.align_right()
     c, d = to_columns(right)
     col2 = c.align_left(".").add_right("... ") + d.align_right()
-    return str(col1.add_space(2) + col2)
+    return str(col1.add_space(2).merge(col2))
 
 
-def income_statement_lines(report: IncomeStatement, rename_dict: dict[str, str]):
-    left = lines({"income": report.income, "expenses:": report.expenses})
-    left = [line.rename(rename_dict) for line in left]
-    h1 = HeaderLine("Current profit", str(report.current_profit()))
-    left.append(h1)
-    return left
+def red(b) -> Text:
+    """Make digit red if negative."""
+    v = Amount(b)
+    if v and v < 0:
+        return Text(b, style="red")
+    else:
+        return Text(b)
 
 
-def view_income_statement(report: IncomeStatement, rename_dict: dict[str, str]) -> str:
-    left = income_statement_lines(report, rename_dict)
-    a, b = to_columns(left)
-    col = a.align_left(fill_char=".").add_right("... ") + b.align_right(fill_char=" ")
-    return str(col)
+def bold(s: Text | str) -> Text:
+    if isinstance(s, Text):
+        s.stylize("bold")
+        return s
+    else:
+        return Text(str(s), style="bold")
+
+
+def unpack(line: Line) -> tuple[Text, Text]:
+    """Convert Line to tuple of two rich.Text instances."""
+    match line:
+        case HeaderLine(a, b):
+            return bold(a), bold(red(b))
+        case AccountLine(a, b):
+            return (Text("  " + a), red(b))
+        case EmptyLine(a, b):
+            return Text(""), Text("")
+        case _:
+            raise ValueError(line)
 
 
 @dataclass
@@ -258,3 +315,6 @@ class TrialBalanceViewer:
 
     def __str__(self) -> str:
         return str(self.table())
+
+    def print(self):
+        print(self)

@@ -1,20 +1,26 @@
 from abacus.core import AccountBalances, BalanceSheet, IncomeStatement, TrialBalance
-from abacus.show import show
-from abacus.show_rich import rich_print
 
 
-def test_show_and_rich_print_are_callable():
+def test_balance_sheet_viewers():
     b = BalanceSheet(
         assets=AccountBalances({"cash": 110}),
         capital=AccountBalances({"equity": 100, "re": 10}),
         liabilities=AccountBalances({"dividend_due": 0}),
     )
-    print(show(b))
+    assert b.viewer(rich=False).print() is None
+    assert b.viewer(rich=True).print() is None
+
+
+def test_income_statement_viewers():
     i = IncomeStatement(
         income=AccountBalances({"sales": 40}),
         expenses=AccountBalances({"salaries": 30}),
     )
-    print(show(i))
+    assert i.viewer(rich=False).print() is None
+    assert i.viewer(rich=True).print() is None
+
+
+def test_trial_balance_viewer():
     t = TrialBalance(
         {
             "cash": (110, 0),
@@ -30,6 +36,28 @@ def test_show_and_rich_print_are_callable():
             "null": (0, 0),
         }
     )
-    print(show(t))
-    rich_print(b)
-    rich_print(i)
+    t.viewer().print()
+
+
+def test_print_all():
+    from abacus import Chart, Report
+
+    chart = Chart(
+        assets=["cash"],
+        capital=["equity"],
+        income=["services"],
+        expenses=["marketing", "salaries"],
+    )
+
+    # Create a ledger using the chart
+    ledger = chart.ledger()
+
+    # Post entries to ledger
+    ledger.post(debit="cash", credit="equity", amount=5000)
+    ledger.post(debit="marketing", credit="cash", amount=1000)
+    ledger.post(debit="cash", credit="services", amount=3499)
+    ledger.post(debit="salaries", credit="cash", amount=2000)
+
+    # Print trial balance, balance sheet and income statement
+    report = Report(chart, ledger).rename("re", "Retained earnings")
+    assert report.print_all() is None

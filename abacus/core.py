@@ -357,9 +357,21 @@ class Entry:
         return cls(**json.loads(line))
 
 
+def use_title(s: str, rename_dict: dict[str, str]) -> str:
+    return rename_dict.get(s, s).replace("_", " ").strip().capitalize()
+
+
 class AccountBalances(UserDict[str, Amount]):
+    def rename(self, rename_dict: [str, str]):
+        def get(name):
+            return use_title(name, rename_dict)
+
+        return self.__class__({get(name): balance for name, balance in self.items()})
+
     def nonzero(self):
-        return {name: balance for name, balance in self.items() if balance}
+        return self.__class__(
+            {name: balance for name, balance in self.items() if balance}
+        )
 
     def total(self):
         return sum(self.values())
@@ -520,6 +532,13 @@ class Pipeline:
 class Report:
     chart: Chart
     ledger: Ledger
+    rename_dict: dict[str, str] = field(default_factory=dict)
+
+    def rename(self, key, value):
+        self.rename_dict[key] = value
+        return self
+
+    # FIXME: may condense chart after init
 
     @property
     def pipeline(self):
@@ -547,6 +566,17 @@ class Report:
     def account_balances(self):
         return self.ledger.balances
 
+    def print_all(self):
+        b = self.balance_sheet.rename(self.rename_dict)
+        i = self.income_statement.rename(self.rename_dict)
+
+        def f(statement):
+            return str(statement.viewer().as_column()).split("\n")
+
+        width = max(map(len, f(b) + f(i)))
+        self.trial_balance.viewer().print()
+        b.viewer(rich=True).print(width)
+        i.viewer(rich=True).print(width)
 
 class Statement:
     ...
@@ -566,6 +596,28 @@ class BalanceSheet(Statement):
             liabilities=ledger.subset(Liability).balances,
         )
 
+    def rename(self, rename_dict):
+        return self.__class__(
+            assets=self.assets.rename(rename_dict),
+            capital=self.capital.rename(rename_dict),
+            liabilities=self.liabilities.rename(rename_dict),
+        )
+
+    def viewer(self, rich=False, header="Balance sheet"):
+        from abacus.show import RichBalanceSheetViewer
+        from abacus.show import BalanceSheetViewer
+
+        if rich:
+            return RichBalanceSheetViewer(self, header)
+        else:
+            return BalanceSheetViewer(self, header)
+
+    def print_rich(self, width=80):
+        self.viewer(rich=True).print(width)
+
+    def print(self):
+        self.viewer(rich=False).print()
+
 
 @dataclass
 class IncomeStatement(Statement):
@@ -582,6 +634,27 @@ class IncomeStatement(Statement):
     def current_profit(self):
         return sum(self.income.values()) - sum(self.expenses.values())
 
+    def rename(self, rename_dict):
+        return self.__class__(
+            income=self.income.rename(rename_dict),
+            expenses=self.expenses.rename(rename_dict),
+        )
+
+    def viewer(self, rich=False, header="Income statement"):
+        from abacus.show import RichIncomeStatementViewer
+        from abacus.show import IncomeStatementViewer
+
+        if rich:
+            return RichIncomeStatementViewer(self, header)
+        else:
+            return IncomeStatementViewer(self, header)
+
+    def print_rich(self, width=80):
+        self.viewer(rich=True).print(width)
+
+    def print(self):
+        self.viewer(rich=False).print()
+
 
 class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
     """Trial balance is a dictionary of account names and
@@ -596,6 +669,11 @@ class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
         for name, balance in _ledger.subset(CreditAccount).balances.items():
             tb[name] = (0, balance)
         return tb
+
+    def viewer(self, header="Trial balance"):
+        from abacus.show import TrialBalanceViewer as TB
+
+        return TB(self, header)
 
 
 def sum_second(xs):

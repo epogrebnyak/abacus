@@ -203,23 +203,6 @@ def cx_report(
 # cx set --retained-earings-account re
 # cx set --null-account null
 
-
-# def promote(account_name: str):
-#     """Safe add account to chart."""
-#     try:
-#         chart_command().promote(account_name).echo().write()
-#     except AbacusError as e:
-#         sys.exit(str(e))
-
-
-# def last(account_identifier: str) -> str:
-#     """Get last item of account identifier."""
-#     return account_identifier.split(":")[-1]
-
-
-# @chart.command(name="add-many")
-# @click.argument("account_labels", required=True, type=str, nargs=-1)
-# @click.option("--prefix", type=str, required=False, help="Account type.")
 # def add_many(account_labels, prefix):
 #     """Add several accounts to chart.
 
@@ -229,23 +212,6 @@ def cx_report(
 #       abacus chart add-many --prefix=asset ar goods
 #     """
 #     click.echo(account_labels, prefix)
-
-
-# @chart.command(name="promote")
-# @click.argument("account_names", required=True, type=str, nargs=-1)
-# @click.option("--title", type=str, required=False, help="Account title.")
-# def promote_command(account_names: list[str], title: str):
-#     """Add accounts to chart using labels like `asset:cash`.
-
-#     \b
-#     Example:
-#       abacus chart asset:cash capital:equity income:sales expense:cogs
-#       abacus chart promote contra:sales:refunds --title "Refunds and cashback"
-#     """
-#     for account_name in account_names:
-#         promote(account_name)
-#     if title and len(account_names) == 1:
-#         name(account_names[0], title)
 
 
 @cx.group(name="extra")

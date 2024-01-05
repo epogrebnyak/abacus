@@ -1,4 +1,4 @@
-from abacus import Chart, Report, echo
+from abacus import Chart, Report
 
 # Create a chart of accounts
 chart = Chart(
@@ -18,8 +18,12 @@ ledger.post(debit="cash", credit="services", amount=3499)
 ledger.post(debit="salaries", credit="cash", amount=2000)
 
 # Print trial balance, balance sheet and income statement
-report = Report(chart, ledger)
-echo(report.trial_balance, "Trial balance")
-echo(report.balance_sheet, "Balance sheet")
-echo(report.income_statement, "Income statement")
-print("Account balances:", report.account_balances)
+report = Report(chart, ledger).rename("re", "Retained earnings")
+assert report.account_balances.nonzero() == {
+    "cash": 5499,
+    "equity": 5000,
+    "services": 3499,
+    "marketing": 1000,
+    "salaries": 2000,
+}
+report.print_all()
