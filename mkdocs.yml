@@ -1,9 +1,9 @@
-site_name: "abacus (minimal accounting framework)"
+site_name: "abacus: accounting in code"
 repo_url: "https://github.com/epogrebnyak/abacus"
 site_url: "https://epogrebnyak.github.io/abacus/"
 copyright: "&copy; 2023 Evgeny Pogrebnyak"
 nav:
-  - About: index.md
+  - "A minimal, yet valid double entry accounting system": index.md
   - "Accounting equations": accounting.md
   - "Chart of accounts": chart_of_accounts.md
   - "Making of": rules.md
@@ -15,4 +15,4 @@ theme:
 
 plugins:
   - search
-  - mkdocstrings
+#  - mkdocstrings

@@ -10,7 +10,7 @@ TODO:
 
 WONTFIX:
 
-- [ ] rich vs echo 
+- [ ] rich vs echo
 - [ ] ... for empty strings in reports
 - [ ] operations dictionary
 - [ ] web / streamlit interface

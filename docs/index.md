@@ -1,14 +1,107 @@
-A minimal, yet valid double-entry accounting system in Python.
+# A minimal, yet valid double-entry accounting system in Python
 
-[![Reddit Discussion](https://img.shields.io/badge/Reddit-%23FF4500.svg?style=for-the-badge&logo=Reddit&logoColor=white)](https://www.reddit.com/r/Accounting/comments/136rrit/wrote_an_accounting_demo_in_python/)
+`abacus` is an experimental package that aims to show that
+accounting can be done with simple code.
 
-## Quotes
+With `abacus` you can perform complete accounting cycle,
+including the following:
 
-> I think it's a great idea to mock-up a mini GL ERP to really get a foundational understanding of how the accounting in ERP works!
+- define a chart of accounts,
+- post entries to ledger,
+- make trial balance and adjustment entries,
+- close accounts at period end,
+- produce balance sheet and income statement,
+- carry account balances forward to the next period.
 
-> I teach accounting information systems... I'd be tempted to use abacus as a way of simply showing the structure of a simple AIS.
+Currently, `abacus` exists as a Python package and a command line tool.
+This means you can write you own Python code or short scripts
+that would perform accounting operations.
 
-> Hey, what a cool job, thanks much. Do you plan to make a possibility for RAS accounting?
+`abacus` is particularly well suited for solving textbook examples,
+that involve deciding on which accounting entries reflect business events.
+There is a collection of textbook examples on this site. 
+
+The big goal for `abacus` is to become a DSL (domain-specific language)
+for accounting, in other words, a notation system that
+allows to formulate accounting operations and demonstrate their results.
+This system would be independent of a specific provider. 
+
+## Minimal example
+
+A firm starts business with a $5000 shareholder investment,
+spends $1000 on marketing,
+earns $3499 from clients,
+and pays $2000 in salaries.
+
+The Python code below will produce the balance sheet and income statement for the firm.
+
+```python
+from abacus import Chart, Report, echo
+
+# Create a chart of accounts
+chart = Chart(
+    assets=["cash"],
+    capital=["equity"],
+    income=["services"],
+    expenses=["marketing", "salaries"],
+)
+
+# Create a ledger using the chart
+ledger = chart.ledger()
+
+# Post entries to ledger
+ledger.post(debit="cash", credit="equity", amount=5000)
+ledger.post(debit="marketing", credit="cash", amount=1000)
+ledger.post(debit="cash", credit="services", amount=3499)
+ledger.post(debit="salaries", credit="cash", amount=2000)
+
+# Print trial balance, balance sheet and income statement
+report = Report(chart, ledger)
+echo(report.trial_balance, "Trial balance")
+echo(report.balance_sheet, "Balance sheet")
+echo(report.income_statement, "Income statement")
+print("Account balances:", report.account_balances)
+```
+
+This code can be found at [readme.py](readme.py).
+
+<details>
+    <summary>See the program output
+    </summary>
+
+```
+(base) Q:\abacus>poetry run python readme.py
+
+Trial balance
+   Account    Debit  Credit
+cash ........   5499      0
+marketing ...   1000      0
+salaries ....   2000      0
+equity ......      0   5000
+re ..........      0      0
+services ....      0   3499
+isa .........      0      0
+null ........      0      0
+
+Balance sheet
+ASSETS... 5499  CAPITAL....... 5499
+  Cash... 5499    Equity...... 5000
+.........         Re..........  499
+.........       LIABILITIES...    0
+TOTAL:... 5499  TOTAL:........ 5499
+
+Income statement
+INCOME........... 3499
+  Services....... 3499
+EXPENSES:........ 3000
+  Marketing...... 1000
+  Salaries....... 2000
+CURRENT PROFIT...  499
+
+Account balances: {'cash': 5499, 'equity': 5000, 're': 0, 'services': 3499, 'marketing': 1000, 'salaries': 2000, 'isa': 0, 'null': 0}
+```
+
+</details>
 
 ## Accounting cycle
 
