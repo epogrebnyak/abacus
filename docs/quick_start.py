@@ -1,4 +1,4 @@
-from abacus import Chart
+from abacus import Chart, Report
 
 chart = Chart(
     assets=["cash", "inventory"],
@@ -15,7 +15,6 @@ ledger.post("cash", "sales", 4800, title="Sold merchandise")
 ledger.post("cogs", "inventory", 4000, title="Registered cost of sales")
 ledger.post("sga", "cash", 500, title="Paid sales representative")
 
-from abacus import Report
 
 report = Report(chart, ledger)
 report.balance_sheet.print()
