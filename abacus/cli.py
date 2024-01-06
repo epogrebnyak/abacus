@@ -189,11 +189,11 @@ def cx_report(
 ):
     """Show reports."""
     if trial_balance_flag:
-        trial_balance().viewer().print()
+        trial_balance().rich_print()
     if balance_sheet_flag:
-        balance_sheet().viewer(rich=True).print()
+        balance_sheet().rich_print()
     if income_statement_flag:
-        income_statement().viewer(rich=True).print()
+        income_statement().rich_print()
     if account_balances_flag:
         print(account_balances())
     if all_reports_flag:

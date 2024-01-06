@@ -21,9 +21,9 @@ go:
 grill:
   just go
   just md
-  just readme
+  just docs-py
+  just docs-cli
   just scripts
-  just make-help
 
 # Run pytest (up to first error) and print slowest test times 
 test:
@@ -61,7 +61,8 @@ docs-cli:
   cd docs && rm -f chart.json entries.linejson && quick_start.bat
 
 # Run command line examples (Linux)
-#scripts:
+scripts:
+   poetry run python readme.py
 #  cd scripts/abacus && bash -e all.sh
 #  cd scripts/cx && bash -e joan.sh
 #  cd scripts/vat && bash -e vat.sh
