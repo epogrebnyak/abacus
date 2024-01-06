@@ -1,8 +1,8 @@
 package := "abacus"
 readme_command := if os_family() == "windows" { "readme-console-win" } else { "readme-console-linux" }
 source_command := if os_family() == "windows" { "call" } else { "source" }
-# use cmd.exe instead of sh on Window
-# set shell := ["cmd.exe", "/c"]
+#use cmd.exe instead of sh on Window
+set shell := ["cmd.exe", "/c"]
 
 
 # List all commands
@@ -50,27 +50,21 @@ ruff:
 md:
   npx prettier . --write
 
-# Run Python code and console commands from README.md 
-readme:  
-  just readme-py
-  just readme-console
+# Run Python code from docs
+docs-py:
+  poetry run python docs/echo.py docs/quick_start.md | npx codedown python > docs/quick_start.py
+  poetry run python docs/quick_start.py
 
-# Run Python code from README.md
-readme-py:
-  cat README.md | npx codedown python > scripts/readme/minimal.py
-  poetry run python scripts/readme/minimal.py
-
-# Run console examples from README.md
-readme-console:
-  cat README.md | npx codedown bash > scripts/readme/minimal.sh
-  cd scripts/readme && rm -f chart.json entries.linejson && bash -e minimal.sh
+# Run console examples from docs
+docs-cli:
+  poetry run python docs/echo.py docs/quick_start.md | npx codedown bash > docs/quick_start.bat
+  cd docs && rm -f chart.json entries.linejson && quick_start.bat
 
 # Run command line examples (Linux)
-scripts:
-  cd scripts/abacus && bash -e all.sh
-  cd scripts/cx && bash -e joan.sh
-  cd scripts/vat && bash -e vat.sh
-
+#scripts:
+#  cd scripts/abacus && bash -e all.sh
+#  cd scripts/cx && bash -e joan.sh
+#  cd scripts/vat && bash -e vat.sh
  
 # Build and serve docs
 docs:
@@ -84,16 +78,8 @@ docs-publish:
 publish:
   poetry publish --build
 
-cli:
-  cd scripts/abacus && bash -e all.sh 
+#cli:
+#  cd scripts/abacus && bash -e all.sh 
 
 patch:
   poetry version patch
-
-make-help:
-  abacus --help > abacus-help.txt
-  abacus chart --help >> abacus-help.txt
-  abacus ledger --help >> abacus-help.txt
-  abacus report --help >> abacus-help.txt
-  abacus account --help >> abacus-help.txt
-  abacus-extra --help >> abacus-help.txt

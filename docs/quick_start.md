@@ -67,11 +67,11 @@ Show firm balance sheet and income statement at period end.
 === "Command line"
 
     ```bash
-    abacus post --debit cash --credit equity --amount 5000 --title "Shareholder investment"
-    abacus post --debit inv  --credit cash   --amount 4000 --title "Purchased merchandise"
-    abacus post --debit cash --credit sales  --amount 4800 --title "Sold merchandise"
-    abacus post --debit cogs --credit inv    --amount 4000 --title "Registered cost of sales"
-    abacus post --debit sga  --credit cash   --amount  500 --title "Paid sales representative"
+    abacus post cash equity 5000 --title "Shareholder investment"
+    abacus post  inv   cash 4000 --title "Purchased merchandise"
+    abacus post cash  sales 4800 --title "Sold merchandise"
+    abacus post cogs    inv 4000 --title "Registered cost of sales"
+    abacus post  sga   cash  500 --title "Paid sales representative"
     abacus close
     ```
 

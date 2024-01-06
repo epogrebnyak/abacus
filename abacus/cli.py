@@ -123,13 +123,15 @@ def name(account_name, title) -> None:
 
 
 @cx.command(name="post")
-@click.option("--debit", required=True, type=str, help="Debit account name.")
-@click.option("--credit", required=True, type=str, help="Credit account name.")
-@click.option("--amount", required=True, type=int, help="Transaction amount.")
-def cx_post(debit, credit, amount):
+@click.argument("debit", required=True, type=str)
+@click.argument("credit", required=True, type=str)
+@click.argument("amount", required=True, type=int)
+@click.option("--title", required=False, type=str, help="Entry title.")
+def cx_post(debit, credit, amount, title):
     """Post double entry to ledger."""
     if not (entries_path := get_entries_path()).exists():
         sys.exit(f"FileNotFoundError: {entries_path()}")
+    # FIXME: title is discarded    
     get_store().append(Entry(debit, credit, amount))
     print(f"Posted to ledger: debit <{debit}> {amount}, credit <{credit}> {amount}.")
 
@@ -172,8 +174,15 @@ def cx_close():
     is_flag=True,
     help="Show account balances.",
 )
+@click.option(
+    "--all",
+    "all_reports_flag",
+    is_flag=True,
+    help="Show all reports.",
+)
 def cx_report(
-    trial_balance_flag, balance_sheet_flag, income_statement_flag, account_balances_flag
+    trial_balance_flag, balance_sheet_flag, income_statement_flag, account_balances_flag,
+    all_reports_flag
 ):
     """Show reports."""
     if trial_balance_flag:
@@ -184,6 +193,8 @@ def cx_report(
         income_statement().viewer(rich=True).print()
     if account_balances_flag:
         print(account_balances())
+    if all_reports_flag:
+        pass
 
 
 # cx init

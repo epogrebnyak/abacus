@@ -397,8 +397,9 @@ class Ledger(UserDict[str, TAccount]):
             ledger.post_many(me.to_entries(chart.null_account))
         return ledger
 
-    def post(self, debit: str, credit: str, amount: Amount):
+    def post(self, debit: str, credit: str, amount: Amount, title: str = ""):
         """Post to ledger using debit and credit account names and amount."""
+        # FIXME: title is discarded
         return self.post_one(Entry(debit, credit, amount))
 
     def post_one(self, entry: Entry):
