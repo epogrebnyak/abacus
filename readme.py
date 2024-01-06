@@ -26,4 +26,8 @@ assert report.account_balances.nonzero() == {
     "marketing": 1000,
     "salaries": 2000,
 }
+report.balance_sheet.rich_print()
+report.balance_sheet.print()
+report.income_statement.rich_print()
+report.income_statement.print()
 report.print_all()

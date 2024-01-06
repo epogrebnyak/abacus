@@ -1,4 +1,17 @@
 from abacus.core import AccountBalances, BalanceSheet, IncomeStatement, TrialBalance
+from abacus.viewers import BalanceSheetViewerBase
+
+
+def test_deep_renaming():
+    b = BalanceSheetViewerBase(
+        BalanceSheet(
+            assets=dict(cash=100), capital=dict(equity=80), liabilities=dict(loan=20)
+        ),
+        rename_dict=dict(assets="активы", cash="касса"),
+        header="Баланс",
+    )
+    assert b.left[0].text == "Активы"
+    assert b.left[1].text == "Касса"
 
 
 def test_balance_sheet_viewers():
@@ -8,7 +21,7 @@ def test_balance_sheet_viewers():
         liabilities=AccountBalances({"dividend_due": 0}),
     )
     assert b.print() is None
-    assert b.show() is None
+    assert b.rich_print() is None
 
 
 def test_income_statement_viewers():
@@ -17,7 +30,7 @@ def test_income_statement_viewers():
         expenses=AccountBalances({"salaries": 30}),
     )
     assert i.print() is None
-    assert i.show() is None
+    assert i.rich_print() is None
 
 
 def test_trial_balance_viewer():
@@ -37,7 +50,7 @@ def test_trial_balance_viewer():
         }
     )
     assert t.print() is None
-    assert t.show() is None
+    assert t.rich_print() is None
 
 
 def test_print_all():

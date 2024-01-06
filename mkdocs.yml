@@ -6,8 +6,7 @@ nav:
   - "A minimal, yet valid double entry accounting system": index.md
   - quick_start.md
   - examples.md
-  - How `abacus` works:
-      - how-it-works/inside.md
+  - reference.md
   - Accounting basics:
       - accounting/introduction.md
       - accounting/chart_of_accounts.md

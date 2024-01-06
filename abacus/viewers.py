@@ -91,6 +91,22 @@ class Column:
         return "\n".join(self.strings)
 
 
+@dataclass
+class BaseViewer:
+    statement: BalanceSheet | IncomeStatement
+    header: str | None = None
+    rename_dict: dict[str, str] = field(default_factory=dict)
+
+    def rename_factory(self):
+        def rename_with(line):
+            s = self.rename_dict.get(line.text, line.text)
+            text = s.replace("_", " ").strip().capitalize()
+            cls = line.__class__
+            return cls(text, line.value)
+
+        return rename_with
+
+
 class Viewer(ABC):
     @abstractmethod
     def as_column(self) -> Column | str:
@@ -111,14 +127,50 @@ class RichViewer(ABC):
         Console().print(self.as_table(width))
 
 
-class BalanceSheetViewerBase(object):
-    def __init__(self, statement: BalanceSheet, header: str):
-        self.left, self.right = left_and_right(statement)
-        self.header = header
+@dataclass
+class BalanceSheetViewerBase(BaseViewer):
+    def __post_init__(self):
+        self.left, self.right = left_and_right(self.statement, self.rename_factory())
+
+
+def it(x):
+    return x
+
+
+def lines(base: dict[str, AccountBalances]) -> list["Line"]:
+    lines: list["Line"] = []
+    for header, balances in base.items():
+        h = HeaderLine(header, total(balances))
+        lines.append(h)
+        for name, value in balances.items():
+            a = AccountLine(name, value)
+            lines.append(a)
+    return lines
+
+
+def left_and_right(
+    report: BalanceSheet, rename_with: Callable = it
+) -> tuple[list["Line"], list["Line"]]:
+    left = lines({"assets": report.assets})
+    right = lines({"capital": report.capital, "liabilities": report.liabilities})
+    # rename
+    left = [rename_with(item) for item in left]
+    right = [rename_with(item) for item in right]
+    # make `left` and `right` same number of lines by adding empty lines
+    n = max(len(left), len(right))
+    left += [empty_line()] * (n - len(left))
+    right += [empty_line()] * (n - len(right))
+    # add end lines
+    t = rename_with(Line("total", 0)).text.capitalize() + ":"
+    h1 = HeaderLine(t, total(report.assets))
+    left.append(h1)
+    h2 = HeaderLine(t, total(report.capital) + total(report.liabilities))
+    right.append(h2)
+    return left, right
 
 
 class BalanceSheetViewer(Viewer, BalanceSheetViewerBase):
-    def as_column(self):
+    def as_column(self) -> Column:
         a, b = to_columns(self.left)
         col1 = a.align_left(".").add_right("... ") + b.align_right()
         c, d = to_columns(self.right)
@@ -127,7 +179,7 @@ class BalanceSheetViewer(Viewer, BalanceSheetViewerBase):
 
 
 class RichBalanceSheetViewer(RichViewer, BalanceSheetViewerBase):
-    def as_table(self, width):
+    def as_table(self, width) -> Table:
         table = Table(title=self.header, box=None, width=width, show_header=False)
         table.add_column("")
         table.add_column("", justify="right", style="green")
@@ -140,14 +192,16 @@ class RichBalanceSheetViewer(RichViewer, BalanceSheetViewerBase):
         return table
 
 
-class IncomeStatementViewerBase(object):
-    def __init__(self, statement: IncomeStatement, header: str):
+@dataclass
+class IncomeStatementViewerBase(BaseViewer):
+    def __post_init__(self):
         self.lines = lines(
-            {"income": statement.income, "expenses:": statement.expenses}
+            {"income": self.statement.income, "expenses": self.statement.expenses}
         )
-        h1 = HeaderLine("Current profit", str(statement.current_profit()))
+        h1 = HeaderLine("current profit", str(self.statement.current_profit()))
         self.lines.append(h1)
-        self.header = header
+        f = self.rename_factory()
+        self.lines = [f(item) for item in self.lines]
 
 
 class IncomeStatementViewer(IncomeStatementViewerBase, Viewer):
@@ -194,34 +248,8 @@ class EmptyLine(Line):
     ...
 
 
-def lines(base: dict[str, AccountBalances]):
-    lines: list[Line] = []
-    for header, balances in base.items():
-        h = HeaderLine(header.capitalize(), total(balances))
-        lines.append(h)
-        for name, value in balances.items():
-            a = AccountLine(name, value)
-            lines.append(a)
-    return lines
-
-
 def empty_line() -> EmptyLine:
     return EmptyLine("", "")
-
-
-def left_and_right(report: BalanceSheet) -> tuple[list[Line], list[Line]]:
-    left = lines({"assets": report.assets})
-    right = lines({"capital": report.capital, "liabilities": report.liabilities})
-    # make `left` and `right` same number of lines by adding empty lines
-    n = max(len(left), len(right))
-    left += [empty_line()] * (n - len(left))
-    right += [empty_line()] * (n - len(right))
-    # add end lines
-    h1 = HeaderLine("Total:", total(report.assets))
-    left.append(h1)
-    h2 = HeaderLine("Total:", total(report.capital) + total(report.liabilities))
-    right.append(h2)
-    return left, right
 
 
 def offset(line: Line) -> str:

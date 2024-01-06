@@ -30,7 +30,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Iterable, Type
+from typing import ClassVar, Iterable, Type
 
 
 class AbacusError(Exception):
@@ -357,17 +357,7 @@ class Entry:
         return cls(**json.loads(line))
 
 
-def use_title(s: str, rename_dict: dict[str, str]) -> str:
-    return rename_dict.get(s, s).replace("_", " ").strip().capitalize()
-
-
 class AccountBalances(UserDict[str, Amount]):
-    def rename(self, rename_dict: dict[str, str]):
-        def get(name):
-            return use_title(name, rename_dict)
-
-        return self.__class__({get(name): balance for name, balance in self.items()})
-
     def nonzero(self):
         return self.__class__(
             {name: balance for name, balance in self.items() if balance}
@@ -568,20 +558,38 @@ class Report:
         return self.ledger.balances
 
     def print_all(self):
-        b = self.balance_sheet.rename(self.rename_dict)
-        i = self.income_statement.rename(self.rename_dict)
+        b = self.balance_sheet
+        i = self.income_statement
 
         def f(statement):
-            return str(statement.viewer().as_column()).split("\n")
+            return str(statement.viewer("", {}).as_column()).split("\n")
 
         width = max(map(len, f(b) + f(i)))
         self.trial_balance.print()
-        b.viewer(rich=True).print(width)
-        i.viewer(rich=True).print(width)
+        b.rich_viewer(rename_dict=self.rename_dict).print(width)
+        i.rich_viewer(rename_dict=self.rename_dict).print(width)
 
 
 class Statement:
-    ...
+    def rich_viewer(self, header=None, rename_dict=None):
+        if header is None:
+            header = self.default_header
+        if rename_dict is None:
+            rename_dict = {}
+        return self.rich_viewer_class(self, header, rename_dict)
+
+    def viewer(self, header=None, rename_dict=None):
+        if header is None:
+            header = self.default_header
+        if rename_dict is None:
+            rename_dict = {}
+        return self.viewer_class(self, header, rename_dict)
+
+    def rich_print(self, width=80):
+        self.rich_viewer(self.default_header, {}).print(width)
+
+    def print(self):
+        self.viewer(self.default_header, {}).print()
 
 
 @dataclass
@@ -589,6 +597,19 @@ class BalanceSheet(Statement):
     assets: AccountBalances
     capital: AccountBalances
     liabilities: AccountBalances
+    default_header: ClassVar[str] = "Balance sheet"
+
+    @property
+    def viewer_class(self):
+        from abacus.viewers import BalanceSheetViewer
+
+        return BalanceSheetViewer
+
+    @property
+    def rich_viewer_class(self):
+        from abacus.viewers import RichBalanceSheetViewer
+
+        return RichBalanceSheetViewer
 
     @classmethod
     def new(cls, ledger: Ledger):
@@ -598,33 +619,24 @@ class BalanceSheet(Statement):
             liabilities=ledger.subset(Liability).balances,
         )
 
-    def rename(self, rename_dict):
-        return self.__class__(
-            assets=self.assets.rename(rename_dict),
-            capital=self.capital.rename(rename_dict),
-            liabilities=self.liabilities.rename(rename_dict),
-        )
-
-    def viewer(self, rich=False, header="Balance sheet"):
-        from abacus.show import RichBalanceSheetViewer
-        from abacus.show import BalanceSheetViewer
-
-        if rich:
-            return RichBalanceSheetViewer(self, header)
-        else:
-            return BalanceSheetViewer(self, header)
-
-    def print(self, width=80):
-        self.viewer(rich=True).print(width)
-
-    def show(self):
-        self.viewer(rich=False).print()
-
 
 @dataclass
 class IncomeStatement(Statement):
     income: AccountBalances
     expenses: AccountBalances
+    default_header: ClassVar[str] = "Income statement"
+
+    @property
+    def viewer_class(self):
+        from abacus.viewers import IncomeStatementViewer as V
+
+        return V
+
+    @property
+    def rich_viewer_class(self):
+        from abacus.viewers import RichIncomeStatementViewer as RV
+
+        return RV
 
     @classmethod
     def new(cls, ledger: Ledger):
@@ -636,29 +648,8 @@ class IncomeStatement(Statement):
     def current_profit(self):
         return sum(self.income.values()) - sum(self.expenses.values())
 
-    def rename(self, rename_dict):
-        return self.__class__(
-            income=self.income.rename(rename_dict),
-            expenses=self.expenses.rename(rename_dict),
-        )
 
-    def viewer(self, rich=False, header="Income statement"):
-        from abacus.show import RichIncomeStatementViewer
-        from abacus.show import IncomeStatementViewer
-
-        if rich:
-            return RichIncomeStatementViewer(self, header)
-        else:
-            return IncomeStatementViewer(self, header)
-
-    def print(self, width=80):
-        self.viewer(rich=True).print(width)
-
-    def show(self):
-        self.viewer(rich=False).print()
-
-
-class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
+class TrialBalance(UserDict[str, tuple[Amount, Amount]]):
     """Trial balance is a dictionary of account names and
     their debit-side and credit-side balances."""
 
@@ -673,7 +664,7 @@ class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
         return tb
 
     def viewer(self, header="Trial balance"):
-        from abacus.show import TrialBalanceViewer as TB
+        from abacus.viewers import TrialBalanceViewer as TB
 
         return TB(self, header)
 
@@ -681,7 +672,7 @@ class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
         # TODO: make rich print
         print(self.viewer())
 
-    def show(self):
+    def rich_print(self):
         print(self.viewer())
 
 

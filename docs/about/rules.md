@@ -58,6 +58,4 @@ Some assumptions may be relaxed, some will remain a feature.
 4. Modern Python features such as subclasssing and pattern matching help to make code cleaner.
    Classes like `Asset`, `Expense`, `Capital`, `Liability`, `Income` pass forward useful information about account types and their behaviors.
 
-5. This is experimental software. The upside is that we can make big changes fast. On a downside we do not learn (or earn) from users, at least yet.
-
-6. `abacus` is not optimised for performance and likely to be slow under high load.
+5. `abacus` is not optimised for performance and likely to be slow under high load.

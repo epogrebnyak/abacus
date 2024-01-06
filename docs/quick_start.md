@@ -48,7 +48,9 @@ Show firm balance sheet and income statement at period end.
     abacus add asset:cash,inv
     abacus add capital:equity
     abacus add income:sales expense:cogs,sga
-    abacus name inv Inventory
+    abacus name inv "Inventory"
+    abacus name cogs "Cost of goods sold"
+    abacus name sga "Selling expenses"
     ```
 
 ### Use ledger to post entries

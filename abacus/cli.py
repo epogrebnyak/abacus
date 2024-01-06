@@ -131,7 +131,7 @@ def cx_post(debit, credit, amount, title):
     """Post double entry to ledger."""
     if not (entries_path := get_entries_path()).exists():
         sys.exit(f"FileNotFoundError: {entries_path()}")
-    # FIXME: title is discarded    
+    # FIXME: title is discarded
     get_store().append(Entry(debit, credit, amount))
     print(f"Posted to ledger: debit <{debit}> {amount}, credit <{credit}> {amount}.")
 
@@ -181,8 +181,11 @@ def cx_close():
     help="Show all reports.",
 )
 def cx_report(
-    trial_balance_flag, balance_sheet_flag, income_statement_flag, account_balances_flag,
-    all_reports_flag
+    trial_balance_flag,
+    balance_sheet_flag,
+    income_statement_flag,
+    account_balances_flag,
+    all_reports_flag,
 ):
     """Show reports."""
     if trial_balance_flag:
