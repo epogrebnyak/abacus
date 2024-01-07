@@ -40,7 +40,7 @@ Here is how the key `cx` commands compare with `abacus` commands:
 ### Textbook example
 
 Here is an exercise from "Accounting Principles" by Weygandt, Kimmel and Kieso
-(ed 12, p. 31) solved with `cx`.
+(ed 12, p. 31) solved with `abacus`.
 
 > Joan Robinson opens her own law office on July 1, 2017. During the first month of operations, the following transactions occurred.
 >
