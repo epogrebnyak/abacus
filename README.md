@@ -22,3 +22,9 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 ```
 
 `abacus-py` requires Python 3.10 or higher.
+
+## Quick example
+
+Check out [readme.py](readme.py), [readme.bat](readme.bat) and documentation link above.
+
+
