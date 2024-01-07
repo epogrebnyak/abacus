@@ -1,33 +1,24 @@
-from abacus import Chart, Report
+from abacus import Chart, Account, Report
 
-# Create a chart of accounts
+# Define chart
 chart = Chart(
-    assets=["cash"],
+    assets=["cash", "paper"],
     capital=["equity"],
-    income=["services"],
-    expenses=["marketing", "salaries"],
+    income=[Account("sales", contra_accounts=["refunds"])],
+    expenses=["cogs", "salaries"],
 )
 
-# Create a ledger using the chart
-ledger = chart.ledger()
+# Use account balances form previous period
+starting_balances = {"cash": 300, "paper": 2200, "equity": 2500}
+ledger = chart.ledger(starting_balances)
 
-# Post entries to ledger
-ledger.post(debit="cash", credit="equity", amount=5000)
-ledger.post(debit="marketing", credit="cash", amount=1000)
-ledger.post(debit="cash", credit="services", amount=3499)
-ledger.post(debit="salaries", credit="cash", amount=2000)
+# Post enties
+ledger.post("cash", "sales", 2675, title="Sell paper for cash")
+ledger.post("refunds", "cash", 375, title="Client refund ")
+ledger.post("cogs", "paper", 2000, title="Register cost of sales")
+ledger.post("salaries", "cash", 500, title="Pay salaries")
 
-# Print trial balance, balance sheet and income statement
-report = Report(chart, ledger).rename("re", "Retained earnings")
-assert report.account_balances.nonzero() == {
-    "cash": 5499,
-    "equity": 5000,
-    "services": 3499,
-    "marketing": 1000,
-    "salaries": 2000,
-}
-report.balance_sheet.rich_print()
-report.balance_sheet.print()
-report.income_statement.rich_print()
-report.income_statement.print()
+# Show reports
+rename_dict = {"cogs": "Cost of goods sold", "paper": "Inventory"}
+report = Report(chart, ledger, rename_dict)
 report.print_all()

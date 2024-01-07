@@ -4,15 +4,15 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Callable
 
-from rich.console import Console
-from rich.table import Table
-from rich.text import Text
+from rich.console import Console  # type: ignore
+from rich.table import Table as RichTable  # type: ignore
+from rich.text import Text  # type: ignore
 
-from abacus.core import AccountBalances, Amount, BalanceSheet, IncomeStatement
+from abacus.core import Amount, BalanceSheet, IncomeStatement
 
 
 @dataclass
-class Column:
+class TextColumn:
     """Column for creating tables.
     Methods to manipulate a column include align and concatenate."""
 
@@ -22,10 +22,6 @@ class Column:
     def width(self):
         return max(len(s) for s in self.strings)
 
-    def apply(self, f: Callable):
-        """Apply function `f` to each string in the column."""
-        return Column([f(s) for s in self.strings])
-
     def align(self, method: str, fill_char: str):
         """Generic method to align all strings in the column."""
         width = self.width  # avoid calculating width too many times
@@ -33,7 +29,7 @@ class Column:
         def f(s):
             return getattr(s, method)(width, fill_char)
 
-        return Column([f(s) for s in self.strings])
+        return self.__class__([f(s) for s in self.strings])
 
     def align_left(self, fill_char=" "):
         """Align all strings to the left."""
@@ -65,22 +61,22 @@ class Column:
 
     def refill(self, text):
         """Create a new column where all strings are replaced by `text`."""
-        return Column([text] * len(self.strings))
+        return self.__class__([text] * len(self.strings))
 
     def merge(self, column):
         """Merge two columns into one."""
-        return Column([a + b for a, b in zip(self.strings, column.strings)])
+        return self.__class__([a + b for a, b in zip(self.strings, column.strings)])  # type: ignore
 
-    def __add__(self, column: "Column"):
+    def __add__(self, column):
         return self.merge(column)
 
     def insert_top(self, text):
         """Insert text at the top of the column."""
-        return Column([text] + self.strings)
+        return self.__class__([text] + self.strings)
 
     def insert_bottom(self, text):
         """Insert text at the bottom of the column."""
-        return Column(self.strings + [text])
+        return self.__class__(self.strings + [text])
 
     def header(self, text):
         """Add a header line to the column."""
@@ -92,238 +88,260 @@ class Column:
 
 
 @dataclass
-class BaseViewer:
-    statement: BalanceSheet | IncomeStatement
-    header: str | None = None
-    rename_dict: dict[str, str] = field(default_factory=dict)
+class String:
+    s: str
 
-    def rename_factory(self):
-        def rename_with(line):
-            s = self.rename_dict.get(line.text, line.text)
-            text = s.replace("_", " ").strip().capitalize()
-            cls = line.__class__
-            return cls(text, line.value)
+    def __str__(self):
+        return self.s
 
-        return rename_with
-
-
-class Viewer(ABC):
-    @abstractmethod
-    def as_column(self) -> Column | str:
-        ...
-
-    def print(self):
-        if self.header:
-            print(self.header)
-        print(self.as_column())
-
-
-class RichViewer(ABC):
-    @abstractmethod
-    def as_table(self, width: int) -> Table:
-        ...
-
-    def print(self, width: int = 80):
-        Console().print(self.as_table(width))
+    def rich(self):
+        return Text(self.s)
 
 
 @dataclass
-class BalanceSheetViewerBase(BaseViewer):
-    def __post_init__(self):
-        self.left, self.right = left_and_right(self.statement, self.rename_factory())
+class Number:
+    n: Amount
 
+    def __str__(self):
+        return str(self.n)
 
-def it(x):
-    return x
-
-
-def lines(base: dict[str, AccountBalances]) -> list["Line"]:
-    lines: list["Line"] = []
-    for header, balances in base.items():
-        h = HeaderLine(header, total(balances))
-        lines.append(h)
-        for name, value in balances.items():
-            a = AccountLine(name, value)
-            lines.append(a)
-    return lines
-
-
-def left_and_right(
-    report: BalanceSheet, rename_with: Callable = it
-) -> tuple[list["Line"], list["Line"]]:
-    left = lines({"assets": report.assets})
-    right = lines({"capital": report.capital, "liabilities": report.liabilities})
-    # rename
-    left = [rename_with(item) for item in left]
-    right = [rename_with(item) for item in right]
-    # make `left` and `right` same number of lines by adding empty lines
-    n = max(len(left), len(right))
-    left += [empty_line()] * (n - len(left))
-    right += [empty_line()] * (n - len(right))
-    # add end lines
-    t = rename_with(Line("total", 0)).text.capitalize() + ":"
-    h1 = HeaderLine(t, total(report.assets))
-    left.append(h1)
-    h2 = HeaderLine(t, total(report.capital) + total(report.liabilities))
-    right.append(h2)
-    return left, right
-
-
-class BalanceSheetViewer(Viewer, BalanceSheetViewerBase):
-    def as_column(self) -> Column:
-        a, b = to_columns(self.left)
-        col1 = a.align_left(".").add_right("... ") + b.align_right()
-        c, d = to_columns(self.right)
-        col2 = c.align_left(".").add_right("... ") + d.align_right()
-        return col1.add_space(2).merge(col2)
-
-
-class RichBalanceSheetViewer(RichViewer, BalanceSheetViewerBase):
-    def as_table(self, width) -> Table:
-        table = Table(title=self.header, box=None, width=width, show_header=False)
-        table.add_column("")
-        table.add_column("", justify="right", style="green")
-        table.add_column("")
-        table.add_column("", justify="right", style="green")
-        for line_1, line_2 in zip(self.left, self.right):
-            a, b = unpack(line_1)
-            c, d = unpack(line_2)
-            table.add_row(a, b, c, d)
-        return table
+    def rich(self):
+        return red(self.n)
 
 
 @dataclass
-class IncomeStatementViewerBase(BaseViewer):
-    def __post_init__(self):
-        self.lines = lines(
-            {"income": self.statement.income, "expenses": self.statement.expenses}
-        )
-        h1 = HeaderLine("current profit", str(self.statement.current_profit()))
-        self.lines.append(h1)
-        f = self.rename_factory()
-        self.lines = [f(item) for item in self.lines]
-
-
-class IncomeStatementViewer(IncomeStatementViewerBase, Viewer):
-    def as_column(self):
-        a, b = to_columns(self.lines)
-        return a.align_left(fill_char=".").add_right("... ") + b.align_right(
-            fill_char=" "
-        )
-
-
-class RichIncomeStatementViewer(IncomeStatementViewerBase, RichViewer):
-    def as_table(self, width):
-        table = Table(title=self.header, box=None, width=width, show_header=False)
-        table.add_column("")
-        table.add_column("", justify="right", style="green")
-        for line in self.lines:
-            a, b = unpack(line)
-            table.add_row(a, b)
-        return table
-
-
-def total(balances) -> Amount:
-    return sum(balances.values())
+class Format:
+    ...
 
 
 @dataclass
-class Line:
-    text: str
-    value: str | Amount
-
-    def __post_init__(self):
-        self.value = str(self.value)
-
-
-class HeaderLine(Line):
+class BoldF(Format):
     ...
 
 
-class AccountLine(Line):
+@dataclass
+class OffsetF(Format):
     ...
 
 
-class EmptyLine(Line):
-    ...
+BOLD = BoldF()
+OFFSET = OffsetF()
 
 
-def empty_line() -> EmptyLine:
-    return EmptyLine("", "")
+@dataclass
+class Cell:
+    content: String | Number
+    formats: list[Format] = field(default_factory=list)
+
+    def rename(self, f: Callable):
+        match self.content:
+            case String(s):
+                self.content.s = f(s)
+            case _:
+                pass
+        return self
+
+    def __str__(self):
+        r = str(self.content)
+        if OFFSET in self.formats:
+            r = "  " + r
+        if BOLD in self.formats:
+            r = r.upper()
+        return r
+
+    def rich(self):
+        r = self.content.rich()
+        if OFFSET in self.formats:
+            r = Text("  ") + r
+        if BOLD in self.formats:
+            r = bold(r)
+        return r
 
 
-def offset(line: Line) -> str:
-    match line:
-        case HeaderLine(s, _):
-            return s.upper()
-        case AccountLine(a, _):
-            return "  " + a
-        case EmptyLine(_, _):
-            return ""
-    raise TypeError  # mypy wanted it here
+EMPTY = Cell(String(""))
 
 
-def to_columns(lines: list[Line]) -> tuple[Column, Column]:
-    col1 = Column(strings=[offset(line) for line in lines])
-    col2 = Column(strings=[str(line.value) for line in lines])
-    return col1, col2
+def maps(f, xs):
+    return list(map(f, xs))
 
 
-def string_from_columns(left, right) -> str:
-    a, b = to_columns(left)
-    col1 = a.align_left(".").add_right("... ") + b.align_right()
-    c, d = to_columns(right)
-    col2 = c.align_left(".").add_right("... ") + d.align_right()
-    return str(col1.add_space(2).merge(col2))
-
-
-def red(b) -> Text:
+def red(t: Amount) -> Text:
     """Make digit red if negative."""
-    v = Amount(b)
-    if v and v < 0:
-        return Text(b, style="red")
+    if t < 0:
+        return Text(str(t), style="red")
     else:
-        return Text(b)
+        return Text(str(t))
 
 
 def bold(s: Text | str) -> Text:
     if isinstance(s, Text):
-        s.stylize("bold")
+        s.stylize("bold")  # type: ignore
         return s
     else:
         return Text(str(s), style="bold")
 
 
-def unpack(line: Line) -> tuple[Text, Text]:
-    """Convert Line to tuple of two rich.Text instances."""
-    match line:
-        case HeaderLine(a, b):
-            return bold(a), bold(red(b))
-        case AccountLine(a, b):
-            return (Text("  " + a), red(b))
-        case EmptyLine(a, b):
-            return Text(""), Text("")
-        case _:
-            raise ValueError(line)
+@dataclass
+class PairColumn:
+    xs: list[Cell]
+    ys: list[Cell]
+
+    def __len__(self):
+        return len(self.xs)
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        xs = []
+        ys = []
+        for k, vs in d.items():
+            n = sum(vs.values())
+            xs.append(Cell(String(k), [BOLD]))
+            ys.append(Cell(Number(n), [BOLD]))
+            for name, value in vs.items():
+                xs.append(Cell(String(name), [OFFSET]))
+                ys.append(Cell(Number(value)))
+        return cls(xs, ys)
+
+    def text_table(self):
+        a = TextColumn(maps(str, self.xs)).align_left().add_space(2)
+        b = TextColumn(maps(str, self.ys)).align_right()
+        return a + b
+
+    def append_empty(self, n):
+        for _ in range(n):
+            self.xs.append(EMPTY)
+            self.ys.append(EMPTY)
+
+    def add_footer(self, s: str, n: Amount):
+        self.xs.append(Cell(String(s), [BOLD]))
+        self.ys.append(Cell(Number(n), [BOLD]))
+
+    def rename(self, rename_dict=None):
+        rename_dict = rename_dict or {}
+
+        def g(s):
+            return rename_dict.get(s, s).replace("_", " ").strip().capitalize()
+
+        self.xs = [x.rename(g) for x in self.xs]
+
+
+def equalize_length(p1: PairColumn, p2: PairColumn):
+    n = max(len(p1), len(p2))
+    p1.append_empty(n - len(p1))
+    p2.append_empty(n - len(p2))
 
 
 @dataclass
-class TrialBalanceViewer:
-    trial_balance: dict[str, tuple[Amount, Amount]]
-    titles: dict[str, str] = field(default_factory=dict)
-    headers: tuple[str, str, str] = "Account", "Debit", "Credit"
+class Viewer(ABC):
+    def use(self, rename_dict: dict[str, str]):
+        self.rename_dict.update(rename_dict)  # type: ignore
+        return self
 
-    def account_names(self):
-        return self.trial_balance.keys()
+    @abstractmethod
+    def text_table(self):
+        ...
 
-    def account_names_column(self, header):
-        return (
-            Column(self.account_names())
-            .add_space(1)
-            .align_left(".")
-            .add_right("...")
-            .header(header)
+    @abstractmethod
+    def rich_table(self, width):
+        ...
+
+    def print(self, width: int | None = None):
+        """Rich printing to console."""
+        t = self.rich_table(width)
+        Console().print(t)
+
+    def __str__(self):
+        prefix = ""
+        if self.title:  # type: ignore
+            prefix = self.title + "\n"  # type: ignore
+        return prefix + str(self.text_table())
+
+    @property
+    def width(self):
+        return max(map(len, str(self).split("\n")))
+
+
+@dataclass
+class IncomeStatementViewer(Viewer):
+    statement: IncomeStatement
+    title: str = "Income Statement"
+    rename_dict: dict[str, str] = field(default_factory=dict)
+
+    def to_dict(self):
+        return dict(income=self.statement.income, expenses=self.statement.expenses)
+
+    @property
+    def pair_column(self):
+        pi = PairColumn.from_dict(self.to_dict())
+        pi.add_footer("current profit", self.statement.current_profit())
+        pi.rename(self.rename_dict)
+        return pi
+
+    def text_table(self):
+        return self.pair_column.text_table()
+
+    def rich_table(self, width):
+        table = RichTable(title=self.title, box=None, width=width, show_header=False)
+        table.add_column()
+        table.add_column(justify="right", style="green")
+        p = self.pair_column
+        for a, b in zip(p.xs, p.ys):
+            table.add_row(a.rich(), b.rich())
+        return table
+
+
+@dataclass
+class BalanceSheetViewer(Viewer):
+    statement: BalanceSheet
+    title: str = "Balance sheet"
+    rename_dict: dict[str, str] = field(default_factory=dict)
+
+    def to_dicts(self):
+        return [
+            dict(assets=self.statement.assets),
+            dict(
+                capital=self.statement.capital, liabilities=self.statement.liabilities
+            ),
+        ]
+
+    @property
+    def pair_columns(self):
+        d1, d2 = self.to_dicts()
+        p1 = PairColumn.from_dict(d1)
+        p2 = PairColumn.from_dict(d2)
+        equalize_length(p1, p2)
+        p1.add_footer("total", sum(self.statement.assets.values()))
+        _s = self.statement
+        p2.add_footer(
+            "total",
+            sum(_s.capital.values()) + sum(_s.liabilities.values()),
         )
+        p1.rename(self.rename_dict)
+        p2.rename(self.rename_dict)
+        return p1, p2
+
+    def text_table(self):
+        p1, p2 = self.pair_columns
+        return p1.text_table().add_space(2) + p2.text_table()
+
+    def rich_table(self, width=None):
+        table = RichTable(title=self.title, box=None, width=width, show_header=False)
+        table.add_column()
+        table.add_column(justify="right", style="green")
+        table.add_column()
+        table.add_column(justify="right", style="green")
+        p1, p2 = self.pair_columns
+        for a, b, c, d in zip(p1.xs, p1.ys, p2.xs, p2.ys):
+            table.add_row(a.rich(), b.rich(), c.rich(), d.rich())
+        return table
+
+
+@dataclass
+class TrialBalanceViewer(Viewer):
+    trial_balance: dict[str, tuple[Amount, Amount]]
+    rename_dict: dict[str, str] = field(default_factory=dict)
+    headers: tuple[str, str, str] = "Account", "Debit", "Credit"
+    title: str = "Trial balance"
 
     @property
     def debits(self) -> list[str]:
@@ -333,15 +351,34 @@ class TrialBalanceViewer:
     def credits(self) -> list[str]:
         return [str(c) for (_, c) in self.trial_balance.values()]
 
-    def numeric_column(self, values, header):
-        return Column(values).align_right().add_space_left(3).header(header)
+    @property
+    def account_names(self):
+        return list(self.trial_balance.keys())
 
-    def table(self):
+    def account_names_column(self, header: str):
+        return (
+            TextColumn(strings=self.account_names)
+            .add_space(1)
+            .align_left(".")
+            .add_right("...")
+            .header(header)
+        )
+
+    def numeric_column(self, values, header):
+        return TextColumn(values).align_right().add_space_left(3).header(header)
+
+    def text_table(self) -> TextColumn:
         return (
             self.account_names_column(self.headers[0])
             + self.numeric_column(self.debits, self.headers[1])
             + self.numeric_column(self.credits, self.headers[2])
         )
 
-    def __str__(self) -> str:
-        return str(self.table())
+    def rich_table(self, width=None) -> RichTable:
+        table = RichTable(title=self.title, box=None, width=width, show_header=True)
+        table.add_column(header=self.headers[0])
+        table.add_column(header=self.headers[1], justify="right", style="green")
+        table.add_column(header=self.headers[2], justify="right", style="green")
+        for a, b, c in zip(self.account_names, self.debits, self.credits):
+            table.add_row(Text(a), red(Amount(b)), red(Amount(c)))
+        return table

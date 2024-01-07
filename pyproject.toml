@@ -2,7 +2,8 @@
 markers = [
     "e2e: end-to-end tests",
     "unit: unit tests",
-    "regression: something was wrong before and got fixed now"
+    "regression: something was wrong and got fixed",
+    "callable: tesk function or method invocation, but not the result"  
 ]
 addopts = "--noconftest --ignore-glob=tests0/"
 

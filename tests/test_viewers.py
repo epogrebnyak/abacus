@@ -1,77 +1,58 @@
-from abacus.core import AccountBalances, BalanceSheet, IncomeStatement, TrialBalance
-from abacus.viewers import BalanceSheetViewerBase
+import pytest
+from abacus.core import AccountBalances as AB
+from abacus.core import BalanceSheet
+from abacus.core import IncomeStatement
+from abacus.viewers import BalanceSheetViewer, IncomeStatementViewer, TrialBalanceViewer
 
 
-def test_deep_renaming():
-    b = BalanceSheetViewerBase(
-        BalanceSheet(
-            assets=dict(cash=100), capital=dict(equity=80), liabilities=dict(loan=20)
-        ),
-        rename_dict=dict(assets="активы", cash="касса"),
-        header="Баланс",
-    )
-    assert b.left[0].text == "Активы"
-    assert b.left[1].text == "Касса"
-
-
-def test_balance_sheet_viewers():
+@pytest.fixture
+def balance_sheet_viewer():
     b = BalanceSheet(
-        assets=AccountBalances({"cash": 110}),
-        capital=AccountBalances({"equity": 100, "re": 10}),
-        liabilities=AccountBalances({"dividend_due": 0}),
+        assets=AB(cash=200),
+        capital=AB(equity=150, retained_earnings=-20),
+        liabilities=AB(loan=65, dd=5),
     )
-    assert b.print() is None
-    assert b.rich_print() is None
-
-
-def test_income_statement_viewers():
-    i = IncomeStatement(
-        income=AccountBalances({"sales": 40}),
-        expenses=AccountBalances({"salaries": 30}),
+    return BalanceSheetViewer(
+        b,
+        rename_dict=dict(
+            assets="активы", cash="касса", dd="dividend due", total="итого"
+        ),
+        title="Баланс",
     )
-    assert i.print() is None
-    assert i.rich_print() is None
 
 
+@pytest.mark.unit
+def test_balance_sheet_viewer_width(balance_sheet_viewer):
+    assert balance_sheet_viewer.width == 38
+
+
+@pytest.mark.unit
+def test_balance_sheet_deep_rename(balance_sheet_viewer):
+    assert "ИТОГО" in str(balance_sheet_viewer)
+
+
+@pytest.mark.callable
+def test_balance_sheet_viewer(balance_sheet_viewer):
+    balance_sheet_viewer.print()
+    balance_sheet_viewer.print(80)
+
+
+@pytest.fixture
+def income_statement_viewer():
+    i = IncomeStatement(income=AB(sales=40), expenses=AB(rent=25, salaries=35))
+    return IncomeStatementViewer(i, "My! income statement")
+
+
+@pytest.mark.callable
+def test_viewer_is(income_statement_viewer):
+    assert "My! income statement" in str(income_statement_viewer)
+    income_statement_viewer.print()
+    income_statement_viewer.print(80)
+
+
+@pytest.mark.callable
 def test_trial_balance_viewer():
-    t = TrialBalance(
-        {
-            "cash": (110, 0),
-            "ts": (20, 0),
-            "refunds": (5, 0),
-            "voids": (2, 0),
-            "salaries": (30, 0),
-            "equity": (0, 120),
-            "re": (0, 0),
-            "dividend_due": (0, 0),
-            "sales": (0, 47),
-            "isa": (0, 0),
-            "null": (0, 0),
-        }
-    )
-    assert t.print() is None
-    assert t.rich_print() is None
-
-
-def test_print_all():
-    from abacus import Chart, Report
-
-    chart = Chart(
-        assets=["cash"],
-        capital=["equity"],
-        income=["services"],
-        expenses=["marketing", "salaries"],
-    )
-
-    # Create a ledger using the chart
-    ledger = chart.ledger()
-
-    # Post entries to ledger
-    ledger.post(debit="cash", credit="equity", amount=5000)
-    ledger.post(debit="marketing", credit="cash", amount=1000)
-    ledger.post(debit="cash", credit="services", amount=3499)
-    ledger.post(debit="salaries", credit="cash", amount=2000)
-
-    # Print trial balance, balance sheet and income statement
-    report = Report(chart, ledger).rename("re", "Retained earnings")
-    assert report.print_all() is None
+    vtb = TrialBalanceViewer(dict(cash=(100, 0), equity=(0, 120), re=(0, -20)))
+    assert "cash" in str(vtb)
+    vtb.print()
+    vtb.print(80)

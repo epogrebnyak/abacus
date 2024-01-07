@@ -268,8 +268,8 @@ class Wrap(Holder):
 
        - income summary account,
        - null account.
-    
-    Note: Income summary account should have zero balance at the end of accounting period. 
+
+    Note: Income summary account should have zero balance at the end of accounting period.
     Null account should always has zero balance.
     """
 
@@ -291,9 +291,9 @@ class Chart:
     ```
     """
 
-    income_summary_account: str = "isa"
-    retained_earnings_account: str = "re"
-    null_account: str = "null"
+    income_summary_account: str = "_isa"
+    retained_earnings_account: str = "retained_earnings"
+    null_account: str = "_null"
     assets: list[str | Account] = field(default_factory=list)
     capital: list[str | Account] = field(default_factory=list)
     liabilities: list[str | Account] = field(default_factory=list)
@@ -334,20 +334,20 @@ class Chart:
             for contra_name in account.contra_accounts:
                 yield contra_name, Contra(t)
 
-    def ledger(self):
-        return Ledger({name: holder.t_account() for name, holder in self.dict_items()})
+    def ledger(self, starting_balances: dict | None = None):
+        return Ledger.new(self, AccountBalances(starting_balances))
 
 
 @dataclass
 class Entry:
     """Double entry with account name to be debited,
        account name to be credited and transaction amount.
-       
+
     Example:
 
     ```python
     entry = Entry(debit="cash", credit="equity", amount=20000)
-    ```   
+    ```
     """
 
     debit: str
@@ -386,7 +386,7 @@ class Ledger(UserDict[str, TAccount]):
     @classmethod
     def new(cls, chart: Chart, balances: AccountBalances | None):
         """Create a new ledger from chart, possibly using starting balances."""
-        ledger = chart.ledger()
+        ledger = cls({name: h.t_account() for name, h in chart.dict_items()})  # type: ignore
         if balances:
             me = MultipleEntry.from_balances(chart, balances)
             ledger.post_many(me.to_entries(chart.null_account))
@@ -563,38 +563,21 @@ class Report:
         return self.ledger.balances
 
     def print_all(self):
-        b = self.balance_sheet
-        i = self.income_statement
-
-        def f(statement):
-            return str(statement.viewer("", {}).as_column()).split("\n")
-
-        width = max(map(len, f(b) + f(i)))
-        self.trial_balance.print()
-        b.rich_viewer(rename_dict=self.rename_dict).print(width)
-        i.rich_viewer(rename_dict=self.rename_dict).print(width)
+        t = self.trial_balance.viewer
+        b = self.balance_sheet.viewer
+        i = self.income_statement.viewer
+        # +2 account for padding and boundaries in RichTable
+        width = 2 + max(b.width, i.width, t.width)
+        t.print(width)
+        b.use(self.rename_dict).print(width)
+        i.use(self.rename_dict).print(width)
 
 
-class Statement:
-    def rich_viewer(self, header=None, rename_dict=None):
-        if header is None:
-            header = self.default_header
-        if rename_dict is None:
-            rename_dict = {}
-        return self.rich_viewer_class(self, header, rename_dict)
-
-    def viewer(self, header=None, rename_dict=None):
-        if header is None:
-            header = self.default_header
-        if rename_dict is None:
-            rename_dict = {}
-        return self.viewer_class(self, header, rename_dict)
-
-    def rich_print(self, width=80):
-        self.rich_viewer(self.default_header, {}).print(width)
-
-    def print(self):
-        self.viewer(self.default_header, {}).print()
+class Statement(ABC):
+    @property
+    @abstractmethod
+    def viewer(self):
+        ...
 
 
 @dataclass
@@ -602,19 +585,12 @@ class BalanceSheet(Statement):
     assets: AccountBalances
     capital: AccountBalances
     liabilities: AccountBalances
-    default_header: ClassVar[str] = "Balance sheet"
 
     @property
-    def viewer_class(self):
+    def viewer(self):
         from abacus.viewers import BalanceSheetViewer
 
-        return BalanceSheetViewer
-
-    @property
-    def rich_viewer_class(self):
-        from abacus.viewers import RichBalanceSheetViewer
-
-        return RichBalanceSheetViewer
+        return BalanceSheetViewer(self)
 
     @classmethod
     def new(cls, ledger: Ledger):
@@ -632,16 +608,10 @@ class IncomeStatement(Statement):
     default_header: ClassVar[str] = "Income statement"
 
     @property
-    def viewer_class(self):
-        from abacus.viewers import IncomeStatementViewer as V
+    def viewer(self):
+        from abacus.viewers import IncomeStatementViewer
 
-        return V
-
-    @property
-    def rich_viewer_class(self):
-        from abacus.viewers import RichIncomeStatementViewer as RV
-
-        return RV
+        return IncomeStatementViewer(self)
 
     @classmethod
     def new(cls, ledger: Ledger):
@@ -654,31 +624,25 @@ class IncomeStatement(Statement):
         return sum(self.income.values()) - sum(self.expenses.values())
 
 
-class TrialBalance(UserDict[str, tuple[Amount, Amount]]):
+class TrialBalance(UserDict[str, tuple[Amount, Amount]], Statement):
     """Trial balance is a dictionary of account names and
     their debit-side and credit-side balances."""
 
     @classmethod
-    def new(cls, ledger):
+    def new(cls, ledger: Ledger):
         _ledger = ledger.condense()
         tb = cls()
         for name, balance in _ledger.subset(DebitAccount).balances.items():
             tb[name] = (balance, 0)
         for name, balance in _ledger.subset(CreditAccount).balances.items():
             tb[name] = (0, balance)
-        return tb
+        return cls(tb)
 
-    def viewer(self, header="Trial balance"):
-        from abacus.viewers import TrialBalanceViewer as TB
+    @property
+    def viewer(self):
+        from abacus.viewers import TrialBalanceViewer
 
-        return TB(self, header)
-
-    def print(self):
-        # TODO: make rich print
-        print(self.viewer())
-
-    def rich_print(self):
-        print(self.viewer())
+        return TrialBalanceViewer(self.data)
 
 
 def sum_second(xs):

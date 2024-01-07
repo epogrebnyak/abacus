@@ -98,7 +98,11 @@ def entries0():
 def test_pipleine(chart0, entries0):
     ledger = chart0.ledger().post_many(entries0)
     p = Pipeline(chart0, ledger).close_first().close_second().close_last()
-    assert p.ledger.balances.nonzero() == {"cash": 110, "equity": 100, "re": 10}
+    assert p.ledger.balances.nonzero() == {
+        "cash": 110,
+        "equity": 100,
+        "retained_earnings": 10,
+    }
 
 
 @pytest.fixture
@@ -111,7 +115,7 @@ def Report0(chart0, entries0):
 def test_balance_sheet(Report0):
     assert Report0.balance_sheet == BalanceSheet(
         assets={"cash": 110},
-        capital={"equity": 100, "re": 10},
+        capital={"equity": 100, "retained_earnings": 10},
         liabilities={"dividend_due": 0},
     )
 
@@ -137,11 +141,11 @@ def test_trial_balance(Report0):
         "voids": (2, 0),
         "salaries": (30, 0),
         "equity": (0, 120),
-        "re": (0, 0),
+        "retained_earnings": (0, 0),
         "dividend_due": (0, 0),
         "sales": (0, 47),
-        "isa": (0, 0),
-        "null": (0, 0),
+        "_isa": (0, 0),
+        "_null": (0, 0),
     }
 
 
@@ -272,3 +276,25 @@ def test_serialisation():
     e = Entry("a", "b", 1)
     assert e.from_string(e.to_json()) == e
     assert e.to_json() == '{"debit": "a", "credit": "b", "amount": 1}'
+
+
+def test_print_all():
+    chart = Chart(
+        assets=["cash"],
+        capital=["equity"],
+        income=["services"],
+        expenses=["marketing", "salaries"],
+    )
+
+    # Create a ledger using the chart
+    ledger = chart.ledger()
+
+    # Post entries to ledger
+    ledger.post(debit="cash", credit="equity", amount=5000)
+    ledger.post(debit="marketing", credit="cash", amount=1000)
+    ledger.post(debit="cash", credit="services", amount=3499)
+    ledger.post(debit="salaries", credit="cash", amount=2000)
+
+    # Print trial balance, balance sheet and income statement
+    report = Report(chart, ledger).rename("re", "Retained earnings")
+    assert report.print_all() is None
