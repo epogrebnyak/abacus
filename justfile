@@ -27,6 +27,7 @@ grill:
 scripts:
   poetry run python readme.py
   rm chart.json && rm entries.linejson && readme.bat
+  cd scripts/vat && vat.bat
   just docs-py
   just docs-cli
 

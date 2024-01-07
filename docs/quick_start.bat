@@ -23,6 +23,8 @@ abacus report --trial-balance
 
 abacus report --account-balances
 abacus report --account-balances > balances.json
+# in next project
+abacus load balances.json
 
 abacus --help
 abacus extra --help

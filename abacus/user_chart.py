@@ -80,6 +80,10 @@ class UserChart(BaseModel):
     retained_earnings_account: str
     null_account: str
     account_labels: dict[str, AccountLabel] = {}
+    rename_dict: dict[str, str] = {}
+
+    def rename(self, name: str, title: str):
+        self.rename_dict[name.split(":")[-1]] = title
 
     def yield_names(self):
         yield self.income_summary_account
@@ -97,6 +101,7 @@ class UserChart(BaseModel):
     def assert_unique(self, name):
         if name in self.names:
             raise AbacusError(f"Duplicate account name: {name}")
+        return name    
 
     def add_one(self, obj: Label | Offset):
         match obj:
@@ -158,7 +163,7 @@ class UserChart(BaseModel):
 
 def user_chart(*args):
     return UserChart(
-        income_summary_account="isa",
-        retained_earnings_account="re",
-        null_account="null",
+        income_summary_account="_isa",
+        retained_earnings_account="retained_earnings",
+        null_account="_null",
     ).use(*args)

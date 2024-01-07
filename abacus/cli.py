@@ -13,6 +13,7 @@ from abacus.core import (
     IncomeStatement,
     Pipeline,
     TrialBalance,
+    MultipleEntry
 )
 from abacus.entries_store import LineJSON
 from abacus.user_chart import UserChart, user_chart
@@ -99,11 +100,16 @@ def cx_command():
 
 @cx.command(name="add")
 @click.argument("account_names", required=True, type=str, nargs=-1)
-def cx_add(account_names):
+@click.option("--title", required=False, type=str, help="Account title")
+def cx_add(account_names, title):
     """Add account to chart."""
     try:
-        get_user_chart().use(*account_names).save(path=get_chart_path())
+        chart = get_user_chart().use(*account_names)
         print(f"Added to chart: {' '.join(account_names)}.")
+        if len(account_names) == 1 and title:
+            chart.rename(account_names[0], title)  
+            print("Account title:", title)
+        chart.save(path=get_chart_path())   
     except (AbacusError, FileNotFoundError) as e:
         sys.exit(str(e))
 
@@ -190,18 +196,19 @@ def cx_report(
     """Show reports."""
     from abacus.viewers import print_viewers
 
-    if trial_balance_flag:
+    rename_dict = get_user_chart().rename_dict
+    if trial_balance_flag and not all_reports_flag:
         trial_balance().viewer.print()
-    if balance_sheet_flag:
-        balance_sheet().viewer.print()
-    if income_statement_flag:
-        income_statement().viewer.print()
+    if balance_sheet_flag and not all_reports_flag:
+        balance_sheet().viewer.use(rename_dict).print()
+    if income_statement_flag and not all_reports_flag:
+        income_statement().viewer.use(rename_dict).print()
     if account_balances_flag:
         print(account_balances())
     if all_reports_flag:
         tv = trial_balance().viewer
-        bv = balance_sheet().viewer
-        iv = income_statement().viewer
+        bv = balance_sheet().viewer.use(rename_dict)
+        iv = income_statement().viewer.use(rename_dict)
         print_viewers({}, tv, bv, iv)
 
 
@@ -289,36 +296,15 @@ def load(file):
     get_store().append_many(entries)
     print("Loaded starting balances from", file)
 
-
-# @ledger.command
-# @click.option("--debit", required=True, type=str, help="Debit account name.")
-# @click.option("--credit", required=True, type=str, help="Credit account name.")
-# @click.option("--amount", required=True, type=int, help="Transaction amount.")
-# @click.option("--title")
-# def post(debit, credit, amount, title):
-#     """Post double entry to ledger."""
-#     chart_command().promote(debit).promote(credit).echo().write()
-#     ledger_command().post_entry(last(debit), last(credit), amount).echo()
-#     # FIXME: title not used
-
-
-# @ledger.command(name="post-compound")
-# @click.option("--debit", type=(str, int), multiple=True)
-# @click.option("--credit", type=(str, int), multiple=True)
-# def post_compound(debit, credit):
-#     """Post compound entry to ledger."""
-#     chart_handler = chart_command()
-#     for account, _ in debit + credit:
-#         chart_handler.promote(account)
-#     chart_handler.echo().write()
-
-#     def apply_last(tuples):
-#         return [(last(account), amount) for account, amount in tuples]
-
-#     ledger_handler = ledger_command()
-#     ledger_handler.post_compound(
-#         get_chart(), apply_last(debit), apply_last(credit)
-#     ).echo()
+@cx.command(name="post-compound")
+@click.option("--debit", type=(str, int), multiple=True)
+@click.option("--credit", type=(str, int), multiple=True)
+def post_compound(debit, credit):
+    """Post compound entry."""
+    chart = get_chart()
+    store = get_store()    
+    entries = MultipleEntry(debits=debit, credits=credit).to_entries(chart.null_account)
+    store.append_many(entries)
 
 
 # @ledger.command

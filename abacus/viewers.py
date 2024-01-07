@@ -221,7 +221,9 @@ class PairColumn:
         rename_dict = rename_dict or {}
 
         def g(s):
-            return rename_dict.get(s, s).replace("_", " ").strip().capitalize()
+            if s in rename_dict.keys():
+                return rename_dict[s]
+            return s.replace("_", " ").strip().capitalize()
 
         self.xs = [x.rename(g) for x in self.xs]
 

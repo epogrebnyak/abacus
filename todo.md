@@ -1,12 +1,10 @@
 TODO:
 
-- [ ] --title for entry *
-- [ ] --title for account name
-- [ ] posting multiple entries
+- [ ] `abacus assert vat 20`
 
 TESTS:
 
-- [ ] runnable scripts and example (VAT, joan low office, etc)
+- [ ] runnable scripts and example (VAT, joan law office, etc)
 
 DOCS/PROSE:
 
@@ -15,6 +13,7 @@ DOCS/PROSE:
 
 WONTFIX:
 
+- [ ] --title for entry *
 - [ ] streamlit interface
 - [ ] operations dictionary
 - [ ] former test package
@@ -22,5 +21,7 @@ WONTFIX:
 
 Done:
 
+- [x] --title for account name
 - [x] plug review/viewers.py to abacus +1
 - [x] API documentation
+- [x] posting multiple entries
