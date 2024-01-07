@@ -95,5 +95,35 @@ Show firm balance sheet and income statement at period end.
     abacus report --income-statement
     ```
 
-Complete file listings may be found at [quick_start.py](quick_start.py)
-and [quick_start.bat](quick_start.bat).
+Complete file listings may be found at
+[quick_start.py](https://github.com/epogrebnyak/abacus/blob/main/docs/quick_start.py)
+and [quick_start.bat](https://github.com/epogrebnyak/abacus/blob/main/docs/quick_start.py).
+
+## More features
+
+### Contra accounts
+
+```bash
+abacus add contra:sales:refunds
+abacus post refunds cash 120 --title "Client refund"
+```
+
+### Trial balance
+
+```bash
+abacus report --trial-balance
+```
+
+### Account balances
+
+```bash
+abacus report --account-balances
+abacus report --account-balances > balances.json
+```
+
+### Help and extra commands
+
+```bash
+abacus --help
+abacus extra --help
+```

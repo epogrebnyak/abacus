@@ -1,4 +1,4 @@
-## Example
+# Example
 
 A freshly created trading Klondike Trading Company (KTC) has recorded the following transactions.
 

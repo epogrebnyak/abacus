@@ -25,10 +25,19 @@ grill:
   just docs-cli
   just scripts
 
+# Run command line examples (Linux)
+scripts:
+   poetry run python readme.py
+#  cd scripts/abacus && bash -e all.sh
+#  cd scripts/cx && bash -e joan.sh
+#  cd scripts/vat && bash -e vat.sh
+
+#cli:
+#  cd scripts/abacus && bash -e all.sh 
+
 # Run pytest (up to first error) and print slowest test times 
 test:
   poetry run pytest . -x --durations=5
-
 
 # Type check
 mypy:
@@ -60,13 +69,7 @@ docs-cli:
   poetry run python docs/echo.py docs/quick_start.md | npx codedown bash > docs/quick_start.bat
   cd docs && rm -f chart.json entries.linejson && quick_start.bat
 
-# Run command line examples (Linux)
-scripts:
-   poetry run python readme.py
-#  cd scripts/abacus && bash -e all.sh
-#  cd scripts/cx && bash -e joan.sh
-#  cd scripts/vat && bash -e vat.sh
- 
+
 # Build and serve docs
 docs:
   poetry run mkdocs serve 
@@ -78,9 +81,6 @@ docs-publish:
 # Publish to PyPI
 publish:
   poetry publish --build
-
-#cli:
-#  cd scripts/abacus && bash -e all.sh 
 
 patch:
   poetry version patch

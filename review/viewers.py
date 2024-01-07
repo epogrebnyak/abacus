@@ -89,10 +89,6 @@ class TextColumn:
         return "\n".join(self.strings)
 
 
-def transpose(xs):
-    return list(map(list, zip(*xs)))
-
-
 @dataclass
 class String:
     s: str
@@ -116,11 +112,6 @@ class Number:
 
 
 @dataclass
-class Cell:
-    content: String | Number
-
-
-@dataclass
 class Format:
     ...
 
@@ -140,7 +131,7 @@ OFFSET = OffsetF()
 
 
 @dataclass
-class Cell2:
+class Cell:
     content: String | Number
     formats: list[Format] = field(default_factory=list)
 
@@ -167,20 +158,12 @@ class Cell2:
         return r
 
 
-class Bold(Cell):
-    """Row with section header like Assets"""
-
-
-class Offset(Cell):
-    """Row with offset like '  Cash'."""
-
-
 @dataclass
 class Empty:
     ...
 
 
-EMPTY = Cell2(String(""))
+EMPTY = Cell(String(""))
 
 
 def maps(f, xs):
@@ -205,8 +188,8 @@ def bold(s: Text | str) -> Text:
 
 @dataclass
 class PairColumn:
-    xs: list[Cell2]
-    ys: list[Cell2]
+    xs: list[Cell]
+    ys: list[Cell]
 
     def __len__(self):
         return len(self.xs)
@@ -221,11 +204,11 @@ class PairColumn:
         ys = []
         for k, vs in d.items():
             n = sum(vs.values())
-            xs.append(Cell2(String(k), [BOLD]))
-            ys.append(Cell2(Number(n), [BOLD]))
+            xs.append(Cell(String(k), [BOLD]))
+            ys.append(Cell(Number(n), [BOLD]))
             for name, value in vs.items():
-                xs.append(Cell2(String(name), [OFFSET]))
-                ys.append(Cell2(Number(value)))
+                xs.append(Cell(String(name), [OFFSET]))
+                ys.append(Cell(Number(value)))
         return cls(xs, ys)
 
     def text_table(self):
@@ -239,8 +222,8 @@ class PairColumn:
             self.ys.append(EMPTY)
 
     def add_footer(self, s: str, n: Amount):
-        self.xs.append(Cell2(String(s), [BOLD]))
-        self.ys.append(Cell2(Number(n), [BOLD]))
+        self.xs.append(Cell(String(s), [BOLD]))
+        self.ys.append(Cell(Number(n), [BOLD]))
 
     def rename(self, rename_dict=None):
         rename_dict = rename_dict or {}
@@ -303,8 +286,8 @@ class ViewerIS(Viewer):
         table = RichTable(title=self.title, box=None, width=width, show_header=False)
         table.add_column()
         table.add_column(justify="right", style="green")
-        p1 = self.pair_columns[0]
-        for a, b in zip(p1.xs, p1.ys):
+        p = self.pair_column
+        for a, b in zip(p.xs, p.ys):
             table.add_row(a.rich(), b.rich())
         return table
 
@@ -325,7 +308,7 @@ class ViewerBS(Viewer):
 
     @property
     def pair_columns(self):
-        ds = self.to_dicts(self.statement)
+        ds = self.to_dicts()
         p1 = PairColumn.from_dict(ds[0])
         p2 = PairColumn.from_dict(ds[1])
         equalize_length(p1, p2)
@@ -333,8 +316,7 @@ class ViewerBS(Viewer):
         s = self.statement
         p2.add_footer(
             "total",
-            sum(s.capital.values())
-            + sum(s.liabilities.values()),
+            sum(s.capital.values()) + sum(s.liabilities.values()),
         )
         p1.rename(self.rename_dict)
         p2.rename(self.rename_dict)
@@ -401,27 +383,3 @@ class ViewerTB(Viewer):
         for a, b, c in zip(self.account_names(), self.debits, self.credits):
             table.add_row(Text(a), red(Amount(b)), red(Amount(c)))
         return table
-
-
-b = BS(
-    assets=dict(cash=200),
-    capital=dict(equity=150, retained_earnings=-20),
-    liabilities=dict(loan=65, dd=5),
-)
-i = IS(income=dict(sales=40), expenses=dict(rent=25, salaries=35))
-vb = ViewerBS(
-    b,
-    rename_dict=dict(assets="активы", cash="касса", dd="dividend due", total="итого"),
-    title="Баланс",
-)
-vi = ViewerIS(i, "Income statement")
-
-print(vb)
-print(vi)
-
-vtb = ViewerTB(dict(cash=(100, 0), equity=(0, 120), re=(0, -20)))
-print(vtb)
-
-vb.print(max(vb.width, vi.width) + 2)
-vi.print(max(vb.width, vi.width) + 2)
-vtb.print(max(vb.width, vi.width) + 2)

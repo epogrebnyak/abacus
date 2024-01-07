@@ -1,14 +1,22 @@
 TODO:
 
-- [ ] change README.md
-- [ ] runnable scripts
+- [ ] plug review/viewers.py to abacus
 - [ ] --title for entry
 - [ ] --title for account name
+- [ ] posting multiple entries
+
+TESTS:
+
+- [ ] runnable scripts and example (VAT, joan low office, etc)
+
+PROSE:
+
 - [ ] _Is it difficult to program an accounting system?_ piece
+- [ ] API documentation
 
 WONTFIX:
 
-- [ ] ... for empty strings in reports
+- [ ] streamlit interface
 - [ ] operations dictionary
-- [ ] web / streamlit interface
 - [ ] former test package
+- [ ] ... for empty strings in reports
