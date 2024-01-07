@@ -31,9 +31,7 @@ from enum import Enum
 from pathlib import Path
 from typing import ClassVar, Iterable, Type
 
-
-class AbacusError(Exception):
-    """Custom error for this project."""
+from abacus.base import AbacusError, Amount
 
 
 class T(Enum):
@@ -125,10 +123,6 @@ class Account:
 
     def __str__(self):
         return self.name
-
-
-# FIXME: can use decimal.Decimal
-Amount = int
 
 
 @dataclass
@@ -382,14 +376,18 @@ class AccountBalances(UserDict[str, Amount]):
         return cls(json.loads(Path(path).read_text(encoding="utf-8")))
 
 
+def starting_entries(chart: Chart, balances: AccountBalances):
+    return MultipleEntry.from_balances(chart, balances).to_entries(chart.null_account)
+
+
 class Ledger(UserDict[str, TAccount]):
     @classmethod
     def new(cls, chart: Chart, balances: AccountBalances | None):
         """Create a new ledger from chart, possibly using starting balances."""
         ledger = cls({name: h.t_account() for name, h in chart.dict_items()})  # type: ignore
         if balances:
-            me = MultipleEntry.from_balances(chart, balances)
-            ledger.post_many(me.to_entries(chart.null_account))
+            entries = starting_entries(chart, balances)
+            ledger.post_many(entries)
         return ledger
 
     def post(self, debit: str, credit: str, amount: Amount, title: str = ""):
@@ -563,14 +561,12 @@ class Report:
         return self.ledger.balances
 
     def print_all(self):
-        t = self.trial_balance.viewer
-        b = self.balance_sheet.viewer
-        i = self.income_statement.viewer
-        # +2 account for padding and boundaries in RichTable
-        width = 2 + max(b.width, i.width, t.width)
-        t.print(width)
-        b.use(self.rename_dict).print(width)
-        i.use(self.rename_dict).print(width)
+        from abacus.viewers import print_viewers
+
+        tv = self.trial_balance.viewer
+        bv = self.balance_sheet.viewer
+        iv = self.income_statement.viewer
+        print_viewers(self.rename_dict, tv, bv, iv)
 
 
 class Statement(ABC):

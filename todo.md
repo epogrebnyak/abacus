@@ -1,6 +1,6 @@
 TODO:
 
-- [ ] --title for entry
+- [ ] --title for entry *
 - [ ] --title for account name
 - [ ] posting multiple entries
 
@@ -22,5 +22,5 @@ WONTFIX:
 
 Done:
 
-- [x] plug review/viewers.py to abacus +1 
+- [x] plug review/viewers.py to abacus +1
 - [x] API documentation

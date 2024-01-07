@@ -1,7 +1,7 @@
 import pytest
+
 from abacus.core import AccountBalances as AB
-from abacus.core import BalanceSheet
-from abacus.core import IncomeStatement
+from abacus.core import BalanceSheet, IncomeStatement
 from abacus.viewers import BalanceSheetViewer, IncomeStatementViewer, TrialBalanceViewer
 
 

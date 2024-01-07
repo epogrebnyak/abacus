@@ -8,7 +8,8 @@ from rich.console import Console  # type: ignore
 from rich.table import Table as RichTable  # type: ignore
 from rich.text import Text  # type: ignore
 
-from abacus.core import Amount, BalanceSheet, IncomeStatement
+from abacus.base import Amount
+from abacus.core import BalanceSheet, IncomeStatement
 
 
 @dataclass
@@ -382,3 +383,17 @@ class TrialBalanceViewer(Viewer):
         for a, b, c in zip(self.account_names, self.debits, self.credits):
             table.add_row(Text(a), red(Amount(b)), red(Amount(c)))
         return table
+
+
+def print_viewers(
+    rename_dict: dict[str, str],
+    tv: TrialBalanceViewer,
+    bv: BalanceSheetViewer,
+    iv: IncomeStatementViewer,
+):
+    width = 2 + max(
+        bv.width, iv.width, tv.width
+    )  # +2 for padding and boundaries in RichTable
+    tv.print(width)
+    bv.use(rename_dict).print(width)
+    iv.use(rename_dict).print(width)

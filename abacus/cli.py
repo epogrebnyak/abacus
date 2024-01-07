@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 
-import click
+import click  # type: ignore
 
 from abacus.core import (
     AbacusError,
@@ -130,7 +130,7 @@ def name(account_name, title) -> None:
 def cx_post(debit, credit, amount, title):
     """Post double entry to ledger."""
     if not (entries_path := get_entries_path()).exists():
-        sys.exit(f"FileNotFoundError: {entries_path()}")
+        sys.exit(f"FileNotFoundError: {entries_path}")
     # FIXME: title is discarded
     get_store().append(Entry(debit, credit, amount))
     print(f"Posted to ledger: debit <{debit}> {amount}, credit <{credit}> {amount}.")
@@ -188,16 +188,21 @@ def cx_report(
     all_reports_flag,
 ):
     """Show reports."""
+    from abacus.viewers import print_viewers
+
     if trial_balance_flag:
-        trial_balance().rich_print()
+        trial_balance().viewer.print()
     if balance_sheet_flag:
-        balance_sheet().rich_print()
+        balance_sheet().viewer.print()
     if income_statement_flag:
-        income_statement().rich_print()
+        income_statement().viewer.print()
     if account_balances_flag:
         print(account_balances())
     if all_reports_flag:
-        pass
+        tv = trial_balance().viewer
+        bv = balance_sheet().viewer
+        iv = income_statement().viewer
+        print_viewers({}, tv, bv, iv)
 
 
 # cx init
@@ -272,14 +277,17 @@ def set_special_accounts(re, null, isa):
     # command.echo().write()
 
 
-@extra.command(name="load")
+@cx.command(name="load")
 @click.argument("file", type=click.Path(exists=True))
-def init_ledger(file):
+def load(file):
     """Load starting balances from JSON file."""
-    # handler = LedgerCommand(path=get_entries_path()).init().echo()
-    # if file:
-    #     starting_balances = read_starting_balances(file)
-    #     handler.post_starting_balances(get_chart(), starting_balances).echo()
+    from abacus.core import AccountBalances, starting_entries
+
+    balances = AccountBalances.load(file)
+    chart = get_chart()
+    entries = starting_entries(chart, balances)
+    get_store().append_many(entries)
+    print("Loaded starting balances from", file)
 
 
 # @ledger.command

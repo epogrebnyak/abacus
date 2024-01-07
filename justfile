@@ -21,17 +21,18 @@ go:
 grill:
   just go
   just md
-  just docs-py
-  just docs-cli
   just scripts
 
-# Run command line examples (Linux)
+# Run examples 
 scripts:
-   poetry run python readme.py
+  poetry run python readme.py
+  rm chart.json && rm entries.linejson && readme.bat
+  just docs-py
+  just docs-cli
+
 #  cd scripts/abacus && bash -e all.sh
 #  cd scripts/cx && bash -e joan.sh
 #  cd scripts/vat && bash -e vat.sh
-
 #cli:
 #  cd scripts/abacus && bash -e all.sh 
 
@@ -63,11 +64,17 @@ md:
 docs-py:
   poetry run python docs/echo.py docs/quick_start.md | npx codedown python > docs/quick_start.py
   poetry run python docs/quick_start.py
+  poetry run python docs/echo.py docs/index.md | npx codedown python > docs/index.py
+  poetry run python docs/index.py
+
 
 # Run console examples from docs
 docs-cli:
   poetry run python docs/echo.py docs/quick_start.md | npx codedown bash > docs/quick_start.bat
   cd docs && rm -f chart.json entries.linejson && quick_start.bat
+  poetry run python docs/echo.py docs/index.md | npx codedown bash > docs/index.bat
+  cd docs && rm -f chart.json entries.linejson && index.bat
+
 
 
 # Build and serve docs

@@ -34,7 +34,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-           options:
-              show_bases: true
-              show_root_heading: true
-              show_source: true              
+          options:
+            show_bases: true
+            show_root_heading: true
+            show_source: true

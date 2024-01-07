@@ -84,8 +84,10 @@ Show firm balance sheet and income statement at period end.
     ```python
     from abacus import Report
     report = Report(chart, ledger)
-    report.balance_sheet.print()
-    report.income_statement.print()
+    report.trial_balance.viewer.print()
+    report.balance_sheet.viewer.print()
+    report.income_statement.viewer.print()
+    print(report.account_balances)
     ```
 
 === "Command line"
@@ -119,6 +121,8 @@ abacus report --trial-balance
 ```bash
 abacus report --account-balances
 abacus report --account-balances > balances.json
+# in next project 
+abacus load balances.json
 ```
 
 ### Help and extra commands

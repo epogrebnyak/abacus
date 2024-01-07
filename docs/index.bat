@@ -12,4 +12,4 @@ abacus post salaries cash   500 --title="Pay salaries"
 abacus close
 abacus report --all
 
-
+pip install abacus-py
