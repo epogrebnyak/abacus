@@ -1,6 +1,6 @@
 TODO:
 
-- [ ] plug review/viewers.py to abacus
+- [ ] plug review/viewers.py to abacus +1 
 - [ ] --title for entry
 - [ ] --title for account name
 - [ ] posting multiple entries
@@ -9,10 +9,11 @@ TESTS:
 
 - [ ] runnable scripts and example (VAT, joan low office, etc)
 
-PROSE:
+DOCS/PROSE:
 
 - [ ] _Is it difficult to program an accounting system?_ piece
-- [ ] API documentation
+- [x] API documentation
+- [ ] changelog
 
 WONTFIX:
 

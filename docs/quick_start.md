@@ -33,7 +33,7 @@ Show firm balance sheet and income statement at period end.
     from abacus import Chart
 
     chart = Chart(
-        assets=["cash", "inventory"],
+        assets=["cash", "inv"],
         capital=["equity"],
         income=["sales"],
         expenses=["cogs", "sga"],
@@ -59,11 +59,11 @@ Show firm balance sheet and income statement at period end.
 
     ```python
     ledger = chart.ledger()
-    ledger.post("cash", "equity", 5000, title="Shareholder investment")
-    ledger.post("inventory", "cash", 4000, title="Purchased merchandise")
-    ledger.post("cash", "sales", 4800, title="Sold merchandise")
-    ledger.post("cogs", "inventory", 4000, title="Registered cost of sales")
-    ledger.post("sga", "cash", 500, title="Paid sales representative")
+    ledger.post(debit="cash", credit="equity", amount=5000, title="Shareholder investment")
+    ledger.post("inv",  "cash",   4000, title="Purchased merchandise")
+    ledger.post("cash", "sales",  4800, title="Sold merchandise")
+    ledger.post("cogs", "inv",    4000, title="Registered cost of sales")
+    ledger.post("sga",  "cash",    500, title="Paid sales representative")
     ```
 
 === "Command line"

@@ -12,12 +12,13 @@ nav:
       - about/motivation.md
       - about/quotes.md
       - about/similar.md
+  - reference.md
 
 theme:
   name: material
   logo: assets/robot.png
   features:
-    - navigation.expand
+    #- navigation.expand
     - content.code.copy
 
 markdown_extensions:
@@ -30,3 +31,10 @@ markdown_extensions:
 
 plugins:
   - search
+  - mkdocstrings:
+      handlers:
+        python:
+           options:
+              show_bases: true
+              show_root_heading: true
+              show_source: true              

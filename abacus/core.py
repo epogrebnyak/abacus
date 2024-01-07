@@ -5,23 +5,22 @@ Using this module you can:
 - create a chart of accounts using `Chart` class,
 - create `Ledger` from `Chart`,
 - post entries to `Ledger`,
-- use `Report` class to generate trial balance, balance sheet and income statement.
+- generate trial balance, balance sheet and income statement.
 
 Implemented in this module:
 
-1. proper closing of accounts at the accounting period end,
-2. contra accounts — there can be a "refunds" account that offsets "income:sales"
-   and "depreciation" account that offsets "asset:ppe".
-3. multiple entries — debit and credit several accounts in one transaction.
+- **contra accounts** — there can be a `refunds` account that offsets `income:sales`
+  and `depreciation` account that offsets `asset:ppe`,
+- **multiple entries** — debit and credit several accounts in one transaction,
+- **closing entries** — proper closing of accounts at the accounting period end.
 
-Assumptions — things that were made intentionally simple:
+Assumptions and simplifications:
 
-1. there is only one level of account hierarchy — no sub-accounts in chart,
-2. account names must be globally unique,
-3. no cashflow statement yet,
-4. one currency,
-5. no checks for account non-negativity,
-6. simple entry format, just debit and credit account names and transaction amount. 
+1. no sub-accounts — there is only one level of account hierarchy in chart
+2. account names must be globally unique
+3. no cashflow statement
+4. one currency
+5. no checks for account non-negativity
 """
 import json
 from abc import ABC, abstractmethod
@@ -265,14 +264,13 @@ class ExtraDebitAccount(ExtraAccount, DebitAccount):
 class Wrap(Holder):
     """Holder for accounts that do not belong to any of 5 account types.
 
-    There are two such accounts where this holder is needed:
-    - income summary account,
-    - null account.
+    There are two temporary accounts where this holder is needed:
 
-    This holder wraps the constructor for t-account used in ledger.
-
-    Income summary account should have zero balance at the end
-    of accounting period. Null account should always has zero balance.
+       - income summary account,
+       - null account.
+    
+    Note: Income summary account should have zero balance at the end of accounting period. 
+    Null account should always has zero balance.
     """
 
     t: type[ExtraAccount]
@@ -342,8 +340,15 @@ class Chart:
 
 @dataclass
 class Entry:
-    """Double entry — reflects account name to be debited,
-    account name to be credited and transaction amount."""
+    """Double entry with account name to be debited,
+       account name to be credited and transaction amount.
+       
+    Example:
+
+    ```python
+    entry = Entry(debit="cash", credit="equity", amount=20000)
+    ```   
+    """
 
     debit: str
     credit: str
@@ -525,11 +530,11 @@ class Report:
     ledger: Ledger
     rename_dict: dict[str, str] = field(default_factory=dict)
 
+    # FIXME: may condense chart after init
+
     def rename(self, key, value):
         self.rename_dict[key] = value
         return self
-
-    # FIXME: may condense chart after init
 
     @property
     def pipeline(self):

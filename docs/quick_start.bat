@@ -15,3 +15,14 @@ abacus close
 
 abacus report --balance-sheet
 abacus report --income-statement
+
+abacus add contra:sales:refunds
+abacus post refunds cash 120 --title "Client refund"
+
+abacus report --trial-balance
+
+abacus report --account-balances
+abacus report --account-balances > balances.json
+
+abacus --help
+abacus extra --help
