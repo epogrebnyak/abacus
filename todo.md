@@ -1,6 +1,5 @@
 TODO:
 
-- [ ] plug review/viewers.py to abacus +1 
 - [ ] --title for entry
 - [ ] --title for account name
 - [ ] posting multiple entries
@@ -12,8 +11,7 @@ TESTS:
 DOCS/PROSE:
 
 - [ ] _Is it difficult to program an accounting system?_ piece
-- [x] API documentation
-- [ ] changelog
+- [ ] restore changelog
 
 WONTFIX:
 
@@ -21,3 +19,8 @@ WONTFIX:
 - [ ] operations dictionary
 - [ ] former test package
 - [ ] ... for empty strings in reports
+
+Done:
+
+- [x] plug review/viewers.py to abacus +1 
+- [x] API documentation
