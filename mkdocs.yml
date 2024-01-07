@@ -5,15 +5,15 @@ copyright: "&copy; 2023-2024 Evgeniy Pogrebnyak"
 nav:
   - "A minimal, yet valid double entry accounting system": index.md
   - quick_start.md
-  - examples.md
-  - reference.md
+#  - examples.md
+#  - reference.md
   - Accounting basics:
       - accounting/introduction.md
       - accounting/chart_of_accounts.md
   - More about project:
       - about/motivation.md
       - about/quotes.md
-      - about/rules.md
+#      - about/rules.md
       - about/similar.md
 
 theme:
@@ -21,11 +21,15 @@ theme:
   logo: assets/robot.png
   features:
     - navigation.expand
+    - content.code.copy
 
 markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
 
 plugins:
   - search

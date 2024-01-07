@@ -10,13 +10,13 @@ pip install abacus-py
 
 ## Accounting cycle with `abacus`
 
-With `abacus` you can do the following parts of accounting work:
+With `abacus` you can replicate the following parts of accounting work:
 
-1. define a chart of accounts,
-2. post entries to ledger,
-3. make trial balance and adjustment entries,
-4. close accounts at period end,
-5. make balance sheet and income statement.
+- [x] define a chart of accounts,
+- [x] post entries to ledger,
+- [x] make trial balance and adjustment entries,
+- [x] close accounts at period end,
+- [x] make balance sheet and income statement.
 
 ## Minimal example
 
@@ -96,4 +96,4 @@ Show firm balance sheet and income statement at period end.
     ```
 
 Complete file listings may be found at [quick_start.py](quick_start.py)
-and [quick_start.sh](quick_start.sh).
+and [quick_start.bat](quick_start.bat).
