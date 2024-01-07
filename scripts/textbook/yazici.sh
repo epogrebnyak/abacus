@@ -1,7 +1,6 @@
 # https://alqashi.com/book/Book50.pdf (pages)
-abacus chart unlink --yes 
-abacus ledger unlink --yes 
-cx init
+abacus init
+# TODO
 cx post --debit asset:cash               --credit capital:equity     --amount 100_000
 cx post --debit asset:equipment          --credit liability:notes    --amount  50_000
 cx post --debit cash                     --credit liability:unearned --amount  12_000

@@ -1,15 +1,16 @@
-TODO:
+TODO/EXAMPLES:
 
-- [ ] `abacus assert vat 20`
-
-TESTS:
-
-- [ ] runnable scripts and example (VAT, joan law office, etc)
+- [ ] yazici ads
 
 DOCS/PROSE:
 
 - [ ] _Is it difficult to program an accounting system?_ piece
 - [ ] restore changelog
+
+BUGS:
+
+- [ ] joan law office ***
+- [ ] problem with `abacus load starting_balances.json` in docs-cli
 
 WONTFIX:
 
@@ -25,3 +26,4 @@ Done:
 - [x] plug review/viewers.py to abacus +1
 - [x] API documentation
 - [x] posting multiple entries
+- [x] `abacus assert vat 20`

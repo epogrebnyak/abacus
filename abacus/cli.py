@@ -113,21 +113,6 @@ def cx_add(account_names, title):
     except (AbacusError, FileNotFoundError) as e:
         sys.exit(str(e))
 
-
-@cx.command(name="name")
-@click.argument("account_name", type=str)
-@click.argument("title", type=str)
-def cx_name(account_name, title):
-    """Set account title."""
-    name(account_name, title)
-
-
-# TODO
-def name(account_name, title) -> None:
-    print(" Name:", account_name)
-    print("Title:", title)
-
-
 @cx.command(name="post")
 @click.argument("debit", required=True, type=str)
 @click.argument("credit", required=True, type=str)
@@ -274,14 +259,14 @@ def cx_unlink():
 )
 def set_special_accounts(re, null, isa):
     """Change default account names (isa, re, null)."""
-    # command = chart_command()
-    # if re:
-    #     command.set_retained_earnings(re)
-    # if null:
-    #     command.set_null_account(null)
-    # if isa:
-    #     command.set_isa(isa)
-    # command.echo().write()
+    user_chart = get_user_chart()
+    if isa:
+        user_chart.set_isa(isa)
+    if re:
+        user_chart.set_re(re)
+    if null:
+        user_chart.set_null(null)
+    user_chart.save(path=get_chart_path())
 
 
 @cx.command(name="load")
@@ -411,19 +396,15 @@ def post_compound(debit, credit):
 #     print_account_info(ledger, get_chart(), account_name)
 
 
-# @accounts.command("assert")
-# @click.option("--balance", type=(str, int), multiple=True)
-# def assert_balance(balance):
-#     """Verify account balance."""
-#     from abacus.cli.inspect_command import assert_account_balance
-#     from abacus.cli.report_command import current_ledger
-
-#     ledger = current_ledger(
-#         chart_path=get_chart_path(), entries_path=get_entries_path()
-#     )
-#     for account_name, balance_ in balance:
-#         assert_account_balance(ledger, account_name, balance_)
-
+@cx.command("assert")
+@click.argument("account_name")
+@click.argument("balance", type=int)
+def assert_balance(account_name, balance):
+    """Verify account balance."""
+    ab = account_balances()
+    if (fact := ab[account_name]) != balance:
+        sys.exit(f"{account_name} balance is {fact}, expected {balance}.")
+        
 
 # @accounts.command(name="show-balances")
 # @click.option("--nonzero", is_flag=True, help="Omit accounts with zero balances.")

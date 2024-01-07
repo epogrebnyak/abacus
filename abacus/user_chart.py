@@ -146,11 +146,11 @@ class UserChart(BaseModel):
             income_summary_account=self.income_summary_account,
             retained_earnings_account=self.retained_earnings_account,
             null_account=self.null_account,
-            assets=self.accounts(T.Asset),
-            capital=self.accounts(T.Capital),
-            liabilities=self.accounts(T.Liability),
-            income=self.accounts(T.Income),
-            expenses=self.accounts(T.Expense),
+            assets=self.accounts(T.Asset), #type: ignore
+            capital=self.accounts(T.Capital), #type: ignore
+            liabilities=self.accounts(T.Liability), #type: ignore
+            income=self.accounts(T.Income), #type: ignore
+            expenses=self.accounts(T.Expense), #type: ignore
         ).validate()
 
     def save(self, path: Path | str):

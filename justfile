@@ -28,14 +28,12 @@ scripts:
   poetry run python readme.py
   rm chart.json && rm entries.linejson && readme.bat
   cd scripts/vat && vat.bat
+  cd scripts/set && set.bat
   just docs-py
   just docs-cli
 
 #  cd scripts/abacus && bash -e all.sh
 #  cd scripts/cx && bash -e joan.sh
-#  cd scripts/vat && bash -e vat.sh
-#cli:
-#  cd scripts/abacus && bash -e all.sh 
 
 # Run pytest (up to first error) and print slowest test times 
 test:
