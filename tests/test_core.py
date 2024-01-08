@@ -20,7 +20,7 @@ from abacus.core import (
     Report,
     contra_pairs,
 )
-from abacus.user_chart import user_chart
+from abacus.user_chart import make_user_chart
 
 
 @pytest.mark.regression
@@ -183,7 +183,7 @@ def test_multiple_entry_from_account_balances():
 
 @pytest.fixture
 def chart2():
-    return user_chart(
+    return make_user_chart(
         "asset:cash",
         "capital:equity",
         "contra:equity:ts",

@@ -10,9 +10,10 @@ BUGS:
 
 WONTFIX:
 
+- [ ] maybe promote
 - [ ] sort keys and totals in trial balance
 - [ ] --no-color flag
-- [ ] --title for entry 
+- [ ] --title for entry
 - [ ] streamlit interface
 - [ ] operations dictionary
 - [ ] former test package

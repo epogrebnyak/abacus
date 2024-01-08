@@ -16,7 +16,7 @@ from abacus.core import (
     TrialBalance,
 )
 from abacus.entries_store import LineJSON
-from abacus.user_chart import UserChart, user_chart
+from abacus.user_chart import UserChart, make_user_chart  
 
 
 def cwd() -> Path:
@@ -88,7 +88,7 @@ def cx_command():
         print(f"Chart file ({chart_path}) already exists.")
         exit_code = 1
     else:
-        user_chart().save(chart_path)
+        make_user_chart().save(chart_path)
     entries_path = get_entries_path()
     if entries_path.exists():
         print(f"Entries file ({entries_path}) already exists.")
@@ -113,6 +113,12 @@ def cx_add(account_names, title):
     except (AbacusError, FileNotFoundError) as e:
         sys.exit(str(e))
 
+@cx.command(name="name")
+@click.argument("account_name")
+@click.argument("title")
+def name(account_name, title):
+    get_user_chart().rename(last(account_name), title).save(path=get_chart_path())
+    print("Account title:", title)
 
 @cx.command(name="post")
 @click.argument("debit", required=True, type=str)
@@ -124,9 +130,17 @@ def cx_post(debit, credit, amount, title):
     if not (entries_path := get_entries_path()).exists():
         sys.exit(f"FileNotFoundError: {entries_path}")
     # FIXME: title is discarded
+    if ":" in debit:
+        get_user_chart().use(debit).save(get_chart_path())
+        debit = last(debit)    
+    if ":" in credit:
+        get_user_chart().use(credit).save(get_chart_path())
+        credit = last(credit)    
     get_store().append(Entry(debit, credit, amount))
     print(f"Posted to ledger: debit <{debit}> {amount}, credit <{credit}> {amount}.")
 
+def last(s):
+    return s.split(":")[-1] 
 
 @cx.command(name="close")
 def cx_close():

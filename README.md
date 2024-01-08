@@ -26,8 +26,9 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 ## Quick example
 
 Let's do Sample Transaction #1 from [accountingcoach.com](https://www.accountingcoach.com/accounting-basics/explanation/5) (a great learning resource, highly recommended).
+Both Python code and command line script will produce company balance sheet.
 
-```python 
+```python
 from abacus import Chart, Report
 
 chart = Chart(assets=["cash"], capital=["common_stock"])
@@ -36,6 +37,13 @@ ledger.post(debit="cash", credit="common_stock", amount=20000)
 report = Report(chart, ledger)
 print(report.balance_sheet.viewer)
 ```
+
+```bash
+abacus init
+abacus post asset:cash capital:common_stock 20000 --title "1. Owner's investment"
+abacus report --balance_sheet
+```
+
 The result is:
 
 ```
@@ -46,3 +54,5 @@ ASSETS  20000  CAPITAL              20000
                LIABILITIES              0
 TOTAL   20000  TOTAL                20000
 ```
+
+See complete example at <https://epogrebnyak.github.io/abacus/textbook/#accountingcoachcom>.

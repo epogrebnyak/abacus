@@ -84,6 +84,7 @@ class UserChart(BaseModel):
 
     def rename(self, name: str, title: str):
         self.rename_dict[name.split(":")[-1]] = title
+        return self
 
     def yield_names(self):
         yield self.income_summary_account
@@ -106,16 +107,16 @@ class UserChart(BaseModel):
     def add_one(self, obj: Label | Offset):
         match obj:
             case Label(t, name):
-                self.assert_unique(name)
-                self.account_labels[name] = AccountLabel(t, [])
+                if name not in self.names: 
+                   self.account_labels[name] = AccountLabel(t, [])
             case Offset(name, contra_name):
-                self.assert_unique(contra_name)
-                try:
-                    self.account_labels[name].offset(contra_name)
-                except KeyError:
-                    raise AbacusError(
-                        f"Cannot offset {name} because it is not in chart."
-                    )
+                if contra_name not in self.names: 
+                    try:
+                        self.account_labels[name].offset(contra_name)
+                    except KeyError:
+                        raise AbacusError(
+                            f"Cannot offset {name} because it is not in chart."
+                        )
 
     def use(self, *label_strings: str, composer: Composer | None = None):
         if composer is None:
@@ -161,7 +162,7 @@ class UserChart(BaseModel):
         return cls.parse_file(path)
 
 
-def user_chart(*args):
+def make_user_chart(*args):
     return UserChart(
         income_summary_account="_isa",
         retained_earnings_account="retained_earnings",

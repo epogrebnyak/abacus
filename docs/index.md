@@ -106,3 +106,5 @@ Few lines of sample code for a fictious [Dunder Mufflin paper company](https://e
     ```bash
     pip install abacus-py
     ```
+
+[Quick Start](quick_start.md){ .md-button .md-button--primary }
