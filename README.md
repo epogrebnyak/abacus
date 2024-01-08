@@ -47,7 +47,7 @@ Command line script:
 ```bash
 abacus init
 abacus post asset:cash capital:common_stock 20000 --title "1. Owner's investment"
-abacus report --balance_sheet
+abacus report --balance-sheet
 ```
 
 The result is:
