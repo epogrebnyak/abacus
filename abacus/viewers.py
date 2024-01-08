@@ -393,10 +393,8 @@ def print_viewers(
     bv: BalanceSheetViewer,
     iv: IncomeStatementViewer,
 ):
-    # +2 for padding and boundaries in RichTable  
-    width = 2 + max(
-        bv.width, iv.width, tv.width
-    ) 
+    # +2 for padding and boundaries in RichTable
+    width = 2 + max(bv.width, iv.width, tv.width)
     tv.print(width)
     bv.use(rename_dict).print(width)
     iv.use(rename_dict).print(width)

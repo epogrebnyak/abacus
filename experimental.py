@@ -5,15 +5,16 @@ from pydantic import BaseModel
 
 from abacus.base import Amount
 from abacus.core import (
-    Ledger,
     BalanceSheet,
     CompoundEntry,
     Entry,
     IncomeStatement,
+    Ledger,
     Pipeline,
     TrialBalance,
 )
 from abacus.user_chart import UserChart, make_user_chart
+from abacus.viewers import BalanceSheetViewer, IncomeStatementViewer, TrialBalanceViewer
 
 
 class Author(Enum):
@@ -40,11 +41,11 @@ class Book:
     starting_balances: dict[str, Amount] = field(default_factory=dict)
 
     @property
-    def entries(self):
+    def entries(self) -> list[Entry]:
         return [e for t in self.transactions for e in t.entries]
 
     @property
-    def entries_not_touching_isa(self):
+    def entries_not_touching_isa(self) -> list[Entry]:
         isa = self.user_chart.income_summary_account
 
         def not_isa(entry):
@@ -84,13 +85,12 @@ class Book:
         self._transact_user(title, entry.to_entries(self.user_chart.null_account))
 
     @property
-    def _chart(self):
+    def chart(self):
         return self.user_chart.chart()
 
     @property
     def _ledger0(self) -> Ledger:
-        chart = self.user_chart.chart()
-        return chart.ledger(self.starting_balances)
+        return self.chart.ledger(self.starting_balances)
 
     @property
     def ledger(self):
@@ -99,14 +99,17 @@ class Book:
 
     @property
     def ledger_for_income_statement(self):
-        ledger = self._ledger0.post_many(self.entries_not_touching_isa)
-        p = Pipeline(self._chart, ledger).close_first()
+        ledger = self._ledger0.post_many(self.entries_not_touching_isa).condense()
+        p = Pipeline(self.chart, ledger).close_first()
         return ledger.post_many(p.closing_entries)
 
     def close_period(self):
         """Add closing entries at the end of accounting period."""
-        p = Pipeline(self._chart, self.ledger).close()
-        self._transact("Closing entries", p.closing_entries, Author.Machine)
+        p = Pipeline(self.chart, self.ledger).close()
+        self._transact_machine("Closing entries", p.closing_entries)
+
+    def _transact_machine(self, title, entries):
+        self._transact(title, entries, Author.Machine)
 
     def _transact_user(self, title, entries):
         self._transact(title, entries, Author.User)
@@ -122,8 +125,6 @@ class Book:
 
     @property
     def balance_sheet(self):
-        from abacus.viewers import BalanceSheetViewer
-
         return BalanceSheetViewer(
             statement=BalanceSheet.new(self.ledger),
             title="Balance sheet: " + self.company,
@@ -132,8 +133,6 @@ class Book:
 
     @property
     def income_statement(self):
-        from abacus.viewers import IncomeStatementViewer
-
         return IncomeStatementViewer(
             statement=IncomeStatement.new(self.ledger_for_income_statement),
             title="Income statement: " + self.company,
@@ -142,8 +141,6 @@ class Book:
 
     @property
     def trial_balance(self):
-        from abacus.viewers import TrialBalanceViewer
-
         return TrialBalanceViewer(
             TrialBalance.new(self.ledger),
             title="Trial balance: " + self.company,
@@ -181,7 +178,7 @@ book.name("vat", "VAT payable")
 book.name("ap", "Other accounts payable")
 book.name("ar", "Accounts receivable")
 
-# Regular syntax - post double entry
+# Post double entry
 book.post("Shareholder investment", amount=1500, debit="cash", credit="equity")
 # Post multiple entry
 book.post_compound(
@@ -199,3 +196,4 @@ print(book.income_statement)
 print(book.account_balances)
 book.print_all()
 book.save(chart_path="./chart.json", entries_path="./entries.linejson")
+# IDEAS: interchangeable list(in-memory) vs LineJSON

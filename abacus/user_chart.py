@@ -134,13 +134,15 @@ class UserChart(BaseModel):
         return self
 
     def set_isa(self, name):
-        self.income_summary_account = name # must check unique except this name itself
+        self.income_summary_account = name  # must check unique except this name itself
 
     def set_re(self, name):
-        self.retained_earnings_account = name # must check unique except this name itself
+        self.retained_earnings_account = (
+            name  # must check unique except this name itself
+        )
 
     def set_null(self, name):
-        self.null_account = name # must check unique except this name itself
+        self.null_account = name  # must check unique except this name itself
 
     def accounts(self, t: T):
         return [
