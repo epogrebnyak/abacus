@@ -16,7 +16,7 @@ from abacus.core import (
     TrialBalance,
 )
 from abacus.entries_store import LineJSON
-from abacus.user_chart import UserChart, make_user_chart  
+from abacus.user_chart import UserChart, make_user_chart
 
 
 def cwd() -> Path:
@@ -113,12 +113,14 @@ def cx_add(account_names, title):
     except (AbacusError, FileNotFoundError) as e:
         sys.exit(str(e))
 
+
 @cx.command(name="name")
 @click.argument("account_name")
 @click.argument("title")
 def name(account_name, title):
     get_user_chart().rename(last(account_name), title).save(path=get_chart_path())
     print("Account title:", title)
+
 
 @cx.command(name="post")
 @click.argument("debit", required=True, type=str)
@@ -132,15 +134,17 @@ def cx_post(debit, credit, amount, title):
     # FIXME: title is discarded
     if ":" in debit:
         get_user_chart().use(debit).save(get_chart_path())
-        debit = last(debit)    
+        debit = last(debit)
     if ":" in credit:
         get_user_chart().use(credit).save(get_chart_path())
-        credit = last(credit)    
+        credit = last(credit)
     get_store().append(Entry(debit, credit, amount))
     print(f"Posted to ledger: debit <{debit}> {amount}, credit <{credit}> {amount}.")
 
+
 def last(s):
-    return s.split(":")[-1] 
+    return s.split(":")[-1]
+
 
 @cx.command(name="close")
 def cx_close():

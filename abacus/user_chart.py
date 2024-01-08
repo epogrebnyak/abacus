@@ -107,10 +107,10 @@ class UserChart(BaseModel):
     def add_one(self, obj: Label | Offset):
         match obj:
             case Label(t, name):
-                if name not in self.names: 
-                   self.account_labels[name] = AccountLabel(t, [])
+                if name not in self.names:
+                    self.account_labels[name] = AccountLabel(t, [])
             case Offset(name, contra_name):
-                if contra_name not in self.names: 
+                if contra_name not in self.names:
                     try:
                         self.account_labels[name].offset(contra_name)
                     except KeyError:
