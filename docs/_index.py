@@ -1,12 +1,11 @@
-
 from abacus import Chart, Account, Report
 
 # Define chart
 chart = Chart(
-assets=["cash", "paper"],
-capital=["equity"],
-income=[Account("sales", contra_accounts=["refunds"])],
-expenses=["cogs", "salaries"],
+    assets=["cash", "paper"],
+    capital=["equity"],
+    income=[Account("sales", contra_accounts=["refunds"])],
+    expenses=["cogs", "salaries"],
 )
 
 # Use account balances form previous period

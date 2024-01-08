@@ -27,8 +27,8 @@ grill:
 
 # Run examples 
 scripts:
-  poetry run python readme.py
-  abacus extra unlink --yes && readme.bat
+  poetry run python scripts/readme.py
+  cd scripts && abacus extra unlink --yes && readme.bat
   cd scripts/vat && vat.bat
   cd scripts/set && set.bat
   cd scripts/textbook && joan.bat

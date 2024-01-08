@@ -25,4 +25,24 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Quick example
 
-Check out [readme.py](readme.py), [readme.bat](readme.bat) and documentation link above.
+Let's do Sample Transaction #1 from [accountingcoach.com](https://www.accountingcoach.com/accounting-basics/explanation/5) (a great learning resource, highly recommended).
+
+```python 
+from abacus import Chart, Report
+
+chart = Chart(assets=["cash"], capital=["common_stock"])
+ledger = chart.ledger()
+ledger.post(debit="cash", credit="common_stock", amount=20000)
+report = Report(chart, ledger)
+print(report.balance_sheet.viewer)
+```
+The result is:
+
+```
+Balance sheet
+ASSETS  20000  CAPITAL              20000
+  Cash  20000    Common stock       20000
+                 Retained earnings      0
+               LIABILITIES              0
+TOTAL   20000  TOTAL                20000
+```
