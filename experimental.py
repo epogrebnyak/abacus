@@ -85,7 +85,7 @@ class Book:
         self._transact_user(title, entry.to_entries(self.user_chart.null_account))
 
     @property
-    def chart(self):
+    def chart(self) -> "Chart":
         return self.user_chart.chart()
 
     @property
@@ -98,7 +98,7 @@ class Book:
         return self._ledger0.post_many(self.entries)
 
     @property
-    def ledger_for_income_statement(self):
+    def _ledger_for_income_statement(self):
         ledger = self._ledger0.post_many(self.entries_not_touching_isa).condense()
         p = Pipeline(self.chart, ledger).close_first()
         return ledger.post_many(p.closing_entries)
@@ -118,13 +118,13 @@ class Book:
         t = Transaction(title=title, entries=entries, author=author)
         self.transactions.append(t)
 
-    def is_closed(self):
+    def is_closed(self) -> bool:
         return "Closing entries" in [
             t.title for t in self.transactions if t.author == Author.Machine
         ]
 
     @property
-    def balance_sheet(self):
+    def balance_sheet(self) -> BalanceSheetViewer:
         return BalanceSheetViewer(
             statement=BalanceSheet.new(self.ledger),
             title="Balance sheet: " + self.company,
@@ -132,15 +132,15 @@ class Book:
         )
 
     @property
-    def income_statement(self):
+    def income_statement(self) -> IncomeStatementViewer:
         return IncomeStatementViewer(
-            statement=IncomeStatement.new(self.ledger_for_income_statement),
+            statement=IncomeStatement.new(self._ledger_for_income_statement),
             title="Income statement: " + self.company,
             rename_dict=self.user_chart.rename_dict,
         )
 
     @property
-    def trial_balance(self):
+    def trial_balance(self) -> TrialBalanceViewer:
         return TrialBalanceViewer(
             TrialBalance.new(self.ledger),
             title="Trial balance: " + self.company,
@@ -152,14 +152,13 @@ class Book:
         return self.ledger.balances
 
     def print_all(self):
-        from abacus.viewers import print_viewers
-
-        print_viewers(
-            self.user_chart.rename_dict,
-            self.trial_balance,
-            self.balance_sheet,
-            self.income_statement,
-        )
+        t = self.trial_balance
+        b = self.balance_sheet
+        i = self.income_statement
+        width = 2 + max(t.width, b.width, i.width)
+        t.print(width)
+        b.print(width)
+        i.print(width)
 
     def save(self, chart_path, entries_path):
         ...
@@ -196,4 +195,6 @@ print(book.income_statement)
 print(book.account_balances)
 book.print_all()
 book.save(chart_path="./chart.json", entries_path="./entries.linejson")
+
 # IDEAS: interchangeable list(in-memory) vs LineJSON
+# .new(), .append(), .iter(), save()
