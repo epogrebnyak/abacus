@@ -10,7 +10,7 @@ from abacus.engine.accounts import (
     NullAccount,
     RetainedEarnings,
 )
-from abacus.engine.base import Entry, MultipleEntry
+from abacus.engine.base import CompoundEntry, Entry
 from abacus.engine.better_chart import BaseChart, Chart, default_chart
 from abacus.engine.ledger import Ledger, to_multiple_entry, unsafe_post_entries
 
@@ -91,7 +91,7 @@ def test_journal_with_starting_balance():
 
     # Account balances are known from previous period end
     starting_balances = {"cash": 1400, "equity": 1500, "re": -100}
-    assert to_multiple_entry(ledger, starting_balances) == MultipleEntry(
+    assert to_multiple_entry(ledger, starting_balances) == CompoundEntry(
         [("cash", 1400)],
         [("equity", 1500), ("re", -100)],
     )

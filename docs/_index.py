@@ -1,4 +1,4 @@
-from abacus import Chart, Account, Report
+from abacus import Account, Chart, Report
 
 # Define chart
 chart = Chart(

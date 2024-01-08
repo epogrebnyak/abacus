@@ -82,8 +82,15 @@ class UserChart(BaseModel):
     account_labels: dict[str, AccountLabel] = {}
     rename_dict: dict[str, str] = {}
 
+    @staticmethod
+    def last(name: str) -> str:
+        return name.split(":")[-1]
+
+    def offset(self, name: str, contra_name: str):
+        self.account_labels[self.last(name)].contra_names.append(contra_name)
+
     def rename(self, name: str, title: str):
-        self.rename_dict[name.split(":")[-1]] = title
+        self.rename_dict[self.last(name)] = title
         return self
 
     def yield_names(self):
@@ -127,13 +134,13 @@ class UserChart(BaseModel):
         return self
 
     def set_isa(self, name):
-        self.income_summary_account = self.assert_unique(name)
+        self.income_summary_account = name # must check unique except this name itself
 
     def set_re(self, name):
-        self.retained_earnings_account = self.assert_unique(name)
+        self.retained_earnings_account = name # must check unique except this name itself
 
     def set_null(self, name):
-        self.null_account = self.assert_unique(name)
+        self.null_account = name # must check unique except this name itself
 
     def accounts(self, t: T):
         return [

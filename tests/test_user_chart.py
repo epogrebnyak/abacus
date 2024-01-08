@@ -1,4 +1,5 @@
 import pytest
+
 import abacus.core as core
 from abacus.core import AbacusError, Account, T
 from abacus.user_chart import Composer, Label, Offset, extract, make_user_chart

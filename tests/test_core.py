@@ -11,11 +11,11 @@ from abacus.core import (
     BalanceSheet,
     Capital,
     Chart,
+    CompoundEntry,
     ContraIncome,
     Entry,
     IncomeStatement,
     Ledger,
-    MultipleEntry,
     Pipeline,
     Report,
     contra_pairs,
@@ -152,12 +152,12 @@ def test_trial_balance(Report0):
 @pytest.mark.unit
 def test_multiple_entry_raises():
     with pytest.raises(AbacusError):
-        MultipleEntry(debits=[("cash", 10)], credits=[("eq", 18)])
+        CompoundEntry(debits=[("cash", 10)], credits=[("eq", 18)])
 
 
 @pytest.mark.unit
 def test_multiple_entry_promotes():
-    me = MultipleEntry(debits=[("cash", 10)], credits=[("eq", 10)])
+    me = CompoundEntry(debits=[("cash", 10)], credits=[("eq", 10)])
     assert me.to_entries("null") == [Entry("cash", "null", 10), Entry("null", "eq", 10)]
 
 
@@ -165,7 +165,7 @@ def test_multiple_entry_promotes():
 def test_multiple_entry_from_account_balances():
     ch = Chart(assets=["cash", "inv"], capital=[Account("eq", ["ta"])])
     ab = AccountBalances({"cash": 10, "inv": 5, "eq": 18, "ta": 3})
-    assert MultipleEntry.from_balances(ch, ab) == MultipleEntry(
+    assert CompoundEntry.from_balances(ch, ab) == CompoundEntry(
         debits=[("cash", 10), ("inv", 5), ("ta", 3)], credits=[("eq", 18)]
     )
 

@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from abacus import Amount, Chart, Entry, MultipleEntry
+from abacus import Amount, Chart, CompoundEntry, Entry
 from abacus.cli.base import BaseCommand
 from abacus.engine.entries import LineJSON
 
@@ -26,7 +26,7 @@ class LedgerCommand(BaseCommand):
         debit_tuples: List[Tuple[str, int]],
         credit_tuples: List[Tuple[str, int]],
     ):
-        me = MultipleEntry(debit_entries=debit_tuples, credit_entries=credit_tuples)
+        me = CompoundEntry(debit_entries=debit_tuples, credit_entries=credit_tuples)
         entries = me.entries(chart.base_chart.null_account)
         return self.post_many(entries, "single")
 

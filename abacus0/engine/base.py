@@ -43,7 +43,7 @@ def sum_second(xs):
 
 
 @dataclass
-class MultipleEntry:
+class CompoundEntry:
     debit_entries: list[tuple[AccountName, Amount]]
     credit_entries: list[tuple[AccountName, Amount]]
 

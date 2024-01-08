@@ -18,7 +18,7 @@
 
 ::: abacus.core.Entry
 
-::: abacus.core.MultipleEntry
+::: abacus.core.CompoundEntry
 
 ## Processing entries
 

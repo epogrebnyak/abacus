@@ -377,7 +377,7 @@ class AccountBalances(UserDict[str, Amount]):
 
 
 def starting_entries(chart: Chart, balances: AccountBalances):
-    return MultipleEntry.from_balances(chart, balances).to_entries(chart.null_account)
+    return CompoundEntry.from_balances(chart, balances).to_entries(chart.null_account)
 
 
 class Ledger(UserDict[str, TAccount]):
@@ -575,6 +575,12 @@ class Statement(ABC):
     def viewer(self):
         ...
 
+    def __str__(self):
+        return str(self.viewer)
+
+    def print(self, width=None):
+        return self.viewer.print(width)
+
 
 @dataclass
 class BalanceSheet(Statement):
@@ -646,7 +652,7 @@ def sum_second(xs):
 
 
 @dataclass
-class MultipleEntry:
+class CompoundEntry:
     """An entry that affects several accounts at once."""
 
     debits: list[tuple[str, Amount]]
@@ -677,7 +683,7 @@ class MultipleEntry:
         return a + b
 
     @classmethod
-    def from_balances(cls, chart: Chart, balances: AccountBalances) -> "MultipleEntry":
+    def from_balances(cls, chart: Chart, balances: AccountBalances) -> "CompoundEntry":
         ledger = chart.ledger()
 
         def is_debit(name):

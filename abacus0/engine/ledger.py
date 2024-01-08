@@ -3,7 +3,7 @@ from collections import UserDict
 from typing import Dict, Iterable, List, Tuple, Type
 
 from abacus.engine.accounts import CreditAccount, DebitAccount, TAccount
-from abacus.engine.base import AbacusError, AccountName, Amount, Entry, MultipleEntry
+from abacus.engine.base import AbacusError, AccountName, Amount, CompoundEntry, Entry
 from abacus.engine.better_chart import Chart
 
 
@@ -33,7 +33,7 @@ class Ledger(UserDict[AccountName, TAccount]):
         """Purge data from ledger. Creates a copy of ledger."""
         return self.apply("empty")
 
-    def make_multiple_entry(self, starting_balances: dict) -> MultipleEntry:
+    def make_multiple_entry(self, starting_balances: dict) -> CompoundEntry:
         """Make a multiple entry from starting balances."""
         return to_multiple_entry(self, starting_balances)
 
@@ -144,7 +144,7 @@ def unsafe_post_entries(
     return ledger, failed
 
 
-def to_multiple_entry(ledger: Ledger, starting_balances: dict) -> MultipleEntry:
+def to_multiple_entry(ledger: Ledger, starting_balances: dict) -> CompoundEntry:
     debit_entries = []
     credit_entries = []
     for account_name in starting_balances.keys():
@@ -158,4 +158,4 @@ def to_multiple_entry(ledger: Ledger, starting_balances: dict) -> MultipleEntry:
                 debit_entries.append((account_name, amount))
             case CreditAccount(_, _):
                 credit_entries.append((account_name, amount))
-    return MultipleEntry(debit_entries, credit_entries).validate()
+    return CompoundEntry(debit_entries, credit_entries).validate()

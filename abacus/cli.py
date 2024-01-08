@@ -9,9 +9,9 @@ from abacus.core import (
     AbacusError,
     BalanceSheet,
     Chart,
+    CompoundEntry,
     Entry,
     IncomeStatement,
-    MultipleEntry,
     Pipeline,
     TrialBalance,
 )
@@ -308,15 +308,8 @@ def post_compound(debit, credit):
     """Post compound entry."""
     chart = get_chart()
     store = get_store()
-    entries = MultipleEntry(debits=debit, credits=credit).to_entries(chart.null_account)
+    entries = CompoundEntry(debits=debit, credits=credit).to_entries(chart.null_account)
     store.append_many(entries)
-
-
-# @ledger.command
-# def close():
-#     """Close ledger at accounting period end."""
-#     # FIXME: allows to close accidentally twice
-#     ledger_command().post_closing_entries(chart=get_chart()).echo()
 
 
 # @ledger.command(name="show")

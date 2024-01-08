@@ -341,22 +341,22 @@ class BalanceSheetViewer(Viewer):
 
 @dataclass
 class TrialBalanceViewer(Viewer):
-    trial_balance: dict[str, tuple[Amount, Amount]]
+    statement: dict[str, tuple[Amount, Amount]]
     rename_dict: dict[str, str] = field(default_factory=dict)
     headers: tuple[str, str, str] = "Account", "Debit", "Credit"
     title: str = "Trial balance"
 
     @property
     def debits(self) -> list[str]:
-        return [str(d) for (d, _) in self.trial_balance.values()]
+        return [str(d) for (d, _) in self.statement.values()]
 
     @property
     def credits(self) -> list[str]:
-        return [str(c) for (_, c) in self.trial_balance.values()]
+        return [str(c) for (_, c) in self.statement.values()]
 
     @property
     def account_names(self):
-        return list(self.trial_balance.keys())
+        return list(self.statement.keys())
 
     def account_names_column(self, header: str):
         return (
@@ -393,9 +393,10 @@ def print_viewers(
     bv: BalanceSheetViewer,
     iv: IncomeStatementViewer,
 ):
+    # +2 for padding and boundaries in RichTable  
     width = 2 + max(
         bv.width, iv.width, tv.width
-    )  # +2 for padding and boundaries in RichTable
+    ) 
     tv.print(width)
     bv.use(rename_dict).print(width)
     iv.use(rename_dict).print(width)
