@@ -1,7 +1,3 @@
-TODO/EXAMPLES:
-
-- [ ] yazici ads
-
 DOCS/PROSE:
 
 - [ ] _Is it difficult to program an accounting system?_ piece
@@ -9,12 +5,14 @@ DOCS/PROSE:
 
 BUGS:
 
-- [ ] joan law office ***
+- [ ] joan law office \*\*\*
 - [ ] problem with `abacus load starting_balances.json` in docs-cli
 
 WONTFIX:
 
-- [ ] --title for entry *
+- [ ] sort keys and totals in trial balance
+- [ ] --no-color flag
+- [ ] --title for entry 
 - [ ] streamlit interface
 - [ ] operations dictionary
 - [ ] former test package
@@ -27,3 +25,4 @@ Done:
 - [x] API documentation
 - [x] posting multiple entries
 - [x] `abacus assert vat 20`
+- [x] yazici ads

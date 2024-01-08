@@ -5,6 +5,7 @@ copyright: "&copy; 2023-2024 Evgeniy Pogrebnyak"
 nav:
   - index.md
   - quick_start.md
+  - textbook.md
   - Accounting basics:
       - accounting/introduction.md
       - accounting/chart_of_accounts.md
@@ -18,7 +19,6 @@ theme:
   name: material
   logo: assets/robot.png
   features:
-    #- navigation.expand
     - content.code.copy
 
 markdown_extensions:

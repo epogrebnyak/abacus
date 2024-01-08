@@ -22,18 +22,16 @@ grill:
   just go
   just md
   just scripts
+  just docs-py
+  just docs-cli
 
 # Run examples 
 scripts:
   poetry run python readme.py
-  rm chart.json && rm entries.linejson && readme.bat
+  abacus extra unlink --yes && readme.bat
   cd scripts/vat && vat.bat
   cd scripts/set && set.bat
-  just docs-py
-  just docs-cli
-
-#  cd scripts/abacus && bash -e all.sh
-#  cd scripts/cx && bash -e joan.sh
+  cd scripts/textbook && joan.bat
 
 # Run pytest (up to first error) and print slowest test times 
 test:
@@ -63,18 +61,15 @@ md:
 docs-py:
   poetry run python docs/echo.py docs/quick_start.md | npx codedown python > docs/quick_start.py
   poetry run python docs/quick_start.py
-  poetry run python docs/echo.py docs/index.md | npx codedown python > docs/index.py
-  poetry run python docs/index.py
-
+  poetry run python docs/echo.py docs/index.md | npx codedown python > docs/_index.py
+  poetry run python docs/_index.py
 
 # Run console examples from docs
 docs-cli:
   poetry run python docs/echo.py docs/quick_start.md | npx codedown bash > docs/quick_start.bat
   cd docs && rm -f chart.json entries.linejson && quick_start.bat
-  poetry run python docs/echo.py docs/index.md | npx codedown bash > docs/index.bat
-  cd docs && rm -f chart.json entries.linejson && index.bat
-
-
+  poetry run python docs/echo.py docs/index.md | npx codedown bash > docs/_index.bat
+  cd docs && rm -f chart.json entries.linejson && _index.bat
 
 # Build and serve docs
 docs:

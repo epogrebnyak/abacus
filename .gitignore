@@ -6,6 +6,7 @@ scripts/readme/entries.linejson
 **/balances.json
 docs/site/
 .env-cli/
+**/starting_balances.json
 
 # more hidden folders
 .venv/

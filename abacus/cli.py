@@ -11,9 +11,9 @@ from abacus.core import (
     Chart,
     Entry,
     IncomeStatement,
+    MultipleEntry,
     Pipeline,
     TrialBalance,
-    MultipleEntry
 )
 from abacus.entries_store import LineJSON
 from abacus.user_chart import UserChart, user_chart
@@ -107,11 +107,12 @@ def cx_add(account_names, title):
         chart = get_user_chart().use(*account_names)
         print(f"Added to chart: {' '.join(account_names)}.")
         if len(account_names) == 1 and title:
-            chart.rename(account_names[0], title)  
+            chart.rename(account_names[0], title)
             print("Account title:", title)
-        chart.save(path=get_chart_path())   
+        chart.save(path=get_chart_path())
     except (AbacusError, FileNotFoundError) as e:
         sys.exit(str(e))
+
 
 @cx.command(name="post")
 @click.argument("debit", required=True, type=str)
@@ -281,13 +282,14 @@ def load(file):
     get_store().append_many(entries)
     print("Loaded starting balances from", file)
 
+
 @cx.command(name="post-compound")
 @click.option("--debit", type=(str, int), multiple=True)
 @click.option("--credit", type=(str, int), multiple=True)
 def post_compound(debit, credit):
     """Post compound entry."""
     chart = get_chart()
-    store = get_store()    
+    store = get_store()
     entries = MultipleEntry(debits=debit, credits=credit).to_entries(chart.null_account)
     store.append_many(entries)
 
@@ -404,7 +406,7 @@ def assert_balance(account_name, balance):
     ab = account_balances()
     if (fact := ab[account_name]) != balance:
         sys.exit(f"{account_name} balance is {fact}, expected {balance}.")
-        
+
 
 # @accounts.command(name="show-balances")
 # @click.option("--nonzero", is_flag=True, help="Omit accounts with zero balances.")

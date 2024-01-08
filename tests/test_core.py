@@ -195,9 +195,9 @@ def chart2():
 
 def test_chart_conversion(chart2):
     assert chart2 == Chart(
-        income_summary_account="isa",
-        retained_earnings_account="re",
-        null_account="null",
+        income_summary_account="_isa",
+        retained_earnings_account="retained_earnings",
+        null_account="_null",
         assets=[Account(name="cash", contra_accounts=[])],
         capital=[Account(name="equity", contra_accounts=["ts"])],
         liabilities=[],
@@ -246,7 +246,7 @@ def test_chaining_in_pipeline_must_not_corrupt_input_argument(chart2, ledger2):
 def test_balance_sheet_again(chart2, ledger2):
     assert Report(chart2, ledger2).balance_sheet == BalanceSheet(
         assets={"cash": 10999},
-        capital={"equity": 10000, "re": 999},
+        capital={"equity": 10000, "retained_earnings": 999},
         liabilities={},
     )
 
@@ -266,9 +266,9 @@ def test_trial_balance_view(chart2, ledger2):
         "salaries": (2001, 0),
         "equity": (0, 12000),
         "sales": (0, 3499),
-        "re": (0, 0),
-        "isa": (0, 0),
-        "null": (0, 0),
+        "retained_earnings": (0, 0),
+        "_isa": (0, 0),
+        "_null": (0, 0),
     }
 
 

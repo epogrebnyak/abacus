@@ -54,9 +54,9 @@ def test_ledger_dict(chart1):
         "cash": core.Asset(debits=[], credits=[]),
         "equity": core.Capital(debits=[], credits=[]),
         "ts": core.ContraCapital(debits=[], credits=[]),
-        "re": core.Capital(debits=[], credits=[]),
-        "isa": core.IncomeSummaryAccount(debits=[], credits=[]),
-        "null": core.NullAccount(debits=[], credits=[]),
+        "retained_earnings": core.Capital(debits=[], credits=[]),
+        "_isa": core.IncomeSummaryAccount(debits=[], credits=[]),
+        "_null": core.NullAccount(debits=[], credits=[]),
     }
 
 
