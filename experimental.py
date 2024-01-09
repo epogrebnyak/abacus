@@ -55,7 +55,7 @@ class Book:
         return [e for t in self.transactions for e in t.entries]
 
     @property
-    def entries_without_closing(self) -> list[Entry]:
+    def _entries_without_closing(self) -> list[Entry]:
         return [
             e
             for t in self.transactions
@@ -71,7 +71,8 @@ class Book:
         entries = CompoundEntry(debits, credits).to_entries(self.chart.null_account)
         self._transact(title, entries, EntryType.Business)
 
-    def load(self, starting_balances):
+    def load(self, starting_balances: dict[str, Amount]):
+        """Load starting balances."""
         from abacus.core import starting_entries as f
 
         entries = f(self.chart.chart(), starting_balances)
@@ -91,7 +92,7 @@ class Book:
 
     @property
     def _ledger_for_income_statement(self):
-        proxy_ledger = self._ledger0.post_many(self.entries_without_closing).condense()
+        proxy_ledger = self._ledger0.post_many(self._entries_without_closing).condense()
         p = self._pipeline(proxy_ledger).close_first()
         return proxy_ledger.post_many(p.closing_entries)
 
@@ -183,7 +184,7 @@ book.save(chart_path="./chart.json", entries_path="./entries.linejson")
 # IDEAS: interchangeable list(in-memory) vs LineJSON
 # .new(), .append(), .iter(), save()
 
-# MORE IDEAS:
+# Change CLI with Typer:
 # set --assets cash ar inv prepaid_insurance
 # set --liabilities ap
 # set --capital equity
@@ -194,4 +195,3 @@ book.save(chart_path="./chart.json", entries_path="./entries.linejson")
 # name
 # add contra:sales:refunds
 # init "Dunder Mufflin"
-
