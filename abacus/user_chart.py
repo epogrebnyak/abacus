@@ -81,6 +81,7 @@ class UserChart(BaseModel):
     null_account: str
     account_labels: dict[str, AccountLabel] = {}
     rename_dict: dict[str, str] = {}
+    company_name: str | None = None
 
     @staticmethod
     def last(name: str) -> str:
@@ -89,6 +90,11 @@ class UserChart(BaseModel):
     def offset(self, name: str, contra_name: str):
         self.account_labels[self.last(name)].contra_names.append(contra_name)
 
+    def name(self, name: str, title: str):
+        self.rename_dict[self.last(name)] = title
+        return self
+
+    # may delete
     def rename(self, name: str, title: str):
         self.rename_dict[self.last(name)] = title
         return self
@@ -132,6 +138,27 @@ class UserChart(BaseModel):
             for obj in extract(label_string, composer):
                 self.add_one(obj)
         return self
+
+    def add_accounts(self, t: T, names: list[str]):
+        for name in names:
+            self.add_one(Label(t, name))
+
+    def add_assets(self, *names):
+        self.add_accounts(T.Asset, names)
+
+    def add_capital(self, *names, retained_earnings_account=None):
+        self.add_accounts(T.Capital, names)
+        if retained_earnings_account is not None:
+            self.set_re(retained_earnings_account)
+
+    def add_liabilities(self, *names):
+        self.add_accounts(T.Liability, names)
+
+    def add_income(self, *names):
+        self.add_accounts(T.Income, names)
+
+    def add_expenses(self, *names):
+        self.add_accounts(T.Expense, names)
 
     def set_isa(self, name):
         self.income_summary_account = name  # must check unique except this name itself

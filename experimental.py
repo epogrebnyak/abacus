@@ -33,12 +33,25 @@ def prefix(p, strings):
     return [p + ":" + s for s in strings]
 
 
+def create_book(company_name: str):
+    user_chart = UserChart(
+        income_summary_account="_isa",
+        retained_earnings_account="retained_earnings",
+        null_account="_null",
+        company_name=company_name,
+    )
+    return Book(chart=user_chart)
+
+
 @dataclass
 class Book:
-    company: str
-    user_chart: UserChart = field(default_factory=make_user_chart)
+    chart: UserChart = field(default_factory=make_user_chart)
     transactions: list[Transaction] = field(default_factory=list)
     starting_balances: dict[str, Amount] = field(default_factory=dict)
+
+    @property
+    def company(self):
+        return self.chart.company_name
 
     @property
     def entries(self) -> list[Entry]:
@@ -46,35 +59,12 @@ class Book:
 
     @property
     def entries_not_touching_isa(self) -> list[Entry]:
-        isa = self.user_chart.income_summary_account
+        isa = self.chart.income_summary_account
 
         def not_isa(entry):
             return (entry.debit != isa) and (entry.credit != isa)
 
         return list(filter(not_isa, self.entries))
-
-    def add_asset_accounts(self, *strings):
-        self.user_chart.use(*prefix("asset", strings))
-
-    def add_capital_accounts(self, *strings, retained_earnings_account=None):
-        if retained_earnings_account:
-            self.user_chart.set_re(retained_earnings_account)
-        self.user_chart.use(*prefix("capital", strings))
-
-    def add_liability_accounts(self, *strings):
-        self.user_chart.use(*prefix("liability", strings))
-
-    def add_income_accounts(self, *strings):
-        self.user_chart.use(*prefix("income", strings))
-
-    def add_expense_accounts(self, *strings):
-        self.user_chart.use(*prefix("expense", strings))
-
-    def offset(self, account_name, account_contra_name):
-        self.user_chart.offset(account_name, account_contra_name)
-
-    def name(self, account_name, title):
-        self.user_chart.rename(account_name, title)
 
     def post(self, title, amount, debit, credit):
         entry = Entry(debit, credit, amount)
@@ -82,30 +72,30 @@ class Book:
 
     def post_compound(self, title, debits, credits):
         entry = CompoundEntry(debits, credits)
-        self._transact_user(title, entry.to_entries(self.user_chart.null_account))
+        self._transact_user(title, entry.to_entries(self.chart.null_account))
 
-    @property
-    def chart(self) -> "Chart":
-        return self.user_chart.chart()
-
+    # TODO: post to first transaction
     @property
     def _ledger0(self) -> Ledger:
-        return self.chart.ledger(self.starting_balances)
+        return self.chart.chart().ledger(self.starting_balances)
 
     @property
     def ledger(self):
         """Current state of the ledger unmodified."""
         return self._ledger0.post_many(self.entries)
 
+    def pipeline(self, ledger):
+        return Pipeline(self.chart.chart(), ledger)
+
     @property
     def _ledger_for_income_statement(self):
         ledger = self._ledger0.post_many(self.entries_not_touching_isa).condense()
-        p = Pipeline(self.chart, ledger).close_first()
+        p = self.pipeline(ledger).close_first()
         return ledger.post_many(p.closing_entries)
 
     def close_period(self):
         """Add closing entries at the end of accounting period."""
-        p = Pipeline(self.chart, self.ledger).close()
+        p = self.pipeline(self.ledger).close()
         self._transact_machine("Closing entries", p.closing_entries)
 
     def _transact_machine(self, title, entries):
@@ -128,7 +118,7 @@ class Book:
         return BalanceSheetViewer(
             statement=BalanceSheet.new(self.ledger),
             title="Balance sheet: " + self.company,
-            rename_dict=self.user_chart.rename_dict,
+            rename_dict=self.chart.rename_dict,
         )
 
     @property
@@ -136,7 +126,7 @@ class Book:
         return IncomeStatementViewer(
             statement=IncomeStatement.new(self._ledger_for_income_statement),
             title="Income statement: " + self.company,
-            rename_dict=self.user_chart.rename_dict,
+            rename_dict=self.chart.rename_dict,
         )
 
     @property
@@ -144,7 +134,7 @@ class Book:
         return TrialBalanceViewer(
             TrialBalance.new(self.ledger),
             title="Trial balance: " + self.company,
-            rename_dict=self.user_chart.rename_dict,
+            rename_dict=self.chart.rename_dict,
         )
 
     @property
@@ -164,22 +154,22 @@ class Book:
         ...
 
 
-book = Book(company="Dragon Trading Company")
+book = create_book("Dragon Trading Company")
 
-# Register valid account names and indicate account type
-book.add_asset_accounts("cash", "ar", "inventory")
-book.add_capital_accounts("equity", retained_earnings_account="retained_earnings")
-book.add_liability_accounts("vat", "ap")
-book.add_income_accounts("sales")
-book.add_expense_accounts("salaries")
-book.offset("sales", "refunds")
-book.name("vat", "VAT payable")
-book.name("ap", "Other accounts payable")
-book.name("ar", "Accounts receivable")
+# Register account names
+book.chart.add_assets("cash", "ar", "inventory", "prepaid_insurance")
+book.chart.add_capital("equity", retained_earnings_account="retained_earnings")
+book.chart.add_liabilities("vat", "ap")
+book.chart.add_income("sales")
+book.chart.add_expenses("salaries", "rent", "insurance")
+book.chart.offset("sales", "refunds")
+book.chart.name("vat", "VAT payable")
+book.chart.name("ap", "Other accounts payable")
+book.chart.name("ar", "Accounts receivable")
 
 # Post double entry
 book.post("Shareholder investment", amount=1500, debit="cash", credit="equity")
-# Post multiple entry
+# Post compound entry
 book.post_compound(
     "Invoice with VAT", debits=[("ar", 120)], credits=[("sales", 100), ("vat", 20)]
 )
@@ -188,7 +178,7 @@ book.post_compound(
 book.close_period()
 print(book.entries)
 print(book.transactions)
-print(book.user_chart)
+print(book.chart)
 print(book.trial_balance)
 print(book.balance_sheet)
 print(book.income_statement)
@@ -201,20 +191,19 @@ book.save(chart_path="./chart.json", entries_path="./entries.linejson")
 
 # MORE IDEAS:
 # set --assets cash ar inv prepaid_insurance
-# set --liabilities ap 
-# set --capital equity 
-# set --income sales 
-# set --expenses cogs sga 
+# set --liabilities ap
+# set --capital equity
+# set --income sales
+# set --expenses cogs sga
 # set --re retained_earnings
-# offset  
+# offset
 # name
 # add contra:sales:refunds
-# init "Dunder Mufflin" 
-# load balances.json 
-# user_chart as book.chart 
-# book.chart.set_assets(cash, ar, inv) 
+# init "Dunder Mufflin"
+# load balances.json
+# user_chart as book.chart
+# book.chart.set_assets(cash, ar, inv)
 # load should load as first transaction
 # company name in user_chart p
-# question about post to ledger 
-# extract.py question about testing mkdocs scripts 
-
+# question about post to ledger
+# extract.py question about testing mkdocs scripts
