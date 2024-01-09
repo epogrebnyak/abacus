@@ -2,7 +2,7 @@ package := "abacus"
 readme_command := if os_family() == "windows" { "readme-console-win" } else { "readme-console-linux" }
 source_command := if os_family() == "windows" { "call" } else { "source" }
 #use cmd.exe instead of sh on Window
-set shell := ["cmd.exe", "/c"]
+#set shell := ["cmd.exe", "/c"]
 
 
 # List all commands

@@ -15,7 +15,7 @@ chart.add_typer(add, name="add")
 @app.command()
 def about():
     """Show information about `abacus` package."""
-    return "abacus"
+    print("abacus")
 
 
 @app.command()
