@@ -198,3 +198,23 @@ book.save(chart_path="./chart.json", entries_path="./entries.linejson")
 
 # IDEAS: interchangeable list(in-memory) vs LineJSON
 # .new(), .append(), .iter(), save()
+
+# MORE IDEAS:
+# set --assets cash ar inv prepaid_insurance
+# set --liabilities ap 
+# set --capital equity 
+# set --income sales 
+# set --expenses cogs sga 
+# set --re retained_earnings
+# offset  
+# name
+# add contra:sales:refunds
+# init "Dunder Mufflin" 
+# load balances.json 
+# user_chart as book.chart 
+# book.chart.set_assets(cash, ar, inv) 
+# load should load as first transaction
+# company name in user_chart p
+# question about post to ledger 
+# extract.py question about testing mkdocs scripts 
+
