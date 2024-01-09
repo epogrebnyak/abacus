@@ -17,20 +17,18 @@ from abacus.user_chart import UserChart, make_user_chart
 from abacus.viewers import BalanceSheetViewer, IncomeStatementViewer, TrialBalanceViewer
 
 
-class Author(Enum):
-    User = "from_user"
-    Machine = "generated"
+class EntryType(Enum):
+    Starting = "starting"
+    Business = "business"
+    Adjustment = "adjustment"
+    Closing = "closing"
 
 
 class Transaction(BaseModel):
     title: str
     entries: list[Entry]
-    author: Author
+    type: EntryType
     # may include date and UUID
-
-
-def prefix(p, strings):
-    return [p + ":" + s for s in strings]
 
 
 def create_book(company_name: str):
@@ -47,7 +45,6 @@ def create_book(company_name: str):
 class Book:
     chart: UserChart = field(default_factory=make_user_chart)
     transactions: list[Transaction] = field(default_factory=list)
-    starting_balances: dict[str, Amount] = field(default_factory=dict)
 
     @property
     def company(self):
@@ -58,60 +55,57 @@ class Book:
         return [e for t in self.transactions for e in t.entries]
 
     @property
-    def entries_not_touching_isa(self) -> list[Entry]:
-        isa = self.chart.income_summary_account
-
-        def not_isa(entry):
-            return (entry.debit != isa) and (entry.credit != isa)
-
-        return list(filter(not_isa, self.entries))
+    def entries_without_closing(self) -> list[Entry]:
+        return [
+            e
+            for t in self.transactions
+            if t.type != EntryType.Closing
+            for e in t.entries
+        ]
 
     def post(self, title, amount, debit, credit):
         entry = Entry(debit, credit, amount)
-        self._transact_user(title, [entry])
+        self._transact(title, [entry], EntryType.Business)
 
     def post_compound(self, title, debits, credits):
-        entry = CompoundEntry(debits, credits)
-        self._transact_user(title, entry.to_entries(self.chart.null_account))
+        entries = CompoundEntry(debits, credits).to_entries(self.chart.null_account)
+        self._transact(title, entries, EntryType.Business)
 
-    # TODO: post to first transaction
+    def load(self, starting_balances):
+        from abacus.core import starting_entries as f
+
+        entries = f(self.chart.chart(), starting_balances)
+        self._transact(self, "Starting balances", entries, EntryType.Starting)
+
     @property
     def _ledger0(self) -> Ledger:
-        return self.chart.chart().ledger(self.starting_balances)
+        return self.chart.chart().ledger()
 
     @property
     def ledger(self):
-        """Current state of the ledger unmodified."""
+        """Current state of the ledger."""
         return self._ledger0.post_many(self.entries)
 
-    def pipeline(self, ledger):
+    def _pipeline(self, ledger):
         return Pipeline(self.chart.chart(), ledger)
 
     @property
     def _ledger_for_income_statement(self):
-        ledger = self._ledger0.post_many(self.entries_not_touching_isa).condense()
-        p = self.pipeline(ledger).close_first()
-        return ledger.post_many(p.closing_entries)
+        proxy_ledger = self._ledger0.post_many(self.entries_without_closing).condense()
+        p = self._pipeline(proxy_ledger).close_first()
+        return proxy_ledger.post_many(p.closing_entries)
 
     def close_period(self):
         """Add closing entries at the end of accounting period."""
-        p = self.pipeline(self.ledger).close()
-        self._transact_machine("Closing entries", p.closing_entries)
+        p = self._pipeline(self.ledger).close()
+        self._transact("Closing entries", p.closing_entries, EntryType.Closing)
 
-    def _transact_machine(self, title, entries):
-        self._transact(title, entries, Author.Machine)
-
-    def _transact_user(self, title, entries):
-        self._transact(title, entries, Author.User)
-
-    def _transact(self, title, entries, author):
-        t = Transaction(title=title, entries=entries, author=author)
+    def _transact(self, title, entries, type_):
+        t = Transaction(title=title, entries=entries, type=type_)
         self.transactions.append(t)
 
     def is_closed(self) -> bool:
-        return "Closing entries" in [
-            t.title for t in self.transactions if t.author == Author.Machine
-        ]
+        return len([t for t in self.transactions if t.type == EntryType.Closing]) > 0
 
     @property
     def balance_sheet(self) -> BalanceSheetViewer:
@@ -200,10 +194,4 @@ book.save(chart_path="./chart.json", entries_path="./entries.linejson")
 # name
 # add contra:sales:refunds
 # init "Dunder Mufflin"
-# load balances.json
-# user_chart as book.chart
-# book.chart.set_assets(cash, ar, inv)
-# load should load as first transaction
-# company name in user_chart p
-# question about post to ledger
-# extract.py question about testing mkdocs scripts
+
