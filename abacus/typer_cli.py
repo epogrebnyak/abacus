@@ -13,6 +13,12 @@ chart.add_typer(add, name="add")
 
 
 @app.command()
+def about():
+    """Show information about `abacus` package."""
+    return "abacus"
+
+
+@app.command()
 def init(company_name: str):
     """Initialize project files in current directory."""
 
