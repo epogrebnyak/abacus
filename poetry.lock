@@ -793,6 +793,21 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytest-console-scripts"
+version = "1.4.1"
+description = "Pytest plugin for testing console scripts"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-console-scripts-1.4.1.tar.gz", hash = "sha256:5a826ed84cc0afa202eb9e44381d7d762f7bdda8e0c23f9f79a7f1f44cf4a895"},
+    {file = "pytest_console_scripts-1.4.1-py3-none-any.whl", hash = "sha256:ad860a951a90eca4bd3bd1159b8f5428633ba4ea01abd5c9526b67a95f65437a"},
+]
+
+[package.dependencies]
+importlib-metadata = {version = ">=3.6", markers = "python_version < \"3.10\""}
+pytest = ">=4.0.0"
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -1185,4 +1200,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "b938cd261d62bc362e8c70b0b9d66292ee1a0f8d536a8ec451ee3e8bcf43b03a"
+content-hash = "56b7e69c834f4fbad34df3a82d82c661edd022adc3a7be4a5282305aae71aab8"
