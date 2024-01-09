@@ -1,7 +1,70 @@
+import os
+import sys
+from pathlib import Path
+
 import typer
 from typing_extensions import Annotated
 
 from abacus.base import Amount
+from abacus.core import BalanceSheet, Chart, IncomeStatement, TrialBalance
+from abacus.entries_store import LineJSON
+from abacus.user_chart import UserChart
+
+
+def cwd() -> Path:
+    return Path(os.getcwd())
+
+
+def get_chart_path() -> Path:
+    return cwd() / "chart.json"
+
+
+def get_entries_path() -> Path:
+    return cwd() / "entries.linejson"
+
+
+def get_user_chart() -> UserChart:
+    return UserChart.load(path=get_chart_path())
+
+
+def get_chart() -> Chart:
+    return get_user_chart().chart()
+
+
+def get_store() -> LineJSON:
+    return LineJSON(path=get_entries_path())
+
+
+def get_current_ledger():
+    chart = get_chart()
+    store = get_store()
+    ledger = chart.ledger()
+    ledger.post_many(entries=store.yield_entries())
+    return ledger
+
+
+def trial_balance():
+    ledger = get_current_ledger()
+    return TrialBalance.new(ledger)
+
+
+def balance_sheet():
+    ledger = get_current_ledger()
+    return BalanceSheet.new(ledger)
+
+
+def income_statement():
+    chart = get_chart()
+    store = get_store()
+    ledger = chart.ledger()
+    ledger.post_many(entries=store.yield_entries_for_income_statement(chart))
+    return IncomeStatement.new(ledger)
+
+
+def account_balances():
+    ledger = get_current_ledger()
+    return ledger.balances
+
 
 app = typer.Typer(
     add_completion=False, help="A minimal yet valid double entry accounting system."
@@ -21,6 +84,22 @@ def about():
 @app.command()
 def init(company_name: str):
     """Initialize project files in current directory."""
+    exit_code = 0
+    chart_path = get_chart_path()
+    if chart_path.exists():
+        print(f"Chart file ({chart_path}) already exists.")
+        exit_code = 1
+    else:
+        UserChart.default_user_chart(company_name).save(chart_path)
+        print(f"Created chart file: {chart_path}")
+    entries_path = get_entries_path()
+    if entries_path.exists():
+        print(f"Entries file ({entries_path}) already exists.")
+        exit_code = 1
+    else:
+        Path(entries_path).touch()
+        print(f"Created entries file: {entries_path}")
+    sys.exit(exit_code)
 
 
 @add.command()
@@ -109,13 +188,15 @@ def assert_(name, balance: Amount):
 
 @app.command()
 def unlink(
-    yes: Annotated[bool, typer.Option(prompt="Are you sure you want to delete files?")]
+    yes: Annotated[bool, typer.Option(prompt="Are you sure you want to delete project files?")]
 ):
     """Permanently delete project files in current directory."""
     if yes:
-        print(f"Deleting files")
+        get_chart_path().unlink(missing_ok=True)
+        get_entries_path().unlink(missing_ok=True)
+
     else:
-        print("Operation cancelled")
+        ...
 
 
 if __name__ == "__main__":

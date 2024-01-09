@@ -83,6 +83,15 @@ class UserChart(BaseModel):
     rename_dict: dict[str, str] = {}
     company_name: str | None = None
 
+    @classmethod
+    def default_user_chart(cls, company_name: str | None = None):
+        return cls(
+            income_summary_account="_isa",
+            retained_earnings_account="retained_earnings",
+            null_account="_null",
+            company_name=company_name,
+        )
+
     @staticmethod
     def last(name: str) -> str:
         return name.split(":")[-1]

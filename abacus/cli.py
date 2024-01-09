@@ -88,13 +88,15 @@ def cx_command():
         print(f"Chart file ({chart_path}) already exists.")
         exit_code = 1
     else:
-        make_user_chart().save(chart_path)
+        UserChart.default_user_chart().save(chart_path)
+        print(f"Created chart file: {chart_path}")
     entries_path = get_entries_path()
     if entries_path.exists():
         print(f"Entries file ({entries_path}) already exists.")
         exit_code = 1
     else:
         Path(entries_path).touch()
+        print(f"Created entries file: {entries_path}")
     sys.exit(exit_code)
 
 
