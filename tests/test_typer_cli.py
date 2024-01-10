@@ -1,3 +1,4 @@
+import pytest
 from typer.testing import CliRunner
 from pathlib import Path
 
@@ -11,6 +12,15 @@ def test_about():
     assert result.exit_code == 0
     assert "abacus" in result.stdout
 
+
+@pytest.mark.parametrize(
+    "word", ["about", "assert", "chart", "ledger", "report", "show", "unlink"]
+)
+def test_help(word):
+    result = runner.invoke(app, ["--help"])
+    assert word in result.stdout
+
+
 def test_init():
     with runner.isolated_filesystem() as f:
         result = runner.invoke(app, ["init", "ABC Company"])
@@ -20,11 +30,10 @@ def test_init():
         assert "Created chart file:" in result.stdout
         assert "Created entries file:" in result.stdout
 
+
 def test_unlink_deletes_files():
     with runner.isolated_filesystem() as f:
         runner.invoke(app, ["init", "ABC Company"])
         runner.invoke(app, ["unlink", "--yes"])
         assert not (Path(f) / "chart.json").exists()
         assert not (Path(f) / "entries.linejson").exists()
-
-
