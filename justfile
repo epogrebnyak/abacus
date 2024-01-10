@@ -20,7 +20,7 @@ go:
 grill:
   just go
   just boil
-  jsut scripts
+  just scripts
 
 # Run examples in scripts folder (linux)
 scripts:
