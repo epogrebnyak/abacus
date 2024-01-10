@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 import typer
 from typing_extensions import Annotated
@@ -21,15 +21,21 @@ def promote(labels: list[str]):
         print(spaced(labels))
 
 
-# TODO/TEST:
-# bx chart add --asset cash --capital equity
+# TODO: создать тест test_chart.py и добавить реализацию задейтсвованных команд (из cli.py)         
+# bx chart add --asset cash -c equity -l loan
+# bx chart promote income:sales expense:salaries,interest 
+# bx chart promote contra:equity:ts
+# bx chart name ts "Treasury stock"
+# bx chart offset sales refunds voids
+# bx show chart --json        
+
 @chart.command()
 def add(
-    asset: A = [],
-    liability: A = [],
-    capital: A = [],
-    income: A = [],
-    expense: A = [],
+    asset: Annotated[List[str], typer.Option("--asset", "-a")] = [],
+    capital: Annotated[List[str], typer.Option("--capital", "-c")] = [],
+    liability: Annotated[List[str], typer.Option("--liability", "-l")] = [],
+    income: Annotated[List[str], typer.Option("--income", "-i")] = [],
+    expense: Annotated[List[str], typer.Option("--expense", "-e")] = [],
 ):
     """Add accounts to chart."""
     if asset:
