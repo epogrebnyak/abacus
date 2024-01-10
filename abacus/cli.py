@@ -71,7 +71,7 @@ def income_statement():
 
 def account_balances():
     ledger = get_current_ledger()
-    return json.dumps(ledger.balances.data)
+    return ledger.balances.data
 
 
 @click.group()
@@ -210,7 +210,7 @@ def cx_report(
     if income_statement_flag and not all_reports_flag:
         income_statement().viewer.use(rename_dict).print()
     if account_balances_flag:
-        print(account_balances())
+        print(json.dumps(account_balances()))
     if all_reports_flag:
         tv = trial_balance().viewer
         bv = balance_sheet().viewer.use(rename_dict)
@@ -417,7 +417,8 @@ def post_compound(debit, credit):
 def assert_balance(account_name, balance):
     """Verify account balance."""
     ab = account_balances()
-    if (fact := ab[account_name]) != balance:
+    fact = ab[account_name]
+    if fact != balance:
         sys.exit(f"{account_name} balance is {fact}, expected {balance}.")
 
 

@@ -20,16 +20,25 @@ go:
 grill:
   just go
   just boil
+  jsut scripts
 
+# Run examples in scripts folder (linux)
+scripts:
+  cd scripts/vat && bash -e vat.bat
+  cd scripts/set && bash -e set.bat
+  cd scripts/textbook && bash -e joan.bat
+
+# Run all tests on documentation files
 boil:  
   just run ./README.md
   just run ./docs/index.md
+  just run ./docs/quick_start.md
   just run ./docs/quick_start.md
 
 # Run code and scripts from markdown file
 run MD_FILE:
   just run-py {{MD_FILE}}
-  just run-sh {{MD_FILE}}
+  just run-sh-clean {{MD_FILE}}
 
 # Run Python code from markdown file
 run-py MD_FILE:
@@ -39,15 +48,12 @@ run-py MD_FILE:
 run-sh MD_FILE:
   codeblock bash {{MD_FILE}} > {{MD_FILE}}.sh
   cd {{parent_directory(MD_FILE)}} && bash -e {{file_name(MD_FILE)}}.sh
+
+# Run script from markdown file and cleanup after
+run-sh-clean MD_FILE:
+  just run-sh {{MD_FILE}}
   rm {{MD_FILE}}.sh
   cd {{parent_directory(MD_FILE)}} && rm -f chart.json entries.linejson starting_balances.json
-
-# Run examples 
-scripts:
-  cd scripts && abacus extra unlink --yes && readme.bat
-  cd scripts/vat && vat.bat
-  cd scripts/set && set.bat
-  cd scripts/textbook && joan.bat
 
 # Run pytest (up to first error) and print slowest test times 
 test:
