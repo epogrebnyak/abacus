@@ -16,7 +16,7 @@ from abacus.core import (
     TrialBalance,
 )
 from abacus.entries_store import LineJSON
-from abacus.user_chart import UserChart, make_user_chart
+from abacus.user_chart import UserChart
 
 
 def cwd() -> Path:

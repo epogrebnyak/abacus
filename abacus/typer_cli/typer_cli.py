@@ -6,20 +6,20 @@ Ideas:
 """
 import os
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 import typer
 from typing_extensions import Annotated
 
 from abacus.base import Amount
-from abacus.core import BalanceSheet, Chart, IncomeStatement, TrialBalance
+from abacus.core import BalanceSheet, IncomeStatement, TrialBalance
 from abacus.entries_store import LineJSON
-from abacus.user_chart import UserChart
-
 from abacus.typer_cli.chart import chart
 from abacus.typer_cli.ledger import ledger
 from abacus.typer_cli.show import show
-
+from abacus.user_chart import UserChart
 
 app = typer.Typer(
     add_completion=False, help="A minimal yet valid double entry accounting system."
@@ -41,11 +41,8 @@ def get_entries_path() -> Path:
     return cwd() / "entries.linejson"
 
 
-from dataclasses import dataclass, field
-
-
 @dataclass
-class EveryThing:
+class Everything:
     chart_path: Path = field(default_factory=get_chart_path)
     entries_path: Path = field(default_factory=get_entries_path)
 
@@ -90,18 +87,18 @@ def about():
 
 
 @app.command()
-def init(company_name: str):
+def init(company_name: Optional[str] = None, overwrite: bool = False):
     """Initialize project files in current directory."""
     exit_code = 0
     chart_path = get_chart_path()
-    if chart_path.exists():
+    if chart_path.exists() and not overwrite:
         print(f"Chart file ({chart_path}) already exists.")
         exit_code = 1
     else:
         UserChart.default_user_chart(company_name).save(chart_path)
         print(f"Created chart file: {chart_path}")
     entries_path = get_entries_path()
-    if entries_path.exists():
+    if entries_path.exists() and not overwrite:
         print(f"Entries file ({entries_path}) already exists.")
         exit_code = 1
     else:

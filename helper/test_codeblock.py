@@ -1,6 +1,6 @@
 from codeblock import codeblock
 
-assert """\nprint("line with offset")""" in codeblock(
+assert """print("line with offset")""" in codeblock(
     "python",
     """ 
 

@@ -25,10 +25,11 @@ pip install git+https://github.com/epogrebnyak/abacus.git
 
 ## Quick example
 
-Let's do Sample Transaction #1 from [accountingcoach.com](https://www.accountingcoach.com/accounting-basics/explanation/5) (a great learning resource, highly recommended).
+Let's do Sample Transaction #1 from [accountingcoach.com](https://www.accountingcoach.com/accounting-basics/explanation/5)[^1].
 
-Both Python code and command line script will produce company balance sheet after
-Transaction #1.
+[^1]: It is a great learning resource for accounting, highly recommended.
+
+Both Python code and command line script will produce company balance sheet after Sample Transaction #1 is completed.
 
 Python code:
 
@@ -37,16 +38,16 @@ from abacus import Chart, Report
 
 chart = Chart(assets=["cash"], capital=["common_stock"])
 ledger = chart.ledger()
-ledger.post(debit="cash", credit="common_stock", amount=20000)
+ledger.post(debit="cash", credit="common_stock", amount=20000, title="Owner's investment")
 report = Report(chart, ledger)
-print(report.balance_sheet.viewer)
+print(report.balance_sheet)
 ```
 
 Command line script:
 
 ```bash
-abacus init
-abacus post asset:cash capital:common_stock 20000 --title "1. Owner's investment"
+bx init --overwrite
+abacus post asset:cash capital:common_stock 20000 --title "Owner's investment"
 abacus report --balance-sheet
 ```
 

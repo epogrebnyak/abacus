@@ -1,7 +1,7 @@
+from pathlib import Path
+
 import typer
 from typing_extensions import Annotated
-from typing import Optional
-from pathlib import Path
 
 from abacus.base import Amount
 
@@ -20,9 +20,13 @@ def post(title: str, amount: Amount, debit: str, credit: str):
     """Post double entry."""
 
 
-@ledger.command()
-def post_compound(title: str, debits: list[str, Amount], credits: list[str, Amount]):
-    """Post compound entry."""
+# TODO: may need a Click command here
+#       See how implemented in Click or https://github.com/tiangolo/typer/issues/387#issuecomment-1192866047
+#
+
+# @ledger.command()
+# def post_compound(title: str, debits: list[tuple[str, Amount]], credits: list[tuple[str, Amount]]):
+#     """Post compound entry."""
 
 
 @ledger.command()

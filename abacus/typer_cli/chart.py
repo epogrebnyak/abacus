@@ -1,6 +1,7 @@
+from typing import Optional
+
 import typer
 from typing_extensions import Annotated
-from typing import Optional
 
 A = Annotated[list[str], typer.Option()]
 

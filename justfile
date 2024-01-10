@@ -20,24 +20,30 @@ go:
 # Run all tests, checks and linters
 grill:
   just go
-  just md
   just boil
 
 boil:  
-  just run-py README.md
+  just run ./README.md
+
+# Run code and scripts from markdown file
+run FILE:
+  just run-py {{FILE}}
+  just run-sh {{FILE}}
 
 # Run Python code from markdown file
 run-py FILE:
   codeblock python {{FILE}} | poetry run python 
 
-# Run examples 
-examples-py:
-  run-py README.md
-
-
+# Run script from markdown file
+run-sh FILE:
+  codeblock bash {{FILE}} > {{FILE}}.sh
+  bash -e {{FILE}}.sh
+  rm {{FILE}}.sh
+  rm {{parent_directory(FILE)}}/chart.json
+  rm {{parent_directory(FILE)}}/entries.linejson
+ 
 # Run examples 
 scripts:
-  poetry run python scripts/readme.py
   cd scripts && abacus extra unlink --yes && readme.bat
   cd scripts/vat && vat.bat
   cd scripts/set && set.bat
@@ -87,6 +93,7 @@ docs:
 
 # Publish docs
 docs-publish:
+  just md
   poetry run mkdocs gh-deploy 
 
 # Publish to PyPI

@@ -8,6 +8,7 @@
 
 import sys
 from pathlib import Path
+
 from markdown_it import MarkdownIt
 
 
