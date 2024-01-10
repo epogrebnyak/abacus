@@ -21,9 +21,19 @@ go:
 grill:
   just go
   just md
-  just scripts
-  just docs-py
-  just docs-cli
+  just boil
+
+boil:  
+  just run-py README.md
+
+# Run Python code from markdown file
+run-py FILE:
+  codeblock python {{FILE}} | poetry run python 
+
+# Run examples 
+examples-py:
+  run-py README.md
+
 
 # Run examples 
 scripts:
