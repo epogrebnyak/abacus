@@ -11,7 +11,7 @@ ledger = typer.Typer(help="Post entries to ledger.", add_completion=False)
 
 
 @ledger.command()
-def start(path: Path):
+def load(path: Path):
     """Load starting balances to ledger from JSON file."""
 
 

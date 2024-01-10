@@ -1,5 +1,4 @@
 package := "abacus"
-readme_command := if os_family() == "windows" { "readme-console-win" } else { "readme-console-linux" }
 source_command := if os_family() == "windows" { "call" } else { "source" }
 #use cmd.exe instead of sh on Window
 #set shell := ["cmd.exe", "/c"]
@@ -24,24 +23,25 @@ grill:
 
 boil:  
   just run ./README.md
+  just run ./docs/index.md
+  just run ./docs/quick_start.md
 
 # Run code and scripts from markdown file
-run FILE:
-  just run-py {{FILE}}
-  just run-sh {{FILE}}
+run MD_FILE:
+  just run-py {{MD_FILE}}
+  just run-sh {{MD_FILE}}
 
 # Run Python code from markdown file
-run-py FILE:
-  codeblock python {{FILE}} | poetry run python 
+run-py MD_FILE:
+  codeblock python {{MD_FILE}} | poetry run python 
 
 # Run script from markdown file
-run-sh FILE:
-  codeblock bash {{FILE}} > {{FILE}}.sh
-  bash -e {{FILE}}.sh
-  rm {{FILE}}.sh
-  rm {{parent_directory(FILE)}}/chart.json
-  rm {{parent_directory(FILE)}}/entries.linejson
- 
+run-sh MD_FILE:
+  codeblock bash {{MD_FILE}} > {{MD_FILE}}.sh
+  cd {{parent_directory(MD_FILE)}} && bash -e {{file_name(MD_FILE)}}.sh
+  rm {{MD_FILE}}.sh
+  cd {{parent_directory(MD_FILE)}} && rm -f chart.json entries.linejson starting_balances.json
+
 # Run examples 
 scripts:
   cd scripts && abacus extra unlink --yes && readme.bat

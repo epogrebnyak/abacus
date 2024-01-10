@@ -71,7 +71,7 @@ def income_statement():
 
 def account_balances():
     ledger = get_current_ledger()
-    return ledger.balances
+    return json.dumps(ledger.balances.data)
 
 
 @click.group()
