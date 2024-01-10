@@ -29,7 +29,12 @@ Let's do Sample Transaction #1 from [accountingcoach.com](https://www.accounting
 
 [^1]: It is a great learning resource for accounting, highly recommended.
 
-Both Python code and command line script will produce company balance sheet after Sample Transaction #1 is completed.
+> On December 1, 2022 Joe starts his business Direct Delivery, Inc. The first transaction that Joe will record for his company is his personal investment of $20,000 in exchange for 5,000 shares of Direct Delivery's common stock.
+> Direct Delivery's accounting system will show an increase in its account Cash from zero to $20,000, and an increase in its stockholders' equity account Common Stock by $20,000.
+
+### Solution
+
+Both Python code and command line script below will produce balance sheet after Sample Transaction #1 is completed.
 
 Python code:
 
@@ -51,7 +56,7 @@ abacus post asset:cash capital:common_stock 20000 --title "Owner's investment"
 abacus report --balance-sheet
 ```
 
-The result is:
+### Result
 
 ```
 Balance sheet
