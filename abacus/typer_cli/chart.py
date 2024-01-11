@@ -1,9 +1,10 @@
-from typing import Optional, List
+import sys
+from typing import List, Optional
 
 import typer
 from typing_extensions import Annotated
 
-A = Annotated[list[str], typer.Option()]
+from abacus.typer_cli.base import UserChartCLI
 
 chart = typer.Typer(help="Modify chart of accounts.", add_completion=False)
 
@@ -12,42 +13,41 @@ def spaced(labels: list[str]) -> str:
     return "Added to chart: " + " ".join(labels)
 
 
-# TODO/TEST:
-# bx chart promote asset:cash capital:equity contra:equity:ts
-@chart.command()
-def promote(labels: list[str]):
-    """Add accounts to chart by label (like 'asset:cash')."""
-    if labels:
-        print(spaced(labels))
-
-
-# TODO: создать тест test_chart.py и добавить реализацию задейтсвованных команд (из cli.py)         
-# bx chart add --asset cash -c equity -l loan
-# bx chart promote income:sales expense:salaries,interest 
+# TODO: создать тест test_chart.py и добавить реализацию задействованных команд (из cli.py)
+# bx chart add -a cash ar paper
+# bx chart add -c equity
+# bx chart add --liability loan
+# bx chart add income:sales expense:salaries,interest
 # bx chart promote contra:equity:ts
 # bx chart name ts "Treasury stock"
 # bx chart offset sales refunds voids
-# bx show chart --json        
+# bx chart show --json
+
+
+def last(label: str) -> str:
+    return label.split(":")[-1]
+
 
 @chart.command()
 def add(
-    asset: Annotated[List[str], typer.Option("--asset", "-a")] = [],
-    capital: Annotated[List[str], typer.Option("--capital", "-c")] = [],
-    liability: Annotated[List[str], typer.Option("--liability", "-l")] = [],
-    income: Annotated[List[str], typer.Option("--income", "-i")] = [],
-    expense: Annotated[List[str], typer.Option("--expense", "-e")] = [],
+    labels: List[str],
+    asset: Annotated[bool, typer.Option("--asset", "-a")] = False,
+    capital: Annotated[bool, typer.Option("--capital", "-c")] = False,
+    liability: Annotated[bool, typer.Option("--liability", "-l")] = False,
+    income: Annotated[bool, typer.Option("--income", "-i")] = False,
+    expense: Annotated[bool, typer.Option("--expense", "-e")] = False,
+    title: Annotated[Optional[str], typer.Option("--title", "-t")] = None,
 ):
     """Add accounts to chart."""
-    if asset:
-        print(spaced(asset))
-    if capital:
-        print(spaced(capital))
-    if liability:
-        print(spaced(liability))
-    if income:
-        print(spaced(income))
-    if expense:
-        print(spaced(expense))
+    if len(labels) == 1 and title:
+        name(last(labels[0]), title)
+    match [asset, capital, liability, income, expense].count(True):
+        case 0:
+            print("Expecting labeles:", labels)
+        case 1:
+            print("Processing flag...")
+        case _:
+            sys.exit("Expecting only one flag or no flags.")
 
 
 @chart.command()
@@ -70,6 +70,7 @@ def set(
 @chart.command()
 def name(name: str, title: str):
     """Set account title."""
+    UserChartCLI.load().name(name, title).save()
     print(f"New title for {name} is {title}.")
 
 
@@ -78,3 +79,9 @@ def offset(name: str, contra_names: list[str]):
     """Add contra accounts."""
     s = "" if len(contra_names) == 1 else "s"
     print(f"Added contra account{s} for {name}.", spaced(contra_names))
+
+
+# TODO: may write test for this
+@chart.command()
+def show(json: bool = True):
+    print(UserChartCLI.load().user_chart.json())
