@@ -101,12 +101,6 @@ class UserChart(BaseModel):
 
     def name(self, name: str, title: str):
         self.rename_dict[self.last(name)] = title
-        return self
-
-    # may delete
-    def rename(self, name: str, title: str):
-        self.rename_dict[self.last(name)] = title
-        return self
 
     def yield_names(self):
         yield self.income_summary_account
@@ -140,36 +134,26 @@ class UserChart(BaseModel):
                             f"Cannot offset {name} because it is not in chart."
                         )
 
-    def use(self, *label_strings: str, prefix: str | None = None, composer: Composer | None = None):
+    def use(
+        self,
+        *label_strings: str,
+        prefix: str | None = None,
+        composer: Composer | None = None,
+    ):
         if prefix and not prefix.endswith(":"):
-            prefix += ":"   
+            prefix += ":"
         if prefix is None:
             prefix = ""
         if composer is None:
             composer = Composer()
         for label_string in label_strings:
-            for obj in extract(prefix+label_string, composer):
+            for obj in extract(prefix + label_string, composer):
                 self.add_one(obj)
         return self
 
-    def add_accounts(self, t: T, names: list[str]):
+    def add_many(self, t: T, names: list[str]):
         for name in names:
             self.add_one(Label(t, name))
-
-    def add_assets(self, names):
-        self.add_accounts(T.Asset, names)
-
-    def add_capital(self, names):
-        self.add_accounts(T.Capital, names)
-
-    def add_liabilities(self, names):
-        self.add_accounts(T.Liability, names)
-
-    def add_income(self, names):
-        self.add_accounts(T.Income, names)
-
-    def add_expenses(self, names):
-        self.add_accounts(T.Expense, names)
 
     def set_isa(self, name):
         self.income_summary_account = name  # must check unique except this name itself
@@ -208,10 +192,14 @@ class UserChart(BaseModel):
     def load(cls, path: Path | str):
         return cls.parse_file(path)
 
+    @classmethod
+    def default(cls):
+        return cls(
+            income_summary_account="_isa",
+            retained_earnings_account="retained_earnings",
+            null_account="_null",
+        )
+
 
 def make_user_chart(*args):
-    return UserChart(
-        income_summary_account="_isa",
-        retained_earnings_account="retained_earnings",
-        null_account="_null",
-    ).use(*args)
+    return UserChart.default().use(*args)

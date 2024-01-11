@@ -21,29 +21,11 @@ app.add_typer(show, name="show")
 
 
 @app.command()
-def about():
-    """Show information about `abacus` package."""
-    print("abacus")
-
-
-@app.command()
 def init(company_name: Optional[str] = None, overwrite: bool = False):
-    """Initialize project files in current directory."""
-    exit_code = 0
-    chart_path = get_chart_path()
-    if chart_path.exists() and not overwrite:
-        print(f"Chart file ({chart_path}) already exists.")
-        exit_code = 1
-    else:
-        UserChart.default_user_chart(company_name).save(chart_path)
-        print(f"Created chart file: {chart_path}")
-    entries_path = get_entries_path()
-    if entries_path.exists() and not overwrite:
-        print(f"Entries file ({entries_path}) already exists.")
-        exit_code = 1
-    else:
-        Path(entries_path).touch()
-        print(f"Created entries file: {entries_path}")
+    from abacus.typer_cli.chart import init as chart_init
+    from abacus.typer_cli.ledger import init as ledger_init
+
+    exit_code = chart_init(company_name, overwrite) + ledger_init(overwrite=overwrite) 
     sys.exit(exit_code)
 
 

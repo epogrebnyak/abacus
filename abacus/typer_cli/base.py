@@ -9,7 +9,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from abacus.user_chart import UserChart
+from abacus.user_chart import UserChart, make_user_chart
 
 
 def cwd() -> Path:
@@ -30,12 +30,18 @@ class UserChartCLI:
     path: Path
 
     @classmethod
+    def default(cls):
+        path = get_chart_path()
+        user_chart = make_user_chart()
+        return cls(user_chart, path)
+
+    @classmethod
     def load(cls):
         path = get_chart_path()
         try:
-            user_chart=UserChart.load(path)
-        except FileNotFoundError as e:
-            sys.exit(f"File not found: {path}. Use `init` command to create it.")                
+            user_chart = UserChart.load(path)
+        except FileNotFoundError:
+            sys.exit(f"File not found: {path}. Use `init` command to create it.")
         return cls(user_chart, path)
 
     def save(self):

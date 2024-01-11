@@ -3,7 +3,8 @@ markers = [
     "e2e: end-to-end tests",
     "unit: unit tests",
     "regression: something was wrong and got fixed",
-    "callable: tesk function or method invocation, but not the result"  
+    "callable: tesk function or method invocation, but not the result",  
+    "cli: command line interfaces"
 ]
 addopts = "--noconftest --ignore-glob=tests0/"
 

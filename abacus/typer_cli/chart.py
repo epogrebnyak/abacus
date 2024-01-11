@@ -8,20 +8,35 @@ from abacus.typer_cli.base import UserChartCLI
 
 chart = typer.Typer(help="Modify chart of accounts.", add_completion=False)
 
-
-def spaced(labels: list[str]) -> str:
-    return " ".join(labels) + "."
-
-
-# TODO: создать тест test_chart.py и добавить реализацию задействованных команд (из cli.py)
+# TODO: создать тест test_chart.py
+# bx init
 # bx chart add -a cash ar paper
 # bx chart add -c equity
 # bx chart add --liability loan
 # bx chart add income:sales expense:salaries,interest
-# bx chart promote contra:equity:ts
-# bx chart name ts "Treasury stock"
+# bx chart add contra:equity:ts --title "Treasury stock"
+# bx chart name paper "Inventory (paper products)"
 # bx chart offset sales refunds voids
 # bx chart show --json
+# bx unlink --yes
+
+
+@chart.command()
+def init(company_name: Optional[str] = None, overwrite: bool = False):
+    """Initialize chart file in current directory."""
+    uci = UserChartCLI.default()
+    if uci.path.exists() and not overwrite:
+        print(f"Chart file ({uci.path}) already exists.")
+        return 1
+    else:
+        uci.user_chart.company_name = company_name
+        uci.save()
+        print(f"  Created chart file: {uci.path}")
+        return 0
+
+
+def spaced(labels: list[str]) -> str:
+    return " ".join(labels) + "."
 
 
 def last(label: str) -> str:
@@ -46,7 +61,7 @@ def add(
         case 0:
             uci.user_chart.use(*labels)
             uci.save()
-            print("Added accounts:", spaced(labels))            
+            print("Added accounts:", spaced(labels))
         case 1:
             if asset:
                 prefix = "asset"
@@ -54,15 +69,15 @@ def add(
                 prefix = "capital"
             if liability:
                 prefix = "liability"
-            if income:  
-                prefix = "income"   
-            if expense: 
-                prefix = "expense"            
+            if income:
+                prefix = "income"
+            if expense:
+                prefix = "expense"
             uci.user_chart.use(*labels, prefix=prefix)
             uci.save()
             print(f"Added accounts ({prefix}):", spaced(labels))
         case _:
-            sys.exit("Expecting only one flag or no flags.")
+            sys.exit("Expecting only one or no flags.")
 
 
 @chart.command()
@@ -83,12 +98,12 @@ def set(
 
 
 @chart.command()
-def name(name: str, title: str):
+def name(account_name: str, title: str):
     """Set account title."""
     uci = UserChartCLI.load()
-    uci.user_chart.name(name, title)    
+    uci.user_chart.name(account_name, title)
     uci.save()
-    print(f"New title for {name} is {title}.")
+    print(f"New title for {account_name} is {title}.")
 
 
 @chart.command()
@@ -102,7 +117,6 @@ def offset(name: str, contra_names: list[str]):
     print(f"Added contra account{s} for {name}:", spaced(contra_names))
 
 
-# TODO: may write test for this
 @chart.command()
 def show(json: bool = True):
-    print(UserChartCLI.load().user_chart.json())
+    print(UserChartCLI.load().user_chart.json(indent=4, ensure_ascii=False))
