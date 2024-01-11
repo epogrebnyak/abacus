@@ -3,7 +3,7 @@
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 [![PyPI](https://img.shields.io/pypi/v/abacus-py?color=blue)](https://pypi.org/project/abacus-py/)
 
-A minimal, yet valid double-entry accounting system in Python.
+A minimal yet valid double-entry accounting system in Python.
 
 ## Documentation
 
