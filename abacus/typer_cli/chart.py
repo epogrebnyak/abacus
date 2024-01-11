@@ -10,7 +10,7 @@ chart = typer.Typer(help="Modify chart of accounts.", add_completion=False)
 
 
 def spaced(labels: list[str]) -> str:
-    return "Added to chart: " + " ".join(labels)
+    return " ".join(labels) + "."
 
 
 # TODO: создать тест test_chart.py и добавить реализацию задействованных команд (из cli.py)
@@ -41,11 +41,26 @@ def add(
     """Add accounts to chart."""
     if len(labels) == 1 and title:
         name(last(labels[0]), title)
+    uci = UserChartCLI.load()
     match [asset, capital, liability, income, expense].count(True):
         case 0:
-            print("Expecting labeles:", labels)
+            uci.user_chart.use(*labels)
+            uci.save()
+            print("Added accounts:", spaced(labels))            
         case 1:
-            print("Processing flag...")
+            if asset:
+                prefix = "asset"
+            if capital:
+                prefix = "capital"
+            if liability:
+                prefix = "liability"
+            if income:  
+                prefix = "income"   
+            if expense: 
+                prefix = "expense"            
+            uci.user_chart.use(*labels, prefix=prefix)
+            uci.save()
+            print(f"Added accounts ({prefix}):", spaced(labels))
         case _:
             sys.exit("Expecting only one flag or no flags.")
 
@@ -70,15 +85,21 @@ def set(
 @chart.command()
 def name(name: str, title: str):
     """Set account title."""
-    UserChartCLI.load().name(name, title).save()
+    uci = UserChartCLI.load()
+    uci.user_chart.name(name, title)    
+    uci.save()
     print(f"New title for {name} is {title}.")
 
 
 @chart.command()
 def offset(name: str, contra_names: list[str]):
     """Add contra accounts."""
+    uci = UserChartCLI.load()
+    for contra_name in contra_names:
+        uci.user_chart.offset(name, contra_name)
+    uci.save()
     s = "" if len(contra_names) == 1 else "s"
-    print(f"Added contra account{s} for {name}.", spaced(contra_names))
+    print(f"Added contra account{s} for {name}:", spaced(contra_names))
 
 
 # TODO: may write test for this

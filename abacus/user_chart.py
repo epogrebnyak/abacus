@@ -140,11 +140,15 @@ class UserChart(BaseModel):
                             f"Cannot offset {name} because it is not in chart."
                         )
 
-    def use(self, *label_strings: str, composer: Composer | None = None):
+    def use(self, *label_strings: str, prefix: str | None = None, composer: Composer | None = None):
+        if prefix and not prefix.endswith(":"):
+            prefix += ":"   
+        if prefix is None:
+            prefix = ""
         if composer is None:
             composer = Composer()
         for label_string in label_strings:
-            for obj in extract(label_string, composer):
+            for obj in extract(prefix+label_string, composer):
                 self.add_one(obj)
         return self
 
@@ -152,21 +156,19 @@ class UserChart(BaseModel):
         for name in names:
             self.add_one(Label(t, name))
 
-    def add_assets(self, *names):
+    def add_assets(self, names):
         self.add_accounts(T.Asset, names)
 
-    def add_capital(self, *names, retained_earnings_account=None):
+    def add_capital(self, names):
         self.add_accounts(T.Capital, names)
-        if retained_earnings_account is not None:
-            self.set_re(retained_earnings_account)
 
-    def add_liabilities(self, *names):
+    def add_liabilities(self, names):
         self.add_accounts(T.Liability, names)
 
-    def add_income(self, *names):
+    def add_income(self, names):
         self.add_accounts(T.Income, names)
 
-    def add_expenses(self, *names):
+    def add_expenses(self, names):
         self.add_accounts(T.Expense, names)
 
     def set_isa(self, name):

@@ -5,6 +5,7 @@ Ideas:
 
 """
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -28,18 +29,14 @@ class UserChartCLI:
     user_chart: UserChart
     path: Path
 
-    def offset(self, name: str, contra_name: str):
-        self.user_chart.offset(name, contra_name)
-        return self
-
-    def name(self, name: str, title: str):
-        self.user_chart.rename_dict[name] = title
-        return self
-
     @classmethod
     def load(cls):
         path = get_chart_path()
-        return cls(user_chart=UserChart.load(path), path=path)
+        try:
+            user_chart=UserChart.load(path)
+        except FileNotFoundError as e:
+            sys.exit(f"File not found: {path}. Use `init` command to create it.")                
+        return cls(user_chart, path)
 
     def save(self):
         return self.user_chart.save(path=self.path)
