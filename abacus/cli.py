@@ -109,7 +109,7 @@ def cx_add(account_names, title):
         chart = get_user_chart().use(*account_names)
         print(f"Added to chart: {' '.join(account_names)}.")
         if len(account_names) == 1 and title:
-            chart.rename(account_names[0], title)
+            chart.name(account_names[0], title)
             print("Account title:", title)
         chart.save(path=get_chart_path())
     except (AbacusError, FileNotFoundError) as e:
@@ -120,7 +120,9 @@ def cx_add(account_names, title):
 @click.argument("account_name")
 @click.argument("title")
 def name(account_name, title):
-    get_user_chart().rename(last(account_name), title).save(path=get_chart_path())
+    uc = get_user_chart()
+    uc.name(last(account_name), title)
+    uc.save(path=get_chart_path())
     print("Account title:", title)
 
 

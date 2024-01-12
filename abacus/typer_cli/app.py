@@ -1,5 +1,4 @@
 import sys
-from pathlib import Path
 from typing import Optional
 
 import typer
@@ -10,7 +9,6 @@ from abacus.typer_cli.base import get_chart_path, get_entries_path
 from abacus.typer_cli.chart import chart
 from abacus.typer_cli.ledger import ledger
 from abacus.typer_cli.show import show
-from abacus.user_chart import UserChart
 
 app = typer.Typer(
     add_completion=False, help="A minimal yet valid double entry accounting system."
@@ -25,7 +23,7 @@ def init(company_name: Optional[str] = None, overwrite: bool = False):
     from abacus.typer_cli.chart import init as chart_init
     from abacus.typer_cli.ledger import init as ledger_init
 
-    exit_code = chart_init(company_name, overwrite) + ledger_init(overwrite=overwrite) 
+    exit_code = chart_init(company_name, overwrite) + ledger_init(overwrite=overwrite)
     sys.exit(exit_code)
 
 

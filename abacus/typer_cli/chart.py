@@ -8,19 +8,8 @@ from abacus.typer_cli.base import UserChartCLI
 
 chart = typer.Typer(help="Modify chart of accounts.", add_completion=False)
 
-# TODO: создать тест test_chart.py
-# bx init
-# bx chart add -a cash ar paper
-# bx chart add -c equity
-# bx chart add --liability loan
-# bx chart add income:sales expense:salaries,interest
-# bx chart add contra:equity:ts --title "Treasury stock"
-# bx chart name paper "Inventory (paper products)"
-# bx chart offset sales refunds voids
-# bx chart show --json
-# bx unlink --yes
 
-
+# FIXME: move company_name to project.py
 @chart.command()
 def init(company_name: Optional[str] = None, overwrite: bool = False):
     """Initialize chart file in current directory."""
@@ -29,6 +18,7 @@ def init(company_name: Optional[str] = None, overwrite: bool = False):
         print(f"Chart file ({uci.path}) already exists.")
         return 1
     else:
+        # FIXME: move company_name to project.py
         uci.user_chart.company_name = company_name
         uci.save()
         print(f"  Created chart file: {uci.path}")
@@ -46,12 +36,24 @@ def last(label: str) -> str:
 @chart.command()
 def add(
     labels: List[str],
-    asset: Annotated[bool, typer.Option("--asset", "-a")] = False,
-    capital: Annotated[bool, typer.Option("--capital", "-c")] = False,
-    liability: Annotated[bool, typer.Option("--liability", "-l")] = False,
-    income: Annotated[bool, typer.Option("--income", "-i")] = False,
-    expense: Annotated[bool, typer.Option("--expense", "-e")] = False,
-    title: Annotated[Optional[str], typer.Option("--title", "-t")] = None,
+    asset: Annotated[
+        bool, typer.Option("--asset", "-a", help="Add assets accounts.")
+    ] = False,
+    capital: Annotated[
+        bool, typer.Option("--capital", "-c", help="Add capital (equity) accounts.")
+    ] = False,
+    liability: Annotated[
+        bool, typer.Option("--liability", "-l", help="Add liability accounts.")
+    ] = False,
+    income: Annotated[
+        bool, typer.Option("--income", "-i", help="Add income accounts.")
+    ] = False,
+    expense: Annotated[
+        bool, typer.Option("--expense", "-e", help="Add expense accounts.")
+    ] = False,
+    title: Annotated[
+        Optional[str], typer.Option("--title", "-t", help="Set title for an account.")
+    ] = None,
 ):
     """Add accounts to chart."""
     if len(labels) == 1 and title:
@@ -77,7 +79,7 @@ def add(
             uci.save()
             print(f"Added accounts ({prefix}):", spaced(labels))
         case _:
-            sys.exit("Expecting only one or no flags.")
+            sys.exit("Use only one or no flags.")
 
 
 @chart.command()
@@ -86,15 +88,20 @@ def set(
     retained_earnings_account: Optional[str] = None,
     null_account: Optional[str] = None,
 ):
-    """Set income summary, retained earnings or null account names."""
-    if i := income_summary_account:
+    """Set income summary, retained earnings or null accounts."""
+    if not (income_summary_account or retained_earnings_account or null_account):
+        sys.exit("No changes made.")
+    uci = UserChartCLI.load()
+    if income_summary_account:
+        uci.user_chart.set_isa(income_summary_account)
         print(f"New income summary account is {income_summary_account}.")
-    if r := retained_earnings_account:
+    if retained_earnings_account:
+        uci.user_chart.set_re(retained_earnings_account)
         print(f"New retained earnings account is {retained_earnings_account}.")
-    if n := null_account:
+    if null_account:
+        uci.user_chart.set_null(null_account)
         print(f"New null account is {null_account}.")
-    if not (i or r or n):
-        print("No changes made.")
+    uci.save()
 
 
 @chart.command()
@@ -119,4 +126,21 @@ def offset(name: str, contra_names: list[str]):
 
 @chart.command()
 def show(json: bool = True):
+    """Print chart."""
     print(UserChartCLI.load().user_chart.json(indent=4, ensure_ascii=False))
+
+
+@chart.command()
+def unlink(
+    yes: Annotated[
+        bool, typer.Option(prompt="Are you sure you want to delete project files?")
+    ]
+):
+    """Permanently delete chart file in current directory."""
+    if yes:
+        try:
+            UserChartCLI.default().path.unlink(missing_ok=False)
+        except FileNotFoundError:
+            sys.exit("No file to delete.")
+    else:
+        ...

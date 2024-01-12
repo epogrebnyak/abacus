@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 from shlex import split
 
@@ -5,8 +6,11 @@ import pytest
 from typer.testing import CliRunner
 
 from abacus.typer_cli import app
+from abacus.typer_cli.base import UserChartCLI
+from abacus.user_chart import AccountLabel, T
 
 runner = CliRunner()
+
 
 @pytest.mark.cli
 @pytest.mark.parametrize(
@@ -46,7 +50,16 @@ def test_unlink_deletes_files():
         assert not b.exists()
 
 
-chart_script = """chart init 
+@dataclass
+class Setting:
+    script: str
+    user_chart_dict: dict | None = None
+    exit_code: int = 0
+
+
+chart_setting = Setting(
+    """
+chart init 
 chart add -a cash ar paper
 chart add -c equity
 chart add --liability loan 
@@ -54,13 +67,95 @@ chart add income:sales expense:salaries,interest
 chart add contra:equity:ts --title "Treasury stock"
 chart name paper "Inventory (paper products)"
 chart offset sales refunds voids
-chart show --json"""
+chart set --retained-earnings-account new_isa --income-summary-account new_re --null-account new_null
+chart show
+chart show --json
+""",
+    user_chart_dict={
+        "account_labels": {
+            "ar": AccountLabel(type=T.Asset, contra_names=[]),
+            "cash": AccountLabel(type=T.Asset, contra_names=[]),
+            "equity": AccountLabel(type=T.Capital, contra_names=["ts"]),
+            "interest": AccountLabel(type=T.Expense, contra_names=[]),
+            "loan": AccountLabel(type=T.Liability, contra_names=[]),
+            "paper": AccountLabel(type=T.Asset, contra_names=[]),
+            "salaries": AccountLabel(type=T.Expense, contra_names=[]),
+            "sales": AccountLabel(type=T.Income, contra_names=["refunds", "voids"]),
+        },
+        "company_name": None,
+        "income_summary_account": "new_re",
+        "null_account": "new_null",
+        "rename_dict": {"paper": "Inventory (paper products)", "ts": "Treasury stock"},
+        "retained_earnings_account": "new_isa",
+    },
+)
 
 
-@pytest.mark.parametrize("script", [chart_script])
+@pytest.mark.parametrize("setting", [chart_setting])
 @pytest.mark.cli
-def test_scripts(script):
+def test_script_as_setting(setting):
+    with runner.isolated_filesystem() as f:
+        for line in setting.script.split("\n"):
+            if line:
+                result = runner.invoke(app, split(line))
+                assert result.exit_code == setting.exit_code
+        if setting.user_chart_dict is not None:
+            uci = UserChartCLI.load(f)
+            assert uci.user_chart.dict() == setting.user_chart_dict
+
+
+@dataclass
+class Line:
+    script: str
+    comment: str | None = None
+
+    @property
+    def args(self):
+        return split(self.script)
+
+
+class HappyLine(Line):
+    ...
+
+
+class SadLine(Line):
+    ...
+
+
+@pytest.mark.parametrize(
+    "lines",
+    [
+        [HappyLine("chart init"), SadLine("chart set")],
+        [SadLine("chart set --income-summary-account new_isa")],
+        [SadLine("chart unlink --yes")],
+        [HappyLine("chart init"), HappyLine("chart unlink --yes")],
+        [HappyLine("ledger init")],
+        [SadLine("ledger unlink --yes")],
+        [HappyLine("ledger init"), HappyLine("ledger unlink --yes")],
+    ],
+)
+@pytest.mark.cli
+def test_by_line(lines):
     with runner.isolated_filesystem():
-        for line in script.split("\n"):
-            result = runner.invoke(app, split(line))
-            assert result.exit_code == 0
+        for line in lines:
+            print(line)
+            result = runner.invoke(app, line.args)
+            print(result.stdout)
+            match line:
+                case HappyLine(_, _):
+                    assert result.exit_code == 0
+                case SadLine(_, _):
+                    assert result.exit_code == 1
+
+
+@pytest.mark.cli
+def test_ledger_create_and_delete_files():
+    with runner.isolated_filesystem() as f:
+        b = Path(f) / "entries.linejson"
+        result = runner.invoke(app, ["ledger", "init"])
+        assert result.exit_code == 0
+        assert b.exists()
+        assert "Created entries file:" in result.stdout
+        result = runner.invoke(app, ["ledger", "unlink", "--yes"])
+        assert result.exit_code == 0
+        assert not b.exists()

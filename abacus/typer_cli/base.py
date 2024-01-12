@@ -16,8 +16,10 @@ def cwd() -> Path:
     return Path(os.getcwd())
 
 
-def get_chart_path() -> Path:
-    return cwd() / "chart.json"
+def get_chart_path(directory: Path | str | None = None) -> Path:
+    if directory is None:
+        directory = cwd()
+    return Path(directory) / "chart.json"
 
 
 def get_entries_path() -> Path:
@@ -36,8 +38,8 @@ class UserChartCLI:
         return cls(user_chart, path)
 
     @classmethod
-    def load(cls):
-        path = get_chart_path()
+    def load(cls, directory: Path | str | None = None):
+        path = get_chart_path(directory)
         try:
             user_chart = UserChart.load(path)
         except FileNotFoundError:

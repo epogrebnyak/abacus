@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import typer
@@ -10,11 +11,10 @@ A = Annotated[list[str], typer.Option()]
 
 ledger = typer.Typer(help="Post entries to ledger.", add_completion=False)
 
-from typing import Optional
 
 @ledger.command()
-def init(file: Optional[Path]=None, overwrite: bool = False):
-    """Load starting balances to ledger from JSON file."""
+def init(overwrite: bool = False):
+    """Initialize chart file in current directory."""
     entries_path = get_entries_path()
     if entries_path.exists() and not overwrite:
         print(f"Entries file ({entries_path}) already exists.")
@@ -22,10 +22,14 @@ def init(file: Optional[Path]=None, overwrite: bool = False):
     else:
         Path(entries_path).touch()
         print(f"Created entries file: {entries_path}")
-    if file:
-        raise NotImplementedError
-        print(f"Loading entries from {file}...")
     return 0
+
+
+@ledger.command()
+def load(file: Path):
+    """Load starting balances to ledger from JSON file."""
+    ...
+
 
 @ledger.command()
 def post(title: str, amount: Amount, debit: str, credit: str):
@@ -43,3 +47,19 @@ def post(title: str, amount: Amount, debit: str, credit: str):
 @ledger.command()
 def close():
     """Post closing entries."""
+
+
+@ledger.command()
+def unlink(
+    yes: Annotated[
+        bool, typer.Option(prompt="Are you sure you want to delete project files?")
+    ]
+):
+    """Permanently delete ledger file in current directory."""
+    if yes:
+        try:
+            get_entries_path().unlink(missing_ok=False)
+        except FileNotFoundError:
+            sys.exit("No file to delete.")
+    else:
+        ...
