@@ -4,7 +4,7 @@ from typing import List, Optional
 import typer
 from typing_extensions import Annotated
 
-from abacus.typer_cli.base import UserChartCLI
+from abacus.typer_cli.base import UserChartCLI, last
 
 chart = typer.Typer(help="Modify chart of accounts.", add_completion=False)
 
@@ -27,10 +27,6 @@ def init(company_name: Optional[str] = None, overwrite: bool = False):
 
 def spaced(labels: list[str]) -> str:
     return " ".join(labels) + "."
-
-
-def last(label: str) -> str:
-    return label.split(":")[-1]
 
 
 @chart.command()

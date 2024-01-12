@@ -122,6 +122,10 @@ class SadLine(Line):
     ...
 
 
+def all_happy(script: str):
+    return [HappyLine(line) for line in script.split("\n") if line]
+
+
 @pytest.mark.parametrize(
     "lines",
     [
@@ -132,6 +136,14 @@ class SadLine(Line):
         [HappyLine("ledger init")],
         [SadLine("ledger unlink --yes")],
         [HappyLine("ledger init"), HappyLine("ledger unlink --yes")],
+        all_happy(
+            """
+chart init
+ledger init 
+ledger post     asset:cash capital:equity 49 
+ledger post cash equity 51 
+"""
+        ),
     ],
 )
 @pytest.mark.cli
@@ -139,6 +151,7 @@ def test_by_line(lines):
     with runner.isolated_filesystem():
         for line in lines:
             print(line)
+            print(line.args)
             result = runner.invoke(app, line.args)
             print(result.stdout)
             match line:

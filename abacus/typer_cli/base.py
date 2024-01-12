@@ -10,6 +10,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from abacus.user_chart import UserChart, make_user_chart
+from abacus.entries_store import LineJSON
+
+
+def last(label: str) -> str:
+    return label.split(":")[-1]
 
 
 def cwd() -> Path:
@@ -24,6 +29,10 @@ def get_chart_path(directory: Path | str | None = None) -> Path:
 
 def get_entries_path() -> Path:
     return cwd() / "entries.linejson"
+
+
+def get_store() -> LineJSON:
+    return LineJSON(path=get_entries_path())
 
 
 @dataclass
@@ -49,23 +58,6 @@ class UserChartCLI:
     def save(self):
         return self.user_chart.save(path=self.path)
 
-
-# @dataclass
-# class Everything:
-#     chart_path: Path = field(default_factory=get_chart_path)
-#     entries_path: Path = field(default_factory=get_entries_path)
-
-#     @property
-#     def user_chart(self) -> UserChart:
-#         return UserChart.load(path=self.chart_path)
-
-#     @property
-#     def chart(self) -> UserChart:
-#         return self.user_chart.chart()
-
-#     @property
-#     def store(self) -> LineJSON:
-#         return LineJSON(path=self.entries_path)
 
 #     @property
 #     def ledger(self):
