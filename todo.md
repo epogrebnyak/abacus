@@ -1,7 +1,5 @@
 REFACTOR:
 
-- [ ] remove File class
-- [ ] trim down get_entries()
 - [ ] clean cli tests
 
 DOCS/PROSE:

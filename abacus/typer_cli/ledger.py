@@ -72,34 +72,6 @@ def post(
     print("Title:", title)
 
 
-# Need a Click command here
-# See how implemented in Click or https://github.com/tiangolo/typer/issues/387#issuecomment-1192866047
-# @ledger.command()
-# def post_compound(title: str, debits: list[tuple[str, Amount]], credits: list[tuple[str, Amount]]):
-#    """Post compound entry."""
-
-
-@ledger.callback()
-def callback():
-    """
-    Typer app, including Click subapp
-    """
-
-
-@click.command()
-def hello():
-    """Simple program that greets NAME for a total of COUNT times."""
-    click.echo("Hello")
-
-
-typer_click_object = typer.main.get_command(ledger)  # type: ignore
-typer_click_object.add_command(hello, "hello")  # type: ignore
-
-### TODO: Хотим добиться чтобы проходило `bx ledger hello`
-###       Тут пример как сделать `bx hello`: https://typer.tiangolo.com/tutorial/using-click/
-###       Вопрос как сделать `bx ledger hello`
-
-
 @ledger.command()
 def close():
     """Post closing entries."""
