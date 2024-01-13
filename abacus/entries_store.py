@@ -10,23 +10,6 @@ __all__ = ["LineJSON"]
 
 
 @dataclass
-class File:
-    """Create and erase file."""
-
-    path: Path
-
-    def touch(self):
-        if not self.path.exists():
-            self.path.touch()
-        return self
-
-    def erase(self):
-        if self.path.exists():
-            self.path.unlink()
-        return self
-
-
-@dataclass
 class LineJSON:
     path: Path
 
@@ -35,10 +18,6 @@ class LineJSON:
         if path is None:
             path = Path("./entries.linejson")
         return cls(Path(path))
-
-    @property
-    def file(self) -> File:
-        return File(Path(self.path))
 
     def append(self, entry: Entry) -> None:
         self.append_many([entry])
