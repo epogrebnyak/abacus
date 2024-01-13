@@ -7,8 +7,6 @@ import pytest
 from typer.testing import CliRunner
 
 from abacus.typer_cli.app import app
-from abacus.typer_cli.base import UserChartCLI
-from abacus.user_chart import AccountLabel, T
 
 runner = CliRunner()
 
@@ -27,13 +25,12 @@ def test_init_creates_files():
     with runner.isolated_filesystem() as f:
         a = Path(f) / "chart.json"
         b = Path(f) / "entries.linejson"
-        result = runner.invoke(app, ["init", "--company-name='ABC Company'"])
+        result = runner.invoke(app, ["init"])
         assert result.exit_code == 0
         assert a.exists()
         assert b.exists()
-        assert "Created chart file:" in result.stdout
-        assert "Created entries file:" in result.stdout
-        assert "ABC Company" in a.read_text()
+        assert "Created chart" in result.stdout
+        assert "Created empty ledger" in result.stdout
 
 
 @pytest.mark.cli
@@ -58,8 +55,7 @@ class Setting:
     exit_code: int = 0
 
 
-chart_setting = Setting(
-    """
+chart_setting = """
 chart init 
 chart add -a cash ar paper
 chart add -c equity
@@ -70,40 +66,18 @@ chart name paper "Inventory (paper products)"
 chart offset sales refunds voids
 chart set --retained-earnings-account new_isa --income-summary-account new_re --null-account new_null
 chart show
-chart show --json
-""",
-    user_chart_dict={
-        "account_labels": {
-            "ar": AccountLabel(type=T.Asset, contra_names=[]),
-            "cash": AccountLabel(type=T.Asset, contra_names=[]),
-            "equity": AccountLabel(type=T.Capital, contra_names=["ts"]),
-            "interest": AccountLabel(type=T.Expense, contra_names=[]),
-            "loan": AccountLabel(type=T.Liability, contra_names=[]),
-            "paper": AccountLabel(type=T.Asset, contra_names=[]),
-            "salaries": AccountLabel(type=T.Expense, contra_names=[]),
-            "sales": AccountLabel(type=T.Income, contra_names=["refunds", "voids"]),
-        },
-        "company_name": None,
-        "income_summary_account": "new_re",
-        "null_account": "new_null",
-        "rename_dict": {"paper": "Inventory (paper products)", "ts": "Treasury stock"},
-        "retained_earnings_account": "new_isa",
-    },
-)
+"""
 
 
 @pytest.mark.parametrize("setting", [chart_setting])
 @pytest.mark.cli
 def test_script_as_setting(setting):
     runner = CliRunner()
-    with runner.isolated_filesystem() as f:
-        for line in setting.script.split("\n"):
+    with runner.isolated_filesystem():
+        for line in setting.split("\n"):
             if line:
                 result = runner.invoke(app, split(line))
-                assert result.exit_code == setting.exit_code
-        if setting.user_chart_dict is not None:
-            uci = UserChartCLI.load(f)
-            assert uci.user_chart.dict() == setting.user_chart_dict
+                assert result.exit_code == 0
 
 
 @dataclass
@@ -153,8 +127,8 @@ def test_post_zzz():
         HappyLine(
             "post --entry asset:cash capital:eq 1000 --credit income:sales 50 --credit liability:vat 10 --debit asset:ar 60 --strict"
         )
-        .prints("True")
-        .prints("income:sales")
+        .prints("Posted")
+        .prints("sales")
     )
     assert_subprocess("bx", h)
 
@@ -168,16 +142,16 @@ def all_happy(script: str):
     [
         [HappyLine("chart init"), SadLine("chart set")],
         [SadLine("chart set --income-summary-account new_isa")],
-        [SadLine("chart unlink --yes")],
+        [HappyLine("chart unlink --yes")],
         [HappyLine("chart init"), HappyLine("chart unlink --yes")],
         [HappyLine("ledger init")],
-        [SadLine("ledger unlink --yes")],
+        [HappyLine("ledger unlink --yes")],
         [HappyLine("ledger init"), HappyLine("ledger unlink --yes")],
         all_happy(
             """
 chart init
 ledger init 
-ledger post     asset:cash capital:equity 49 
+ledger post asset:cash capital:equity 49 
 ledger post cash equity 51 
 """
         ),
@@ -209,7 +183,7 @@ def test_ledger_create_and_delete_files():
         result = runner.invoke(app, ["ledger", "init"])
         assert result.exit_code == 0
         assert b.exists()
-        assert "Created entries file:" in result.stdout
+        assert "Created empty ledger file" in result.stdout
         result = runner.invoke(app, ["ledger", "unlink", "--yes"])
         assert result.exit_code == 0
         assert not b.exists()

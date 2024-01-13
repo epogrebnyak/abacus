@@ -185,11 +185,15 @@ class UserChart(BaseModel):
             expenses=self.accounts(T.Expense),  # type: ignore
         ).validate()
 
-    def save(self, path: Path | str):
+    def save(self, path: Path | str | None = None):
+        if path is None:
+            path = Path("./chart.json")
         Path(path).write_text(self.json(indent=4, ensure_ascii=False), encoding="utf-8")
 
     @classmethod
-    def load(cls, path: Path | str):
+    def load(cls, path: Path | str | None = None):
+        if path is None:
+            path = Path("./chart.json")
         return cls.parse_file(path)
 
     @classmethod

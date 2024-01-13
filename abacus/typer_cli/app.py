@@ -1,11 +1,11 @@
 import sys
+from pathlib import Path
 from typing import Optional
 
 import typer
 from typing_extensions import Annotated
 
-from abacus.core import Amount
-from abacus.typer_cli.base import get_chart_path, get_entries_path
+from abacus.typer_cli.base import get_chart_path, get_entries_path, get_ledger
 from abacus.typer_cli.chart import chart
 from abacus.typer_cli.ledger import ledger
 from abacus.typer_cli.show import show
@@ -13,8 +13,7 @@ from abacus.typer_cli.show import show
 from .post import postx
 
 app = typer.Typer(
-    # add_completion=False,
-    help="A minimal yet valid double entry accounting system."
+    add_completion=False, help="A minimal yet valid double entry accounting system."
 )
 app.add_typer(chart, name="chart")
 app.add_typer(ledger, name="ledger")
@@ -29,12 +28,12 @@ def callback():
 
 
 @app.command()
-def init(company_name: Optional[str] = None, overwrite: bool = False):
+def init():
     from abacus.typer_cli.chart import init as chart_init
     from abacus.typer_cli.ledger import init as ledger_init
 
-    exit_code = chart_init(company_name, overwrite) + ledger_init(overwrite=overwrite)
-    sys.exit(exit_code)
+    chart_init()
+    ledger_init()
 
 
 @app.command()
@@ -57,8 +56,16 @@ def report(
 
 
 @app.command(name="assert")
-def assert_(name: str, balance: Amount):
+def assert_(
+    name: str,
+    balance: int,
+    chart_file: Optional[Path] = None,
+    ledger_file: Optional[Path] = None,
+):
     """Verify account balance."""
+    ledger = get_ledger(chart_file, ledger_file)
+    if not (fact := ledger.balances[name]) == balance:
+        sys.exit(f"Account {name} balance is {fact}, expected {balance}.")
 
 
 @app.command()

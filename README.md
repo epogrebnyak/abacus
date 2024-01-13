@@ -51,7 +51,7 @@ print(report.balance_sheet)
 Command line script:
 
 ```bash
-bx init --overwrite
+bx init
 abacus post asset:cash capital:common_stock 20000 --title "Owner's investment"
 abacus report --balance-sheet
 ```

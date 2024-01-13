@@ -5,8 +5,7 @@ Ideas:
 
 """
 import os
-import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from abacus.entries_store import LineJSON
@@ -36,6 +35,14 @@ def get_store() -> LineJSON:
 
 
 @dataclass
+class ChartCLI:
+    path: Path = field(default_factory=get_chart_path)
+
+    def user_chart(self):
+        return UserChart.parse_file(self.path)
+
+
+@dataclass
 class UserChartCLI:
     user_chart: UserChart
     path: Path
@@ -49,14 +56,17 @@ class UserChartCLI:
     @classmethod
     def load(cls, directory: Path | str | None = None):
         path = get_chart_path(directory)
-        try:
-            user_chart = UserChart.load(path)
-        except FileNotFoundError:
-            sys.exit(f"File not found: {path}. Use `init` command to create it.")
+        user_chart = UserChart.load(path)
         return cls(user_chart, path)
 
     def save(self):
         return self.user_chart.save(path=self.path)
+
+
+def get_ledger(chart_file: Path | None = None, store_file: Path | None = None):
+    chart = UserChart.load(chart_file).chart()
+    store = LineJSON.load(store_file)
+    return chart.ledger().post_many(entries=store.yield_entries())
 
 
 #     @property

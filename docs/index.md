@@ -43,7 +43,7 @@ Few lines of sample code for a fictious [Dunder Mufflin paper company](https://e
 === "Command line"
 
     ```bash
-    bx init --overwrite
+    bx init
     abacus add asset:cash
     abacus add asset:paper --title "Inventory"
     abacus add capital:equity

@@ -30,6 +30,12 @@ class File:
 class LineJSON:
     path: Path
 
+    @classmethod
+    def load(cls, path: Path | str | None = None):
+        if path is None:
+            path = Path("./entries.linejson")
+        return cls(Path(path))
+
     @property
     def file(self) -> File:
         return File(Path(self.path))

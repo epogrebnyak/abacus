@@ -11,18 +11,14 @@ chart = typer.Typer(help="Modify chart of accounts.", add_completion=False)
 
 # FIXME: move company_name to project.py
 @chart.command()
-def init(company_name: Optional[str] = None, overwrite: bool = False):
+def init():
     """Initialize chart file in current directory."""
     uci = UserChartCLI.default()
-    if uci.path.exists() and not overwrite:
+    if uci.path.exists():
         print(f"Chart file ({uci.path}) already exists.")
-        return 1
     else:
-        # FIXME: move company_name to project.py
-        uci.user_chart.company_name = company_name
         uci.save()
-        print(f"  Created chart file: {uci.path}")
-        return 0
+        print(f"Created chart file: {uci.path}")
 
 
 def spaced(labels: list[str]) -> str:
@@ -121,22 +117,20 @@ def offset(name: str, contra_names: list[str]):
 
 
 @chart.command()
-def show(json: bool = True):
+def show():
     """Print chart."""
     print(UserChartCLI.load().user_chart.json(indent=4, ensure_ascii=False))
 
 
 @chart.command()
 def unlink(
-    yes: Annotated[
-        bool, typer.Option(prompt="Are you sure you want to delete project files?")
-    ]
+    yes: Annotated[bool, typer.Option(prompt="Are you sure you want to chart file?")]
+    # ,
+    # chart_file: Optional[Path] = None
 ):
     """Permanently delete chart file in current directory."""
+
     if yes:
-        try:
-            UserChartCLI.default().path.unlink(missing_ok=False)
-        except FileNotFoundError:
-            sys.exit("No file to delete.")
+        UserChartCLI.default().path.unlink(missing_ok=True)
     else:
         ...

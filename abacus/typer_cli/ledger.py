@@ -7,56 +7,70 @@ import typer
 from typing_extensions import Annotated
 
 from abacus.base import Amount
-from abacus.core import Entry
-from abacus.typer_cli.base import UserChartCLI, get_entries_path, get_store, last
+from abacus.core import AccountBalances, Entry, starting_entries
+from abacus.entries_store import LineJSON
+from abacus.typer_cli.base import last
+from abacus.user_chart import UserChart
 
 A = Annotated[list[str], typer.Option()]
 
-ledger = typer.Typer(help="Post entries to ledger.", add_completion=False)
+ledger = typer.Typer(help="Modify ledger.", add_completion=False)
 
 
-@ledger.command()
-def init(overwrite: bool = False):
-    """Initialize chart file in current directory."""
-    entries_path = get_entries_path()
-    if entries_path.exists() and not overwrite:
-        print(f"Entries file ({entries_path}) already exists.")
-        return 1
-    else:
-        Path(entries_path).touch()
-        print(f"Created entries file: {entries_path}")
-    return 0
-    # FIXME: always exit with 0
-
-
-@ledger.command()
-def load(file: Path):
-    """Load starting balances to ledger from JSON file."""
-    raise NotImplementedError
-
-
-@ledger.command()
-def post(debit: str, credit: str, amount: Amount, title: Optional[str] = None):
-    """Post double entry."""
-    if not (entries_path := get_entries_path()).exists():
+def assure_ledger_file_exists(store_file):
+    store = LineJSON.load(store_file)
+    if not store.path.exists():
         sys.exit(
-            f"Entries file not found: {entries_path}. Use `ledger init` command to create it"
+            f"Ledger file ({store.path}) not found. Use `ledger init` command to create it."
         )
+
+
+@ledger.command()
+def init():
+    """Initialize ledger file in current directory."""
+    store_path = LineJSON.load(None).path
+    if store_path.exists():
+        print(f"Ledger file ({store_path}) already exists.")
+    else:
+        store_path.touch()
+        print(f"Created empty ledger file ({store_path}).")
+
+
+@ledger.command()
+def load(
+    file: Path, chart_file: Optional[Path] = None, store_file: Optional[Path] = None
+):
+    """Load starting balances to ledger from JSON file."""
+    store = LineJSON.load(store_file)
+    # FIXME: store must be empty for load() command
+    balances = AccountBalances.load(file)
+    chart = UserChart.load(chart_file)
+    entries = starting_entries(chart, balances)
+    store.append_many(entries)
+    print("Posted starting balances to ledger:", entries)
+
+
+@ledger.command()
+def post(
+    debit: str,
+    credit: str,
+    amount: Amount,
+    title: Optional[str] = None,
+    chart_file: Optional[Path] = None,
+    store_file: Optional[Path] = None,
+):
+    """Post double entry."""
+    assure_ledger_file_exists(store_file)
     if ":" in debit:
-        uci = UserChartCLI.load()
-        uci.user_chart.use(debit)
-        uci.save()
+        UserChart.load(chart_file).use(debit).save()
         debit = last(debit)
     if ":" in credit:
-        uci = UserChartCLI.load()
-        uci.user_chart.use(credit)
-        uci.save()
+        UserChart.load(chart_file).use(credit).save()
         credit = last(credit)
-    get_store().append(Entry(debit, credit, amount))
-    print(
-        f"Posted to ledger: debit <{debit}> {amount}, credit <{credit}> {amount}. Title: {title}."
-    )
+    LineJSON.load(store_file).append(Entry(debit, credit, amount))
+    print(f"Debited {debit} {amount} and credited {credit} {amount}.")
     # FIXME: title is discarded
+    print("Title:", title)
 
 
 # Need a Click command here
@@ -94,16 +108,21 @@ def close():
 
 
 @ledger.command()
+def show(store_file: Optional[Path] = None):
+    """Show ledger."""
+    assure_ledger_file_exists(store_file)
+    print(LineJSON.load(store_file).path.read_text())
+
+
+@ledger.command()
 def unlink(
     yes: Annotated[
-        bool, typer.Option(prompt="Are you sure you want to delete project files?")
-    ]
+        bool, typer.Option(prompt="Are you sure you want to delete ledger file?")
+    ],
+    store_file: Optional[Path] = None,
 ):
     """Permanently delete ledger file in current directory."""
     if yes:
-        try:
-            get_entries_path().unlink(missing_ok=False)
-        except FileNotFoundError:
-            sys.exit("No file to delete.")
+        LineJSON.load(store_file).path.unlink(missing_ok=True)
     else:
         ...
