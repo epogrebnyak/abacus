@@ -8,3 +8,6 @@ bx ledger init
 bx assert cash 0
 bx post --starting-balances-file start.json
 bx assert cash 20000 
+bx post --entry cash income:sales 500
+bx close 
+bx assert retained_earnings 500

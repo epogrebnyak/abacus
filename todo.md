@@ -10,6 +10,7 @@ BUGS:
 
 WONTFIX:
 
+- [ ] allow bx without arguments to show help
 - [ ] maybe promote
 - [ ] sort keys and totals in trial balance
 - [ ] --no-color flag
