@@ -298,8 +298,10 @@ class Chart:
         self.validate()
 
     def validate(self) -> "Chart":
-        if len(self.to_dict()) != len(list(self.dict_items())):
-            raise AbacusError("Chart should not contain duplicate account names.")
+        a = list(self.to_dict().keys())
+        b = [x[0] for x in self.dict_items()]
+        if len(a) != len(b):
+            raise AbacusError(["Chart should not contain duplicate account names.", len(a), len(b), set(b)-set(a)])
         return self
 
     def to_dict(self) -> dict[str, Holder]:
