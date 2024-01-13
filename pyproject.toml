@@ -26,7 +26,7 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-bx = 'abacus.typer_cli:app'
+bx = 'abacus.typer_cli.app:combined_typer_click_app'
 abacus = 'abacus.cli:cx'
 codeblock = 'helper.codeblock:main'
 
