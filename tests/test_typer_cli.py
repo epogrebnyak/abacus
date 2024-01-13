@@ -5,7 +5,7 @@ from shlex import split
 import pytest
 from typer.testing import CliRunner
 
-from abacus.typer_cli.app import combined_typer_click_app as app
+from abacus.typer_cli.app import app
 from abacus.typer_cli.base import UserChartCLI
 from abacus.user_chart import AccountLabel, T
 
@@ -94,6 +94,7 @@ chart show --json
 @pytest.mark.parametrize("setting", [chart_setting])
 @pytest.mark.cli
 def test_script_as_setting(setting):
+    runner = CliRunner()
     with runner.isolated_filesystem() as f:
         for line in setting.script.split("\n"):
             if line:
@@ -109,6 +110,14 @@ class Line:
     script: str
     comment: str | None = None
     stdout_contains: list[str] = field(default_factory=list)
+
+    @property
+    def exit_code(self):
+        match self:
+            case HappyLine(_, _):
+                return 0
+            case SadLine(_, _):
+                return 1
 
     @property
     def args(self):
@@ -127,6 +136,31 @@ class SadLine(Line):
     ...
 
 
+import subprocess
+
+
+def assert_subprocess(command: str, line: Line):
+    args = [command] + line.args
+    result = subprocess.run(args, text=True, capture_output=True)
+    print
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == line.exit_code
+    for s in line.stdout_contains:
+        assert s in result.stdout
+
+
+def test_post_zzz():
+    h = (
+        HappyLine(
+            "post --entry asset:cash capital:eq 1000 --credit income:sales 50 --credit liability:vat 10 --debit asset:ar 60 --strict"
+        )
+        .prints("True")
+        .prints("income:sales")
+    )
+    assert_subprocess("bx", h)
+
+
 def all_happy(script: str):
     return [HappyLine(line) for line in script.split("\n") if line]
 
@@ -141,10 +175,6 @@ def all_happy(script: str):
         [HappyLine("ledger init")],
         [SadLine("ledger unlink --yes")],
         [HappyLine("ledger init"), HappyLine("ledger unlink --yes")],
-        [HappyLine(
-            "post --entry asset:cash capital:eq 1000 --credit income:sales 50 --credit liability:vat 10 --debit asset:ar 60 --strict"
-        ).prints("True").prints("income:sales")
-        ],
         all_happy(
             """
 chart init
@@ -157,6 +187,7 @@ ledger post cash equity 51
 )
 @pytest.mark.cli
 def test_by_line(lines):
+    runner = CliRunner()
     with runner.isolated_filesystem():
         for line in lines:
             print(line)

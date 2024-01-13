@@ -11,7 +11,8 @@ from abacus.typer_cli.ledger import ledger
 from abacus.typer_cli.show import show
 
 app = typer.Typer(
-    add_completion=False, help="A minimal yet valid double entry accounting system."
+    # add_completion=False,
+    help="A minimal yet valid double entry accounting system."
 )
 app.add_typer(chart, name="chart")
 app.add_typer(ledger, name="ledger")
