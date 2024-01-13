@@ -88,7 +88,7 @@ def cx_command():
         print(f"Chart file ({chart_path}) already exists.")
         exit_code = 1
     else:
-        UserChart.default_user_chart().save(chart_path)
+        UserChart.default_user_chart().set_path(chart_path).save()
         print(f"Created chart file: {chart_path}")
     entries_path = get_entries_path()
     if entries_path.exists():
@@ -106,12 +106,12 @@ def cx_command():
 def cx_add(account_names, title):
     """Add account to chart."""
     try:
-        chart = get_user_chart().use(*account_names)
+        user_chart = get_user_chart().use(*account_names)
         print(f"Added to chart: {' '.join(account_names)}.")
         if len(account_names) == 1 and title:
-            chart.name(account_names[0], title)
+            user_chart.name(account_names[0], title)
             print("Account title:", title)
-        chart.save(path=get_chart_path())
+        user_chart.save()
     except (AbacusError, FileNotFoundError) as e:
         sys.exit(str(e))
 
@@ -120,9 +120,7 @@ def cx_add(account_names, title):
 @click.argument("account_name")
 @click.argument("title")
 def name(account_name, title):
-    uc = get_user_chart()
-    uc.name(last(account_name), title)
-    uc.save(path=get_chart_path())
+    get_user_chart().name(last(account_name), title).save()
     print("Account title:", title)
 
 
@@ -137,10 +135,10 @@ def cx_post(debit, credit, amount, title):
         sys.exit(f"FileNotFoundError: {entries_path}")
     # FIXME: title is discarded
     if ":" in debit:
-        get_user_chart().use(debit).save(get_chart_path())
+        UserChart.load().use(debit).save()
         debit = last(debit)
     if ":" in credit:
-        get_user_chart().use(credit).save(get_chart_path())
+        UserChart.load().use(credit).save()
         credit = last(credit)
     get_store().append(Entry(debit, credit, amount))
     print(f"Posted to ledger: debit <{debit}> {amount}, credit <{credit}> {amount}.")

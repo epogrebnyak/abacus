@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PrivateAttr
 
 from abacus.core import AbacusError, Account, Chart, T
 
@@ -81,15 +81,14 @@ class UserChart(BaseModel):
     null_account: str
     account_labels: dict[str, AccountLabel] = {}
     rename_dict: dict[str, str] = {}
-    company_name: str | None = None
+    _path: Path = PrivateAttr(default=Path("./chart.json"))
 
     @classmethod
-    def default_user_chart(cls, company_name: str | None = None):
+    def default_user_chart(cls):
         return cls(
             income_summary_account="_isa",
             retained_earnings_account="retained_earnings",
             null_account="_null",
-            company_name=company_name,
         )
 
     @staticmethod
@@ -98,9 +97,11 @@ class UserChart(BaseModel):
 
     def offset(self, name: str, contra_name: str):
         self.account_labels[self.last(name)].contra_names.append(contra_name)
+        return self
 
     def name(self, name: str, title: str):
         self.rename_dict[self.last(name)] = title
+        return self
 
     def yield_names(self):
         yield self.income_summary_account
@@ -185,16 +186,22 @@ class UserChart(BaseModel):
             expenses=self.accounts(T.Expense),  # type: ignore
         ).validate()
 
-    def save(self, path: Path | str | None = None):
-        if path is None:
-            path = Path("./chart.json")
-        Path(path).write_text(self.json(indent=4, ensure_ascii=False), encoding="utf-8")
+    def set_path(self, path: Path | None = None):
+        if path is not None:
+            self._path = path
+        return self
+
+    def save(self):
+        Path(self._path).write_text(
+            self.json(indent=4, ensure_ascii=False), encoding="utf-8"
+        )
 
     @classmethod
     def load(cls, path: Path | str | None = None):
-        if path is None:
-            path = Path("./chart.json")
-        return cls.parse_file(path)
+        path = cls.default()._path if path is None else path
+        self = cls.parse_file(path)
+        self._path = Path(path)
+        return self
 
     @classmethod
     def default(cls):

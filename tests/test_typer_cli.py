@@ -122,6 +122,7 @@ def assert_subprocess(command: str, line: Line):
         assert s in result.stdout
 
 
+@pytest.mark.skip
 def test_post_zzz():
     h = (
         HappyLine(

@@ -1,10 +1,10 @@
+"""Post entries to ledger."""
 from pathlib import Path
 
 import click
 
 from abacus.core import CompoundEntry
-from abacus.entries_store import LineJSON
-from abacus.typer_cli.base import UserChartCLI, last
+from abacus.typer_cli.base import get_chart, get_store, last
 from abacus.typer_cli.ledger import load, post
 from abacus.user_chart import UserChart
 
@@ -16,9 +16,9 @@ def post_compound(debits, credits, title, chart_file, store_file):
     debits = [(last(name), value) for name, value in debits]
     credits = [(last(name), value) for name, value in credits]
     compound_entry = CompoundEntry(debits=debits, credits=credits)
-    chart = UserChart.load(chart_file).chart()
+    chart = get_chart(chart_file)
     entries = compound_entry.to_entries(chart.null_account)
-    store = LineJSON.load(store_file)
+    store = get_store(store_file)
     store.append_many(entries)
     print("Posted compound entry:", compound_entry)
     print("Title:", title)
@@ -66,27 +66,14 @@ def postx(
     if starting_balances_file:
         print(f"Loading starting balances from {starting_balances_file}...")
         load(starting_balances_file, chart_file, store_file)
-
-    if not strict:
-        try:
-            UserChartCLI.load(chart_file)
-        except FileNotFoundError:
-            from abacus.typer_cli.chart import init as chart_init
-
-            chart_init()
-    if not strict:
-        if not LineJSON.load(store_file).path.exists():
-            from abacus.typer_cli.ledger import init as ledger_init
-
-            ledger_init()
     if entry:
         for item in entry:
-            post(item[0], item[1], item[2], title, chart_file, store_file)
+            dr, cr, amount = item
+            post(dr, cr, amount, title, chart_file, store_file)
     if debit or credit:
         post_compound(debit, credit, title, chart_file, store_file)
     if strict:
         print("In strict mode `abacus` will assume:")
-        print("- chart and ledger files already exist in project folder")
         print("- all used account names are already in chart.")
         print("Flag was set to:", strict)
     if verbose:

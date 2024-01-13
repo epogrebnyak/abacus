@@ -13,15 +13,14 @@ from abacus.typer_cli.base import last
 from abacus.user_chart import UserChart
 
 A = Annotated[list[str], typer.Option()]
-
 ledger = typer.Typer(help="Modify ledger.", add_completion=False)
 
 
 def assure_ledger_file_exists(store_file):
-    store = LineJSON.load(store_file)
-    if not store.path.exists():
+    path = LineJSON.load(store_file).path
+    if not path.exists():
         sys.exit(
-            f"Ledger file ({store.path}) not found. Use `ledger init` command to create it."
+            f"Ledger file ({path}) not found. Use `ledger init` command to create it."
         )
 
 

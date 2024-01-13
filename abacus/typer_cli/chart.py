@@ -1,24 +1,24 @@
 import sys
+from pathlib import Path
 from typing import List, Optional
 
 import typer
 from typing_extensions import Annotated
 
-from abacus.typer_cli.base import UserChartCLI, last
+from abacus.typer_cli.base import UserChart, last
 
 chart = typer.Typer(help="Modify chart of accounts.", add_completion=False)
 
 
-# FIXME: move company_name to project.py
 @chart.command()
 def init():
     """Initialize chart file in current directory."""
-    uci = UserChartCLI.default()
-    if uci.path.exists():
-        print(f"Chart file ({uci.path}) already exists.")
+    path = UserChart.default()._path
+    if path.exists():
+        print(f"Chart file ({path}) already exists.")
     else:
-        uci.save()
-        print(f"Created chart file: {uci.path}")
+        UserChart.default().save()
+        print(f"Created chart file: {path}")
 
 
 def spaced(labels: list[str]) -> str:
@@ -46,15 +46,15 @@ def add(
     title: Annotated[
         Optional[str], typer.Option("--title", "-t", help="Set title for an account.")
     ] = None,
+    chart_file: Optional[Path] = None,
 ):
     """Add accounts to chart."""
     if len(labels) == 1 and title:
         name(last(labels[0]), title)
-    uci = UserChartCLI.load()
+    user_chart = UserChart.load(chart_file)
     match [asset, capital, liability, income, expense].count(True):
         case 0:
-            uci.user_chart.use(*labels)
-            uci.save()
+            user_chart.use(*labels).save()
             print("Added accounts:", spaced(labels))
         case 1:
             if asset:
@@ -67,8 +67,7 @@ def add(
                 prefix = "income"
             if expense:
                 prefix = "expense"
-            uci.user_chart.use(*labels, prefix=prefix)
-            uci.save()
+            user_chart.use(*labels, prefix=prefix).save()
             print(f"Added accounts ({prefix}):", spaced(labels))
         case _:
             sys.exit("Use only one or no flags.")
@@ -79,58 +78,54 @@ def set(
     income_summary_account: Optional[str] = None,
     retained_earnings_account: Optional[str] = None,
     null_account: Optional[str] = None,
+    chart_file: Optional[Path] = None,
 ):
     """Set income summary, retained earnings or null accounts."""
     if not (income_summary_account or retained_earnings_account or null_account):
         sys.exit("No changes made.")
-    uci = UserChartCLI.load()
+    user_chart = UserChart.load(chart_file)
     if income_summary_account:
-        uci.user_chart.set_isa(income_summary_account)
+        user_chart.set_isa(income_summary_account)
         print(f"New income summary account is {income_summary_account}.")
     if retained_earnings_account:
-        uci.user_chart.set_re(retained_earnings_account)
+        user_chart.set_re(retained_earnings_account)
         print(f"New retained earnings account is {retained_earnings_account}.")
     if null_account:
-        uci.user_chart.set_null(null_account)
+        user_chart.set_null(null_account)
         print(f"New null account is {null_account}.")
-    uci.save()
+    user_chart.save()
 
 
 @chart.command()
-def name(account_name: str, title: str):
+def name(account_name: str, title: str, chart_file: Optional[Path] = None):
     """Set account title."""
-    uci = UserChartCLI.load()
-    uci.user_chart.name(account_name, title)
-    uci.save()
+    user_chart = UserChart.load(chart_file)
+    user_chart.name(account_name, title).save()
     print(f"New title for {account_name} is {title}.")
 
 
 @chart.command()
-def offset(name: str, contra_names: list[str]):
+def offset(name: str, contra_names: list[str], chart_file: Optional[Path] = None):
     """Add contra accounts."""
-    uci = UserChartCLI.load()
+    user_chart = UserChart.load(chart_file)
     for contra_name in contra_names:
-        uci.user_chart.offset(name, contra_name)
-    uci.save()
+        user_chart.offset(name, contra_name)
+    user_chart.save()
     s = "" if len(contra_names) == 1 else "s"
     print(f"Added contra account{s} for {name}:", spaced(contra_names))
 
 
 @chart.command()
-def show():
+def show(chart_file: Optional[Path] = None):
     """Print chart."""
-    print(UserChartCLI.load().user_chart.json(indent=4, ensure_ascii=False))
+    print(UserChart.load(chart_file).json(indent=4, ensure_ascii=False))
 
 
 @chart.command()
 def unlink(
     yes: Annotated[bool, typer.Option(prompt="Are you sure you want to chart file?")]
-    # ,
-    # chart_file: Optional[Path] = None
 ):
     """Permanently delete chart file in current directory."""
 
     if yes:
-        UserChartCLI.default().path.unlink(missing_ok=True)
-    else:
-        ...
+        UserChart.default()._path.unlink(missing_ok=True)

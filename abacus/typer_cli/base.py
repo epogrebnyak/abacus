@@ -1,11 +1,10 @@
 """Command line interface using Typer package"""
 import os
-from dataclasses import dataclass
 from pathlib import Path
 
 from abacus.core import Chart
 from abacus.entries_store import LineJSON
-from abacus.user_chart import UserChart, make_user_chart
+from abacus.user_chart import UserChart
 
 
 def last(label: str) -> str:
@@ -46,24 +45,3 @@ def get_ledger_income_statement(chart_file=None, store_file=None):
     ledger = chart.ledger()
     ledger.post_many(entries=store.yield_entries_for_income_statement(chart))
     return ledger
-
-
-@dataclass
-class UserChartCLI:
-    user_chart: UserChart
-    path: Path
-
-    @classmethod
-    def default(cls):
-        path = get_chart_path()
-        user_chart = make_user_chart()
-        return cls(user_chart, path)
-
-    @classmethod
-    def load(cls, directory: Path | str | None = None):
-        path = get_chart_path(directory)
-        user_chart = UserChart.load(path)
-        return cls(user_chart, path)
-
-    def save(self):
-        return self.user_chart.save(path=self.path)
