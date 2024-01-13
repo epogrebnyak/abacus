@@ -9,8 +9,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from abacus.user_chart import UserChart, make_user_chart
 from abacus.entries_store import LineJSON
+from abacus.user_chart import UserChart, make_user_chart
 
 
 def last(label: str) -> str:

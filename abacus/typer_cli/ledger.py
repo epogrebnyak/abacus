@@ -1,14 +1,14 @@
 import sys
 from pathlib import Path
+from typing import Optional
 
 import click
 import typer
 from typing_extensions import Annotated
-from typing import Optional
 
 from abacus.base import Amount
 from abacus.core import Entry
-from abacus.typer_cli.base import get_entries_path, get_store, UserChartCLI, last
+from abacus.typer_cli.base import UserChartCLI, get_entries_path, get_store, last
 
 A = Annotated[list[str], typer.Option()]
 
@@ -79,8 +79,8 @@ def hello():
     click.echo("Hello")
 
 
-typer_click_object = typer.main.get_command(ledger)
-typer_click_object.add_command(hello, "hello")
+typer_click_object = typer.main.get_command(ledger)  # type: ignore
+typer_click_object.add_command(hello, "hello")  # type: ignore
 
 ### TODO: Хотим добиться чтобы проходило `bx ledger hello`
 ###       Тут пример как сделать `bx hello`: https://typer.tiangolo.com/tutorial/using-click/

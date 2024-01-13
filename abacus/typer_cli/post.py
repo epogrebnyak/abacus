@@ -12,9 +12,8 @@ def postx(entry, debit, credit, strict):
     print(debit)
     print(credit)
     print(strict)
-
-
-#    chart = get_chart()
-#    store = get_store()
-#    entries = CompoundEntry(debits=debit, credits=credit).to_entries(chart.null_account)
-#    store.append_many(entries)
+    # TODO: add actual implementation here, similar to below:
+    #    chart = get_chart()
+    #    store = get_store()
+    #    entries = CompoundEntry(debits=debit, credits=credit).to_entries(chart.null_account)
+    #    store.append_many(entries)

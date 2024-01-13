@@ -10,6 +10,8 @@ from abacus.typer_cli.chart import chart
 from abacus.typer_cli.ledger import ledger
 from abacus.typer_cli.show import show
 
+from .post import postx
+
 app = typer.Typer(
     # add_completion=False,
     help="A minimal yet valid double entry accounting system."
@@ -17,8 +19,6 @@ app = typer.Typer(
 app.add_typer(chart, name="chart")
 app.add_typer(ledger, name="ledger")
 app.add_typer(show, name="show")
-
-from .post import postx
 
 
 @app.callback()
@@ -77,4 +77,4 @@ def unlink(
 
 
 combined_typer_click_app = typer.main.get_command(app)
-combined_typer_click_app.add_command(postx, "post")
+combined_typer_click_app.add_command(postx, "post")  # type: ignore

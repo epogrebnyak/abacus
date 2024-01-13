@@ -1,3 +1,4 @@
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from shlex import split
@@ -134,9 +135,6 @@ class HappyLine(Line):
 
 class SadLine(Line):
     ...
-
-
-import subprocess
 
 
 def assert_subprocess(command: str, line: Line):
