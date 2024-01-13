@@ -19,11 +19,13 @@ app.add_typer(show, name="show")
 
 from .post import postx
 
+
 @app.callback()
 def callback():
     """
     Typer app, including Click subapp
     """
+
 
 @app.command()
 def init(company_name: Optional[str] = None, overwrite: bool = False):
@@ -32,9 +34,6 @@ def init(company_name: Optional[str] = None, overwrite: bool = False):
 
     exit_code = chart_init(company_name, overwrite) + ledger_init(overwrite=overwrite)
     sys.exit(exit_code)
-
-
-
 
 
 @app.command()
@@ -74,6 +73,7 @@ def unlink(
 
     else:
         ...
+
 
 combined_typer_click_app = typer.main.get_command(app)
 combined_typer_click_app.add_command(postx, "post")

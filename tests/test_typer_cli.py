@@ -1,11 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from shlex import split
 
 import pytest
 from typer.testing import CliRunner
 
-from abacus.typer_cli import app
+from abacus.typer_cli.app import combined_typer_click_app as app
 from abacus.typer_cli.base import UserChartCLI
 from abacus.user_chart import AccountLabel, T
 
@@ -108,10 +108,15 @@ def test_script_as_setting(setting):
 class Line:
     script: str
     comment: str | None = None
+    stdout_contains: list[str] = field(default_factory=list)
 
     @property
     def args(self):
         return split(self.script)
+
+    def prints(self, s: str):
+        self.stdout_contains.append(s)
+        return self
 
 
 class HappyLine(Line):
@@ -136,6 +141,10 @@ def all_happy(script: str):
         [HappyLine("ledger init")],
         [SadLine("ledger unlink --yes")],
         [HappyLine("ledger init"), HappyLine("ledger unlink --yes")],
+        [HappyLine(
+            "post --entry asset:cash capital:eq 1000 --credit income:sales 50 --credit liability:vat 10 --debit asset:ar 60 --strict"
+        ).prints("True").prints("income:sales")
+        ],
         all_happy(
             """
 chart init
@@ -159,6 +168,9 @@ def test_by_line(lines):
                     assert result.exit_code == 0
                 case SadLine(_, _):
                     assert result.exit_code == 1
+            if line.stdout_contains:
+                for s in line.stdout_contains:
+                    assert s in result.stdout
 
 
 @pytest.mark.cli
