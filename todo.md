@@ -1,3 +1,9 @@
+REFACTOR:
+
+- [ ] remove File class
+- [ ] trim down get_entries()
+- [ ] clean cli tests
+
 DOCS/PROSE:
 
 - [ ] _Is it difficult to program an accounting system?_ piece
