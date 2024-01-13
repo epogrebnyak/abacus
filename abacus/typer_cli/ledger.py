@@ -117,11 +117,8 @@ def show(store_file: Optional[Path] = None):
 def unlink(
     yes: Annotated[
         bool, typer.Option(prompt="Are you sure you want to delete ledger file?")
-    ],
-    store_file: Optional[Path] = None,
+    ]
 ):
     """Permanently delete ledger file in current directory."""
     if yes:
-        LineJSON.load(store_file).path.unlink(missing_ok=True)
-    else:
-        ...
+        LineJSON.load().path.unlink(missing_ok=True)

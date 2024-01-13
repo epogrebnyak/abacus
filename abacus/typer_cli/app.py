@@ -1,3 +1,4 @@
+"""Typer app, including Click subcommand."""
 import sys
 from pathlib import Path
 from typing import Optional
@@ -6,10 +7,9 @@ import typer
 from typing_extensions import Annotated
 
 from abacus.core import BalanceSheet, IncomeStatement, Pipeline, TrialBalance
+from abacus.entries_store import LineJSON
 from abacus.typer_cli.base import (
     get_chart,
-    get_chart_path,
-    get_entries_path,
     get_ledger,
     get_ledger_income_statement,
     get_store,
@@ -18,8 +18,7 @@ from abacus.typer_cli.chart import chart
 from abacus.typer_cli.ledger import ledger
 from abacus.typer_cli.show import show
 from abacus.user_chart import UserChart
-
-from .post import postx
+from abacus.typer_cli.post import postx
 
 app = typer.Typer(
     add_completion=False, help="A minimal yet valid double entry accounting system."
@@ -27,6 +26,8 @@ app = typer.Typer(
 app.add_typer(chart, name="chart")
 app.add_typer(ledger, name="ledger")
 app.add_typer(show, name="show")
+combined_typer_click_app = typer.main.get_command(app)
+combined_typer_click_app.add_command(postx, "post")  # type: ignore
 
 
 @app.callback()
@@ -122,11 +123,5 @@ def unlink(
 ):
     """Permanently delete project files in current directory."""
     if yes:
-        get_chart_path().unlink(missing_ok=True)
-        get_entries_path().unlink(missing_ok=True)
-    else:
-        ...
-
-
-combined_typer_click_app = typer.main.get_command(app)
-combined_typer_click_app.add_command(postx, "post")  # type: ignore
+        UserChart.default()._path.unlink(missing_ok=True)
+        LineJSON.load().path.unlink(missing_ok=True)
