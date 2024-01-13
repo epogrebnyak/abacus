@@ -52,8 +52,8 @@ Command line script:
 
 ```bash
 bx init
-abacus post asset:cash capital:common_stock 20000 --title "Owner's investment"
-abacus report --balance-sheet
+bx post --entry asset:cash capital:common_stock 20000 --title "Initial investment"
+bx report --balance-sheet
 ```
 
 ### Result

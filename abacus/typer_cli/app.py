@@ -9,6 +9,7 @@ from abacus.typer_cli.base import get_chart_path, get_entries_path, get_ledger
 from abacus.typer_cli.chart import chart
 from abacus.typer_cli.ledger import ledger
 from abacus.typer_cli.show import show
+from abacus.user_chart import UserChart
 
 from .post import postx
 
@@ -36,6 +37,10 @@ def init():
     ledger_init()
 
 
+from abacus.typer_cli.base import get_ledger
+from abacus.core import TrialBalance, BalanceSheet, IncomeStatement
+# FIXME: add balances command
+
 @app.command()
 def report(
     balance_sheet: Annotated[
@@ -50,9 +55,31 @@ def report(
         bool,
         typer.Option("--trial-balance", "-t", help="Show trial balance."),
     ] = False,
-    all: Annotated[bool, typer.Option("--all", help="Show all statements.")] = False,
+    all_reports: Annotated[bool, typer.Option("--all", help="Show all statements.")] = False,
 ):
     """Show reports."""
+    from abacus.viewers import print_viewers
+
+    ledger = get_ledger().condense()
+    rename_dict = UserChart.load().rename_dict
+    t = TrialBalance.new(ledger)
+    b = BalanceSheet.new(ledger)
+    i = IncomeStatement.new(ledger)
+    if trial_balance and not all_reports:
+        t.viewer.print()
+    if balance_sheet and not all_reports:
+        b.viewer.use(rename_dict).print()
+    if income_statement and not all_reports:
+        i.viewer.use(rename_dict).print()
+    #if account_balances:
+    #    print(json.dumps(account_balances()))
+    if all_reports:
+        tv = t.viewer
+        bv = b.viewer.use(rename_dict)
+        iv = i.viewer.use(rename_dict)
+        print_viewers({}, tv, bv, iv)
+
+
 
 
 @app.command(name="assert")
