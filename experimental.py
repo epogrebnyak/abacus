@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from abacus.base import Amount
 from abacus.core import (
     BalanceSheet,
+    Chart,
     CompoundEntry,
     Entry,
     IncomeStatement,
@@ -13,12 +14,12 @@ from abacus.core import (
     Pipeline,
     TrialBalance,
 )
-from abacus.user_chart import UserChart, make_user_chart
+from abacus.user_chart import UserChart
 from abacus.viewers import BalanceSheetViewer, IncomeStatementViewer, TrialBalanceViewer
 
 
 class EntryType(Enum):
-    Starting = "starting"
+    Starting = "opening_balance"
     Business = "business"
     Adjustment = "adjustment"
     Closing = "closing"
@@ -31,24 +32,12 @@ class Transaction(BaseModel):
     # may include date and UUID
 
 
-def create_book(company_name: str):
-    user_chart = UserChart(
-        income_summary_account="_isa",
-        retained_earnings_account="retained_earnings",
-        null_account="_null",
-        company_name=company_name,
-    )
-    return Book(chart=user_chart)
-
-
 @dataclass
 class Book:
-    chart: UserChart = field(default_factory=make_user_chart)
+    chart: Chart
     transactions: list[Transaction] = field(default_factory=list)
-
-    @property
-    def company(self):
-        return self.chart.company_name
+    rename_dict: dict[str, str] = field(default_factory=dict)
+    company: str = ""
 
     @property
     def entries(self) -> list[Entry]:
@@ -79,20 +68,18 @@ class Book:
         self._transact(self, "Starting balances", entries, EntryType.Starting)
 
     @property
-    def _ledger0(self) -> Ledger:
-        return self.chart.chart().ledger()
-
-    @property
-    def ledger(self):
+    def ledger(self) -> Ledger:
         """Current state of the ledger."""
-        return self._ledger0.post_many(self.entries)
+        return self.chart.ledger().post_many(self.entries)
 
     def _pipeline(self, ledger):
-        return Pipeline(self.chart.chart(), ledger)
+        return Pipeline(self.chart, ledger)
 
     @property
     def _ledger_for_income_statement(self):
-        proxy_ledger = self._ledger0.post_many(self._entries_without_closing).condense()
+        proxy_ledger = (
+            self.chart.ledger().post_many(self._entries_without_closing).condense()
+        )
         p = self._pipeline(proxy_ledger).close_first()
         return proxy_ledger.post_many(p.closing_entries)
 
@@ -113,7 +100,7 @@ class Book:
         return BalanceSheetViewer(
             statement=BalanceSheet.new(self.ledger),
             title="Balance sheet: " + self.company,
-            rename_dict=self.chart.rename_dict,
+            rename_dict=self.rename_dict,
         )
 
     @property
@@ -121,7 +108,7 @@ class Book:
         return IncomeStatementViewer(
             statement=IncomeStatement.new(self._ledger_for_income_statement),
             title="Income statement: " + self.company,
-            rename_dict=self.chart.rename_dict,
+            rename_dict=self.rename_dict,
         )
 
     @property
@@ -129,7 +116,7 @@ class Book:
         return TrialBalanceViewer(
             TrialBalance.new(self.ledger),
             title="Trial balance: " + self.company,
-            rename_dict=self.chart.rename_dict,
+            rename_dict=self.rename_dict,
         )
 
     @property
@@ -145,23 +132,20 @@ class Book:
         b.print(width)
         i.print(width)
 
-    def save(self, chart_path, entries_path):
-        ...
-
-
-book = create_book("Dragon Trading Company")
 
 # Register account names
-book.chart.add_assets("cash", "ar", "inventory", "prepaid_insurance")
-book.chart.add_capital("equity", retained_earnings_account="retained_earnings")
-book.chart.add_liabilities("vat", "ap")
-book.chart.add_income("sales")
-book.chart.add_expenses("salaries", "rent", "insurance")
-book.chart.offset("sales", "refunds")
-book.chart.name("vat", "VAT payable")
-book.chart.name("ap", "Other accounts payable")
-book.chart.name("ar", "Accounts receivable")
+user_chart = UserChart.default()
+user_chart.use("cash", "ar", "inventory", "prepaid_insurance", prefix="asset")
+user_chart.use("equity", prefix="capital")
+user_chart.use("vat", "ap", prefix="liability")
+user_chart.use("sales", prefix="income")
+user_chart.use("salaries", "rent", "insurance", prefix="expense")
+user_chart.offset("sales", "refunds")
+user_chart.name("vat", "VAT payable")
+user_chart.name("ap", "Other accounts payable")
+user_chart.name("ar", "Accounts receivable")
 
+book = Book(chart=user_chart.chart(), rename_dict=user_chart.rename_dict, company="ABC")
 # Post double entry
 book.post("Shareholder investment", amount=1500, debit="cash", credit="equity")
 # Post compound entry
@@ -179,19 +163,4 @@ print(book.balance_sheet)
 print(book.income_statement)
 print(book.account_balances)
 book.print_all()
-book.save(chart_path="./chart.json", entries_path="./entries.linejson")
-
-# IDEAS: interchangeable list(in-memory) vs LineJSON
-# .new(), .append(), .iter(), save()
-
-# Change CLI with Typer:
-# set --assets cash ar inv prepaid_insurance
-# set --liabilities ap
-# set --capital equity
-# set --income sales
-# set --expenses cogs sga
-# set --re retained_earnings
-# offset
-# name
-# add contra:sales:refunds
-# init "Dunder Mufflin"
+# book.save(chart_path="./chart.json", entries_path="./entries.linejson")

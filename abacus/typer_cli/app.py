@@ -16,9 +16,9 @@ from abacus.typer_cli.base import (
 )
 from abacus.typer_cli.chart import chart
 from abacus.typer_cli.ledger import ledger
+from abacus.typer_cli.post import postx
 from abacus.typer_cli.show import show
 from abacus.user_chart import UserChart
-from abacus.typer_cli.post import postx
 
 app = typer.Typer(
     add_completion=False, help="A minimal yet valid double entry accounting system."
@@ -26,8 +26,6 @@ app = typer.Typer(
 app.add_typer(chart, name="chart")
 app.add_typer(ledger, name="ledger")
 app.add_typer(show, name="show")
-combined_typer_click_app = typer.main.get_command(app)
-combined_typer_click_app.add_command(postx, "post")  # type: ignore
 
 
 @app.callback()
@@ -56,13 +54,14 @@ def assert_(
 ):
     """Verify account balance."""
     ledger = get_ledger(chart_file, ledger_file)
-    if not (fact := ledger.balances[name]) == balance:
+    fact = ledger.balances[name]
+    if not fact == balance:
         sys.exit(f"Account {name} balance is {fact}, expected {balance}.")
 
 
 @app.command()
 def close():
-    """Closing accounts at period end."""
+    """Close accounts at period end."""
     chart = get_chart()
     ledger = get_ledger()
     store = get_store()
@@ -125,3 +124,7 @@ def unlink(
     if yes:
         UserChart.default()._path.unlink(missing_ok=True)
         LineJSON.load().path.unlink(missing_ok=True)
+
+
+combined_typer_click_app = typer.main.get_command(app)
+combined_typer_click_app.add_command(postx, "post")  # type: ignore

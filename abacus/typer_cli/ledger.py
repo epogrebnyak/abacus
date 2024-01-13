@@ -2,11 +2,10 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-import click
 import typer
 from typing_extensions import Annotated
 
-from abacus.base import Amount
+from abacus.base import AbacusError, Amount
 from abacus.core import AccountBalances, Entry, starting_entries
 from abacus.entries_store import LineJSON
 from abacus.typer_cli.base import last
@@ -61,21 +60,21 @@ def post(
     """Post double entry."""
     assure_ledger_file_exists(store_file)
     if ":" in debit:
-        UserChart.load(chart_file).use(debit).save()
+        try:
+            UserChart.load(chart_file).use(debit).save()
+        except AbacusError:
+            pass
         debit = last(debit)
     if ":" in credit:
-        UserChart.load(chart_file).use(credit).save()
+        try:
+            UserChart.load(chart_file).use(credit).save()
+        except AbacusError:
+            pass
         credit = last(credit)
     LineJSON.load(store_file).append(Entry(debit, credit, amount))
     print(f"Debited {debit} {amount} and credited {credit} {amount}.")
     # FIXME: title is discarded
     print("Title:", title)
-
-
-@ledger.command()
-def close():
-    """Post closing entries."""
-    raise NotImplementedError
 
 
 @ledger.command()

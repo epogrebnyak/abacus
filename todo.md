@@ -1,6 +1,7 @@
 REFACTOR:
 
 - [ ] clean cli tests
+- [ ] remove null account and make everything a coumpund entry
 
 DOCS/PROSE:
 

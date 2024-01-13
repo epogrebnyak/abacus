@@ -5,9 +5,18 @@ from typing import List, Optional
 import typer
 from typing_extensions import Annotated
 
+from abacus.base import AbacusError
 from abacus.typer_cli.base import UserChart, last
 
 chart = typer.Typer(help="Modify chart of accounts.", add_completion=False)
+
+
+def assure_chart_file_exists(chart_file=None):
+    path = UserChart.default()._path if chart_file is None else chart_file
+    if not path.exists():
+        sys.exit(
+            f"Chart file ({path}) not found. Use `chart init` command to create it."
+        )
 
 
 @chart.command()
@@ -67,7 +76,10 @@ def add(
                 prefix = "income"
             if expense:
                 prefix = "expense"
-            user_chart.use(*labels, prefix=prefix).save()
+            try:
+                user_chart.use(*labels, prefix=prefix).save()
+            except AbacusError as e:
+                sys.exit(str(e))
             print(f"Added accounts ({prefix}):", spaced(labels))
         case _:
             sys.exit("Use only one or no flags.")
@@ -109,7 +121,10 @@ def offset(name: str, contra_names: list[str], chart_file: Optional[Path] = None
     """Add contra accounts."""
     user_chart = UserChart.load(chart_file)
     for contra_name in contra_names:
-        user_chart.offset(name, contra_name)
+        try:
+            user_chart.offset(name, contra_name)
+        except AbacusError:
+            sys.exit(str())
     user_chart.save()
     s = "" if len(contra_names) == 1 else "s"
     print(f"Added contra account{s} for {name}:", spaced(contra_names))
@@ -118,6 +133,7 @@ def offset(name: str, contra_names: list[str], chart_file: Optional[Path] = None
 @chart.command()
 def show(chart_file: Optional[Path] = None):
     """Print chart."""
+    assure_chart_file_exists(chart_file)
     print(UserChart.load(chart_file).json(indent=4, ensure_ascii=False))
 
 

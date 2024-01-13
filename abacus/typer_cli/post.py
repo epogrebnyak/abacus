@@ -3,6 +3,7 @@ from pathlib import Path
 
 import click
 
+from abacus.base import AbacusError
 from abacus.core import CompoundEntry
 from abacus.typer_cli.base import get_chart, get_store, last
 from abacus.typer_cli.ledger import load, post
@@ -11,8 +12,13 @@ from abacus.user_chart import UserChart
 
 def post_compound(debits, credits, title, chart_file, store_file):
     for label, _ in debits + credits:
+        user_chart = UserChart.load(chart_file)
         if ":" in label:
-            UserChart.load(chart_file).use(label).save()
+            try:
+                user_chart.use(label)
+            except AbacusError:
+                pass
+        user_chart.save()
     debits = [(last(name), value) for name, value in debits]
     credits = [(last(name), value) for name, value in credits]
     compound_entry = CompoundEntry(debits=debits, credits=credits)

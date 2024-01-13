@@ -124,16 +124,18 @@ class UserChart(BaseModel):
     def add_one(self, obj: Label | Offset):
         match obj:
             case Label(t, name):
-                if name not in self.names:
-                    self.account_labels[name] = AccountLabel(t, [])
+                if name in self.names:
+                    raise AbacusError(f"Name already in chart: {name}")
+                self.account_labels[name] = AccountLabel(t, [])
             case Offset(name, contra_name):
-                if contra_name not in self.names:
-                    try:
-                        self.account_labels[name].offset(contra_name)
-                    except KeyError:
-                        raise AbacusError(
-                            f"Cannot offset {name} because it is not in chart."
-                        )
+                if contra_name in self.names:
+                    raise AbacusError(f"Name already in chart: {name}")
+                try:
+                    self.account_labels[name].offset(contra_name)
+                except KeyError:
+                    raise AbacusError(
+                        f"Cannot offset {name} because it is not in chart."
+                    )
 
     def use(
         self,
@@ -149,7 +151,7 @@ class UserChart(BaseModel):
             composer = Composer()
         for label_string in label_strings:
             for obj in extract(prefix + label_string, composer):
-                self.add_one(obj)
+                _ = self.add_one(obj)
         return self
 
     def add_many(self, t: T, names: list[str]):
