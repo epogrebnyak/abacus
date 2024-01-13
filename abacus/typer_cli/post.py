@@ -3,8 +3,7 @@ from pathlib import Path
 
 import click
 
-from abacus.base import AbacusError
-from abacus.core import CompoundEntry
+from abacus.core import AbacusError, CompoundEntry
 from abacus.typer_cli.base import get_chart, get_store, last
 from abacus.typer_cli.ledger import load, post
 from abacus.user_chart import UserChart

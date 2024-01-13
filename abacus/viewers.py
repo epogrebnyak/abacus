@@ -8,8 +8,7 @@ from rich.console import Console  # type: ignore
 from rich.table import Table as RichTable  # type: ignore
 from rich.text import Text  # type: ignore
 
-from abacus.base import Amount
-from abacus.core import BalanceSheet, IncomeStatement
+from abacus.core import Amount, BalanceSheet, IncomeStatement
 
 
 @dataclass

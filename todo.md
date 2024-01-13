@@ -1,5 +1,6 @@
 REFACTOR:
 
+- [ ] remove cli.py and abacus entry point
 - [ ] clean cli tests
 - [ ] remove null account and make everything a coumpund entry
 

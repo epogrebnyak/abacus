@@ -5,8 +5,7 @@ from typing import Optional
 import typer
 from typing_extensions import Annotated
 
-from abacus.base import AbacusError, Amount
-from abacus.core import AccountBalances, Entry, starting_entries
+from abacus.core import AbacusError, AccountBalances, Amount, Entry, starting_entries
 from abacus.entries_store import LineJSON
 from abacus.typer_cli.base import last
 from abacus.user_chart import UserChart

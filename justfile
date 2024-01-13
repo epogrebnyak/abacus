@@ -97,6 +97,9 @@ docs-cli:
 docs:
   poetry run mkdocs serve 
 
+lazy:
+  poetry run lazydocs --overview-file L_README.md --src-base-url https://github.com/rustedpy/result/blob/master/ abacus
+
 # Publish docs
 docs-publish:
   just md

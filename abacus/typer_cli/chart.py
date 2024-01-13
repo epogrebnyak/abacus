@@ -5,7 +5,7 @@ from typing import List, Optional
 import typer
 from typing_extensions import Annotated
 
-from abacus.base import AbacusError
+from abacus.core import AbacusError
 from abacus.typer_cli.base import UserChart, last
 
 chart = typer.Typer(help="Modify chart of accounts.", add_completion=False)

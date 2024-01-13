@@ -31,7 +31,13 @@ from enum import Enum
 from pathlib import Path
 from typing import ClassVar, Iterable, Type
 
-from abacus.base import AbacusError, Amount
+
+class AbacusError(Exception):
+    """Custom error for this project."""
+
+
+# FIXME: can use decimal.Decimal
+Amount = int
 
 
 class T(Enum):
