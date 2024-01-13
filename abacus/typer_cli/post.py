@@ -35,7 +35,7 @@ def post_compound(debits, credits, title, chart_file, store_file):
     multiple=True,
     help="Credit records for compound entry.",
 )
-@click.option("--start-file", type=Path, help="Load starting balances from JSON file.")
+@click.option("--starting-balances-file", type=Path, help="Load starting balances from JSON file.")
 @click.option(
     "--strict",
     "-s",
@@ -50,12 +50,12 @@ def post_compound(debits, credits, title, chart_file, store_file):
 )
 @click.option("--title", "-t", type=str, help="Set transaction description.")
 def postx(
-    title, entry, debit, credit, strict, start_file, chart_file, store_file, verbose
+    title, entry, debit, credit, strict, starting_balances_file, chart_file, store_file, verbose
 ):
     """Post accounting entries to ledger."""
-    if start_file:
-        print("Loading starting balances from", start_file)
-        load(start_file, chart_file, store_file)
+    if starting_balances_file:
+        print(f"Loading starting balances from {starting_balances_file}...")
+        load(starting_balances_file, chart_file, store_file)
 
     if not strict:
         try:

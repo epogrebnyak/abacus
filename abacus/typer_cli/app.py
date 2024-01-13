@@ -5,6 +5,7 @@ from typing import Optional
 import typer
 from typing_extensions import Annotated
 
+from abacus.core import BalanceSheet, IncomeStatement, TrialBalance
 from abacus.typer_cli.base import get_chart_path, get_entries_path, get_ledger
 from abacus.typer_cli.chart import chart
 from abacus.typer_cli.ledger import ledger
@@ -30,16 +31,13 @@ def callback():
 
 @app.command()
 def init():
+    """Initialize project files in current folder."""
     from abacus.typer_cli.chart import init as chart_init
     from abacus.typer_cli.ledger import init as ledger_init
 
     chart_init()
     ledger_init()
 
-
-from abacus.typer_cli.base import get_ledger
-from abacus.core import TrialBalance, BalanceSheet, IncomeStatement
-# FIXME: add balances command
 
 @app.command()
 def report(
@@ -55,7 +53,9 @@ def report(
         bool,
         typer.Option("--trial-balance", "-t", help="Show trial balance."),
     ] = False,
-    all_reports: Annotated[bool, typer.Option("--all", help="Show all statements.")] = False,
+    all_reports: Annotated[
+        bool, typer.Option("--all", help="Show all statements.")
+    ] = False,
 ):
     """Show reports."""
     from abacus.viewers import print_viewers
@@ -71,15 +71,13 @@ def report(
         b.viewer.use(rename_dict).print()
     if income_statement and not all_reports:
         i.viewer.use(rename_dict).print()
-    #if account_balances:
-    #    print(json.dumps(account_balances()))
     if all_reports:
         tv = t.viewer
         bv = b.viewer.use(rename_dict)
         iv = i.viewer.use(rename_dict)
         print_viewers({}, tv, bv, iv)
-
-
+    if not (trial_balance or balance_sheet or income_statement or all_reports):
+        sys.exit("No reports selected. Use -t, -b, -i or --all flags.")
 
 
 @app.command(name="assert")

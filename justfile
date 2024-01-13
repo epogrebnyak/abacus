@@ -24,15 +24,15 @@ grill:
 
 # Run examples in scripts folder (linux)
 scripts:
-  cd scripts/vat && bash -e vat.bat
-  cd scripts/set && bash -e set.bat
-  cd scripts/textbook && bash -e joan.bat
+  cd scripts && bash -ex all.sh
+  cd scripts/textbook && bash -ex joan.bat
+  cd scripts/textbook && bash -ex accounting_coach.bat
+  cd scripts/textbook && bash -ex yazici.bat
 
 # Run all tests on documentation files
 boil:  
   just run ./README.md
   just run ./docs/index.md
-  just run ./docs/quick_start.md
   just run ./docs/quick_start.md
 
 # Run code and scripts from markdown file

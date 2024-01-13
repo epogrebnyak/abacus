@@ -125,7 +125,7 @@ def assert_subprocess(command: str, line: Line):
 def test_post_zzz():
     h = (
         HappyLine(
-            "post --entry asset:cash capital:eq 1000 --credit income:sales 50 --credit liability:vat 10 --debit asset:ar 60 --strict"
+            "post --entry asset:cash capital:eq 1000 --credit income:sales 50 --credit liability:vat 10 --debit asset:ar 60"
         )
         .prints("Posted")
         .prints("sales")

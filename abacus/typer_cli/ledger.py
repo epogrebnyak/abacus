@@ -44,7 +44,7 @@ def load(
     store = LineJSON.load(store_file)
     # FIXME: store must be empty for load() command
     balances = AccountBalances.load(file)
-    chart = UserChart.load(chart_file)
+    chart = UserChart.load(chart_file).chart()
     entries = starting_entries(chart, balances)
     store.append_many(entries)
     print("Posted starting balances to ledger:", entries)
