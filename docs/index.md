@@ -1,6 +1,6 @@
 <img width="64" align="right" src="assets/robot.png">
 
-# Minimal, yet valid double-entry accounting system in Python and command line
+# Minimal yet valid double-entry accounting system in Python and command line
 
 `abacus` is an Python package and a command line tool for accounting calculations.
 
