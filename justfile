@@ -99,4 +99,4 @@ patch:
 
 # Launch Streamlit app
 stream:
-  poetry run streamlit run streamlit.py
+  poetry run streamlit run streamlit_app.py
