@@ -31,9 +31,20 @@ from enum import Enum
 from pathlib import Path
 from typing import ClassVar, Iterable, Type
 
-__all__ = ["AbacusError", "Amount", "Chart", "Entry", "T", "TrialBalance",
-           "Ledger", "BalanceSheet", "IncomeStatement", "AccountBalances",
-           "Pipeline"]
+__all__ = [
+    "AbacusError",
+    "Amount",
+    "Chart",
+    "Entry",
+    "T",
+    "TrialBalance",
+    "Ledger",
+    "BalanceSheet",
+    "IncomeStatement",
+    "AccountBalances",
+    "Pipeline",
+]
+
 
 class AbacusError(Exception):
     """Custom error for this project."""

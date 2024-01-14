@@ -44,13 +44,13 @@ Show firm balance sheet and income statement at period end.
 === "Command line"
 
     ```bash
-    abacus init
-    abacus add asset:cash,inv
-    abacus add capital:equity
-    abacus add income:sales expense:cogs,sga
-    abacus name inv "Inventory"
-    abacus name cogs "Cost of goods sold"
-    abacus name sga "Selling expenses"
+    bx init
+    bx chart add --asset cash
+    bx chart add --asset inv --title "Inventory"
+    bx chart add --capital equity
+    bx chart add --income sales
+    bx chart add --expense cogs --title "Cost of goods sold"
+    bx chart add --expense sga --title "Selling expenses"
     ```
 
 ### Use ledger to post entries
@@ -69,12 +69,12 @@ Show firm balance sheet and income statement at period end.
 === "Command line"
 
     ```bash
-    abacus post  cash equity 5000 --title "Shareholder investment"
-    abacus post   inv   cash 4000 --title "Purchased merchandise"
-    abacus post  cash  sales 4800 --title "Sold merchandise"
-    abacus post  cogs    inv 4000 --title "Registered cost of sales"
-    abacus post   sga   cash  500 --title "Paid sales representative"
-    abacus close
+    bx post --entry cash equity 5000 --title "Shareholder investment"
+    bx post --entry  inv   cash 4000 --title "Purchased merchandise"
+    bx post --entry cash  sales 4800 --title "Sold merchandise"
+    bx post --entry cogs    inv 4000 --title "Registered cost of sales"
+    bx post --entry  sga   cash  500 --title "Paid sales representative"
+    bx close
     ```
 
 ### Make reports
@@ -93,41 +93,43 @@ Show firm balance sheet and income statement at period end.
 === "Command line"
 
     ```bash
-    abacus report --balance-sheet
-    abacus report --income-statement
+    bx report --balance-sheet
+    bx report --income-statement
     ```
 
+<!--
 Complete file listings may be found at
 [quick_start.py](https://github.com/epogrebnyak/abacus/blob/main/docs/quick_start.py)
-and [quick_start.bat](https://github.com/epogrebnyak/abacus/blob/main/docs/quick_start.py).
+and [quick_start.bat](https://github.com/epogrebnyak/abacus/blob/main/docs/quick_start.bat).
+-->
 
 ## More features
 
 ### Contra accounts
 
 ```bash
-abacus add contra:sales:refunds
-abacus post refunds cash 120 --title "Client refund"
+bx chart add contra:sales:refunds
+bx chart offset sales voids
+bx post --entry refunds cash 120 --title "Client refund"
 ```
 
 ### Trial balance
 
 ```bash
-abacus report --trial-balance
+bx report --trial-balance
 ```
 
 ### Account balances
 
 ```bash
-abacus report --account-balances
-abacus report --account-balances > balances.json
-# in next project
-abacus load balances.json
+bx show balances
+bx show balances --nonzero > balances.json
 ```
 
-### Help and extra commands
+In your next project you can do `bx ledger load balances.json`.
 
-```bash
-abacus --help
-abacus extra --help
+### Help with `abacus`
+
+```
+bx --help
 ```
