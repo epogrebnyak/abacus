@@ -26,7 +26,6 @@ grill:
 scripts:
   cd scripts && bash -ex all.sh
   cd scripts/textbook && bash -ex joan.bat
-  cd scripts/textbook && bash -ex accounting_coach.bat
   cd scripts/textbook && bash -ex yazici.bat
 
 # Run all tests on documentation files
@@ -78,20 +77,6 @@ ruff:
 # Prettify markdown files (use .prettierignore to exclude files)
 md:
   npx prettier . --write
-
-# Run Python code from docs
-docs-py:
-  poetry run python docs/echo.py docs/quick_start.md | npx codedown python > docs/quick_start.py
-  poetry run python docs/quick_start.py
-  poetry run python docs/echo.py docs/index.md | npx codedown python > docs/_index.py
-  poetry run python docs/_index.py
-
-# Run console examples from docs
-docs-cli:
-  poetry run python docs/echo.py docs/quick_start.md | npx codedown bash > docs/quick_start.bat
-  cd docs && rm -f chart.json entries.linejson && quick_start.bat
-  poetry run python docs/echo.py docs/index.md | npx codedown bash > docs/_index.bat
-  cd docs && rm -f chart.json entries.linejson && _index.bat
 
 # Build and serve docs
 docs:
