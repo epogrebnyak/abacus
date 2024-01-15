@@ -1,14 +1,16 @@
 <img width="64" align="right" src="assets/robot.png">
 
-# Minimal, yet valid double-entry accounting system in Python and command line
+# Minimal yet valid double-entry accounting system in Python and command line
 
-`abacus` is an Python package and a command line tool for accounting calculations.
+`abacus` is an Python package and  a command line tool for accounting calculations. 
+There is also a [web interface demonstration](https://abacus.streamlit.app/). 
+
 
 With `abacus` you can perform a complete accounting cycle
 from a chart of accounts to financial reports.
 To start using `abacus` go to [Quick Start](quick_start.md) section.
 
-Few lines of sample code for a fictious [Dunder Mufflin paper company](https://en.wikipedia.org/wiki/Dunder_Mifflin) are listed below together with `abacus` outputs.
+Few lines of sample code for a fictitious [Dunder Mufflin paper company](https://en.wikipedia.org/wiki/Dunder_Mifflin) are listed below together with `abacus` outputs.
 
 === "Python"
 

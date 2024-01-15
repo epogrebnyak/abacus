@@ -96,3 +96,7 @@ publish:
 
 patch:
   poetry version patch
+
+# Launch Streamlit app
+stream:
+  poetry run streamlit run streamlit_app.py

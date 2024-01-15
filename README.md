@@ -5,6 +5,9 @@
 
 A minimal yet valid double-entry accounting system in Python.
 
+> [!TIP]
+> Check out a brand new Streamlit demo for double-entry accounting at https://abacus.streamlit.app/ 
+
 ## Documentation
 
 See project documentation at <https://epogrebnyak.github.io/abacus/>.
