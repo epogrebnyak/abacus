@@ -3,8 +3,10 @@
 # pip install -e .
 # streamlit run streamlit_app.py
 
-from abacus.core import Entry
 import streamlit as st
+
+from abacus import Chart, Report
+from abacus.core import Entry
 
 if "entries" not in st.session_state:
     st.session_state["entries"] = []
@@ -38,8 +40,6 @@ st.header("Accounting with `abacus` :star:")
 
 """Use sidebar to post double entries and see how they affect financial reports."""
 
-from abacus import Chart, Report
-from abacus.core import Entry
 
 chart = Chart(
     assets=["cash", "ar", "inventory"],
