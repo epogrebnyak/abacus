@@ -1,27 +1,36 @@
+CONSIDER:
+
+- reflex and nicegui vs streamlit
+- guide for transactions (do this next scenario) 
+- what makes a 1.0.0?
+
 REFACTOR:
 
-- [ ] remove cli.py and abacus entry point
-- [ ] clean cli tests
-- [ ] remove null account and make everything a coumpund entry
+- [ ] remove null account and make everything a compound entry
+- [ ] combine uncore.py + experimental.py
+- [ ] consider roles of Chart and UserChart
+- [ ] executable examples with elmsript/pydiode like in rust docs 
 
 DOCS/PROSE:
 
-- [ ] _Is it difficult to program an accounting system?_ piece
+- [ ] _How to build your own accounting system?_ piece for docs and dev.to
+- [ ] pure.py
+- [ ] mailing list 
+- [ ] 'tutorial' in r/Python 
 - [ ] restore changelog
+- [ ] more software reviews - akaunting
 
 BUGS:
 
-- [ ] joan law office \*\*\*
-- [ ] problem with `abacus load starting_balances.json` in docs-cli
+...
 
 WONTFIX:
 
+- [ ] clean cli tests
 - [ ] allow bx without arguments to show help
-- [ ] maybe promote
 - [ ] sort keys and totals in trial balance
 - [ ] --no-color flag
 - [ ] --title for entry
-- [ ] streamlit interface
 - [ ] operations dictionary
 - [ ] former test package
 - [ ] ... for empty strings in reports
@@ -34,3 +43,5 @@ Done:
 - [x] posting multiple entries
 - [x] `abacus assert vat 20`
 - [x] yazici ads
+- [x] streamlit interface
+- [x] remove cli.py and abacus entry point
