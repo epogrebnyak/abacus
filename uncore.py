@@ -34,6 +34,9 @@ class Contra:
     links_to: str
 
 
+from typing import Type
+
+
 @dataclass
 class Chart:
     income_summary_account: str
@@ -43,8 +46,13 @@ class Chart:
     def __post_init__(self):
         self.accounts[self.retained_earnings_account] = Regular(T.Capital)
 
-    def names(self, t):
-        return [k for k, v in self.accounts.items() if isinstance(v, t)]
+    def regular_names(self, t: T) -> list[str]:
+        """List regular account names by type."""
+        return [n for n, p in self.accounts.items() if p == Regular(t)]
+
+    def names(self, rc: Type[Regular] | Type[Contra]) -> list[str]:
+        """List all regular or all contra account names."""
+        return [k for k, v in self.accounts.items() if isinstance(v, rc)]
 
     def update(self, t, name):
         self.accounts[name] = Regular(t)
@@ -80,15 +88,15 @@ class Chart:
     def constructor(self, name):
         match self.accounts[name]:
             case Regular(T.Asset):
-                return DebitAccount
+                return Asset
             case Regular(T.Expense):
-                return DebitAccount
+                return Expense
             case Regular(T.Capital):
-                return CreditAccount
+                return Capital
             case Regular(T.Liability):
-                return CreditAccount
+                return Liability
             case Regular(T.Income):
-                return CreditAccount
+                return Income
             case Contra(name):
                 return self.constructor(name).reverse()
             case _:
@@ -100,51 +108,38 @@ class Chart:
         return ledger
 
 
+from collections import namedtuple
+
 Amount = Decimal | int | float
-Record = tuple[Side, str, Amount]
+Record = namedtuple("Record", ["side", "name", "amount"])
 Entry = list[Record]
 
 
 def debit(name, amount) -> Record:
-    return (Side.Debit, name, amount)
+    return Record(Side.Debit, name, amount)
 
 
 def credit(name, amount) -> Record:
-    return (Side.Credit, name, amount)
+    return Record(Side.Credit, name, amount)
 
 
 def double_entry(dr, cr, amount) -> Entry:
     return [debit(dr, amount), credit(cr, amount)]
 
 
-def value(r: Record):
-    return r[2]
-
-
 def is_debit(r: Record):
-    return r[0] == Side.Debit
+    return r.side == Side.Debit
 
 
 def is_credit(r: Record):
-    return r[0] == Side.Credit
+    return r.side == Side.Credit
 
 
-def is_valid(rs: list[Record]) -> bool:
-    def sumfun(rs, f):
-        return sum([value(r) for r in rs if f(r)])
+def is_balanced(rs: list[Record]) -> bool:
+    def sums(rs, f):
+        return sum([r.amount for r in rs if f(r)])
 
-    return sumfun(rs, is_debit) == sumfun(rs, is_credit)
-
-
-def name(r):
-    return r[1]
-
-
-def to_double_entry(rs) -> tuple[str, str, Amount]:
-    a, b = rs[0], rs[1]
-    if not (value(a) == value(b)):
-        raise ValueError(rs)
-    return (name(a), name(b), value(a))
+    return sums(rs, is_debit) == sums(rs, is_credit)
 
 
 @dataclass
@@ -167,24 +162,24 @@ class TAccount(ABC):
         """Return account balance."""
 
     @abstractmethod
-    def tuple_balance(self) -> tuple[Amount, Amount]:
+    def net_tuple_balance(self) -> tuple[Amount, Amount]:
         """Return a tuple of debit and credit side balances."""
 
     def condense(self):
         """Create a new account of the same type with only one value as account balance."""
-        return self.empty().topup(self.balance())
+        return self.empty().top_up(self.balance())
 
     def empty(self):
         """Create a new empty account of the same type."""
         return self.__class__()
 
     @abstractmethod
-    def topup(self, balance):
+    def top_up(self, balance):
         """Add starting balance to the proper side of account."""
 
 
 class DebitAccount(TAccount):
-    def topup(self, balance):
+    def top_up(self, balance):
         self.debit(balance)
 
     @staticmethod
@@ -194,12 +189,12 @@ class DebitAccount(TAccount):
     def balance(self):
         return sum(self.debits) - sum(self.credits)
 
-    def tuple_balance(self):
+    def net_tuple_balance(self):
         return (self.balance(), 0)
 
 
 class CreditAccount(TAccount):
-    def topup(self, balance):
+    def top_up(self, balance):
         self.credit(balance)
 
     @staticmethod
@@ -209,8 +204,14 @@ class CreditAccount(TAccount):
     def balance(self):
         return sum(self.credits) - sum(self.debits)
 
-    def tuple_balance(self):
+    def net_tuple_balance(self):
         return (0, self.balance())
+
+class Asset(DebitAccount):...
+class Expense(DebitAccount):...
+class Capital(CreditAccount):...
+class Liability(CreditAccount):...
+class Income(CreditAccount):...
 
 
 @dataclass
@@ -225,7 +226,7 @@ class IncomeSummaryAccount(CreditAccount):
 
 class Ledger(UserDict[str, "TAccount"]):
     def post(self, entry: Entry):
-        if not is_valid(entry):
+        if not is_balanced(entry):
             raise ValueError(entry)
         for record in entry:
             match record:
@@ -247,29 +248,17 @@ class Ledger(UserDict[str, "TAccount"]):
         return {name: account.balance() for name, account in self.data.items()}
 
     @property
-    def tuple_balances(self):
-        return {name: account.tuple_balance() for name, account in self.data.items()}
-
-    def _find_one(self, account_type):
-        names = [k for k, v in self.data.items() if isinstance(v, account_type)]
-        if len(names) == 1:
-            return names[0]
-        else:
-            raise ValueError(names)
-
-    @property
-    def _isa(self) -> str:
-        return self.find_one(IncomeSummaryAccount)
-
-    @property
-    def _re(self) -> str:
-        return self.find_one(RetainedEarningsAccount)
+    def net_tuple_balances(self):
+        return {name: account.net_tuple_balance() for name, account in self.data.items()}
+    
+    def subset(self, ta):
+        return self.__class__({k:v for k, v in self.items() if isinstance(v, ta)}) 
 
 
 chart = (
     Chart("isa", "retained_earnings")
     .add_many(T.Asset, "cash", "ar")
-    .add(T.Capital, "equity", contra_names=["provisions", "treasury_stock"])
+    .add(T.Capital, "equity", contra_names=["buyback"])
     .add(T.Income, "sales", contra_names=["refunds", "voids"])
     .add(T.Liability, "vat")
     .add(T.Expense, "salary")
@@ -280,16 +269,15 @@ print(chart)
 ledger = chart.create_ledger().post_many(
     [
         double_entry("cash", "equity", 1200),
-        double_entry("treasury_stock", "cash", 200),
+        double_entry("buyback", "cash", 200),
         [debit("ar", 70), credit("sales", 60), credit("vat", 10)],
         double_entry("cash", "ar", 30),
         [debit("voids", 20), debit("refunds", 10), debit("vat", 5), credit("ar", 35)],
-        double_entry("provisions", "ar", 5),
         [debit("salary", 18), credit("cash", 18)],
     ]
 )
 
-print(ledger.tuple_balances)
+print(ledger.net_tuple_balances)
 
 
 def contra_pairs(chart: Chart, t: T):
@@ -301,35 +289,25 @@ def contra_pairs(chart: Chart, t: T):
 
 
 assert contra_pairs(chart, T.Income) == [("sales", "refunds"), ("sales", "voids")]
-assert contra_pairs(chart, T.Capital) == [
-    ("equity", "provisions"),
-    ("equity", "treasury_stock"),
-]
+assert contra_pairs(chart, T.Capital) == [("equity", "buyback")]
 
 
 @dataclass
 class Move:
+    """Indicate where to transfer account balance.
+    Helps to trace closing entries."""
+
     frm: str
     to: str
 
     def to_entry(self, ledger):
         account = ledger[self.frm]
         b = account.balance()
-        match account:            
+        match account:
             case DebitAccount(_, _):
                 return double_entry(self.to, self.frm, b)
             case CreditAccount(_, _):
                 return double_entry(self.frm, self.to, b)
-
-
-def transfer_balance_entry(account, from_, to_, balance=None):
-    if balance is None:
-        balance = account.balance()
-    match account:
-        case DebitAccount(_, _):
-            return double_entry(to_, from_, balance)
-        case CreditAccount(_, _):
-            return double_entry(from_, to_, balance)
 
 
 @dataclass
@@ -342,35 +320,43 @@ class Pipeline:
     def __post_init__(self):
         self.ledger = deepcopy(self.ledger)
 
-    def move(self, from_, to_):
-        self.moves.append(move:=Move(from_, to_))
+    def move(self, from_: str, to_: str):
+        self.moves.append(move := Move(from_, to_))
         entry = move.to_entry(self.ledger)
         self.closing_entries.append(entry)
         self.ledger.post(entry)
-        return self   
+        return self
 
-    def close_contra_accounts(self, t):
+    def close_contra(self, t):
         for name, contra_name in contra_pairs(self.chart, t):
             self.move(contra_name, name)
         return self
 
-    def close_contra_accounts_all(self):
+    def close_contra_all(self):
         for t in T:
             self.close_contra_accounts(t)
         return self
 
     def close_isa(self):
-        for name, p in chart.accounts.items():
-            if p in [Regular(T.Income), Regular(T.Expense)]:
-                self.move(name, self.chart.income_summary_account)
+        for name in chart.regular_names(T.Income) + chart.regular_names(T.Expense):
+            self.move(name, self.chart.income_summary_account)
         return self
 
     def close_re(self):
-        return self.move(self.chart.income_summary_account, self.chart.retained_earnings_account)
+        return self.move(
+            self.chart.income_summary_account, self.chart.retained_earnings_account
+        )
 
+    def close_first(self):
+        return self.close_contra(T.Income).close_contra(T.Expense)
 
-    def close(self):
-        return self.close_contra_accounts_all().close_isa().close_re()
+    def close_second(self):
+        return self.close_isa().close_re()
+
+    def close_last(self):
+        return (
+            self.close_contra(T.Asset).close_contra(T.Capital).close_contra(T.Liability)
+        )
 
     def flush(self):
         self.closing_entries = []
@@ -378,33 +364,39 @@ class Pipeline:
         return self
 
 
-print(Pipeline(chart, ledger).close_contra_accounts(T.Income).moves)
-print(Pipeline(chart, ledger).close_contra_accounts(T.Capital).moves)
-print(Pipeline(chart, ledger).close_contra_accounts_all().moves)
+print(Pipeline(chart, ledger).close_contra(T.Income).moves)
+print(Pipeline(chart, ledger).close_contra(T.Capital).moves)
 print(
     (
         p := Pipeline(chart, ledger)
-        .close_contra_accounts(T.Income)
-        .close_contra_accounts(T.Expense)
+        .close_contra(T.Income)
+        .close_contra(T.Expense)
         .flush()
         .close_isa()
     ).moves
 )
-assert to_double_entry(p.flush().close_re().closing_entries[0]) == (
+assert p.flush().close_re().closing_entries[0] == [double_entry(
     "isa",
     "retained_earnings",
     12,
-)
+)]
 
 
 def close(chart, ledger):
-    return Pipeline(chart, ledger).close().ledger
+    return Pipeline(chart, ledger).close_first().close_second().close_last().ledger
 
 
-# does not change
+# ledger does not change
 assert ledger.balances["retained_earnings"] == 0
 assert close(chart, ledger).balances["retained_earnings"] == 12
-assert ledger.tuple_balances["retained_earnings"] == (0, 0)
+assert ledger.net_tuple_balances["retained_earnings"] == (0, 0)
 
-# after provisions
-assert close(chart, ledger).balances["equity"] == 995
+# netted buyback 1200-200=1000
+assert close(chart, ledger).balances["equity"] == 1000
+
+
+assert ledger.subset(Asset).balances == {'cash': 1012, 'ar': 5}
+
+# - Entry may be a dataclass with records field, checked by is_balanced
+# - Statement and viewers classes next
+# - Company with chart and entries from experimental.py are next 
