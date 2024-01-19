@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 from collections import UserDict, namedtuple
-from copy import copy, deepcopy
+from copy import deepcopy
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
-from typing import Type
 
 
 class Side(Enum):
@@ -36,46 +35,44 @@ class Contra:
 
 
 class ChartDict(UserDict[str, Regular | Contra]):
-    def __set_item__(self, name: str, value: Regular | Contra):
-        match value:
-            case Regular(_):
-                self.data[name] = value
-            case Contra(name):
-                if name in self.data.keys():
-                    self.data[name] = value
-                else:
-                    raise KeyError(
-                        f"Account {name} not in chart, "
-                        "cannot add a contrа account to it."
-                    )
-            case _:
-                raise TypeError(value)
+    def __setitem__(self, name: str, value: Regular | Contra):
+        if isinstance(value, Contra) and value.links_to not in self.data.keys():
+            raise KeyError(
+                f"Account '{name}' is not in chart, "
+                "cannot add a contrа account to it."
+            )
+        self.data[name] = value
 
     def add_regular(self, t: T, name: str):
         self[name] = Regular(t)
         return self
 
     def add_offset(self, name: str, contra_name: str):
-        self[contra_name] = Contra(name)
+        self[contra_name] = Contra(links_to=name)
         return self
 
 
-# test case: add R, add C, fail on adding C, and integer
+def regular_names(chart: ChartDict, t: T | list[T] | None = None) -> list[str]:
+    """List all or type-specific regular account names."""
+    if t is None:
+        ts = T.__members__.values()
+    elif isinstance(t, T):
+        ts = [t]
+    else:
+        ts = t
+    return [n for t in ts for n, p in chart.items() if p == Regular(t)]
+
+
+def contra_names(chart: ChartDict) -> list[str]:
+    """List all contra account names."""
+    return [k for k, v in chart.accounts.items() if isinstance(v, Contra)]
 
 
 @dataclass
 class Chart:
     retained_earnings_account: str
-    accounts: ChartDict = field(default_factory=ChartDict)
     income_summary_account: str = "_isa"
-
-    def regular_names(self, t: T) -> list[str]:
-        """List regular account names by type."""
-        return [n for n, p in self.accounts.items() if p == Regular(t)]
-
-    def names(self, cls: Type[Regular] | Type[Contra]) -> list[str]:
-        """List all regular or all contra account names."""
-        return [k for k, v in self.accounts.items() if isinstance(v, cls)]
+    accounts: ChartDict = field(default_factory=ChartDict)
 
     def add_many(self, t, *names: str):
         for name in names:
@@ -85,8 +82,9 @@ class Chart:
     def add(self, t: T, name: str, contra_names: list[str] | None = None):
         self.accounts.add_regular(t, name)
         if contra_names is None:
-            contra_names = []
+            return self
         for contra_name in contra_names:
+            print(name, contra_name)
             self.accounts.add_offset(name, contra_name)
         return self
 
@@ -109,17 +107,13 @@ class Chart:
 
     def create_ledger(self):
         self.accounts[self.retained_earnings_account] = Regular(T.Capital)
-        ledger = Ledger({k: self.constructor(k)() for k in self.accounts})
+        ledger = Ledger({k: self.constructor(k)() for k in self.accounts.keys()})
         ledger[self.income_summary_account] = IncomeSummaryAccount()
         return ledger
-
-
-# test case: overwrite any reserved name
 
 Amount = Decimal | int | float
 Record = namedtuple("Record", ["side", "name", "amount"])
 Entry = list[Record]
-
 
 def debit(name: str, amount: Amount) -> Record:
     return Record(Side.Debit, name, amount)
@@ -277,41 +271,12 @@ class Ledger(UserDict[str, "TAccount"]):
         return self.__class__({k: v for k, v in self.items() if isinstance(v, ta)})
 
 
-chart = (
-    Chart(retained_earnings_account="retained_earnings")
-    .add_many(T.Asset, "cash", "ar")
-    .add(T.Capital, "equity", contra_names=["buyback"])
-    .add(T.Income, "sales", contra_names=["refunds", "voids"])
-    .add(T.Liability, "vat")
-    .add(T.Expense, "salary")
-)
-print(chart)
-
-
-ledger = chart.create_ledger().post_many(
-    [
-        double_entry("cash", "equity", 1200),
-        double_entry("buyback", "cash", 200),
-        [debit("ar", 70), credit("sales", 60), credit("vat", 10)],
-        double_entry("cash", "ar", 30),
-        [debit("voids", 20), debit("refunds", 10), debit("vat", 5), credit("ar", 35)],
-        [debit("salary", 18), credit("cash", 18)],
-    ]
-)
-
-print(ledger.net_tuple_balances)
-
-
 def contra_pairs(chart: Chart, t: T):
     return [
         (p.links_to, name)
         for name, p in chart.accounts.items()
         if isinstance(p, Contra) and chart.accounts[p.links_to] == Regular(t)
     ]
-
-
-assert contra_pairs(chart, T.Income) == [("sales", "refunds"), ("sales", "voids")]
-assert contra_pairs(chart, T.Capital) == [("equity", "buyback")]
 
 
 @dataclass
@@ -360,7 +325,7 @@ class Pipeline:
         return self
 
     def close_isa(self):
-        for name in chart.regular_names(T.Income) + chart.regular_names(T.Expense):
+        for name in regular_names(chart.accounts, [T.Income, T.Expense]):
             self.move(name, self.chart.income_summary_account)
         return self
 
@@ -386,43 +351,73 @@ class Pipeline:
         return self
 
 
-print(Pipeline(chart, ledger).close_contra(T.Income).moves)
-print(Pipeline(chart, ledger).close_contra(T.Capital).moves)
-print(
-    (
-        p := Pipeline(chart, ledger)
-        .close_contra(T.Income)
-        .close_contra(T.Expense)
-        .flush()
-        .close_isa()
-    ).moves
-)
-print(a := p.flush().close_re().closing_entries[0])
-print(
-    b := double_entry(
-        "_isa",
-        "retained_earnings",
-        12,
-    )
-)
-assert a == b
-
-
 def close(chart, ledger):
     return Pipeline(chart, ledger).close_first().close_second().close_last().ledger
 
 
-# ledger does not change
-assert ledger.balances["retained_earnings"] == 0
-assert close(chart, ledger).balances["retained_earnings"] == 12
-assert ledger.net_tuple_balances["retained_earnings"] == (0, 0)
+if __name__ == "__main__":
+    print(Chart("re").add(T.Income, "sales", contra_names=["refunds", "voids"]))
+    chart = (
+        Chart(retained_earnings_account="retained_earnings")
+        .add_many(T.Asset, "cash", "ar")
+        .add(T.Capital, "equity", contra_names=["buyback"])
+        .add(T.Income, "sales", contra_names=["refunds", "voids"])
+        .add(T.Liability, "vat")
+        .add(T.Expense, "salary")
+    )
+    print(chart)
+    ledger = chart.create_ledger()
+    ledger.post_many(
+        [
+            double_entry("cash", "equity", 1200),
+            double_entry("buyback", "cash", 200),
+            [debit("ar", 70), credit("sales", 60), credit("vat", 10)],
+            double_entry("cash", "ar", 30),
+            [
+                debit("voids", 20),
+                debit("refunds", 10),
+                debit("vat", 5),
+                credit("ar", 35),
+            ],
+            [debit("salary", 18), credit("cash", 18)],
+        ]
+    )
 
-# netted buyback 1200-200=1000
-assert close(chart, ledger).balances["equity"] == 1000
+    print(ledger.net_tuple_balances)
+    assert contra_pairs(chart, T.Income) == [("sales", "refunds"), ("sales", "voids")]
+    assert contra_pairs(chart, T.Capital) == [("equity", "buyback")]
 
+    print(Pipeline(chart, ledger).close_contra(T.Income).moves)
+    print(Pipeline(chart, ledger).close_contra(T.Capital).moves)
+    print(
+        (
+            p := Pipeline(chart, ledger)
+            .close_contra(T.Income)
+            .close_contra(T.Expense)
+            .flush()
+            .close_isa()
+        ).moves
+    )
+    print(a := p.flush().close_re().closing_entries[0])
+    print(
+        b := double_entry(
+            "_isa",
+            "retained_earnings",
+            12,
+        )
+    )
+    assert a == b
 
-assert ledger.subset(Asset).balances == {"cash": 1012, "ar": 5}
+    # ledger does not change
+    assert ledger.balances["retained_earnings"] == 0
+    assert close(chart, ledger).balances["retained_earnings"] == 12
+    assert ledger.net_tuple_balances["retained_earnings"] == (0, 0)
 
-# - Entry may be a dataclass with records field, checked by is_balanced
-# - Statement and viewers classes next
-# - Company with chart and entries from experimental.py are next
+    # netted buyback 1200-200=1000
+    assert close(chart, ledger).balances["equity"] == 1000
+
+    assert ledger.subset(Asset).balances == {"cash": 1012, "ar": 5}
+
+    # - Entry may be a dataclass with records field, checked by is_balanced
+    # - Statement and viewers classes next
+    # - Company with chart and entries from experimental.py are next
