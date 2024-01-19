@@ -1,7 +1,8 @@
 import pytest
-from uncore import ChartDict, Contra, Regular, T, regular_names, contra_names
+from uncore import ChartDict, Contra, Regular, T, contra_names, regular_names, Asset
 
 # test case: overwrite any reserved name in Chart
+
 
 def test_contra_account_added_to_chart():
     chart_dict = (
@@ -35,10 +36,10 @@ def test_regular_names():
     assert regular_names(chart_dict, [T.Asset, T.Capital]) == ["cash", "equity"]
 
 
-def tets_contra_names():
-    chart_dict = (
-        ChartDict()
-        .add_regular(T.Capital, "equity")
-        .add_offset("equity", "ts")
-    )
+def test_contra_names():
+    chart_dict = ChartDict().add_regular(T.Capital, "equity").add_offset("equity", "ts")
     assert contra_names(chart_dict) == ["ts"]
+
+
+def test_condense():
+    assert Asset([10, 20], [5]).condense() == Asset([25], [])

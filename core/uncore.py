@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from collections import UserDict, namedtuple
-from copy import deepcopy
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
+from typing import Type
 
 
 class Side(Enum):
@@ -63,15 +63,15 @@ def regular_names(chart: ChartDict, t: T | list[T] | None = None) -> list[str]:
     return [n for t in ts for n, p in chart.items() if p == Regular(t)]
 
 
-def contra_names(chart: ChartDict) -> list[str]:
+def contra_names(chart_dict: ChartDict) -> list[str]:
     """List all contra account names."""
-    return [k for k, v in chart.accounts.items() if isinstance(v, Contra)]
+    return [k for k, v in chart_dict.items() if isinstance(v, Contra)]
 
 
 @dataclass
 class Chart:
-    retained_earnings_account: str
-    income_summary_account: str = "_isa"
+    retained_earnings_account: str = "retained earnings"
+    income_summary_account: str = "income_summary_account"
     accounts: ChartDict = field(default_factory=ChartDict)
 
     def add_many(self, t, *names: str):
@@ -84,7 +84,6 @@ class Chart:
         if contra_names is None:
             return self
         for contra_name in contra_names:
-            print(name, contra_name)
             self.accounts.add_offset(name, contra_name)
         return self
 
@@ -111,9 +110,11 @@ class Chart:
         ledger[self.income_summary_account] = IncomeSummaryAccount()
         return ledger
 
+
 Amount = Decimal | int | float
 Record = namedtuple("Record", ["side", "name", "amount"])
 Entry = list[Record]
+
 
 def debit(name: str, amount: Amount) -> Record:
     return Record(Side.Debit, name, amount)
@@ -135,9 +136,9 @@ def is_credit(r: Record) -> bool:
     return r.side == Side.Credit
 
 
-def is_balanced(rs: list[Record]) -> bool:
+def is_balanced(entry: Entry) -> bool:
     def sums(f):
-        return sum([r.amount for r in rs if f(r)])
+        return sum([r.amount for r in entry if f(r)])
 
     return sums(f=is_debit) == sums(f=is_credit)
 
@@ -181,6 +182,7 @@ class TAccount(ABC):
 class DebitAccount(TAccount):
     def top_up(self, balance):
         self.debit(balance)
+        return self
 
     @staticmethod
     def reverse():
@@ -196,6 +198,7 @@ class DebitAccount(TAccount):
 class CreditAccount(TAccount):
     def top_up(self, balance):
         self.credit(balance)
+        return self
 
     @staticmethod
     def reverse():
@@ -238,10 +241,14 @@ class IncomeSummaryAccount(CreditAccount):
     ...
 
 
-class Ledger(UserDict[str, "TAccount"]):
+class LedgerError(Exception):
+    ...
+
+
+class Ledger(UserDict[str, TAccount]):
     def post(self, entry: Entry):
         if not is_balanced(entry):
-            raise ValueError(entry)
+            raise LedgerError(entry)
         for record in entry:
             match record:
                 case (Side.Debit, name, amount):
@@ -267,7 +274,7 @@ class Ledger(UserDict[str, "TAccount"]):
             name: account.net_tuple_balance() for name, account in self.data.items()
         }
 
-    def subset(self, ta):
+    def subset(self, ta: Type[TAccount]):
         return self.__class__({k: v for k, v in self.items() if isinstance(v, ta)})
 
 
@@ -305,45 +312,49 @@ class Pipeline:
     closing_entries: list[Entry] = field(default_factory=list)
 
     def __post_init__(self):
-        self.ledger = deepcopy(self.ledger)
+        self.ledger = Ledger({n: a.condense() for n, a in self.ledger.items()})
 
-    def move(self, from_: str, to_: str):
-        self.moves.append(move := Move(from_, to_))
+    def move(self, frm: str, to: str):
+        """Transfer balance of account `frm` to account `to`."""
+        self.moves.append(move := Move(frm, to))
         entry = move.to_entry(self.ledger)
         self.closing_entries.append(entry)
         self.ledger.post(entry)
         return self
 
-    def close_contra(self, t):
-        for name, contra_name in contra_pairs(self.chart, t):
-            self.move(contra_name, name)
+    def close_contra(self, ts: list[T]):
+        """Close contra accounts that offset accounts of types `ts`."""
+        for t in ts:
+            for name, contra_name in contra_pairs(self.chart, t):
+                self.move(contra_name, name)
         return self
 
-    def close_contra_all(self):
-        for t in T:
-            self.close_contra_accounts(t)
-        return self
-
-    def close_isa(self):
+    def close_temporary(self):
+        """Close temporary accounts (income, expenses) and transfer their balances
+        to income summary account."""
         for name in regular_names(chart.accounts, [T.Income, T.Expense]):
             self.move(name, self.chart.income_summary_account)
         return self
 
-    def close_re(self):
-        return self.move(
-            self.chart.income_summary_account, self.chart.retained_earnings_account
-        )
+    def close_isa(self):
+        """Transfer balance from income summary account to retained earnings account."""
+        isa = self.chart.income_summary_account
+        re = self.chart.retained_earnings_account
+        return self.move(isa, re)
 
     def close_first(self):
-        return self.close_contra(T.Income).close_contra(T.Expense)
+        """Close contra accounts to income and expenses.
+        Makes ledger ready for income statement."""
+        return self.close_contra([T.Income, T.Expense])
 
     def close_second(self):
-        return self.close_isa().close_re()
+        """Close income summary account and move balance to retained earnings.
+        Should be used after .close_first() method."""
+        return self.close_temporary().close_isa()
 
     def close_last(self):
-        return (
-            self.close_contra(T.Asset).close_contra(T.Capital).close_contra(T.Liability)
-        )
+        """Do netting (close contra accounts) for permanent accounts."""
+        return self.close_contra([T.Asset, T.Capital, T.Liability])
 
     def flush(self):
         self.closing_entries = []
@@ -387,21 +398,20 @@ if __name__ == "__main__":
     assert contra_pairs(chart, T.Income) == [("sales", "refunds"), ("sales", "voids")]
     assert contra_pairs(chart, T.Capital) == [("equity", "buyback")]
 
-    print(Pipeline(chart, ledger).close_contra(T.Income).moves)
-    print(Pipeline(chart, ledger).close_contra(T.Capital).moves)
+    print(Pipeline(chart, ledger).close_contra([T.Income]).moves)
+    print(Pipeline(chart, ledger).close_contra([T.Capital]).moves)
     print(
         (
             p := Pipeline(chart, ledger)
-            .close_contra(T.Income)
-            .close_contra(T.Expense)
+            .close_contra([T.Income, T.Expense])
             .flush()
-            .close_isa()
+            .close_temporary()
         ).moves
     )
-    print(a := p.flush().close_re().closing_entries[0])
+    print(a := p.flush().close_isa().closing_entries[0])
     print(
         b := double_entry(
-            "_isa",
+            chart.income_summary_account,
             "retained_earnings",
             12,
         )
