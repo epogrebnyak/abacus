@@ -137,11 +137,6 @@ class Chart:
             self.dict.offset(name, contra_name)
         return self
 
-    def create_ledger(self):
-        return Journal.from_chart(
-            self.dict, self.income_summary_account, self.retained_earnings_account
-        )
-
 
 Amount = Decimal | int | float
 Record = namedtuple("Record", ["side", "name", "amount"])
@@ -217,12 +212,12 @@ class Journal(UserDict[str, Account]):
         income_summary_account: str,
         retained_earnings_account: str,
     ):
-        ledger = cls()
+        journal = cls()
         for key in chart_dict.keys():
-            ledger[key] = Account(chart_dict.account_type(key))
-        ledger[retained_earnings_account] = Account(Regular(T.Capital))
-        ledger[income_summary_account] = Account(Intermediate(Side.Credit))
-        return ledger
+            journal[key] = Account(chart_dict.account_type(key))
+        journal[retained_earnings_account] = Account(Regular(T.Capital))
+        journal[income_summary_account] = Account(Intermediate(Side.Credit))
+        return journal
 
     @classmethod
     def from_chart(
@@ -326,7 +321,7 @@ class Pipeline:
 
     def close_first(self):
         """Close contra accounts to income and expenses.
-        Makes ledger ready for income statement."""
+        Makes journal ready for income statement."""
         return self.close_contra([T.Income, T.Expense])
 
     def close_second(self):
@@ -344,28 +339,26 @@ class Pipeline:
         return self
 
 
-def close(chart, ledger):
-    return Pipeline(chart, ledger).close_first().close_second().close_last().journal
+def close(chart, journal):
+    return Pipeline(chart, journal).close_first().close_second().close_last().journal
 
 
-def statements(chart, ledger):
-    a = Pipeline(chart, ledger).close_first()
-    b = Pipeline(chart, ledger).close_first().close_second().close_last()
+def statements(chart, journal):
+    a = Pipeline(chart, journal).close_first()
+    b = Pipeline(chart, journal).close_first().close_second().close_last()
     return a.journal, b.journal
 
 
 if __name__ == "__main__":
     chart = (
-        Chart()
+        Chart("isa", "re")
         .add_many(T.Asset, "cash", "ar")
         .add(T.Capital, "equity", contra_names=["buyback"])
         .add(T.Income, "sales", contra_names=["refunds", "voids"])
         .add(T.Liability, "vat")
         .add(T.Expense, "salary")
     )
-    journal = Journal.from_chart(
-        chart.dict, "income_summary_account", "retained_earnings"
-    )
+    journal = Journal.from_chart(chart)
     journal.post_many(
         [
             double_entry("cash", "equity", 1200),
