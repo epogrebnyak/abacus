@@ -11,7 +11,6 @@ from uncore import (
     Journal,
     Move,
     Pipeline,
-    Reference,
     Regular,
     Side,
     T,
@@ -24,8 +23,8 @@ from uncore import (
 
 def test_contra_account_added_to_chart():
     chart_dict = ChartDict().add(T.Income, "sales").offset("sales", "refunds")
-    assert chart_dict["sales"] == T.Income
-    assert chart_dict["refunds"] == Reference("sales")
+    assert chart_dict["sales"] == Regular(T.Income)
+    assert chart_dict["refunds"] == Contra(T.Income)
 
 
 def test_invalid_contra_account_not_added_to_chart_by_method():
@@ -70,18 +69,20 @@ def test_chart_creation():
         {
             "cash": T.Asset,
             "sales": T.Income,
-            "refunds": Reference("sales"),
-            "voids": Reference("sales"),
             "equity": T.Capital,
-            "buyback": Reference("equity"),
-        }
+        },
+        {
+            "refunds": "sales",
+            "voids": "sales",
+            "buyback": "equity",
+        },
     )
     assert chart0.retained_earnings_account == "retained_earnings"
     assert chart0.income_summary_account == "income_summary_account"
 
 
 def test_journal_creation():
-    j = Journal.new(ChartDict(cash=T.Asset, contra_cash=Reference("cash")))
+    j = Journal.new(ChartDict().add(T.Asset, "cash").offset("cash", "contra_cash"))
     assert j.set_isa("isa").set_re("re") == Journal(
         {
             "cash": Account(Regular(T.Asset)),
@@ -130,7 +131,7 @@ def journal(chart):
 
 def test_journal_has_retained_earnings(chart):
     j = Journal.from_chart(chart)
-    assert j[chart.retained_earnings_account].account_type == Regular(T.Capital)
+    assert j[chart.retained_earnings_account].flavor == Regular(T.Capital)
 
 
 def test_balances(journal):

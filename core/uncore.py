@@ -1,10 +1,10 @@
 """Accounting chart, journal and reports."""
 
+from abc import ABC
 from collections import UserDict, namedtuple
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
-from typing import Protocol
 
 
 class Side(Enum):
@@ -22,7 +22,7 @@ class T(Enum):
     Expense = "expense"
 
 
-class AccountType(Protocol):
+class AccountType(ABC):
     @property
     def side(self) -> Side:
         ...
@@ -69,21 +69,6 @@ def reverse(side: Side):
         return Side.Debit
 
 
-@dataclass
-class Reference:
-    """Reference class is used for contra account definition.
-    `points_to` refers to 'parent' account name."""
-
-    points_to: str
-
-
-def assert_reference_exists(key, keys):
-    if key not in keys:
-        raise KeyError(
-            f"Account '{key}' not in chart, cannot add a contrа account to it."
-        )
-
-
 # not used
 @dataclass
 class Label:
@@ -98,39 +83,53 @@ class Offset:
     name: str
 
 
-class ChartDict(UserDict[str, T | Reference]):
+def assert_reference_exists(key, keys):
+    if key not in keys:
+        raise KeyError(
+            f"Account '{key}' not in chart, cannot add a contrа account to it."
+        )
+
+
+@dataclass
+class ChartDict:
+    regular_accounts: dict[str, T] = field(default_factory=dict)
+    contra_accounts: dict[str, str] = field(default_factory=dict)
+
     def add(self, t: T, name: str):
         """Add regular account to chart."""
-        self[name] = t
+        self.regular_accounts[name] = t
         return self
 
     def offset(self, name: str, contra_name: str):
         """Offset an existing account `name` in chart with a new `contra_name`."""
-        assert_reference_exists(name, self.keys())
-        self[contra_name] = Reference(name)
+        assert_reference_exists(name, self.regular_accounts.keys())
+        self.contra_accounts[contra_name] = name
         return self
 
     def contra_pairs(self, t: T) -> list[tuple[str, str]]:
         """List contra accounts, result should similar to
         `[('sales', 'refunds'), ('sales', 'voids')]`."""
         return [
-            (value.points_to, name)
-            for name, value in self.items()
-            if isinstance(value, Reference) and self[value.points_to] == t
+            (name, contra_name)
+            for contra_name, name in self.contra_accounts.items()
+            if self.regular_accounts[name] == t
         ]
 
     def regular_names(self, *ts: T) -> list[str]:
         """List regular account names by type."""
-        return [name for name, value in self.items() if value in ts]
+        return [name for name, t in self.regular_accounts.items() if t in ts]
 
-    def account_type(self, name) -> Contra | Regular:
-        """Return regular or contra account type based on `name`."""
-        what = self[name]
-        if isinstance(what, Reference):
-            t: T = self[what.points_to]  # type: ignore
-            return Contra(t)
-        elif isinstance(what, T):
-            return Regular(what)
+    def __getitem__(self, name: str) -> Contra | Regular:
+        """Return regular or contra account for `name`."""
+        if name in self.regular_accounts:
+            return Regular(self.regular_accounts[name])
+        if name in self.contra_accounts:
+            return Contra(self.regular_accounts[self.contra_accounts[name]])
+        raise KeyError(name)
+
+    def items(self):
+        for k in list(self.regular_accounts.keys()) + list(self.contra_accounts.keys()):
+            yield k, self[k]
 
 
 @dataclass
@@ -187,9 +186,13 @@ def is_balanced(entry: Entry) -> bool:
 
 @dataclass
 class Account:
-    account_type: AccountType
+    flavor: AccountType
     debits: list[Amount] = field(default_factory=list)
     credits: list[Amount] = field(default_factory=list)
+
+    @property
+    def side(self) -> Side:
+        return self.flavor.side
 
     def debit(self, amount: Amount) -> None:
         """Add debit amount to account."""
@@ -206,17 +209,19 @@ class Account:
     def condense(self):
         """Return new account of same type with account balance
         on proper side debit or credit side."""
-        match self.account_type.side:
+        match self.side:
             case Side.Debit:
                 a, b = [self.balance()], []
             case Side.Credit:
                 a, b = [], [self.balance()]
-        return self.__class__(self.account_type, a, b)
+            case _:
+                raise ValueError(self)
+        return self.__class__(self.flavor, a, b)
 
     def balance(self):
         """Return account balance."""
         a, b = self.tuple()
-        match self.account_type.side:
+        match self.side:
             case Side.Debit:
                 return a - b
             case Side.Credit:
@@ -232,8 +237,8 @@ class Journal(UserDict[str, Account]):
         chart_dict: ChartDict,
     ):
         journal = cls()
-        for key in chart_dict.keys():
-            journal[key] = Account(chart_dict.account_type(key))
+        for key, account_type in chart_dict.items():
+            journal[key] = Account(account_type)
         return journal
 
     @classmethod
@@ -287,7 +292,7 @@ class Journal(UserDict[str, Account]):
 
     def subset(self, t: T):
         cls = self.__class__
-        return cls({k: a for k, a in self.items() if a.account_type == Regular(t)})
+        return cls({k: a for k, a in self.items() if a.flavor == Regular(t)})
 
 
 @dataclass
@@ -301,7 +306,7 @@ class Move:
     def to_entry(self, journal):
         account = journal[self.frm]
         b = account.balance()
-        match account.account_type.side:
+        match account.side:
             case Side.Debit:
                 return double_entry(self.to, self.frm, b)
             case Side.Credit:
@@ -435,14 +440,14 @@ class TrialBalance(UserDict[str, tuple[Amount, Amount, Side]], Statement):
     def new(cls, journal: Journal):
         tb = cls()
         for side in [Side.Debit, Side.Credit]:
-            for name, a in journal.items():
-                if a.account_type.side == side:
-                    x, y = a.tuple()
+            for name, account in journal.items():
+                if account.side == side:
+                    x, y = account.tuple()
                     tb[name] = x, y, side
         return tb
 
     def net(self):
-        """Show net balance on one side of account."""
+        """Show net balance on proper side of account."""
         tb = self.__class__()
         for n, (a, b, s) in self.items():
             if s == Side.Debit:
@@ -452,24 +457,22 @@ class TrialBalance(UserDict[str, tuple[Amount, Amount, Side]], Statement):
         return tb
 
     def drop_null(self):
-        """Drop accounts where balance is null.
-        These are usually temporary and intermediate accounts after closing."""
+        """Drop accounts where balance is null."""
+        # These are usually temporary and intermediate accounts after closing.
         tb = self.__class__()
         for n, (a, b, s) in self.items():
-            if a + b != 0:
-                tb[n] = (a, b, s)
+            if (a + b) == 0:
+                continue
+            tb[n] = (a, b, s)
         return tb
 
     def brief(self) -> dict[str, tuple[Amount, Amount]]:
-        """Hide information about side of accounts."""
+        """Hide information about debit or credit side of accounts."""
         return {n: (a, b) for n, (a, b, _) in self.items()}
 
     def balances(self) -> dict[str, Amount]:
         """Return dictionary with account balances."""
         return {n: a + b for n, (a, b, _) in self.net().items()}
-
-    def non_zero_balances(self) -> dict[str, Amount]:
-        return self.drop_null().balances()
 
 
 def trial_balance(journal) -> TrialBalance:
@@ -488,8 +491,8 @@ if __name__ == "__main__":
     journal = Journal.from_chart(chart)
     journal.post_many(
         [
-            double_entry("cash", "equity", 1200),
-            double_entry("buyback", "cash", 200),
+            double_entry("cash", "equity", 1200.5),
+            double_entry("buyback", "cash", 200.5),
             [debit("ar", 70), credit("sales", 60), credit("vat", 10)],
             double_entry("cash", "ar", 30),
             [
@@ -502,7 +505,6 @@ if __name__ == "__main__":
         ]
     )
     t, i, b, final_t = statements(chart, journal)
-    # todo: test TrialBalance
     print(t.brief())
     print(b)
     print(i)
@@ -510,5 +512,6 @@ if __name__ == "__main__":
     print(final_t.drop_null().brief())
 
     # Next:
+    # - test TrialBalance
     # - viewers (separate file)
     # - company with chart and transactions from experimental.py

@@ -1,6 +1,6 @@
-from abacus.engine.accounts import (  # type: ignore
+from abacus.engine.accounts import (
     Asset,
-    Capital,
+    Capital,  # type: ignore
     ContraCapital,
     IncomeSummaryAccount,
     NullAccount,
