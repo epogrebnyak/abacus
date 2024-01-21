@@ -55,7 +55,10 @@ def test_chart_contra_pairs():
 
 def test_chart_creation():
     chart0 = (
-        Chart("income_summary_account", "retained_earnings")
+        Chart(
+            income_summary_account="income_summary_account",
+            retained_earnings_account="retained_earnings",
+        )
         .add(T.Income, "sales", contra_names=["refunds", "voids"])
         .add(T.Asset, "cash")
         .add(T.Capital, "equity", contra_names=["buyback"])
@@ -75,9 +78,8 @@ def test_chart_creation():
 
 
 def test_journal_creation():
-    assert Journal.new(
-        ChartDict(cash=T.Asset, contra_cash=Reference("cash")), "isa", "re"
-    ) == Journal(
+    j = Journal.new(ChartDict(cash=T.Asset, contra_cash=Reference("cash")))
+    assert j.set_isa("isa").set_re("re") == Journal(
         {
             "cash": Account(Regular(T.Asset)),
             "contra_cash": Account(Contra(T.Asset)),
@@ -125,7 +127,7 @@ def journal(chart):
 
 def test_journal_has_retained_earnings(chart):
     j = Journal.from_chart(chart)
-    assert j[chart.retained_earnings_account]
+    assert j[chart.retained_earnings_account].account_type == Regular(T.Capital)
 
 
 def test_balances(journal):
@@ -170,29 +172,27 @@ def pipeline(chart, journal):
 
 
 def test_moves_income(pipeline):
-    assert pipeline.close_contra([T.Income]).moves == [
+    assert pipeline.close_contra(T.Income).moves == [
         Move(frm="refunds", to="sales"),
         Move(frm="voids", to="sales"),
     ]
 
 
 def test_moves_capital(pipeline):
-    assert pipeline.close_contra([T.Capital]).moves == [
-        Move(frm="buyback", to="equity")
-    ]
+    assert pipeline.close_contra(T.Capital).moves == [Move(frm="buyback", to="equity")]
 
 
 def test_moves_close_temp(pipeline):
     assert pipeline.close_contra(
-        [T.Income, T.Expense]
+        T.Income, T.Expense
     ).flush().close_temporary().moves == [
         Move(frm="sales", to="income_summary_account"),
         Move(frm="salary", to="income_summary_account"),
     ]
 
 
-def test_eq(pipeline, chart):
-    p = pipeline.close_contra([T.Income, T.Expense]).close_temporary()
+def test_equate_close_isa_entry(pipeline, chart):
+    p = pipeline.close_contra(T.Income, T.Expense).close_temporary()
     a = p.flush().close_isa().closing_entries
     b = [
         double_entry(
@@ -204,11 +204,23 @@ def test_eq(pipeline, chart):
     assert a == b
 
 
-def test_ledger_does_not_change_after_pipeline(chart, journal):
+def test_ledger_does_not_change_after_pipeline_application(chart, journal):
     assert journal.balances["retained_earnings"] == 0
     assert close(chart, journal).balances["retained_earnings"] == 12
+    assert journal.balances["retained_earnings"] == 0
     assert journal.tuples["retained_earnings"] == (0, 0)
 
 
-def test_equity_nets_out(chart, journal):
+def test_equity_nets_out_to_1000(chart, journal):
     assert close(chart, journal).balances["equity"] == 1000
+
+
+def test_close_pipeline_logic(chart, journal):
+    assert close(chart, journal) == (
+        Pipeline(chart, journal)
+        .close_contra(T.Income, T.Expense)
+        .close_temporary()
+        .close_isa()
+        .close_contra(T.Asset, T.Capital, T.Liability)
+        .journal
+    )

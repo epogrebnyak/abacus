@@ -54,15 +54,17 @@ def which(t: T) -> Side:
 
 
 def reverse(side: Side):
-    match side:
-        case Side.Debit:
-            return Side.Credit
-        case Side.Credit:
-            return Side.Debit
+    if side == Side.Debit:
+        return Side.Credit
+    elif side == Side.Credit:
+        return Side.Debit
 
 
 @dataclass
 class Reference:
+    """Reference class is used for contra account definition.
+    `points_to` refers to 'parent' account name."""
+
     points_to: str
 
 
@@ -98,7 +100,8 @@ class ChartDict(UserDict[str, T | Reference]):
         return self
 
     def contra_pairs(self, t: T) -> list[tuple[str, str]]:
-        """List contra accounts, similar to `[('sales', 'refunds')]`."""
+        """List contra accounts, result should similar to
+        `[('sales', 'refunds'), ('sales', 'voids')]`."""
         return [
             (value.points_to, name)
             for name, value in self.items()
@@ -111,11 +114,12 @@ class ChartDict(UserDict[str, T | Reference]):
 
     def account_type(self, name) -> Contra | Regular:
         """Return regular or contra account type based on `name`."""
-        match self[name]:
-            case Reference(links_to):
-                return Contra(t=self[links_to])
-            case t:
-                return Regular(t)
+        what = self[name]
+        if isinstance(what, Reference):
+            t: T = self[what.points_to]  # type: ignore
+            return Contra(t)
+        elif isinstance(what, T):
+            return Regular(what)
 
 
 @dataclass
@@ -185,9 +189,12 @@ class Account:
         self.credits.append(amount)
 
     def tuple(self):
+        """Return account debits and credit side balance."""
         return sum(self.debits), sum(self.credits)
 
     def condense(self):
+        """Return new account of same type with account balance
+        on proper side debit or credit side."""
         match self.account_type.side:
             case Side.Debit:
                 a, b = [self.balance()], []
@@ -196,6 +203,7 @@ class Account:
         return self.__class__(self.account_type, a, b)
 
     def balance(self):
+        """Return account balance."""
         a, b = self.tuple()
         match self.account_type.side:
             case Side.Debit:
@@ -205,18 +213,16 @@ class Account:
 
 
 class Journal(UserDict[str, Account]):
+    """Ledger that holds T-accounts. Each T-account is referenced by unique name."""
+
     @classmethod
     def new(
         cls,
         chart_dict: ChartDict,
-        income_summary_account: str,
-        retained_earnings_account: str,
     ):
         journal = cls()
         for key in chart_dict.keys():
             journal[key] = Account(chart_dict.account_type(key))
-        journal[retained_earnings_account] = Account(Regular(T.Capital))
-        journal[income_summary_account] = Account(Intermediate(Side.Credit))
         return journal
 
     @classmethod
@@ -224,11 +230,19 @@ class Journal(UserDict[str, Account]):
         cls,
         chart: Chart,
     ):
-        return cls.new(
-            chart_dict=chart.dict,
-            income_summary_account=chart.income_summary_account,
-            retained_earnings_account=chart.retained_earnings_account,
+        return (
+            cls.new(chart.dict)
+            .set_isa(chart.income_summary_account)
+            .set_re(chart.retained_earnings_account)
         )
+
+    def set_isa(self, name):
+        self[name] = Account(Intermediate(Side.Credit))
+        return self
+
+    def set_re(self, name):
+        self[name] = Account(Regular(T.Capital))
+        return self
 
     def post(self, entry: Entry):
         if not is_balanced(entry):
@@ -263,7 +277,7 @@ class Journal(UserDict[str, Account]):
 
 @dataclass
 class Move:
-    """Indicate where from and where to transfer the account balances.
+    """Indicate how to transfer the account balances.
     Helps to trace closing entries."""
 
     frm: str
@@ -299,7 +313,7 @@ class Pipeline:
         self.journal.post(entry)
         return self
 
-    def close_contra(self, ts: list[T]):
+    def close_contra(self, *ts: T):
         """Close contra accounts that offset accounts of types `ts`."""
         for t in ts:
             for name, contra_name in self.chart.dict.contra_pairs(t):
@@ -322,7 +336,7 @@ class Pipeline:
     def close_first(self):
         """Close contra accounts to income and expenses.
         Makes journal ready for income statement."""
-        return self.close_contra([T.Income, T.Expense])
+        return self.close_contra(T.Income, T.Expense)
 
     def close_second(self):
         """Close income summary account and move balance to retained earnings.
@@ -331,7 +345,7 @@ class Pipeline:
 
     def close_last(self):
         """Do netting (close contra accounts) for permanent accounts."""
-        return self.close_contra([T.Asset, T.Capital, T.Liability])
+        return self.close_contra(T.Asset, T.Capital, T.Liability)
 
     def flush(self):
         self.closing_entries = []
