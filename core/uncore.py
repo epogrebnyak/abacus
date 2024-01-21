@@ -120,8 +120,8 @@ class ChartDict(UserDict[str, T | Reference]):
 
 @dataclass
 class Chart:
-    retained_earnings_account: str = "retained_earnings"
-    income_summary_account: str = "income_summary_account"
+    income_summary_account: str
+    retained_earnings_account: str
     dict: ChartDict = field(default_factory=ChartDict)
 
     def add_many(self, t, *names: str):
@@ -211,19 +211,29 @@ class Account:
 
 class Journal(UserDict[str, Account]):
     @classmethod
-    def from_chart(
+    def new(
         cls,
         chart_dict: ChartDict,
         income_summary_account: str,
         retained_earnings_account: str,
     ):
-
         ledger = cls()
         for key in chart_dict.keys():
             ledger[key] = Account(chart_dict.account_type(key))
         ledger[retained_earnings_account] = Account(Regular(T.Capital))
         ledger[income_summary_account] = Account(Intermediate(Side.Credit))
         return ledger
+
+    @classmethod
+    def from_chart(
+        cls,
+        chart: Chart,
+    ):
+        return cls.new(
+            chart_dict=chart.dict,
+            income_summary_account=chart.income_summary_account,
+            retained_earnings_account=chart.retained_earnings_account,
+        )
 
     def post(self, entry: Entry):
         if not is_balanced(entry):
@@ -353,10 +363,10 @@ if __name__ == "__main__":
         .add(T.Liability, "vat")
         .add(T.Expense, "salary")
     )
-    ledger = Journal.from_chart(
+    journal = Journal.from_chart(
         chart.dict, "income_summary_account", "retained_earnings"
     )
-    ledger.post_many(
+    journal.post_many(
         [
             double_entry("cash", "equity", 1200),
             double_entry("buyback", "cash", 200),
@@ -371,48 +381,6 @@ if __name__ == "__main__":
             [debit("salary", 18), credit("cash", 18)],
         ]
     )
-    assert ledger.balances == {
-        "cash": 1012,
-        "ar": 5,
-        "equity": 1200,
-        "buyback": 200,
-        "sales": 60,
-        "refunds": 10,
-        "voids": 20,
-        "vat": 5,
-        "salary": 18,
-        "retained_earnings": 0,
-        "income_summary_account": 0,
-    }
-    print(Pipeline(chart, ledger).close_contra([T.Income]).moves)
-    print(Pipeline(chart, ledger).close_contra([T.Capital]).moves)
-    print(
-        (
-            p := Pipeline(chart, ledger)
-            .close_contra([T.Income, T.Expense])
-            .flush()
-            .close_temporary()
-        ).moves
-    )
-    print(a := p.flush().close_isa().closing_entries[0])
-    print(
-        b := double_entry(
-            chart.income_summary_account,
-            "retained_earnings",
-            12,
-        )
-    )
-    assert a[0] == b[0]
-    assert a[1] == b[1]
 
-    # ledger does not change
-    assert ledger.balances["retained_earnings"] == 0
-    assert close(chart, ledger).balances["retained_earnings"] == 12
-    assert ledger.tuples["retained_earnings"] == (0, 0)
-
-    # netted buyback 1200-200=1000
-    assert close(chart, ledger).balances["equity"] == 1000
-
-    # - Test closing
     # - Statement and viewers classes next
     # - Company with chart and entries from experimental.py are next

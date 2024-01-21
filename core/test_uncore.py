@@ -10,9 +10,12 @@ from uncore import (
     Regular,
     Side,
     T,
+    Pipeline,
+    Move,
     credit,
     debit,
     double_entry,
+    close,
 )
 
 
@@ -42,7 +45,7 @@ def test_chart_dict_contra_pairs():
 
 
 def test_chart_contra_pairs():
-    assert Chart().add(
+    assert Chart("isa", "re").add(
         T.Income, "sales", contra_names=["refunds", "voids"]
     ).dict.contra_pairs(T.Income) == [
         ("sales", "refunds"),
@@ -52,12 +55,12 @@ def test_chart_contra_pairs():
 
 def test_chart_creation():
     chart0 = (
-        Chart()
+        Chart("income_summary_account", "retained_earnings")
         .add(T.Income, "sales", contra_names=["refunds", "voids"])
         .add(T.Asset, "cash")
         .add(T.Capital, "equity", contra_names=["buyback"])
     )
-    assert chart0.dict ==  ChartDict(
+    assert chart0.dict == ChartDict(
         {
             "cash": T.Asset,
             "sales": T.Income,
@@ -72,7 +75,7 @@ def test_chart_creation():
 
 
 def test_journal_creation():
-    assert Journal.from_chart(
+    assert Journal.new(
         ChartDict(cash=T.Asset, contra_cash=Reference("cash")), "isa", "re"
     ) == Journal(
         {
@@ -85,19 +88,24 @@ def test_journal_creation():
 
 
 @pytest.fixture
-def journal():
-    chart = (
-        Chart()
+def chart():
+    return (
+        Chart(
+            retained_earnings_account="retained_earnings",
+            income_summary_account="income_summary_account",
+        )
         .add_many(T.Asset, "cash", "ar")
         .add(T.Capital, "equity", contra_names=["buyback"])
         .add(T.Income, "sales", contra_names=["refunds", "voids"])
         .add(T.Liability, "vat")
         .add(T.Expense, "salary")
     )
-    ledger = Journal.from_chart(
-        chart.dict, "income_summary_account", "retained_earnings"
-    )
-    ledger.post_many(
+
+
+@pytest.fixture
+def journal(chart):
+    j = Journal.from_chart(chart)
+    j.post_many(
         [
             double_entry("cash", "equity", 1200),
             double_entry("buyback", "cash", 200),
@@ -112,7 +120,12 @@ def journal():
             [debit("salary", 18), credit("cash", 18)],
         ]
     )
-    return ledger
+    return j
+
+
+def test_journal_has_retained_earnings(chart):
+    j = Journal.from_chart(chart)
+    assert j[chart.retained_earnings_account]
 
 
 def test_balances(journal):
@@ -149,3 +162,53 @@ def test_tuples(journal):
 
 def test_subset(journal):
     assert journal.subset(T.Asset).balances == {"cash": 1012, "ar": 5}
+
+
+@pytest.fixture
+def pipeline(chart, journal):
+    return Pipeline(chart, journal)
+
+
+def test_moves_income(pipeline):
+    assert pipeline.close_contra([T.Income]).moves == [
+        Move(frm="refunds", to="sales"),
+        Move(frm="voids", to="sales"),
+    ]
+
+
+def test_moves_capital(pipeline):
+    assert pipeline.close_contra([T.Capital]).moves == [
+        Move(frm="buyback", to="equity")
+    ]
+
+
+def test_moves_close_temp(pipeline):
+    assert pipeline.close_contra(
+        [T.Income, T.Expense]
+    ).flush().close_temporary().moves == [
+        Move(frm="sales", to="income_summary_account"),
+        Move(frm="salary", to="income_summary_account"),
+    ]
+
+
+def test_eq(pipeline, chart):
+    p = pipeline.close_contra([T.Income, T.Expense]).close_temporary()
+    a = p.flush().close_isa().closing_entries
+    b = [
+        double_entry(
+            chart.income_summary_account,
+            chart.retained_earnings_account,
+            12,
+        )
+    ]
+    assert a == b
+
+
+def test_ledger_does_not_change_after_pipeline(chart, journal):
+    assert journal.balances["retained_earnings"] == 0
+    assert close(chart, journal).balances["retained_earnings"] == 12
+    assert journal.tuples["retained_earnings"] == (0, 0)
+
+
+def test_equity_nets_out(chart, journal):
+    assert close(chart, journal).balances["equity"] == 1000
