@@ -1,21 +1,24 @@
 import pytest
+import uncore
 from uncore import (
     Account,
+    BalanceSheet,
     Chart,
     ChartDict,
     Contra,
+    IncomeStatement,
     Intermediate,
     Journal,
+    Move,
+    Pipeline,
     Reference,
     Regular,
     Side,
     T,
-    Pipeline,
-    Move,
+    close,
     credit,
     debit,
     double_entry,
-    close,
 )
 
 
@@ -224,3 +227,37 @@ def test_close_pipeline_logic(chart, journal):
         .close_contra(T.Asset, T.Capital, T.Liability)
         .journal
     )
+
+
+@pytest.fixture
+def income_statement(chart, journal):
+    return uncore.income_statement(chart, journal)
+
+
+@pytest.fixture
+def balance_sheet(chart, journal):
+    return uncore.balance_sheet(chart, journal)
+
+
+def test_statements(chart, journal, income_statement, balance_sheet):
+    _, i, b, _ = uncore.statements(chart, journal)
+    assert i == income_statement
+    assert b == balance_sheet
+
+
+def test_income_statement(income_statement):
+    assert income_statement == IncomeStatement(
+        income={"sales": 30}, expenses={"salary": 18}
+    )
+
+
+def test_balance_sheet(balance_sheet):
+    assert balance_sheet == BalanceSheet(
+        assets={"cash": 1012, "ar": 5},
+        capital={"equity": 1000, "retained_earnings": 12},
+        liabilities={"vat": 5},
+    )
+
+
+def test_current_profit(income_statement):
+    assert income_statement.current_profit == 12

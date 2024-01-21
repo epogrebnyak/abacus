@@ -1,8 +1,10 @@
-from abc import ABC, abstractmethod
+"""Accounting chart, journal and reports."""
+
 from collections import UserDict, namedtuple
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
+from typing import Protocol
 
 
 class Side(Enum):
@@ -20,8 +22,10 @@ class T(Enum):
     Expense = "expense"
 
 
-class AccountType:
-    ...
+class AccountType(Protocol):
+    @property
+    def side(self) -> Side:
+        ...
 
 
 @dataclass
@@ -44,7 +48,12 @@ class Contra(AccountType):
 
 @dataclass
 class Intermediate(AccountType):
-    side: Side
+    _side: Side
+
+    # workaround for mypy
+    @property
+    def side(self):
+        return self._side
 
 
 def which(t: T) -> Side:
@@ -75,12 +84,14 @@ def assert_reference_exists(key, keys):
         )
 
 
+# not used
 @dataclass
 class Label:
     prefix: str
     name: str
 
 
+# not used
 @dataclass
 class Offset:
     points_to: str
@@ -244,6 +255,10 @@ class Journal(UserDict[str, Account]):
         self[name] = Account(Regular(T.Capital))
         return self
 
+    def condense(self):
+        cls = self.__class__
+        return cls({n: a.condense() for n, a in self.items()})
+
     def post(self, entry: Entry):
         if not is_balanced(entry):
             raise ValueError(entry)
@@ -295,15 +310,15 @@ class Move:
 
 @dataclass
 class Pipeline:
+    """A pipeline to accumulate ledger transformations."""
+
     chart: Chart
     journal: Journal
     moves: list[Move] = field(default_factory=list)
     closing_entries: list[Entry] = field(default_factory=list)
 
     def __post_init__(self):
-        import copy
-
-        self.journal = copy.deepcopy(self.journal)
+        self.journal = self.journal.condense()
 
     def move(self, frm: str, to: str):
         """Transfer balance of account `frm` to account `to`."""
@@ -344,7 +359,7 @@ class Pipeline:
         return self.close_temporary().close_isa()
 
     def close_last(self):
-        """Do netting (close contra accounts) for permanent accounts."""
+        """Close contra accounts for permanent accounts (for assets, capital and liabilities)."""
         return self.close_contra(T.Asset, T.Capital, T.Liability)
 
     def flush(self):
@@ -358,14 +373,112 @@ def close(chart, journal):
 
 
 def statements(chart, journal):
-    a = Pipeline(chart, journal).close_first()
-    b = Pipeline(chart, journal).close_first().close_second().close_last()
-    return a.journal, b.journal
+    t1 = trial_balance(journal)
+    a = Pipeline(chart, journal).close_first().journal.condense()
+    b = Pipeline(chart, a).close_second().close_last().journal.condense()
+    t2 = trial_balance(b)
+    return t1, IncomeStatement.new(a), BalanceSheet.new(b), t2
+
+
+def income_statement(chart, journal):
+    return IncomeStatement.new(Pipeline(chart, journal).close_first().journal)
+
+
+def balance_sheet(chart, journal):
+    return BalanceSheet.new(close(chart, journal))
+
+
+class Statement:
+    ...
+
+
+AccountBalances = dict[str, Amount]
+
+
+@dataclass
+class BalanceSheet(Statement):
+    assets: AccountBalances
+    capital: AccountBalances
+    liabilities: AccountBalances
+
+    @classmethod
+    def new(cls, journal: Journal):
+        return cls(
+            assets=journal.subset(T.Asset).balances,
+            capital=journal.subset(T.Capital).balances,
+            liabilities=journal.subset(T.Liability).balances,
+        )
+
+
+@dataclass
+class IncomeStatement(Statement):
+    income: AccountBalances
+    expenses: AccountBalances
+
+    @classmethod
+    def new(cls, journal: Journal):
+        return cls(
+            income=journal.subset(T.Income).balances,
+            expenses=journal.subset(T.Expense).balances,
+        )
+
+    @property
+    def current_profit(self):
+        return sum(self.income.values()) - sum(self.expenses.values())
+
+
+class TrialBalance(UserDict[str, tuple[Amount, Amount, Side]], Statement):
+    """Trial balance is a dictionary of account names and
+    their debit side and credit side balances."""
+
+    @classmethod
+    def new(cls, journal: Journal):
+        tb = cls()
+        for side in [Side.Debit, Side.Credit]:
+            for name, a in journal.items():
+                if a.account_type.side == side:
+                    x, y = a.tuple()
+                    tb[name] = x, y, side
+        return tb
+
+    def net(self):
+        """Show net balance on one side of account."""
+        tb = self.__class__()
+        for n, (a, b, s) in self.items():
+            if s == Side.Debit:
+                tb[n] = a - b, 0, s
+            else:
+                tb[n] = 0, b - a, s
+        return tb
+
+    def drop_null(self):
+        """Drop accounts where balance is null.
+        These are usually temporary and intermediate accounts after closing."""
+        tb = self.__class__()
+        for n, (a, b, s) in self.items():
+            if a + b != 0:
+                tb[n] = (a, b, s)
+        return tb
+
+    def brief(self) -> dict[str, tuple[Amount, Amount]]:
+        """Hide information about side of accounts."""
+        return {n: (a, b) for n, (a, b, _) in self.items()}
+
+    def balances(self) -> dict[str, Amount]:
+        """Return dictionary with account balances."""
+        return {n: a + b for n, (a, b, _) in self.net().items()}
+
+    def non_zero_balances(self) -> dict[str, Amount]:
+        return self.drop_null().balances()
+
+
+def trial_balance(journal) -> TrialBalance:
+    return TrialBalance.new(journal)
 
 
 if __name__ == "__main__":
     chart = (
-        Chart("isa", "re")
+        Chart(income_summary_account="isa", retained_earnings_account="re")
         .add_many(T.Asset, "cash", "ar")
         .add(T.Capital, "equity", contra_names=["buyback"])
         .add(T.Income, "sales", contra_names=["refunds", "voids"])
@@ -388,6 +501,14 @@ if __name__ == "__main__":
             [debit("salary", 18), credit("cash", 18)],
         ]
     )
+    t, i, b, final_t = statements(chart, journal)
+    # todo: test TrialBalance
+    print(t.brief())
+    print(b)
+    print(i)
+    print(i.current_profit)
+    print(final_t.drop_null().brief())
 
-    # - Statement and viewers classes next
-    # - Company with chart and entries from experimental.py are next
+    # Next:
+    # - viewers (separate file)
+    # - company with chart and transactions from experimental.py
