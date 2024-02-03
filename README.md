@@ -1,3 +1,6 @@
+> [!NOTE]
+> Need a break: will resume working on this after the repo gets 50 stars. Estimated: June 2024 given one star per month ;)
+
 # abacus
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
