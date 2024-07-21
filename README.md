@@ -1,5 +1,7 @@
 > [!NOTE]
-> Need a break: will resume working on this after the repo gets 50 stars. Estimated: June 2024 given one star per month ;)
+> Current point of work is [issue #80](https://github.com/epogrebnyak/abacus/issues/80), it is a simplfied rewrite of the program with:
+> - main type of entry is multiple entry
+> - simplified closing of accounts  
 
 # abacus
 
