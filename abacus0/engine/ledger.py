@@ -1,4 +1,5 @@
 """Ledger data structure, can be created from chart, used to post entries and produce reports."""
+
 from collections import UserDict
 from typing import Dict, Iterable, List, Tuple, Type
 

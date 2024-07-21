@@ -1,4 +1,5 @@
 """Post entries to ledger."""
+
 from pathlib import Path
 
 import click

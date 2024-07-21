@@ -103,12 +103,10 @@ class Line:
         return self
 
 
-class HappyLine(Line):
-    ...
+class HappyLine(Line): ...
 
 
-class SadLine(Line):
-    ...
+class SadLine(Line): ...
 
 
 def assert_subprocess(command: str, line: Line):

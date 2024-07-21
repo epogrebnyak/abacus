@@ -109,8 +109,7 @@ class BaseViewer:
 
 class Viewer(ABC):
     @abstractmethod
-    def as_column(self) -> Column | str:
-        ...
+    def as_column(self) -> Column | str: ...
 
     def print(self):
         if self.header:
@@ -120,8 +119,7 @@ class Viewer(ABC):
 
 class RichViewer(ABC):
     @abstractmethod
-    def as_table(self, width: int) -> Table:
-        ...
+    def as_table(self, width: int) -> Table: ...
 
     def print(self, width: int = 80):
         Console().print(self.as_table(width))
@@ -236,16 +234,13 @@ class Line:
         self.value = str(self.value)
 
 
-class HeaderLine(Line):
-    ...
+class HeaderLine(Line): ...
 
 
-class AccountLine(Line):
-    ...
+class AccountLine(Line): ...
 
 
-class EmptyLine(Line):
-    ...
+class EmptyLine(Line): ...
 
 
 def empty_line() -> EmptyLine:

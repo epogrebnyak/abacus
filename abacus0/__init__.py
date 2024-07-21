@@ -19,6 +19,7 @@ Simplifying assumptions:
 - balances stick to one side only (debit or credit) based on specified type of account
 
 """
+
 from .engine.base import AbacusError, Amount, CompoundEntry, Entry  # noqa: F401
 from .engine.better_chart import BaseChart, Chart  # noqa: F401
 from .engine.entries import LineJSON  # noqa: F401

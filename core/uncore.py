@@ -24,8 +24,7 @@ class T(Enum):
 
 class AccountType(ABC):
     @property
-    def side(self) -> Side:
-        ...
+    def side(self) -> Side: ...
 
 
 @dataclass
@@ -393,8 +392,7 @@ def balance_sheet(chart, journal):
     return BalanceSheet.new(close(chart, journal))
 
 
-class Statement:
-    ...
+class Statement: ...
 
 
 AccountBalances = dict[str, Amount]

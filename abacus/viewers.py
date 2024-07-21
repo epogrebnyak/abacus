@@ -110,18 +110,15 @@ class Number:
 
 
 @dataclass
-class Format:
-    ...
+class Format: ...
 
 
 @dataclass
-class BoldF(Format):
-    ...
+class BoldF(Format): ...
 
 
 @dataclass
-class OffsetF(Format):
-    ...
+class OffsetF(Format): ...
 
 
 BOLD = BoldF()
@@ -240,12 +237,10 @@ class Viewer(ABC):
         return self
 
     @abstractmethod
-    def text_table(self):
-        ...
+    def text_table(self): ...
 
     @abstractmethod
-    def rich_table(self, width):
-        ...
+    def rich_table(self, width): ...
 
     def print(self, width: int | None = None):
         """Rich printing to console."""

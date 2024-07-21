@@ -1,4 +1,5 @@
 """Income statement and balance sheet reports, created from ledger."""
+
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
 

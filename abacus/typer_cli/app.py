@@ -1,4 +1,5 @@
 """Typer app, including Click subcommand."""
+
 import sys
 from pathlib import Path
 from typing import Optional
