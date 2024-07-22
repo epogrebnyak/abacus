@@ -1,8 +1,6 @@
-# Assumptions
-# - one currency
 import decimal
 from abc import ABC, abstractmethod
-from collections import UserDict, namedtuple
+from collections import UserDict
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable
@@ -14,7 +12,6 @@ class AbacusError(Exception):
 
 Amount = decimal.Decimal
 AccountName = str
-# ZERO = Amount(0)
 
 
 class Side(Enum):
@@ -26,6 +23,8 @@ class Side(Enum):
             return Side.Credit
         return Side.Debit
 
+    def __repr__(self):
+        return str(self)
 
 class T5(Enum):
     """Five types of accounts."""
@@ -43,21 +42,30 @@ class T5(Enum):
         return Side.Credit
 
 
+class Slug(ABC):
+    @property
+    @abstractmethod
+    def side(self):
+        pass
+
+    def taccount(self):
+        return TAccount(self.side)
+
 @dataclass
-class Regular:
+class Regular(Slug):
     t: T5
 
     @property
-    def side(self):
+    def side(self) -> Side:
         return T5.which(self.t)
-
+    
 
 @dataclass
-class Contra:
+class Contra(Slug):
     t: T5
 
     @property
-    def side(self):
+    def side(self) -> Side:
         return T5.which(self.t).reverse()
 
 
@@ -67,15 +75,17 @@ class Profit(Enum):
 
 
 @dataclass
-class Intermediate:
+class Intermediate(Slug):
     t: Profit
 
     @property
-    def side(self):
+    def side(self) -> Side:
         return Side.Credit
 
-
-Enter = namedtuple("Enter", "account_name amount")
+@dataclass
+class Enter:
+    account_name: AccountName
+    amount: Amount
 
 
 @dataclass
@@ -84,9 +94,6 @@ class MultipleEntry:
     credit: list[Enter]
 
     def __post_init__(self):
-        self.verify()
-
-    def verify(self):
         if not sum(d.amount for d in self.debit) == sum(c.amount for c in self.credit):
             raise AbacusError(
                 "Debits and credits not equal in this entry: " + str(self)
@@ -147,9 +154,6 @@ class Chart:
                 yield contra_name, Contra(account_type)
 
     def __post_init__(self):
-        self.validate()
-
-    def validate(self):
         a = list(self.dict().keys())
         b = [x[0] for x in self.items()]
         if len(a) != len(b):
@@ -161,19 +165,12 @@ class Chart:
                 ]
             )
 
-
 @dataclass
-class TAccount(ABC):
+class TAccount:
     """T-account will hold amounts on debits and credit side."""
-
+    side: Side
     debits: list[Amount] = field(default_factory=list)
     credits: list[Amount] = field(default_factory=list)
-
-    @property
-    @abstractmethod
-    def side(self):
-        """Debit or credit side for this account."""
-        pass
 
     def debit(self, amount: Amount):
         """Add debit amount to account."""
@@ -190,32 +187,18 @@ class TAccount(ABC):
             return b
         return -b
 
-    @classmethod
-    def new(cls, slug: Regular | Contra | Intermediate) -> "TAccount":
-        if slug.side == Side.Debit:
-            return DebitAccount()
-        return CreditAccount()
-
-
-class DebitAccount(TAccount):
-    side = Side.Debit
-
-
-class CreditAccount(TAccount):
-    side = Side.Credit
-
 
 class Ledger(UserDict[AccountName, TAccount]):
     @classmethod
     def new(cls, chart: Chart):
-        return cls({name: TAccount.new(slug) for name, slug in chart.items()})
+        return cls({name: slug.taccount() for name, slug in chart.items()})
 
     def post_one(self, entry: MultipleEntry):
         """Post one multiple entry to ledger."""
         return self.post_many([entry])
 
     def post_many(self, entries: Iterable[MultipleEntry]):
-        """Post several multiple  entries to ledger."""
+        """Post several multiple entries to ledger."""
         failed = []
         for entry in entries:
             try:
@@ -248,6 +231,10 @@ def trial_balance(ledger: Ledger):
     return {name: to_tuples(side, balance) for side, name, balance in flat(ledger)}
 
 
+class TrialBalance(UserDict[str, tuple[Side, Amount]]):
+    ...            
+
+
 @dataclass
 class IncomeSummary:
     income: dict[AccountName, Amount] = field(default_factory=dict)
@@ -255,13 +242,15 @@ class IncomeSummary:
 
 
 def close(ledger: Ledger, chart: Chart):
-    """Close income and expense contra accounts,
-    close income and expense accounts to income summary account
-    and close income summary account to retained earnings."""
+    """Closing order:
+       - close income and expense contra accounts,
+       - close income and expense accounts to income summary account,
+       - close income summary account to retained earnings.
+    """
     isa = chart.income_summary_account
     re = chart.retained_earnings_account
     closing_entries = []
-    # close contra_accounts
+    # Close contra_accounts
     for account in chart.income:
         for a in account.contra_accounts:
             e = entry(debit=account.name, credit=a, amount=ledger[a].balance())
@@ -275,7 +264,7 @@ def close(ledger: Ledger, chart: Chart):
             ledger.post_one(e)
             del ledger[a]
     income_summary = IncomeSummary()
-    # close income and expense accounts
+    # Close income and expense accounts
     for account in chart.income:
         a = account.name
         b = ledger[a].balance()
@@ -292,6 +281,7 @@ def close(ledger: Ledger, chart: Chart):
         closing_entries.append(e)
         ledger.post_one(e)
         del ledger[a]
+    # Close to retained earnings
     e = entry(debit=isa, credit=re, amount=ledger[isa].balance())
     closing_entries.append(e)
     ledger.post_one(e)
@@ -328,7 +318,7 @@ chart = Chart(
     assets=[Account("cash"), Account("inventory")],
     capital=[Account("equity")],
     expenses=[Account("cogs")],
-    income=[Account("sales", ["refunds"])],
+    income=[Account("sales", contra_accounts=["refunds"])],
 )
 
 print(chart)
