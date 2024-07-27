@@ -1,7 +1,55 @@
 > [!NOTE]
-> Current point of work is [issue #80](https://github.com/epogrebnyak/abacus/issues/80), it is a simplfied rewrite of the program with:
-> - main type of entry is multiple entry
-> - simplified closing of accounts  
+> Current point of work is [issue #80](https://github.com/epogrebnyak/abacus/issues/80):
+> - [x] main type of entry is multiple entry
+> - [x] closing of accounts in one function 
+> - [ ] complete list of assumptions in docs
+> - [ ] profit tax
+
+Whole program signature is:
+
+`Chart -> Ledger -> list[MultipleEntry] -> Ledger -> (list[MultipleEntry], IncomeStatement, Ledger)` 
+
+A minimal example:
+
+```python
+from playground import Chart, Ledger
+
+# Create chart of accounts
+chart = Chart(
+    assets=[Account("cash")],
+    capital=[Account("equity")],
+    liabilities=[Account("due_payments")],
+    income=[Account("sales", contra_accounts=["refunds"])],
+    expenses=[Account("salaries")],
+)
+
+# Create ledger from chart
+ledger = Ledger.new(chart)
+
+# Post entries to ledger
+ledger.post_double("cash", "equity", 100)
+ledger.post_double("cash", "sales", 220)
+ledger.post_double("refunds", "cash", 20)
+ledger.post_double("salaries", "due_payments", 250)
+
+# Close ledger at accounting period end
+closing_entries, ledger, income_summary = ledger.close(chart)
+
+# Show income statement data
+assert income_summary.dict() == {
+    "income": {"sales": 200},
+    "expenses": {"salaries": 250},
+}
+
+# Show account balances for balance sheet statement
+assert ledger.balances() == {
+    "cash": 300,
+    "equity": 100,
+    "retained_earnings": -50,
+    "due_payments": 250,
+}
+```
+
 
 # abacus
 

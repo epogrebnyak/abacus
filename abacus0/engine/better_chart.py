@@ -4,9 +4,9 @@ from typing import Dict, Iterable, List, Tuple, Type
 from pydantic import BaseModel
 
 from abacus import AbacusError, Amount, Entry  # type: ignore
+from abacus.engine.accounts import Capital  # type: ignore
 from abacus.engine.accounts import (
     Asset,
-    Capital,  # type: ignore
     ContraAsset,
     ContraCapital,
     ContraExpense,
