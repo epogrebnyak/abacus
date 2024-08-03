@@ -12,13 +12,13 @@ Whole program signature is:
 A minimal example:
 
 ```python
-from playground import Chart, Ledger
+from playground import *
 
 # Create chart of accounts
 chart = Chart(
-    assets=[Account("cash")],
+    assets=[Account("cash"), Account("ar")],
     capital=[Account("equity")],
-    liabilities=[Account("due_payments")],
+    liabilities=[Account("ap")],
     income=[Account("sales", contra_accounts=["refunds"])],
     expenses=[Account("salaries")],
 )
@@ -26,28 +26,26 @@ chart = Chart(
 # Create ledger from chart
 ledger = Ledger.new(chart)
 
-# Post entries to ledger
-ledger.post_double("cash", "equity", 100)
-ledger.post_double("cash", "sales", 220)
-ledger.post_double("refunds", "cash", 20)
-ledger.post_double("salaries", "due_payments", 250)
+# Define double or multiple entries and post them to ledger
+entries = [
+    DoubleEntry("cash", "equity", 100),
+    Entry("Sold $200 worth of goods with a refund and 50% prepayment")
+    .debit("cash", 90)
+    .debit("ar", 90)
+    .debit("refunds", 20)
+    .credit("sales", 200),
+    MultipleEntry.new(DebitEntry("salaries", 250), CreditEntry("ap", 250)),
+]
+ledger.post_many(entries)
 
 # Close ledger at accounting period end
 closing_entries, ledger, income_summary = ledger.close(chart)
 
 # Show income statement data
-assert income_summary.dict() == {
-    "income": {"sales": 200},
-    "expenses": {"salaries": 250},
-}
+print(income_summary.dict())
 
-# Show account balances for balance sheet statement
-assert ledger.balances() == {
-    "cash": 300,
-    "equity": 100,
-    "retained_earnings": -50,
-    "due_payments": 250,
-}
+# Show account balances data for balance sheet statement
+print(ledger.balances())
 ```
 
 
