@@ -70,7 +70,7 @@ class Holder(ABC):
     and their contra accounts.
 
     Intermediate constructor used for profit accounts,
-    that live a short while after closing entries.
+    that live for a short while after closing entries.
     """
 
     @property
@@ -134,52 +134,118 @@ class Intermediate(Holder):
 
 @dataclass
 class SingleEntry(ABC):
-    """Single entry that changes either a debit or a credit side of an account."""
+    """Single entry changes either a debit or a credit side of an account."""
 
     name: AccountName
-    amount: Amount
+    amount: Amount | int | float
 
     def __post_init__(self):
         """Allow using double or integer for amount."""
         self.amount = Amount(self.amount)
 
 
-class Debit(SingleEntry):
+class DebitEntry(SingleEntry):
     """An entry that increases the debit side of an account."""
 
 
-class Credit(SingleEntry):
+class CreditEntry(SingleEntry):
     """An entry that increases the credit side of an account."""
+
+
+class EntryBase(Iterable):
+    """Base class for accounting entries.
+
+    Used for:
+    - MultipleEntry
+    - DoubleEntry
+    - Entry
+    """
+
+    @property
+    @abstractmethod
+    def multiple_entry(self) -> "MultipleEntry":
+        """Return multiple entry."""
+        pass
+
+    def __iter__(self):
+        """Make class iterable, similar to list[SingleEntry].
+        Will validate entry before iterating.
+        """
+        return self.multiple_entry.validate().__iter__()
 
 
 @dataclass
 class MultipleEntry:
     data: list[SingleEntry]
 
-    def _sum(self, type):
+    @classmethod
+    def new(cls, *entries) -> "MultipleEntry":
+        """Shorthand method for creating a multiple entry."""
+        return MultipleEntry(entries)  # type: ignore
+
+    @property
+    def multiple_entry(self) -> "MultipleEntry":
+        return self
+
+    def _sum(self, type: type[DebitEntry | CreditEntry]):
         """Sum of entries of either debit or credit type."""
         return sum(x.amount for x in self.data if isinstance(x, type))
 
-    def __post_init__(self):
-        """Check if sum of debits and credits is equal."""
-        if self._sum(Debit) != self._sum(Credit):
-            raise AbacusError(
-                "Sum of debits and sum of credits should be equal: " + str(self)
-            )
+    def validate(self):
+        """Check if sum of debits and sum credits are equal."""
+        if self._sum(DebitEntry) == self._sum(DebitEntry):
+            return self
+        raise AbacusError(
+            "Sum of debits and sum of credits should be equal: " + str(self)
+        )
 
     def __iter__(self):
-        """Make MultipleEntry iterable, should behave similarly to list[SingleEntry]."""
         return iter(self.data)
 
 
-def double_entry(debit, credit, amount) -> MultipleEntry:
+@dataclass
+class DoubleEntry(EntryBase):
     """Create entry from debit account name, credit account name and entry amount."""
-    return MultipleEntry(data=[Debit(debit, amount), Credit(credit, amount)])
+
+    debit: AccountName
+    credit: AccountName
+    amount: Amount | int | float
+
+    @property
+    def multiple_entry(self) -> MultipleEntry:
+        amount = Amount(self.amount)
+        return MultipleEntry.new(
+            DebitEntry(self.debit, amount),
+            CreditEntry(self.credit, amount),
+        )
 
 
-def multiple_entry(*entries: Iterable[SingleEntry]) -> MultipleEntry:
-    """Shorthand for creating a multiple entry."""
-    return MultipleEntry(entries)  # type: ignore
+@dataclass
+class Entry(EntryBase):
+    """Create entry using .debit() and .credit() methods - similar to 'medici' package."""
+
+    title: str
+    _multiple_entry: MultipleEntry = field(
+        default_factory=lambda: MultipleEntry(data=[])
+    )
+
+    def _append(self, cls, name, amount):
+        entry = cls(name, Amount(amount))
+        self._multiple_entry.data.append(entry)
+
+    def debit(self, name: AccountName, amount: Amount | int | float):
+        """Add debit entry to multiple entry."""
+        self._append(DebitEntry, name, amount)
+        return self
+
+    def credit(self, name: AccountName, amount: Amount | int | float):
+        """Add credit entry to multiple entry."""
+        self._append(CreditEntry, name, amount)
+        return self
+
+    @property
+    def multiple_entry(self) -> MultipleEntry:
+        return self._multiple_entry
 
 
 @dataclass
@@ -236,14 +302,14 @@ class Chart:
             yield from account.stream(account_type)
 
     def __post_init__(self):
-        a = list(self.dict().keys())
-        b = [x[0] for x in self.items()]
-        if len(a) != len(b):
+        xs = list(self.dict().keys())
+        ys = [x[0] for x in self.items()]
+        if len(xs) != len(ys):
             raise AbacusError(
                 [
                     "Chart should not contain duplicate account names.",
-                    len(b) - len(a),
-                    set(b) - set(a),
+                    len(xs) - len(ys),
+                    set(ys) - set(xs),
                 ]
             )
 
@@ -283,10 +349,10 @@ class Ledger(UserDict[AccountName, TAccount]):
     def _post(self, entry: SingleEntry):
         """Post single entry to ledger. Will raise `KeyError` if account name is not found."""
         match entry:
-            case Debit(name, amount):
-                self.data[name].debit(amount)
-            case Credit(name, amount):
-                self.data[name].credit(amount)
+            case DebitEntry(name, amount):
+                self.data[name].debit(Amount(amount))
+            case CreditEntry(name, amount):
+                self.data[name].credit(Amount(amount))
 
     def post(self, entries: Iterable[SingleEntry]):
         """Post a stream of single entries to ledger."""
@@ -298,10 +364,6 @@ class Ledger(UserDict[AccountName, TAccount]):
                 failed.append(entry)
         if failed:
             raise AbacusError(["Could not post to ledger:", failed])
-
-    def post_double(self, debit: AccountName, credit: AccountName, amount: Amount):
-        """Post a double entry to ledger."""
-        self.post(double_entry(debit, credit, amount))
 
     def post_many(self, entries: list[MultipleEntry]):
         """Post several multiple entries to ledger."""
@@ -322,7 +384,7 @@ class Ledger(UserDict[AccountName, TAccount]):
 
 
 class TrialBalance(UserDict[str, tuple[Side, Amount]]):
-    """Trial balance is a list of accounts, account sides and account balances."""
+    """Trial balance is a list of accounts, account sides and balances."""
 
     @classmethod
     def new(cls, ledger: Ledger):
@@ -354,7 +416,11 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
     def entries(self) -> list[SingleEntry]:
         """Return trial balance as a list of single entries."""
         return [
-            Debit(name, balance) if side == Side.Debit else Credit(name, balance)
+            (
+                DebitEntry(name, balance)
+                if side == Side.Debit
+                else CreditEntry(name, balance)
+            )
             for name, (side, balance) in self.items()
         ]
 
@@ -373,7 +439,7 @@ class IncomeSummary:
         """Calculate net earnings from income and expenses."""
         return sum(self.income.values()) - sum(self.expenses.values())
 
-    # NOTE: may need add more post close accounts (e.g. income tax posting)
+    # NOTE: will need add more post close accounts (e.g. income tax posting)
 
 
 def close(ledger: Ledger, chart: Chart):
@@ -400,11 +466,11 @@ def close(ledger: Ledger, chart: Chart):
     # 1. Close contra income and contra expense accounts
     for account in chart.income:
         for a in account.contra_accounts:
-            e = double_entry(debit=account.name, credit=a, amount=ledger[a].balance())
+            e = DoubleEntry(debit=account.name, credit=a, amount=ledger[a].balance())
             proceed(a, e)
     for account in chart.expenses:
         for a in account.contra_accounts:
-            e = double_entry(debit=a, credit=account.name, amount=ledger[a].balance())
+            e = DoubleEntry(debit=a, credit=account.name, amount=ledger[a].balance())
             proceed(a, e)
 
     # 2. Close income and expense accounts
@@ -413,17 +479,17 @@ def close(ledger: Ledger, chart: Chart):
         a = account.name
         b = ledger[a].balance()
         income_summary.income[a] = b
-        e = double_entry(debit=a, credit=isa, amount=b)
+        e = DoubleEntry(debit=a, credit=isa, amount=b)
         proceed(a, e)
     for account in chart.expenses:
         a = account.name
         b = ledger[a].balance()
         income_summary.expenses[a] = b
-        e = double_entry(debit=isa, credit=a, amount=b)
+        e = DoubleEntry(debit=isa, credit=a, amount=b)
         proceed(a, e)
 
     # 3. Close to retained earnings
-    e = double_entry(debit=isa, credit=re, amount=ledger[isa].balance())
+    e = DoubleEntry(debit=isa, credit=re, amount=ledger[isa].balance())
     proceed(isa, e)
     # NOTE: we actually did mutate the incoming ledger, may want to create a copy instead
     return closing_entries, ledger, income_summary
@@ -433,9 +499,9 @@ def close(ledger: Ledger, chart: Chart):
 
 # Create chart of accounts
 chart = Chart(
-    assets=[Account("cash")],
+    assets=[Account("cash"), Account("ar")],
     capital=[Account("equity")],
-    liabilities=[Account("due_payments")],
+    liabilities=[Account("ap")],
     income=[Account("sales", contra_accounts=["refunds"])],
     expenses=[Account("salaries")],
 )
@@ -443,25 +509,32 @@ chart = Chart(
 # Create ledger from chart
 ledger = Ledger.new(chart)
 
-# Post entries to ledger
-ledger.post_double("cash", "equity", 100)
-ledger.post_double("cash", "sales", 220)
-ledger.post_double("refunds", "cash", 20)
-ledger.post_double("salaries", "due_payments", 250)
+# Define and post entries
+entries = [
+    DoubleEntry("cash", "equity", 100),
+    Entry("Sold goods with a refund and 50% prepayment")
+    .debit("cash", 90)
+    .debit("ar", 90)
+    .debit("refunds", 20)
+    .credit("sales", 200),
+    MultipleEntry.new(DebitEntry("salaries", 250), CreditEntry("ap", 250)),
+]
+ledger.post_many(entries)
 
 # Close ledger at accounting period end
 closing_entries, ledger, income_summary = ledger.close(chart)
 
 # Show income statement data
 assert income_summary.dict() == {
-    "income": {"sales": 200},
+    "income": {"sales": 180},
     "expenses": {"salaries": 250},
 }
 
 # Show account balances for balance sheet
 assert ledger.balances() == {
-    "cash": 300,
+    "cash": 190,
     "equity": 100,
-    "retained_earnings": -50,
-    "due_payments": 250,
+    "retained_earnings": -70,
+    "ap": 250,
+    "ar": 90,
 }
