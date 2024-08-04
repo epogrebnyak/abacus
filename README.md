@@ -29,7 +29,7 @@ ledger = Ledger.new(chart)
 # Define double or multiple entries and post them to ledger
 entries = [
     DoubleEntry("cash", "equity", 100),
-    Entry("Sold $200 worth of goods with a refund and 50% prepayment")
+    Entry("Sold $200 worth of goods with a 10% refund and 50% prepayment")
     .debit("cash", 90)
     .debit("ar", 90)
     .debit("refunds", 20)

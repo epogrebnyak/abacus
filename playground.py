@@ -193,7 +193,7 @@ class MultipleEntry:
 
     def validate(self):
         """Check if sum of debits and sum credits are equal."""
-        if self._sum(DebitEntry) == self._sum(DebitEntry):
+        if self._sum(DebitEntry) == self._sum(CreditEntry):
             return self
         raise AbacusError(
             "Sum of debits and sum of credits should be equal: " + str(self)

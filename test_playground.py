@@ -5,26 +5,29 @@ from playground import (
     Account,
     Amount,
     Chart,
-    Credit,
-    Debit,
+    CreditEntry,
+    DebitEntry,
     Ledger,
     MultipleEntry,
     Side,
     TAccount,
     close,
-    double_entry,
-    multiple_entry,
+    DoubleEntry,
+    MultipleEntry,
 )
 
 
 def test_invalid_multiple_entry():
     with pytest.raises(AbacusError):
-        MultipleEntry(data=[Debit("a", 100), Credit("b", 99)])
+        me = MultipleEntry(
+            data=[DebitEntry("a", Amount(100)), CreditEntry("b", Amount(99))]
+        )
+        me.validate()
 
 
 def test_ledger_post_method():
     book = Ledger({"a": TAccount(Side.Debit), "b": TAccount(Side.Credit)})
-    e = MultipleEntry(data=[Debit("a", 100), Credit("b", 100)])
+    e = MultipleEntry(data=[DebitEntry("a", 100), CreditEntry("b", 100)])
     book.post(e)
     assert book == {
         "a": TAccount(side=Side.Debit, debits=[Amount(100)], credits=[]),
@@ -34,10 +37,12 @@ def test_ledger_post_method():
 
 def test_end_to_end():
     entries = [
-        double_entry("cash", "equity", 100),
-        double_entry("inventory", "cash", 90),
-        double_entry("cogs", "inventory", 60),
-        multiple_entry(Debit("cash", 75), Debit("refunds", 2), Credit("sales", 77)),
+        DoubleEntry("cash", "equity", 100),
+        DoubleEntry("inventory", "cash", 90),
+        DoubleEntry("cogs", "inventory", 60),
+        MultipleEntry.new(
+            DebitEntry("cash", 75), DebitEntry("refunds", 2), CreditEntry("sales", 77)
+        ),
     ]
 
     chart = Chart(
