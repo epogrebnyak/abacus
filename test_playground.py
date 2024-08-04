@@ -8,7 +8,6 @@ from playground import (
     CreditEntry,
     DebitEntry,
     Ledger,
-    MultipleEntry,
     Side,
     TAccount,
     close,

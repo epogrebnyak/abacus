@@ -137,11 +137,11 @@ class SingleEntry(ABC):
     """Single entry changes either a debit or a credit side of an account."""
 
     name: AccountName
-    amount: Amount | int | float
+    amount: Amount #| int | float
 
-    def __post_init__(self):
-        """Allow using double or integer for amount."""
-        self.amount = Amount(self.amount)
+    # def __post_init__(self):
+    #     """Allow using double or integer for amount."""
+    #     self.amount = Amount(self.amount)
 
 
 class DebitEntry(SingleEntry):
@@ -177,6 +177,10 @@ class EntryBase(Iterable):
 @dataclass
 class MultipleEntry:
     data: list[SingleEntry]
+
+    @classmethod
+    def empty(cls) -> "MultipleEntry":
+        return cls(data=[])
 
     @classmethod
     def new(cls, *entries) -> "MultipleEntry":
@@ -225,20 +229,21 @@ class Entry(EntryBase):
     """Create entry using .debit() and .credit() methods - similar to 'medici' package."""
 
     title: str
+    amount: Amount | int | float | None = None
     _multiple_entry: MultipleEntry = field(
-        default_factory=lambda: MultipleEntry(data=[])
+        default_factory=MultipleEntry.empty
     )
 
     def _append(self, cls, name, amount):
-        entry = cls(name, Amount(amount))
+        entry = cls(name, Amount(amount or self.amount))
         self._multiple_entry.data.append(entry)
 
-    def debit(self, name: AccountName, amount: Amount | int | float):
+    def debit(self, name: AccountName, amount: Amount | int | float | None = None):
         """Add debit entry to multiple entry."""
         self._append(DebitEntry, name, amount)
         return self
 
-    def credit(self, name: AccountName, amount: Amount | int | float):
+    def credit(self, name: AccountName, amount: Amount | int | float | None = None):
         """Add credit entry to multiple entry."""
         self._append(CreditEntry, name, amount)
         return self
@@ -517,7 +522,8 @@ entries = [
     .debit("ar", 90)
     .debit("refunds", 20)
     .credit("sales", 200),
-    MultipleEntry.new(DebitEntry("salaries", 250), CreditEntry("ap", 250)),
+    MultipleEntry.new(DebitEntry("salaries", Amount(250)), 
+                      CreditEntry("ap", Amount(250))),
 ]
 ledger.post_many(entries)
 
