@@ -10,7 +10,7 @@ and:
 
 import decimal
 from abc import ABC, abstractmethod
-from collections import UserDict
+from collections import UserDict, UserList
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable
@@ -50,27 +50,27 @@ class T5(Enum):
     Income = "income"
     Expense = "expense"
 
-    @staticmethod
-    def which(t: "T5") -> Side:
-        """Associate each type of account with debit or credit type."""
-        if t in [T5.Asset, T5.Expense]:
+    @property
+    def side(self) -> Side:
+        """Indicate side of account (debit or credit)."""
+        if self in [T5.Asset, T5.Expense]:
             return Side.Debit
         return Side.Credit
 
 
 class Holder(ABC):
-    """Abstract class for construction of regular, contra or intermediate accounts.
+    """Abstract base class for regular, contra or intermediate account definitation.
 
-    Examples:
+    Parent class for Regular, Contra and Intermediate classes.
+
+    Usage examples:
         Regular(T5.Asset)
         Contra(T5.Income)
         Intermediate(Profit.IncomeSummaryAccount)
 
     Regular and Contra constructors define any of five account types
-    and their contra accounts.
-
-    Intermediate constructor used for profit accounts,
-    that live for a short while after closing entries.
+    and their contra accounts. Intermediate constructor used for
+    profit accounts, that live for a short while when closing the ledger.
     """
 
     @property
@@ -92,26 +92,26 @@ class Regular(Holder):
 
     @property
     def side(self) -> Side:
-        return T5.which(self.t)
+        return self.t.side
 
 
 @dataclass
 class Contra(Holder):
-    """A contra account to any of five types of account.
+    """A contra account to any of five types of accounts.
 
     Examples of contra accounts (generated text below):
-        - contra property, plant, equipment account: accumulated depreciation
-        - contra liability account: discount on bonds payable
-        - contra capital account: treasury stock
-        - contra income account: refunds
-        - contra expense account: purchase discounts
+        - contra property, plant, equipment: accumulated depreciation
+        - contra liability: discount on bonds payable
+        - contra capital: treasury stock
+        - contra income: refunds
+        - contra expense: purchase discounts
     """
 
     t: T5
 
     @property
     def side(self) -> Side:
-        return T5.which(self.t).reverse()
+        return self.t.side.reverse()
 
 
 class Profit(Enum):
@@ -137,11 +137,7 @@ class SingleEntry(ABC):
     """Single entry changes either a debit or a credit side of an account."""
 
     name: AccountName
-    amount: Amount #| int | float
-
-    # def __post_init__(self):
-    #     """Allow using double or integer for amount."""
-    #     self.amount = Amount(self.amount)
+    amount: Amount
 
 
 class DebitEntry(SingleEntry):
@@ -152,18 +148,33 @@ class CreditEntry(SingleEntry):
     """An entry that increases the credit side of an account."""
 
 
-class EntryBase(Iterable):
-    """Base class for accounting entries.
+class MultipleEntry(UserList[SingleEntry]):
+    """Multiple entry is a list of single entries."""
 
-    Used for:
-    - MultipleEntry
-    - DoubleEntry
-    - Entry
-    """
+    @classmethod
+    def new(cls, *entries) -> "MultipleEntry":
+        """Shorthand method for creating a multiple entry with commas."""
+        return MultipleEntry(entries)  # type: ignore
+
+    def _sum(self, type: type[DebitEntry | CreditEntry]):
+        """Sum of entries of either of debit or of credit type."""
+        return sum(x.amount for x in self.data if isinstance(x, type))
+
+    def validate(self):
+        """Check if sum of debits and sum credits are equal."""
+        a = self._sum(DebitEntry)
+        b = self._sum(CreditEntry)
+        if a == b:
+            return self
+        raise AbacusError(f"Sum of debits {a} is not equal to sum of credits {b}.")
+
+
+class EntryBase(Iterable):
+    """Base class to derive DoubleEntry and NamedEntry."""
 
     @property
     @abstractmethod
-    def multiple_entry(self) -> "MultipleEntry":
+    def multiple_entry(self) -> MultipleEntry:
         """Return multiple entry."""
         pass
 
@@ -175,78 +186,52 @@ class EntryBase(Iterable):
 
 
 @dataclass
-class MultipleEntry:
-    data: list[SingleEntry]
-
-    @classmethod
-    def empty(cls) -> "MultipleEntry":
-        return cls(data=[])
-
-    @classmethod
-    def new(cls, *entries) -> "MultipleEntry":
-        """Shorthand method for creating a multiple entry."""
-        return MultipleEntry(entries)  # type: ignore
-
-    @property
-    def multiple_entry(self) -> "MultipleEntry":
-        return self
-
-    def _sum(self, type: type[DebitEntry | CreditEntry]):
-        """Sum of entries of either debit or credit type."""
-        return sum(x.amount for x in self.data if isinstance(x, type))
-
-    def validate(self):
-        """Check if sum of debits and sum credits are equal."""
-        if self._sum(DebitEntry) == self._sum(CreditEntry):
-            return self
-        raise AbacusError(
-            "Sum of debits and sum of credits should be equal: " + str(self)
-        )
-
-    def __iter__(self):
-        return iter(self.data)
-
-
-@dataclass
 class DoubleEntry(EntryBase):
     """Create entry from debit account name, credit account name and entry amount."""
 
     debit: AccountName
     credit: AccountName
-    amount: Amount | int | float
+    amount: Amount
 
     @property
     def multiple_entry(self) -> MultipleEntry:
-        amount = Amount(self.amount)
         return MultipleEntry.new(
-            DebitEntry(self.debit, amount),
-            CreditEntry(self.credit, amount),
+            DebitEntry(self.debit, self.amount),
+            CreditEntry(self.credit, self.amount),
         )
 
 
 @dataclass
-class Entry(EntryBase):
-    """Create entry using .debit() and .credit() methods - similar to 'medici' package."""
+class NamedEntry(EntryBase):
+    """Create entry using .debit() and .credit() methods.
+
+    The syntax is similar to 'medici' package (<https://github.com/flash-oss/medici>).
+    """
 
     title: str
-    amount: Amount | int | float | None = None
-    _multiple_entry: MultipleEntry = field(
-        default_factory=MultipleEntry.empty
-    )
+    _amount: Amount | int | float | None = None
+    _multiple_entry: MultipleEntry = field(default_factory=MultipleEntry)
+
+    def amount(self, amount: Amount | int | float):
+        """Set default amount for this entry."""
+        self._amount = amount
+        return self
 
     def _append(self, cls, name, amount):
-        entry = cls(name, Amount(amount or self.amount))
+        a = Amount(amount or self._amount)
+        if not a:
+            raise AbacusError("Amount is not defined.")
+        entry = cls(name, a)
         self._multiple_entry.data.append(entry)
+        return self
 
     def debit(self, name: AccountName, amount: Amount | int | float | None = None):
-        """Add debit entry to multiple entry."""
-        self._append(DebitEntry, name, amount)
-        return self
+        """Add debit entry or debit account name."""
+        return self._append(DebitEntry, name, amount)
 
     def credit(self, name: AccountName, amount: Amount | int | float | None = None):
-        """Add credit entry to multiple entry."""
-        self._append(CreditEntry, name, amount)
-        return self
+        """Add credit entry or credit account name."""
+        return self._append(CreditEntry, name, amount)
 
     @property
     def multiple_entry(self) -> MultipleEntry:
@@ -255,7 +240,7 @@ class Entry(EntryBase):
 
 @dataclass
 class Account:
-    """Account definition that has account name and names of associated contra accounts."""
+    """Account definition with account name and names of associated contra accounts."""
 
     name: AccountName
     contra_accounts: list[AccountName] = field(default_factory=list)
@@ -375,21 +360,30 @@ class Ledger(UserDict[AccountName, TAccount]):
         for entry in entries:
             self.post(entry)
 
+    @property
     def trial_balance(self):
         """Create trial balance from ledger."""
         return TrialBalance.new(self)
+
+    def balances(self) -> dict[str, Amount]:
+        """Return account balances."""
+        return {name: account.balance() for name, account in self.items()}
 
     def close(self, chart):
         """Close ledger at accounting period end."""
         return close(self, chart)
 
-    def balances(self) -> dict[AccountName, Amount]:
-        """Show account balances."""
-        return self.trial_balance().balances()
+
+class Report(ABC):
+    """Base class for financial reports."""
+
+    def dict(self):
+        """Allow serialisation."""
+        return self.__dict__
 
 
-class TrialBalance(UserDict[str, tuple[Side, Amount]]):
-    """Trial balance is a list of accounts, account sides and balances."""
+class TrialBalance(UserDict[str, tuple[Side, Amount]], Report):
+    """Trial balance contains account names, account sides and balances."""
 
     @classmethod
     def new(cls, ledger: Ledger):
@@ -414,8 +408,8 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
             name: to_tuples(side, balance) for name, (side, balance) in self.items()
         }
 
-    def balances(self) -> dict[str, Amount]:
-        """Return account names and balances"""
+    def amounts(self) -> dict[str, Amount]:
+        """Return account names and amount balances."""
         return {name: balance for name, (_, balance) in self.items()}
 
     def entries(self) -> list[SingleEntry]:
@@ -431,20 +425,27 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
 
 
 @dataclass
-class IncomeSummary:
+class IncomeSummary(Report):
     income: dict[AccountName, Amount] = field(default_factory=dict)
     expenses: dict[AccountName, Amount] = field(default_factory=dict)
 
-    def dict(self):
-        """Allow serialisation of this dataclass."""
-        return self.__dict__
-
     @property
     def net_earnings(self):
-        """Calculate net earnings from income and expenses."""
+        """Calculate net earnings as income less expenses."""
         return sum(self.income.values()) - sum(self.expenses.values())
 
-    # NOTE: will need add more post close accounts (e.g. income tax posting)
+    # NOTE: will need add income tax posting and more post close accounts.
+
+
+@dataclass
+class BalanceSheet(Report):
+    assets: dict[AccountName, Amount]
+    capital: dict[AccountName, Amount]
+    liabilities: dict[AccountName, Amount]
+
+    @classmethod
+    def new(cls, ledger: Ledger, chart: Chart):
+        return ledger.trial_balance.balances()
 
 
 def close(ledger: Ledger, chart: Chart):
@@ -516,14 +517,19 @@ ledger = Ledger.new(chart)
 
 # Define double or multiple entries and post them to ledger
 entries = [
-    DoubleEntry("cash", "equity", 100),
-    Entry("Sold $200 worth of goods with a refund and 50% prepayment")
+    DoubleEntry("cash", "equity", Amount(100)),
+    NamedEntry("Sold $200 worth of goods with 10% refund and 50% prepayment")
     .debit("cash", 90)
     .debit("ar", 90)
     .debit("refunds", 20)
     .credit("sales", 200),
-    MultipleEntry.new(DebitEntry("salaries", Amount(250)), 
-                      CreditEntry("ap", Amount(250))),
+    MultipleEntry.new(
+        DebitEntry("salaries", Amount(250)), CreditEntry("ap", Amount(250))
+    ),
+    NamedEntry("Received $10 payment for goods sold")
+    .amount(10)
+    .debit("cash")
+    .credit("ar"),
 ]
 ledger.post_many(entries)
 
@@ -536,11 +542,16 @@ assert income_summary.dict() == {
     "expenses": {"salaries": 250},
 }
 
-# Show account balances for balance sheet
-assert ledger.balances() == {
-    "cash": 190,
+# Show balance sheet data
+# TODO: show balance sheet data with contra accounts
+balance_sheet = BalanceSheet.new(ledger, chart)
+print(balance_sheet)
+
+# Show account balances
+assert ledger.trial_balance.amounts() == {
+    "cash": 200,
     "equity": 100,
     "retained_earnings": -70,
     "ap": 250,
-    "ar": 90,
+    "ar": 80,
 }
