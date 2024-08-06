@@ -445,7 +445,7 @@ class BalanceSheet(Report):
 
     @classmethod
     def new(cls, ledger: Ledger, chart: Chart):
-        return ledger.trial_balance.balances()
+        return ledger.trial_balance.amounts()
 
 
 def close(ledger: Ledger, chart: Chart):
@@ -546,6 +546,12 @@ assert income_summary.dict() == {
 # TODO: show balance sheet data with contra accounts
 balance_sheet = BalanceSheet.new(ledger, chart)
 print(balance_sheet)
+# - get trail balance
+# - create proxy balance
+# - close contra accounts
+# - create BalanceSheet
+# - use depreciation as example
+# - maybe need name after contra accounts 
 
 # Show account balances
 assert ledger.trial_balance.amounts() == {
