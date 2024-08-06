@@ -18,15 +18,13 @@ from playground import (
 
 def test_invalid_multiple_entry():
     with pytest.raises(AbacusError):
-        me = MultipleEntry(
-            data=[DebitEntry("a", Amount(100)), CreditEntry("b", Amount(99))]
-        )
+        me = MultipleEntry([DebitEntry("a", Amount(100)), CreditEntry("b", Amount(99))])
         me.validate()
 
 
 def test_ledger_post_method():
     book = Ledger({"a": TAccount(Side.Debit), "b": TAccount(Side.Credit)})
-    e = MultipleEntry(data=[DebitEntry("a", 100), CreditEntry("b", 100)])
+    e = MultipleEntry.new(DebitEntry("a", 100), CreditEntry("b", 100))
     book.post(e)
     assert book == {
         "a": TAccount(side=Side.Debit, debits=[Amount(100)], credits=[]),
@@ -55,7 +53,7 @@ def test_end_to_end():
 
     ledger = Ledger.new(chart)
     ledger.post_many(entries)
-    tb1 = ledger.trial_balance()
+    tb1 = ledger.trial_balance
     assert tb1.tuples() == {
         "cash": (85, 0),
         "inventory": (30, 0),
@@ -68,8 +66,8 @@ def test_end_to_end():
     }
     _, ledger, income_summary = close(ledger, chart)
     assert income_summary.net_earnings == 15
-    tb2 = ledger.trial_balance()
-    balances = tb2.balances()
+    tb2 = ledger.trial_balance
+    balances = tb2.amounts()
     assert balances == {
         "cash": 85,
         "inventory": 30,

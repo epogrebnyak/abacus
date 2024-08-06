@@ -1,11 +1,36 @@
 """Accounting module for double-entry bookkeeping.
 
-add assumptions from issue 80 
-and:
+Accounting conventions used:
+- account holds amounts on debit and credit side ("T-account")
+- for each account we know which side holds the balance (debit or credit side)
+- regular accounts of 5 types (asset, liability, capital, income, expense)
+- contra accounts to regular accounts are possibe (eg depreciation, discounts, etc.)
+- one intermediate account is income summary account for profit calculation
+
+Accounting workflow used:
+1. create chart of accounts
+2. create ledger from chart
+3. post entries to ledger
+4. close ledger at accounting period end and produce income statement
+5. make post-close entries and produce balance sheet
+6. show trial balance at any time
+7. save permanent account balances for next period  
+
+Assumptions and simplifications (some may be relaxed in future versions): 
+- one level of accounts, no subaccounts
+- account names must be globally unique
+- chart always has "retained earnigns account"
+- chart always has "income summary account" 
 - account is always defined as either debit side or credit side
-- no journals, entries get posted to ledger directly
-- how closing is made
-- net earnings made of income and expenses, no gross profit or profit before tax calculated    
+- no non-negativity checks for account balances (eg cash account can go negative)
+- there are no journals, entries are posted to ledger directly
+- entry can touch any accounts
+- entry amount can be positive or negative 
+- one currency
+- period end closing adds net earnings to retained earnings
+- net earnings are income less expenses, no gross profit or profit before tax calculated    
+- no cash flow statement
+- no statement of changes in equity
 """
 
 import decimal
@@ -36,6 +61,10 @@ class Side(Enum):
             return Side.Credit
         return Side.Debit
 
+    def is_debit(self) -> bool:
+        """Return True if this is a debit side."""
+        return self == Side.Debit
+
     def __repr__(self):
         """Make this enum look better in messages."""
         return str(self)
@@ -59,17 +88,17 @@ class T5(Enum):
 
 
 class Holder(ABC):
-    """Abstract base class for regular, contra or intermediate account definitation.
+    """Abstract base class for regular, contra or intermediate account definitions.
 
     Parent class for Regular, Contra and Intermediate classes.
 
-    Usage examples:
+    Usage examples of child classes:
         Regular(T5.Asset)
         Contra(T5.Income)
         Intermediate(Profit.IncomeSummaryAccount)
 
-    Regular and Contra constructors define any of five account types
-    and their contra accounts. Intermediate constructor used for
+    Regular and Contra classes define any of five account types
+    and their contra accounts. Intermediate class used for
     profit accounts, that live for a short while when closing the ledger.
     """
 
@@ -86,7 +115,7 @@ class Holder(ABC):
 
 @dataclass
 class Regular(Holder):
-    """Regular account of any of five types."""
+    """Regular account of any of five types of accounts."""
 
     t: T5
 
@@ -153,7 +182,12 @@ class MultipleEntry(UserList[SingleEntry]):
 
     @classmethod
     def new(cls, *entries) -> "MultipleEntry":
-        """Shorthand method for creating a multiple entry with commas."""
+        """Shorthand method for creating a multiple entry with commas:
+
+        Example:
+            MultipleEntry.new(DebitEntry("cash", 100), CreditEntry("equity", 100))
+
+        """
         return MultipleEntry(entries)  # type: ignore
 
     def _sum(self, type: type[DebitEntry | CreditEntry]):
@@ -246,7 +280,7 @@ class Account:
     contra_accounts: list[AccountName] = field(default_factory=list)
 
     def stream(self, account_type: T5):
-        """Yield account definitions for original account and associated contra accounts."""
+        """Yield account definitions for regular account and associated contra accounts."""
         yield self.name, Regular(account_type)
         for contra_name in self.contra_accounts:
             yield contra_name, Contra(account_type)
@@ -275,7 +309,7 @@ class Chart:
         """Return chart as a dictionary with unique account names"""
         return dict(self.items())
 
-    def items(self):
+    def items(self) -> Iterable[tuple[AccountName, Regular | Contra | Intermediate]]:
         """Assign account types to account names."""
         yield from self.stream(self.assets, T5.Asset)
         yield from self.stream(self.capital, T5.Capital)
@@ -292,14 +326,18 @@ class Chart:
             yield from account.stream(account_type)
 
     def __post_init__(self):
-        xs = list(self.dict().keys())
-        ys = [x[0] for x in self.items()]
-        if len(xs) != len(ys):
+        self.assert_unique_names()
+
+    def assert_unique_names(self) -> None:
+        """Ensure all account names in chart are unique."""
+        unique_names = list(self.dict().keys())
+        all_names = [x[0] for x in self.items()]
+        if len(unique_names) != len(all_names):
+            n = len(all_names) - len(unique_names)
             raise AbacusError(
                 [
-                    "Chart should not contain duplicate account names.",
-                    len(xs) - len(ys),
-                    set(ys) - set(xs),
+                    f"Chart contains {n} duplicate account names",
+                    set(all_names) - set(unique_names),
                 ]
             )
 
@@ -320,14 +358,10 @@ class TAccount:
         """Add amount to credit side of T-account."""
         self.credits.append(amount)
 
-    def _is_debit_account(self) -> bool:
-        """Return True if this account is a debit-side account."""
-        return self.side == Side.Debit
-
     def balance(self) -> Amount:
         """Return account balance."""
-        b = Amount(sum(self.debits) - sum(self.credits))
-        return b if self._is_debit_account() else -b
+        b = sum(self.debits) - sum(self.credits)
+        return Amount(b if self.side.is_debit() else -b)
 
 
 class Ledger(UserDict[AccountName, TAccount]):
@@ -457,46 +491,50 @@ def close(ledger: Ledger, chart: Chart):
 
     Returns:
         closing_entries: list of closing entries,
-        ledger: ledger after account closing (without temporary and intermediate accounts),
+        ledger: ledger after account closing (only permanent accounts,
+                temporary and intermediate accounts will have zero balance
+                and will be removed),
         income_summary: income statement data.
     """
     isa = chart.income_summary_account
     re = chart.retained_earnings_account
     closing_entries = []
 
-    def proceed(a, e):
-        closing_entries.append(e)
-        ledger.post(e)
-        del ledger[a]
+    def proceed(account, entry):
+        closing_entries.append(entry)
+        ledger.post(entry)
+        del ledger[account]
 
     # 1. Close contra income and contra expense accounts
     for account in chart.income:
         for a in account.contra_accounts:
-            e = DoubleEntry(debit=account.name, credit=a, amount=ledger[a].balance())
-            proceed(a, e)
+            entry = DoubleEntry(
+                debit=account.name, credit=a, amount=ledger[a].balance()
+            )
+            proceed(a, entry)
     for account in chart.expenses:
         for a in account.contra_accounts:
-            e = DoubleEntry(debit=a, credit=account.name, amount=ledger[a].balance())
-            proceed(a, e)
+            entry = DoubleEntry(
+                debit=a, credit=account.name, amount=ledger[a].balance()
+            )
+            proceed(a, entry)
 
     # 2. Close income and expense accounts
     income_summary = IncomeSummary()
     for account in chart.income:
-        a = account.name
-        b = ledger[a].balance()
-        income_summary.income[a] = b
-        e = DoubleEntry(debit=a, credit=isa, amount=b)
-        proceed(a, e)
+        b = ledger[account.name].balance()
+        income_summary.income[account.name] = b
+        entry = DoubleEntry(debit=account.name, credit=isa, amount=b)
+        proceed(account.name, entry)
     for account in chart.expenses:
-        a = account.name
-        b = ledger[a].balance()
-        income_summary.expenses[a] = b
-        e = DoubleEntry(debit=isa, credit=a, amount=b)
-        proceed(a, e)
+        b = ledger[account.name].balance()
+        income_summary.expenses[account.name] = b
+        entry = DoubleEntry(debit=isa, credit=account.name, amount=b)
+        proceed(account.name, entry)
 
-    # 3. Close to retained earnings
-    e = DoubleEntry(debit=isa, credit=re, amount=ledger[isa].balance())
-    proceed(isa, e)
+    # 3. Close income summary account to retained earnings account
+    entry = DoubleEntry(debit=isa, credit=re, amount=ledger[isa].balance())
+    proceed(isa, entry)
     # NOTE: we actually did mutate the incoming ledger, may want to create a copy instead
     return closing_entries, ledger, income_summary
 
@@ -515,21 +553,22 @@ chart = Chart(
 # Create ledger from chart
 ledger = Ledger.new(chart)
 
-# Define double or multiple entries and post them to ledger
+# Define entries and post them to ledger
 entries = [
-    DoubleEntry("cash", "equity", Amount(100)),
-    NamedEntry("Sold $200 worth of goods with 10% refund and 50% prepayment")
-    .debit("cash", 90)
-    .debit("ar", 90)
-    .debit("refunds", 20)
+    NamedEntry("Shareholder investment").amount(100).debit("cash").credit("equity"),
+    NamedEntry("Provided services worth $200 with $100 prepayment")
+    .debit("cash", 100)
+    .debit("ar", 100)
     .credit("sales", 200),
-    MultipleEntry.new(
-        DebitEntry("salaries", Amount(250)), CreditEntry("ap", Amount(250))
-    ),
-    NamedEntry("Received $10 payment for goods sold")
-    .amount(10)
+    NamedEntry("Provided $20 refund for services")
+    .amount(20)
+    .debit("refunds")
+    .credit("ar"),
+    NamedEntry("Received $30 payment for services")
+    .amount(30)
     .debit("cash")
     .credit("ar"),
+    NamedEntry("Accrued staff salaries").amount(250).debit("salaries").credit("ap"),
 ]
 ledger.post_many(entries)
 
@@ -537,10 +576,15 @@ ledger.post_many(entries)
 closing_entries, ledger, income_summary = ledger.close(chart)
 
 # Show income statement data
+print(income_summary.dict())
 assert income_summary.dict() == {
     "income": {"sales": 180},
     "expenses": {"salaries": 250},
 }
+
+# TODO: accure income tax, pay 50% didividend
+# What is the sequence of events at accouting period end:
+# - accrue income tax
 
 # Show balance sheet data
 # TODO: show balance sheet data with contra accounts
@@ -551,13 +595,13 @@ print(balance_sheet)
 # - close contra accounts
 # - create BalanceSheet
 # - use depreciation as example
-# - maybe need name after contra accounts 
+# - maybe need name after contra accounts
 
 # Show account balances
 assert ledger.trial_balance.amounts() == {
-    "cash": 200,
+    "cash": 230,
     "equity": 100,
     "retained_earnings": -70,
     "ap": 250,
-    "ar": 80,
+    "ar": 50,
 }
