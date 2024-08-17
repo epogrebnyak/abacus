@@ -24,8 +24,10 @@ entries = [
     Entry("Provided cashback").amount(20).debit("refunds").credit("ar"),
     Entry("Received payment for services").amount(40).debit("cash").credit("ar"),
     Entry("Accrued staff salaries").amount(120).debit("salaries").credit("ap"),
-    Entry("Accounted for office wear and tear").amount(20).debit("depreciation").credit("wt"),
-
+    Entry("Accounted for office wear and tear")
+    .amount(20)
+    .debit("depreciation")
+    .credit("wt"),
 ]
 ledger.post_many(entries)
 
@@ -42,7 +44,10 @@ closing_entries, ledger, income_summary = ledger.close(chart)
 
 # Show income statement data
 print(income_summary.dict())
-assert income_summary.dict() == {'income': {'sales': 180}, 'expenses': {'salaries': 120, 'depreciation': 20}}
+assert income_summary.dict() == {
+    "income": {"sales": 180},
+    "expenses": {"salaries": 120, "depreciation": 20},
+}
 
 # Show balance sheet data
 # TODO: show balance sheet data with contra accounts

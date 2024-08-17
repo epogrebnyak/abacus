@@ -12,23 +12,24 @@ Accounting workflow used:
 Accounting conventions used:
 - regular accounts of 5 types (asset, liability, capital, income, expense)
 - contra accounts to regular accounts are possibe (eg depreciation, discounts, etc.)
-- only intermediate account is income summary account for profit calculation
+- the only intermediate account is income summary account used for profit calculation
 - accounts holds amounts on debit and credit side ("T-account")
-- the balancing side of the account is fixed
-- accounts cannot go negative, except income summary account
+- the balancing side of the account can be fixed (eg asset is always debit side)
+  or can be determined by the balance (eg income summary account is credit side 
+  if balance is positive)
+- accounts balances cannot go negative
 
 Assumptions and simplifications (some may be relaxed in future versions): 
 - one level of accounts, no subaccounts
 - account names must be globally unique
 - chart always has "retained earnigns account"
 - chart always has "income summary account" 
-- account is always defined as either debit side or credit side
 - there are no journals, entries are posted to ledger directly
 - an entry can touch any accounts
 - entry amount can be positive or negative 
 - one currency
 - net earnings are income less expenses, no gross profit or profit before tax calculated    
-- period end closing adds net earnings to retained earnings
+- period end closing tranfsers net earnings to retained earnings
 - no cash flow statement
 - no statement of changes in equity
 """
@@ -165,7 +166,9 @@ class Intermediate(AccountDefinition):
         raise AbacusError("Unknown intermediate account: " + str(self.t))
 
     def taccount(self):
-        return UnrestrictedCreditAccount()
+        if isinstance(self.t, Profit):
+            return DebitOrCreditAccount()
+        raise AbacusError("Unknown intermediate account: " + str(self.t))
 
 
 @dataclass
@@ -221,7 +224,7 @@ class EntryBase(Iterable):
 
     def __iter__(self):
         """Make class iterable, similar to list[SingleEntry].
-        Will validate entry before iterating.
+        Will validate entry before iterating (but this is not very clean)
         """
         return self.multiple_entry.validate().__iter__()
 
@@ -250,8 +253,8 @@ class Account:
     contra_accounts: list[AccountName] = field(default_factory=list)
 
     def stream(self, account_type: T5):
-        """Yield account definitions for the regular account 
-           and associated contra accounts (if any).
+        """Yield account definitions for the regular account
+        and associated contra accounts (if any).
         """
         yield self.name, Regular(account_type)
         for contra_name in self.contra_accounts:
@@ -340,14 +343,32 @@ class TAccountBase(ABC):
     @abstractmethod
     def side(self) -> Side:
         pass
-    
-    def make_closing_entry(self, my_name: AccountName, destination_name: AccountName) -> "DoubleEntry":
+
+    def make_closing_entry(
+        self, my_name: AccountName, destination_name: AccountName
+    ) -> "DoubleEntry":
+        """
+        Make closing entry to transfer balance from *my_name* account
+        to *destination_name* account.
+
+        When closing debit account, the closing entry will be:
+           - Cr my_name
+           - Dr destination_name
+
+        When closing credit account, the closing entry will be:
+            - Dr my_name
+            - Cr destination_name
+        """
         match self.side:
             case Side.Debit:
-                a, b = destination_name, my_name
+                return DoubleEntry(
+                    debit=destination_name, credit=my_name, amount=self.balance
+                )
             case Side.Credit:
-                a, b = my_name, destination_name
-        return DoubleEntry(a, b, self.balance)       
+                return DoubleEntry(
+                    debit=my_name, credit=destination_name, amount=self.balance
+                )
+
 
 class UnrestrictedDebitAccount(TAccountBase):
 
@@ -389,6 +410,20 @@ class CreditAccount(UnrestrictedCreditAccount):
                 f"Account balance is {self.balance}, cannot debit {amount}."
             )
         self.left += amount
+
+
+class DebitOrCreditAccount(TAccountBase):
+    """Account that can be either debit or credit depending on the balance."""
+
+    @property
+    def balance(self) -> Amount:
+        return abs(self.left - self.right)
+
+    @property
+    def side(self) -> Side:
+        if self.right >= self.left:
+            return Side.Credit
+        return Side.Debit
 
 
 class Ledger(UserDict[AccountName, TAccountBase]):
@@ -436,10 +471,10 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
 
 def net_balance(ledger: Ledger, account: Account):
-        b = ledger[account.name].balance
-        for name in account.contra_accounts:
-            b -= ledger[name].balance
-        return b    
+    b = ledger[account.name].balance
+    for name in account.contra_accounts:
+        b -= ledger[name].balance
+    return b
 
 
 class Report(ABC):
@@ -501,6 +536,7 @@ class IncomeSummary(Report):
     def net_earnings(self):
         """Calculate net earnings as income less expenses."""
         return sum(self.income.values()) - sum(self.expenses.values())
+
 
 @dataclass
 class BalanceSheet(Report):
