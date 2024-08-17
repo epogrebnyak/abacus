@@ -1,4 +1,4 @@
-from core import Account, NetBalanceSheet, Chart, Ledger
+from core import Account, BalanceSheet, Chart, Ledger
 from ui import NamedEntry as Entry
 
 # Create chart of accounts with contra accounts
@@ -46,7 +46,8 @@ assert income_summary.dict() == {'income': {'sales': 180}, 'expenses': {'salarie
 
 # Show balance sheet data
 # TODO: show balance sheet data with contra accounts
-balance_sheet = NetBalanceSheet.new(ledger, chart)
+print(chart)
+balance_sheet = BalanceSheet.new(ledger, chart)
 print(balance_sheet.dict())
 # - get trail balance
 # - create proxy balance
@@ -58,9 +59,13 @@ print(balance_sheet.dict())
 # Show account balances
 print(ledger.trial_balance.amounts())
 assert ledger.trial_balance.amounts() == {
-    "cash": 230,
-    "equity": 100,
-    "retained_earnings": -70,
-    "ap": 250,
-    "ar": 50,
+    "cash": 240,
+    "ppe": 200,
+    "equity": 300,
+    "wt": 20,
+    "retained_earnings": 40,
+    "ap": 120,
+    "ict_due": 0,
+    "div_due": 0,
+    "ar": 40,
 }

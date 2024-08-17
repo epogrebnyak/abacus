@@ -4,15 +4,15 @@ Accounting workflow used:
 1. create chart of accounts
 2. create ledger from chart
 3. post entries to ledger
-4. close ledger at accounting period end and produce income statement
-5. make post-close entries and produce balance sheet
-6. show trial balance at any time
+4. show trial balance at any time
+5. close ledger at accounting period end and produce income statement
+6. make post-close entries and produce balance sheet
 7. save permanent account balances for next period  
 
 Accounting conventions used:
 - regular accounts of 5 types (asset, liability, capital, income, expense)
 - contra accounts to regular accounts are possibe (eg depreciation, discounts, etc.)
-- one intermediate account is income summary account for profit calculation
+- only intermediate account is income summary account for profit calculation
 - accounts holds amounts on debit and credit side ("T-account")
 - the balancing side of the account is fixed
 - accounts cannot go negative, except income summary account
@@ -98,8 +98,8 @@ class AccountDefinition(ABC):
         Intermediate(Profit.IncomeSummaryAccount)
 
     Regular and Contra classes define any of five account types
-    and their contra accounts. Intermediate class used for
-    profit accounts, that live for a short while when closing the ledger.
+    and their contra accounts. Intermediate class used for profit accounts
+    that live for a short while when closing the ledger.
     """
 
     @property
@@ -331,6 +331,23 @@ class TAccountBase(ABC):
         """Add amount to credit side of T-account."""
         self.right += amount
 
+    @property
+    @abstractmethod
+    def balance(self) -> Amount:
+        pass
+
+    @property
+    @abstractmethod
+    def side(self) -> Side:
+        pass
+    
+    def make_closing_entry(self, my_name: AccountName, destination_name: AccountName) -> "DoubleEntry":
+        match self.side:
+            case Side.Debit:
+                a, b = destination_name, my_name
+            case Side.Credit:
+                a, b = my_name, destination_name
+        return DoubleEntry(a, b, self.balance)       
 
 class UnrestrictedDebitAccount(TAccountBase):
 
@@ -418,7 +435,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
         return close(self, chart)
 
 
-def net_balance(ledger, account):
+def net_balance(ledger: Ledger, account: Account):
         b = ledger[account.name].balance
         for name in account.contra_accounts:
             b -= ledger[name].balance
@@ -486,7 +503,7 @@ class IncomeSummary(Report):
         return sum(self.income.values()) - sum(self.expenses.values())
 
 @dataclass
-class NetBalanceSheet(Report):
+class BalanceSheet(Report):
     assets: dict[AccountName, Amount]
     capital: dict[AccountName, Amount]
     liabilities: dict[AccountName, Amount]
@@ -494,7 +511,7 @@ class NetBalanceSheet(Report):
     @classmethod
     def new(cls, ledger: Ledger, chart: Chart):
         def subset(accounts: list[Account]):
-            return {account.name: net_balance(ledger, account.name) for account in accounts}
+            return {account.name: net_balance(ledger, account) for account in accounts}
 
         return cls(
             assets=subset(chart.assets),
@@ -521,36 +538,30 @@ def close(ledger: Ledger, chart: Chart):
     re = chart.retained_earnings_account
     closing_entries = []
 
-    def proceed(account, entry):
+    def proceed(from_, to_):
+        entry = ledger[from_].make_closing_entry(from_, to_)
         closing_entries.append(entry)
         ledger.post(entry)
-        del ledger[account]
+        del ledger[from_]
 
     # 1. Close contra income and contra expense accounts
-    for account in chart.income:
-        for a in account.contra_accounts:
-            entry = DoubleEntry(debit=account.name, credit=a, amount=ledger[a].balance)
-            proceed(a, entry)
-    for account in chart.expenses:
-        for a in account.contra_accounts:
-            entry = DoubleEntry(debit=a, credit=account.name, amount=ledger[a].balance)
-            proceed(a, entry)
+    for account in chart.income + chart.expenses:
+        for contra_account_name in account.contra_accounts:
+            proceed(from_=contra_account_name, to_=account.name)
 
     # 2. Close income and expense accounts
     income_summary = IncomeSummary()
     for account in chart.income:
         b = ledger[account.name].balance
         income_summary.income[account.name] = b
-        entry = DoubleEntry(debit=account.name, credit=isa, amount=b)
-        proceed(account.name, entry)
+        proceed(from_=account.name, to_=isa)
     for account in chart.expenses:
         b = ledger[account.name].balance
         income_summary.expenses[account.name] = b
-        entry = DoubleEntry(debit=isa, credit=account.name, amount=b)
-        proceed(account.name, entry)
+        proceed(account.name, isa)
 
     # 3. Close income summary account to retained earnings account
-    entry = DoubleEntry(debit=isa, credit=re, amount=ledger[isa].balance)
-    proceed(isa, entry)
+    proceed(isa, re)
+
     # NOTE: we actually did mutate the incoming ledger, may want to create a copy instead
     return closing_entries, ledger, income_summary
