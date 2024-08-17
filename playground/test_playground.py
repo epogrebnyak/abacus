@@ -1,6 +1,6 @@
 import pytest
 
-from playground import (
+from core import (
     AbacusError,
     Account,
     Amount,
@@ -9,11 +9,21 @@ from playground import (
     DebitEntry,
     Ledger,
     Side,
-    TAccount,
     close,
     DoubleEntry,
     MultipleEntry,
+    DebitAccount,
+    CreditAccount,
 )
+
+
+def test_debit_account_stays_positive():
+    with pytest.raises(AbacusError):
+        DebitAccount(Amount(100), 0).credit(Amount(101))
+
+
+def test_unrestircted_credit_account_may_be_negative():
+    CreditAccount().credit(Amount(5))
 
 
 def test_invalid_multiple_entry():
@@ -23,12 +33,12 @@ def test_invalid_multiple_entry():
 
 
 def test_ledger_post_method():
-    book = Ledger({"a": TAccount(Side.Debit), "b": TAccount(Side.Credit)})
+    book = Ledger({"a": DebitAccount(), "b": CreditAccount()})
     e = MultipleEntry.new(DebitEntry("a", 100), CreditEntry("b", 100))
     book.post(e)
     assert book == {
-        "a": TAccount(side=Side.Debit, debits=[Amount(100)], credits=[]),
-        "b": TAccount(side=Side.Credit, debits=[], credits=[Amount(100)]),
+        "a": DebitAccount(Amount(100), Amount(0)),
+        "b": CreditAccount(Amount(0), Amount(100)),
     }
 
 
