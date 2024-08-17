@@ -1,14 +1,14 @@
-from core import Account, BalanceSheet, Chart, Ledger
+from core import Account, BalanceSheet, PureChart, Ledger
 from ui import NamedEntry as Entry
 
 # Create chart of accounts with contra accounts
-chart = Chart(
+chart = PureChart(
     assets=[Account("cash"), Account("ar"), Account("ppe", contra_accounts=["wt"])],
-    capital=[Account("equity")],
+    capital=[Account("equity"), Account("retained_earnings")],
     liabilities=[Account("ap"), Account("ict_due"), Account("div_due")],
     income=[Account("sales", contra_accounts=["refunds", "voids"])],
     expenses=[Account("salaries"), Account("depreciation")],
-)
+).set_retained_earnings("retained_earnings")
 
 # Create ledger from chart
 ledger = Ledger.new(chart)

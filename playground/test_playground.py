@@ -74,7 +74,7 @@ def test_end_to_end():
         "cogs": (60, 0),
         "isa": (0, 0),
     }
-    _, ledger, income_summary = close(ledger, chart)
+    _, ledger, income_summary = close(ledger, chart, chart.retained_earnings_account)
     assert income_summary.net_earnings == 15
     tb2 = ledger.trial_balance
     balances = tb2.amounts()

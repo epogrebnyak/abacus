@@ -320,6 +320,82 @@ class Chart:
 
 
 @dataclass
+class PureChart:
+    income_summary_account: str = "isa"
+    assets: list[Account] = field(default_factory=list)
+    capital: list[Account] = field(default_factory=list)
+    liabilities: list[Account] = field(default_factory=list)
+    income: list[Account] = field(default_factory=list)
+    expenses: list[Account] = field(default_factory=list)
+
+    def dict(self) -> dict[AccountName, AccountDefinition]:
+        """Return chart as a dictionary with unique account names"""
+        return dict(self.items())
+
+    def items(self) -> Iterable[tuple[AccountName, Regular | Contra | Intermediate]]:
+        """Assign account types to account names."""
+        yield from self.stream(self.assets, T5.Asset)
+        yield from self.stream(self.capital, T5.Capital)
+        yield from self.stream(self.liabilities, T5.Liability)
+        yield from self.stream(self.income, T5.Income)
+        yield from self.stream(self.expenses, T5.Expense)
+        yield self.income_summary_account, Intermediate(Profit.IncomeSummaryAccount)
+
+    @staticmethod
+    def stream(accounts: list[Account], account_type: T5):
+        """Yield account definitions for a list of accounts."""
+        for account in accounts:
+            yield from account.stream(account_type)
+
+    def __post_init__(self):
+        self.assert_unique_names()
+
+    def assert_unique_names(self) -> None:
+        """Ensure all account names in chart are unique."""
+        unique_names = list(self.dict().keys())
+        all_names = [x[0] for x in self.items()]
+        if len(unique_names) != len(all_names):
+            n = len(all_names) - len(unique_names)
+            raise AbacusError(
+                [
+                    f"Chart contains {n} duplicate account names",
+                    set(all_names) - set(unique_names),
+                    sorted(unique_names),
+                    sorted(all_names),
+                ]
+            )
+
+    def set_retained_earnings(self, account_name: AccountName):
+        return ClosableChart(
+            income_summary_account=self.income_summary_account,
+            assets=self.assets,
+            capital=self.capital,
+            liabilities=self.liabilities,
+            income=self.income,
+            expenses=self.expenses,
+            retained_earnings_account=account_name,
+        )
+
+
+@dataclass
+class ClosableChart(PureChart):
+    retained_earnings_account: AccountName | None = None
+
+    def assert_re_was_set(self):
+        if not self.retained_earnings_account:
+            raise AbacusError(f"Account {self.retained_earnings_account} was not set.")
+
+    def assert_re_in_chart(self):
+        re = self.retained_earnings_account
+        if re not in [account.name for account in self.capital]:
+            raise AbacusError(f"Account {re} not found in chart.")
+
+    def __post_init__(self):
+        self.assert_re_was_set()
+        self.assert_re_in_chart()
+
+
+@dataclass
 class TAccountBase(ABC):
     """Base class for T-account that holds amounts on the left and right sides."""
 
@@ -348,14 +424,14 @@ class TAccountBase(ABC):
         self, my_name: AccountName, destination_name: AccountName
     ) -> "DoubleEntry":
         """
-        Make closing entry to transfer balance from *my_name* account
+        Make closing entry to transfer account balance from *my_name* account
         to *destination_name* account.
 
-        When closing debit account, the closing entry will be:
+        When closing a debit account, the closing entry will be:
            - Cr my_name
            - Dr destination_name
 
-        When closing credit account, the closing entry will be:
+        When closing a credit account, the closing entry will be:
             - Dr my_name
             - Cr destination_name
         """
@@ -467,7 +543,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
     def close(self, chart):
         """Close ledger at accounting period end."""
-        return close(self, chart)
+        return close(self, chart, chart.retained_earnings_account)
 
 
 def net_balance(ledger: Ledger, account: Account):
@@ -556,7 +632,7 @@ class BalanceSheet(Report):
         )
 
 
-def close(ledger: Ledger, chart: Chart):
+def close(ledger: Ledger, chart: Chart, retained_earnings_account: AccountName):
     """Close ledger at accounting period end in the following order.
 
        1. Close income and expense contra accounts.
@@ -570,8 +646,6 @@ def close(ledger: Ledger, chart: Chart):
                 and will be removed),
         income_summary: income statement data.
     """
-    isa = chart.income_summary_account
-    re = chart.retained_earnings_account
     closing_entries = []
 
     def proceed(from_, to_):
@@ -590,14 +664,14 @@ def close(ledger: Ledger, chart: Chart):
     for account in chart.income:
         b = ledger[account.name].balance
         income_summary.income[account.name] = b
-        proceed(from_=account.name, to_=isa)
+        proceed(from_=account.name, to_=chart.income_summary_account)
     for account in chart.expenses:
         b = ledger[account.name].balance
         income_summary.expenses[account.name] = b
-        proceed(account.name, isa)
+        proceed(account.name, chart.income_summary_account)
 
     # 3. Close income summary account to retained earnings account
-    proceed(isa, re)
+    proceed(chart.income_summary_account, retained_earnings_account)
 
     # NOTE: we actually did mutate the incoming ledger, may want to create a copy instead
     return closing_entries, ledger, income_summary
