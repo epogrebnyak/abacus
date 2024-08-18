@@ -8,12 +8,12 @@ from core import (
     CreditEntry,
     DebitEntry,
     Ledger,
-    Side,
     close,
     DoubleEntry,
     MultipleEntry,
     DebitAccount,
     CreditAccount,
+    UnrestrictedCreditAccount,
 )
 
 
@@ -22,8 +22,16 @@ def test_debit_account_stays_positive():
         DebitAccount(Amount(100), 0).credit(Amount(101))
 
 
+def test_crediting_works_on_credit_account():
+    ca = CreditAccount(left=Amount(0), right=Amount(0))
+    ca.credit(Amount(100))
+    assert ca == CreditAccount(Amount(0), Amount(100))
+
+
 def test_unrestircted_credit_account_may_be_negative():
-    CreditAccount().credit(Amount(5))
+    ca = UnrestrictedCreditAccount(left=Amount(0), right=Amount(10))
+    ca.debit(Amount(15))
+    assert ca.balance == -5
 
 
 def test_invalid_multiple_entry():
@@ -34,7 +42,7 @@ def test_invalid_multiple_entry():
 
 def test_ledger_post_method():
     book = Ledger({"a": DebitAccount(), "b": CreditAccount()})
-    e = MultipleEntry.new(DebitEntry("a", 100), CreditEntry("b", 100))
+    e = MultipleEntry().debit("a", 100).credit("b", 100)
     book.post(e)
     assert book == {
         "a": DebitAccount(Amount(100), Amount(0)),
@@ -47,19 +55,16 @@ def test_end_to_end():
         DoubleEntry("cash", "equity", 100),
         DoubleEntry("inventory", "cash", 90),
         DoubleEntry("cogs", "inventory", 60),
-        MultipleEntry.new(
-            DebitEntry("cash", 75), DebitEntry("refunds", 2), CreditEntry("sales", 77)
-        ),
+        MultipleEntry().debit("cash", 75).debit("refunds", 2).credit("sales", 77),
     ]
 
     chart = Chart(
         income_summary_account="isa",
-        retained_earnings_account="retained_earnings",
         assets=[Account("cash"), Account("inventory")],
         capital=[Account("equity")],
         expenses=[Account("cogs")],
         income=[Account("sales", contra_accounts=["refunds"])],
-    )
+    ).set_retained_earnings(account_name="retained_earnings")
 
     ledger = Ledger.new(chart)
     ledger.post_many(entries)

@@ -1,8 +1,7 @@
 from core import (
     EntryBase,
     MultipleEntry,
-    DebitEntry,
-    CreditEntry,
+    UnbalancedEntry,
     Amount,
     AccountName,
     AbacusError,
@@ -14,34 +13,41 @@ from dataclasses import dataclass, field
 class NamedEntry(EntryBase):
     """Create entry using .debit() and .credit() methods.
 
-    The syntax is similar to 'medici' package (<https://github.com/flash-oss/medici>).
+    The syntax is similar to 'medici' package (<https://github.com/flash-oss/medici>),
+    but we added .amount() method to set default amount for the entry.
     """
 
     title: str
     _amount: Amount | int | float | None = None
-    _multiple_entry: MultipleEntry = field(default_factory=MultipleEntry)
+    _unbalanced_entry: UnbalancedEntry = field(default_factory=UnbalancedEntry)
 
     def amount(self, amount: Amount | int | float):
         """Set default amount for this entry."""
-        self._amount = amount
+        self._amount = Amount(amount)
         return self
 
-    def _append(self, cls, name, amount):
-        a = Amount(amount or self._amount)
-        if not a:
-            raise AbacusError("Amount is not defined.")
-        entry = cls(name, a)
-        self._multiple_entry.data.append(entry)
-        return self
+    def _get(self, amount: Amount | int | float | None = None) -> Amount:
+        try:
+            return Amount(amount or self._amount)
+        except TypeError:
+            raise AbacusError(f"Amount must be provided, got {amount}.")
 
-    def debit(self, name: AccountName, amount: Amount | int | float | None = None):
+    def debit(
+        self, account_name: AccountName, amount: Amount | int | float | None = None
+    ):
         """Add debit entry or debit account name."""
-        return self._append(DebitEntry, name, amount)
+        amount = self._get(amount)
+        self._unbalanced_entry.debit(account_name, amount)
+        return self
 
-    def credit(self, name: AccountName, amount: Amount | int | float | None = None):
+    def credit(
+        self, account_name: AccountName, amount: Amount | int | float | None = None
+    ):
         """Add credit entry or credit account name."""
-        return self._append(CreditEntry, name, amount)
+        amount = self._get(amount)
+        self._unbalanced_entry.credit(account_name, amount)
+        return self
 
     @property
     def multiple_entry(self) -> MultipleEntry:
-        return self._multiple_entry
+        return MultipleEntry(data=self._unbalanced_entry.data)

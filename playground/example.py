@@ -1,30 +1,33 @@
-from core import Account, BalanceSheet, PureChart, Ledger
-from ui import NamedEntry as Entry
+from core import Account, BalanceSheet, Chart, Ledger, Amount
+from ui import NamedEntry
 
 # Create chart of accounts with contra accounts
-chart = PureChart(
+chart = Chart(
     assets=[Account("cash"), Account("ar"), Account("ppe", contra_accounts=["wt"])],
     capital=[Account("equity"), Account("retained_earnings")],
     liabilities=[Account("ap"), Account("ict_due"), Account("div_due")],
     income=[Account("sales", contra_accounts=["refunds", "voids"])],
     expenses=[Account("salaries"), Account("depreciation")],
-).set_retained_earnings("retained_earnings")
+).set_retained_earnings(account_name="retained_earnings")
 
 # Create ledger from chart
 ledger = Ledger.new(chart)
 
 # Define entries and post them to ledger
 entries = [
-    Entry("Shareholder investment,").amount(300).debit("cash").credit("equity"),
-    Entry("Bought office furniture").amount(200).debit("ppe").credit("cash"),
-    Entry("Provided services worth $200 with $100 prepayment")
+    NamedEntry("Shareholder investment")
+    .amount(300)
+    .debit(account_name="cash")
+    .credit(account_name="equity"),
+    NamedEntry("Bought office furniture").amount(200).debit("ppe").credit("cash"),
+    NamedEntry("Provided services worth $200 with $100 prepayment")
     .debit("cash", 100)
     .debit("ar", 100)
     .credit("sales", 200),
-    Entry("Provided cashback").amount(20).debit("refunds").credit("ar"),
-    Entry("Received payment for services").amount(40).debit("cash").credit("ar"),
-    Entry("Accrued staff salaries").amount(120).debit("salaries").credit("ap"),
-    Entry("Accounted for office wear and tear")
+    NamedEntry("Provided cashback").amount(20).debit("refunds").credit("ar"),
+    NamedEntry("Received payment for services").amount(40).debit("cash").credit("ar"),
+    NamedEntry("Accrued staff salaries").amount(120).debit("salaries").credit("ap"),
+    NamedEntry("Accounted for office wear and tear")
     .amount(20)
     .debit("depreciation")
     .credit("wt"),
@@ -33,7 +36,6 @@ ledger.post_many(entries)
 
 # TODO: accure income tax, pay 50% didividend
 # What is the sequence of events at accouting period end:
-# - calculate income tax
 # - calculate income tax
 
 for name, (a, b) in ledger.trial_balance.tuples().items():
