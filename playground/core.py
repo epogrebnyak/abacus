@@ -1,25 +1,27 @@
 """Accounting module for double-entry bookkeeping.
 
 Accounting workflow used:
+
 1. create chart of accounts
-2. set retained earnigns account 
+2. set retained earnings account 
 3. create ledger from chart
 4. post entries to ledger
 5. close ledger at accounting period end and produce income statement
 6. make post-close entries and produce balance sheet
 7. save permanent account balances for next period  
-8. show trial balance at any time after step 3
-
+8. show trial balance or proxy income statement at any time after step 3
 
 Accounting conventions used:
+
 - regular accounts of five types (asset, liability, capital, income, expense)
 - contra accounts to regular accounts are possible (eg depreciation, discounts, etc.)
-- intermediate income summary account used for profit calculation
+- intermediate income summary account used for net income calculation
 - T-account holds amounts on debit and credit side
 - the balancing side of most T-accoutns is fixed (eg asset is always debit side)
 - the balancing side income summary account is determined by the balance 
 
 Assumptions and simplifications (some may be relaxed in future versions): 
+
 - one currency
 - one level of accounts, no subaccounts
 - account names must be globally unique
@@ -27,7 +29,7 @@ Assumptions and simplifications (some may be relaxed in future versions):
 - chart always has "income summary account" 
 - no journals, entries are posted to ledger directly
 - an entry can touch any accounts
-- entry amount can be positive or negative 
+- entry amount can be positive or negative
 - account balances cannot go negative
 - net earnings are income less expenses, no gross profit or profit before tax calculated    
 - period end closing tranfsers net earnings to retained earnings
@@ -353,8 +355,9 @@ class ClosableChart(Chart):
     """Chart of accounts that can be closed at accounting period end.
 
     Suggested values for *retained_earnings_account* parameter are:
-    - "retained_earnings" for corporation,
-    - "owner_capital_account" for sole proprietorship.
+
+        - "retained_earnings" for corporation,
+        - "owner_capital_account" for sole proprietorship.
 
     See: https://www.accountingcoach.com/blog/what-is-the-income-summary-account
     """
@@ -381,11 +384,12 @@ class TAccountBase(ABC):
     """Base class for T-account that holds amounts on the left and right sides.
 
     Parent class for:
-        - UnrestrictedDebitAccount
-        - UnrestrictedCreditAccount
-        - DebitAccount
-        - CreditAccount
-        - DebitOrCreditAccount
+    
+      - UnrestrictedDebitAccount
+      - UnrestrictedCreditAccount
+      - DebitAccount
+      - CreditAccount
+      - DebitOrCreditAccount
     """
 
     left: Amount = Amount(0)
@@ -583,16 +587,7 @@ def close(
     # 3. Close income summary account to retained earnings account.
     proceed(chart.income_summary_account, retained_earnings_account)
 
-    # NOTE: we actually did mutate the incoming ledger, may want to create a copy instead
     return closing_entries, ledger, income_summary
-
-
-class Report(BaseModel):
-    """Base class for financial reports."""
-
-    def dict(self):
-        """Allow serialisation."""
-        return self.__dict__
 
 
 class TrialBalance(UserDict[str, tuple[Side, Amount]]):
@@ -634,7 +629,11 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
         ]
 
 
-class IncomeStatement(BaseModel):
+class Report(BaseModel):
+    """Base class for financial reports."""
+
+
+class IncomeStatement(Report):
     income: dict[AccountName, Amount]
     expenses: dict[AccountName, Amount]
 
@@ -642,6 +641,7 @@ class IncomeStatement(BaseModel):
     def net_earnings(self):
         """Calculate net earnings as income less expenses."""
         return sum(self.income.values()) - sum(self.expenses.values())
+
 
 def net_balance(ledger: Ledger, account: Account) -> Amount:
     """Calculate net balance of an account by substracting the balances of its contra accounts."""
@@ -651,7 +651,7 @@ def net_balance(ledger: Ledger, account: Account) -> Amount:
     return b
 
 
-class BalanceSheet(BaseModel):
+class BalanceSheet(Report):
     assets: dict[AccountName, Amount]
     capital: dict[AccountName, Amount]
     liabilities: dict[AccountName, Amount]
