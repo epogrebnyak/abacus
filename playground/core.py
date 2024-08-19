@@ -1,18 +1,18 @@
 """Double-entry bookkeeping module.
 
-Accounting workflow used:
+Accounting workflow:
 
 1. create chart of accounts
 2. set retained earnings account
 3. create ledger from chart
 4. post entries to ledger
 5. show proxy income statement 
-6. close ledger at accounting period end and produce income statement
+6. close ledger at accounting period end and make income statement
 7. make post-close entries and produce balance sheet
 8. save permanent account balances for next period  
 9. show trial balance at any time after step 3
 
-Accounting conventions used:
+Accounting conventions:
 
 - regular accounts of five types (asset, liability, capital, income, expense)
 - contra accounts to regular accounts are possible (eg depreciation, discounts, etc.)
@@ -31,7 +31,7 @@ Assumptions and simplifications (some may be relaxed in future versions):
 - an entry can touch any accounts
 - entry amount can be positive or negative
 - account balances cannot go negative
-- net earnings are income less expenses, no gross profit or profit before tax calculated    
+- net earnings are income less expenses, no gross profit or earnings before tax calculated    
 - period end closing will transfers net earnings to retained earnings
 - no cash flow statement
 - no statement of changes in equity
@@ -112,11 +112,7 @@ class AccountDefinition(ABC):
     @staticmethod
     def from_side(side: Side) -> "DebitAccount | CreditAccount":
         """Create debit or credit account based on the specified side."""
-        match side:
-            case Side.Debit:
-                return DebitAccount()
-            case Side.Credit:
-                return CreditAccount()
+        return DebitAccount() if side.is_debit() else CreditAccount()
 
     @abstractmethod
     def taccount(self) -> "DebitAccount | CreditAccount | DebitOrCreditAccount":
@@ -222,12 +218,6 @@ class MultipleEntry(IterableEntry):
 
     def __iter__(self):
         return iter(self.debits + self.credits)
-
-    @classmethod
-    def from_list(cls, entries: list[SingleEntry]):
-        debits = [x for x in entries if isinstance(x, DebitEntry)]
-        credits = [x for x in entries if isinstance(x, CreditEntry)]
-        return cls(debits, credits)
 
     def debit(self, account_name, amount):
         self.debits.append(DebitEntry(account_name, amount))
@@ -485,9 +475,7 @@ class DebitOrCreditAccount(TAccountBase):
 
     @property
     def side(self) -> Side:
-        if self.right >= self.left:
-            return Side.Credit
-        return Side.Debit
+        return Side.Credit if self.right >= self.left else Side.Debit
 
 
 class Ledger(UserDict[AccountName, TAccountBase]):
@@ -507,14 +495,10 @@ class Ledger(UserDict[AccountName, TAccountBase]):
             case CreditEntry(name, amount):
                 self.data[name].credit(Amount(amount))
 
-    def post(self, entries: IterableEntry):
+    def post(self, iterable_entry: IterableEntry):
         """Post a stream of single entries to ledger."""
         failed = []
-        try:
-            entries.validate()
-        except AbacusError:
-            failed.append(entries)
-        for entry in entries:
+        for entry in iter(iterable_entry):
             try:
                 self._post(entry)
             except KeyError:

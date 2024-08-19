@@ -1,7 +1,7 @@
 import pytest
 from ui import Book, NamedEntry, StoredEntry
 
-from core import AbacusError, Amount, CreditEntry, DebitEntry
+from core import Amount, CreditEntry, DebitEntry
 
 
 def test_named_entry_constructor():
@@ -18,18 +18,18 @@ def test_named_entry_constructor():
 
 
 def test_named_entry_on_None_amount_raises_error():
-    with pytest.raises(AbacusError):
+    with pytest.raises(TypeError):
         NamedEntry("").debit(account_name="cash")
 
 
 def test_book_add_assets():
-    assert Book("Pied Piper").add_assets("cash").chart.assets[0].name == "cash"
+    assert Book("Pied Piper").add_asset("cash").chart.assets[0].name == "cash"
 
 
 def test_book():
     assert (
         Book("test")
-        .add_assets("cash")
+        .add_asset("cash")
         .add_capital("equity")
         .open()
         .entry("Shareholder investment")

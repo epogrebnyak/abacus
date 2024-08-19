@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from pydantic import BaseModel
 
 from core import (
+    T5,
     AbacusError,
     Account,
     AccountName,
@@ -41,17 +42,11 @@ class NamedEntry(IterableEntry):
         self._amount = Amount(amount)
         return self
 
-    def _get(self, amount: Amount | int | float | None = None) -> Amount:
-        try:
-            return Amount(amount or self._amount)
-        except TypeError:
-            raise AbacusError(f"Amount must be provided, got {amount}.")
-
     def debit(
         self, account_name: AccountName, amount: Amount | int | float | None = None
     ):
         """Add debit entry or debit account name."""
-        amount = self._get(amount)
+        amount = Amount(amount or self._amount)
         self._entry.debit(account_name, amount)
         return self
 
@@ -59,7 +54,7 @@ class NamedEntry(IterableEntry):
         self, account_name: AccountName, amount: Amount | int | float | None = None
     ):
         """Add credit entry or credit account name."""
-        amount = self._get(amount)
+        amount = Amount(amount or self._amount)
         self._entry.credit(account_name, amount)
         return self
 
@@ -67,12 +62,25 @@ class NamedEntry(IterableEntry):
         return iter(self._entry)
 
     @property
-    def stored_entry(self) -> StoredEntry:
+    def stored(self):
         return StoredEntry(
             title=self.title,
-            debits=[(e.name, e.amount) for e in self._entry.debits],
-            credits=[(e.name, e.amount) for e in self._entry.credits],
+            debits=[(d.name, d.amount) for d in self._entry.debits],
+            credits=[(c.name, c.amount) for c in self._entry.credits],
         )
+
+
+MAPPER = dict(
+    asset="assets",
+    capital="capital",
+    liability="liabilities",
+    income="income",
+    expense="expenses",
+)
+
+
+def t5_to_attr(t5: T5) -> str:
+    return MAPPER[t5.value]
 
 
 @dataclass
@@ -93,82 +101,87 @@ class Book:
     def balance_sheet(self):
         return BalanceSheet.new(self.ledger, self.chart)
 
-    def _add(self, key, accounts):
-        if isinstance(accounts, tuple):
-            for a in accounts:
-                self._add(key, a)
-        if isinstance(accounts, str):
-            accounts = Account(accounts)
-        if isinstance(accounts, Account):
-            getattr(self.chart, key).append(accounts)
+    def _add(self, t5: str, account_name: str | list[str], offsets: list[str] | None):
+        if isinstance(account_name, list) and offsets:
+            raise AbacusError("Cannot offset many accounts.")
+        if isinstance(account_name, list):
+            for name in account_name:
+                self._add(t5, name, offsets)
+            return self
+        offsets = offsets or []
+        account = Account(account_name, offsets)
+        attr = t5_to_attr(t5)
+        getattr(self.chart, attr).append(account)
         return self
 
-    def add_assets(self, *accounts):
-        return self._add("assets", accounts)
+    def add_asset(self, account, *, offsets=None):
+        return self._add(T5.Asset, account, offsets)
 
-    def add_liabilities(self, *accounts):
-        return self._add("liabilities", accounts)
+    def add_liability(self, account, *, offsets=None):
+        return self._add(T5.Liability, account, offsets)
 
-    def add_capital(self, *accounts):
-        return self._add("capital", accounts)
+    def add_capital(self, account, *, offsets=None):
+        return self._add(T5.Capital, account, offsets)
 
-    def add_income(self, *accounts):
-        return self._add("income", accounts)
+    def add_income(self, account, *, offsets=None):
+        return self._add(T5.Income, account, offsets)
 
-    def add_expenses(self, *accounts):
-        return self._add("expenses", accounts)
-
-    def offset(self, account_name, *contra_account_names):
-        for attr in ["assets", "capital", "liabilities", "income", "expenses"]:
-            for account in getattr(self.chart, attr):
-                if account.name == account_name:
-                    account.offset(*contra_account_names)
-        return self
+    def add_expense(self, account, *, offsets=None):
+        return self._add(T5.Expense, account, offsets)
 
     def set_income_summary_account(self, account_name: str):
         self.chart.income_summary_account = account_name
         return self
 
-    def set_retained_earnings_account(self, account_name: str):
+    def set_retained_earnings(self, account_name: str):
         self.chart = self.chart.set_retained_earnings(account_name)
         return self
 
     def open(self):
+        """Create new ledger."""
         try:
             self.chart.retained_earnings_account
         except AttributeError:
-            self.set_retained_earnings_account("retained_earnings")
+            self.set_retained_earnings("retained_earnings")
         self.ledger = Ledger.new(self.chart)
         return self
 
     def entry(self, title: str):
+        """Start new entry."""
         self._current_entry = NamedEntry(title)
         return self
 
     def amount(self, amount: Amount | int | float):
+        """Set amount for the current entry."""
         self._current_entry.amount(amount)
         return self
 
     def debit(self, account_name: str, amount: Amount | int | float | None = None):
+        """Add debit part to current entry."""
         self._current_entry.debit(account_name, amount)
         return self
 
     def credit(self, account_name: str, amount: Amount | int | float | None = None):
+        """Add credit part to current entry."""
         self._current_entry.credit(account_name, amount)
         return self
 
     def commit(self):
+        """Post current entry to ledger and write it to entry store."""
         self.ledger.post(self._current_entry)
-        self.entries.append(self._current_entry.stored_entry)
+        self.entries.append(self._current_entry.stored)
         self._current_entry = NamedEntry()
         self._current_id += 1
         return self
 
     def close(self):
+        """Close ledger."""
         closing_entries, self.ledger, self.income_statement = self.ledger.close(
             self.chart
         )
-        self.entries.extend(closing_entries)
+        for ce in closing_entries:
+            ne = NamedEntry("Closing entry", _entry=ce.multiple_entry)
+            self.entries.append(ne.stored)
         return self
 
     @property
@@ -179,3 +192,15 @@ class Book:
     @property
     def proxy_net_earnings(self) -> Amount:
         return self.proxy_income_statement.net_earnings
+
+    def save_chart(self, path="./chart.json"):
+        pass
+
+    def load_chart(self, path="./chart.json"):
+        pass
+
+    def save_entries(self, path="./entries.linejson"):
+        pass
+
+    def load_entries(self, path="./entries.linejson"):
+        pass

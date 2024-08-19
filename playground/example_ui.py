@@ -1,14 +1,12 @@
 from ui import Book
 
 book = Book("Duffin Mills")
-book.add_assets("cash", "ar", "inventory")
-book.add_capital("equity")
-book.offset("equity", "buyback")
-book.add_income("sales")
-book.offset("sales", "refunds", "cashback")
-book.add_expenses("cogs", "salaries", "cit")
-book.add_liabilities("vat", "dividend", "cit_due")
-book.set_retained_earnings_account("re")
+book.add_asset(["cash", "ar", "inventory"])
+book.add_capital("equity", offsets=["buyback"])
+book.add_income("sales", offsets=["refunds", "cashback"])
+book.add_expense(["cogs", "salaries", "cit"])
+book.add_liability(["vat", "dividend", "cit_due"])
+book.set_retained_earnings("re")
 book.open()
 # fmt: off
 n = 1
