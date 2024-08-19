@@ -1,53 +1,44 @@
 > [!NOTE]
 > Current point of work is [issue #80](https://github.com/epogrebnyak/abacus/issues/80):
-> - [x] main type of entry is multiple entry
-> - [x] closing of accounts in one function 
-> - [ ] complete list of assumptions in docs
-> - [ ] profit tax
 
-Whole program signature is:
-
-`Chart -> Ledger -> list[MultipleEntry] -> Ledger -> (list[MultipleEntry], IncomeStatement, Ledger)` 
-
-A minimal example:
+A new minimal example:
 
 ```python
-from playground import *
+from playground.ui import Book
+
+# Start company
+book = Book(company_name="Pied Piper")
 
 # Create chart of accounts
-chart = Chart(
-    assets=[Account("cash"), Account("ar")],
-    capital=[Account("equity")],
-    liabilities=[Account("ap")],
-    income=[Account("sales", contra_accounts=["refunds"])],
-    expenses=[Account("salaries")],
-)
+book.add_assets("cash", "inventory", "ar")
+book.add_capital("equity")
+book.add_income("sales", offsets=["refunds"])
+book.add_expense("cogs")
+book.add_liability("dividend")
+book.set_retained_earnings("re")
 
-# Create ledger from chart
-ledger = Ledger.new(chart)
+# Open ledger and post entries
+book.open()
+book.entry("Shareholder investment").amount(300).debit("cash").credit("equity").commit()
+book.entry("Bought inventory").amount(200).debit("inventory").credit("cash").commit()
+book.entry("Invoiced sales").debit("ar", 380).debit("refunds", 20).credit("sales", 400).commit()
+book.entry("Shippled goods").amount(200).debit("cogs").credit("inventory").commit()
 
-# Define double or multiple entries and post them to ledger
-entries = [
-    DoubleEntry("cash", "equity", 100),
-    Entry("Sold $200 worth of goods with a 10% refund and 50% prepayment")
-    .debit("cash", 90)
-    .debit("ar", 90)
-    .debit("refunds", 20)
-    .credit("sales", 200),
-    MultipleEntry.new(DebitEntry("salaries", 250), CreditEntry("ap", 250)),
-]
-ledger.post_many(entries)
+# Close ledger at period end and make post-close entries
+book.close()
+book.entry("Accrue dividend").amount(90).debit("re").credit("dividend").commit()
 
-# Close ledger at accounting period end
-closing_entries, ledger, income_summary = ledger.close(chart)
-
-# Show income statement data
-print(income_summary.dict())
-
-# Show account balances data for balance sheet statement
-print(ledger.balances())
+# Show reports
+print(book.balance_sheet.json())
+print(book.income_statement.json())
 ```
 
+Result:
+
+```
+{"assets": {"cash": 100, "inventory": 0, "ar": 380}, "capital": {"equity": 300, "re": 90}, "liabilities": {"dividend": 90}}
+{"income": {"sales": 380}, "expenses": {"cogs": 200}}
+```
 
 # abacus
 
@@ -57,7 +48,7 @@ print(ledger.balances())
 A minimal yet valid double-entry accounting system in Python.
 
 > [!TIP]
-> Check out a brand new Streamlit demo for double-entry accounting at https://abacus.streamlit.app/ 
+> Check out a brand new Streamlit demo for double-entry accounting at https://abacus.streamlit.app/
 
 ## Documentation
 

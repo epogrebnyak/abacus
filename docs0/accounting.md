@@ -5,6 +5,7 @@
 [Expanded accounting equation][eq] is a good basis for an accounting system[^1][^2]:
 
 [^1]: As mentioned by [@mafm, author of ledger.py](https://github.com/mafm/ledger.py/blob/master/doc/Ledger.md#debits-and-credits-etc)[^1]:
+
 [^2]: Also some students indicate expanded accounting equation [makes learning a bit smoother](https://www.reddit.com/r/Accounting/comments/137e3lz/i_plan_on_pursuing_a_bachelors_in_accounting_soon/jitcu6g/?context=3).
 
 ```

@@ -1,7 +1,7 @@
 CONSIDER:
 
 - reflex and nicegui vs streamlit
-- guide for transactions (do this next scenario) 
+- guide for transactions (do this next scenario)
 - what makes a 1.0.0?
 
 REFACTOR:
@@ -9,14 +9,14 @@ REFACTOR:
 - [ ] remove null account and make everything a compound entry
 - [ ] combine uncore.py + experimental.py
 - [ ] consider roles of Chart and UserChart
-- [ ] executable examples with elmsript/pydiode like in rust docs 
+- [ ] executable examples with elmsript/pydiode like in rust docs
 
 DOCS/PROSE:
 
 - [ ] _How to build your own accounting system?_ piece for docs and dev.to
 - [ ] pure.py
-- [ ] mailing list 
-- [ ] 'tutorial' in r/Python 
+- [ ] mailing list
+- [ ] 'tutorial' in r/Python
 - [ ] restore changelog
 - [ ] more software reviews - akaunting
 
