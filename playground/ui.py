@@ -201,7 +201,10 @@ class Book:
     def load_chart(self):
         pass
 
-    def save_entries(self):
+    def overwrite_entries(self):
+        pass
+
+    def append_entries(self):
         pass
 
     def load_entries(self):
