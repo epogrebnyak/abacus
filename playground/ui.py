@@ -125,7 +125,7 @@ class Book:
         return self._add("expenses", accounts)
 
     def offset(self, *contra_account_names):
-        for attr in "assets capital liabilities income expenses".split():
+        for attr in ["assets", "capital", "liabilities", "income", "expenses"]:
             for account in getattr(self.chart, attr):
                 if account.name == self._last_added:
                     account.offset(*contra_account_names)
@@ -176,3 +176,12 @@ class Book:
         )
         self.entries.extend(closing_entries)
         return self
+
+    @property
+    def proxy_income_statement(self):
+        _, _, income_statement = self.ledger.copy().close(self.chart)
+        return income_statement
+
+    @property
+    def proxy_net_earnings(self) -> Amount:
+        return self.proxy_income_statement.net_earnings

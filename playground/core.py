@@ -39,6 +39,7 @@ Assumptions and simplifications (some may be relaxed in future versions):
 import decimal
 from abc import ABC, abstractmethod
 from collections import UserDict
+from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable
@@ -314,10 +315,10 @@ class Chart:
     def validate(self) -> None:
         """Ensure all account names in chart are unique."""
         if len(self.account_names) != len(self.account_names_unique):
-            self._raise_error(self.account_names, self.account_names_unique)
+            self.raise_error(self.account_names, self.account_names_unique)
 
     @staticmethod
-    def _raise_error(all_names, unique_names):
+    def raise_error(all_names, unique_names):
         n = len(all_names) - len(unique_names)
         raise AbacusError(
             [
@@ -429,10 +430,8 @@ class TAccountBase(ABC):
 
         match self.side:
             case Side.Debit:
-                # Dr destination_name, Cr my_name
                 return make_entry(dr=destination_name, cr=my_name)
             case Side.Credit:
-                # Dr my_name, Cr destination_name
                 return make_entry(dr=my_name, cr=destination_name)
 
 
@@ -497,6 +496,9 @@ class Ledger(UserDict[AccountName, TAccountBase]):
     def new(cls, chart: Chart):
         """Create new ledger from chart of accounts."""
         return cls({name: definition.taccount() for name, definition in chart.items()})
+
+    def copy(self):
+        return Ledger({name: deepcopy(account) for name, account in self.items()})
 
     def _post(self, entry: SingleEntry):
         """Post single entry to ledger. Will raise `KeyError` if account name is not found."""
@@ -640,9 +642,6 @@ class IncomeStatement(BaseModel):
     def net_earnings(self):
         """Calculate net earnings as income less expenses."""
         return sum(self.income.values()) - sum(self.expenses.values())
-
-    # FIXME: note we have not method of knowing the net_earnings without closing the accounts.
-
 
 def net_balance(ledger: Ledger, account: Account) -> Amount:
     """Calculate net balance of an account by substracting the balances of its contra accounts."""

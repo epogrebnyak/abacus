@@ -67,6 +67,10 @@ def test_ledger_post_method():
     }
 
 
+def test_ledger_copy():
+    Ledger({"cash": DebitAccount(), "equity": CreditAccount()}).copy()
+
+
 def test_end_to_end():
     entries = [
         DoubleEntry("cash", "equity", 100),
