@@ -86,6 +86,8 @@ def t5_to_attr(t5: T5) -> str:
 @dataclass
 class Book:
     company_name: str
+    chart_path: str = "./chart.json"
+    entries_path: str = "./entries.linejson"
     chart: Chart | ClosableChart = Chart()
     ledger: Ledger | None = None
     entries: list[StoredEntry] = field(default_factory=list)
@@ -193,14 +195,14 @@ class Book:
     def proxy_net_earnings(self) -> Amount:
         return self.proxy_income_statement.net_earnings
 
-    def save_chart(self, path="./chart.json"):
+    def save_chart(self):
         pass
 
-    def load_chart(self, path="./chart.json"):
+    def load_chart(self):
         pass
 
-    def save_entries(self, path="./entries.linejson"):
+    def save_entries(self):
         pass
 
-    def load_entries(self, path="./entries.linejson"):
+    def load_entries(self):
         pass
