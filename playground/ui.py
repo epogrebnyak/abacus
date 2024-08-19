@@ -103,33 +103,44 @@ class Book:
     def balance_sheet(self):
         return BalanceSheet.new(self.ledger, self.chart)
 
-    def _add(self, t5: str, account_name: str | list[str], offsets: list[str] | None):
-        if isinstance(account_name, list) and offsets:
-            raise AbacusError("Cannot offset many accounts.")
+    def set_title(self, account_name: str, title: str):
+        pass  # not implemented yet
+        return self
+
+    def _add(
+        self,
+        t5: str,
+        account_name: str | list[str],
+        title: str | None,
+        offsets: list[str] | None,
+    ):
+        if isinstance(account_name, list) and (offsets or title):
+            raise AbacusError("Cannot offset or set title to many accounts.")
         if isinstance(account_name, list):
             for name in account_name:
-                self._add(t5, name, offsets)
+                self._add(t5, name, title, offsets)
             return self
         offsets = offsets or []
         account = Account(account_name, offsets)
         attr = t5_to_attr(t5)
         getattr(self.chart, attr).append(account)
+        # not implemented: title not used
         return self
 
-    def add_asset(self, account, *, offsets=None):
-        return self._add(T5.Asset, account, offsets)
+    def add_asset(self, account, *, title=None, offsets=None):
+        return self._add(T5.Asset, account, title, offsets)
 
-    def add_liability(self, account, *, offsets=None):
-        return self._add(T5.Liability, account, offsets)
+    def add_liability(self, account, *, title=None, offsets=None):
+        return self._add(T5.Liability, account, title, offsets)
 
-    def add_capital(self, account, *, offsets=None):
-        return self._add(T5.Capital, account, offsets)
+    def add_capital(self, account, *, title=None, offsets=None):
+        return self._add(T5.Capital, account, title, offsets)
 
-    def add_income(self, account, *, offsets=None):
-        return self._add(T5.Income, account, offsets)
+    def add_income(self, account, *, title=None, offsets=None):
+        return self._add(T5.Income, account, title, offsets)
 
-    def add_expense(self, account, *, offsets=None):
-        return self._add(T5.Expense, account, offsets)
+    def add_expense(self, account, *, title=None, offsets=None):
+        return self._add(T5.Expense, account, title, offsets)
 
     def set_income_summary_account(self, account_name: str):
         self.chart.income_summary_account = account_name
