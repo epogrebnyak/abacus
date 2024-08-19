@@ -1,19 +1,21 @@
-from ui import Book, StoredEntry
+from ui import Book
 
 book = Book("Duffin Mills")
 book.add_assets("cash", "ar", "inventory")
-book.add_capital("equity").offset("buyback")
-book.add_income("sales").offset("refunds", "cashback")
+book.add_capital("equity")
+book.offset("equity", "buyback")
+book.add_income("sales")
+book.offset("sales", "refunds", "cashback")
 book.add_expenses("cogs", "salaries", "cit")
 book.add_liabilities("vat", "dividend", "cit_due")
 book.set_retained_earnings_account("re")
 book.open()
 # fmt: off
 n = 1
-for _ in range(1):
+for _ in range(n):
     book.entry("Shareholder investment").amount(1500).debit("cash").credit("equity").commit()
     book.entry("Bought inventory").amount(1000).debit("inventory").credit("cash").commit()
-    book.entry("Invoiced sales with VAT").debit("ar", 1200).credit("sales", 1000).credit("vat", 200).commit()
+    book.entry("Invoice with VAT").debit("ar", 1200).credit("sales", 1000).credit("vat", 200).commit()
     book.entry("Registered costs").amount(600).debit("cogs").credit("inventory").commit()
     book.entry("Accepted payment").amount(900).credit("ar").debit("cash").commit()
     book.entry("Made refund").amount(50).debit("refunds").credit("ar").commit()
@@ -38,8 +40,3 @@ if n == 1:
         "capital": {"equity": 1400, "re": 110},
         "liabilities": {"vat": 200, "dividend": 15, "cit_due": 30},
     }
-
-
-assert book.entries[-1] == StoredEntry(
-    title="Announced dividend", debits=[("re", 15)], credits=[("dividend", 15)]
-)

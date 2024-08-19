@@ -32,13 +32,9 @@ class NamedEntry(IterableEntry):
     also added .amount() method to set default amount for the entry.
     """
 
-    title: str
+    title: str | None = None
     _amount: Amount | int | float | None = None
     _entry: MultipleEntry = field(default_factory=MultipleEntry)
-
-    @classmethod
-    def empty(cls):
-        return cls("Entry title was not set.")
 
     def amount(self, amount: Amount | int | float):
         """Set default amount for this entry."""
@@ -83,11 +79,10 @@ class NamedEntry(IterableEntry):
 class Book:
     company_name: str
     chart: Chart | ClosableChart = Chart()
-    ledger: Ledger = Ledger({})
+    ledger: Ledger | None = None
     entries: list[StoredEntry] = field(default_factory=list)
-    _current_entry: NamedEntry = NamedEntry.empty()
+    _current_entry: NamedEntry = NamedEntry()
     _current_id: int = 0  # reserved
-    _last_added: str | None = None
     income_statement: IncomeStatement = IncomeStatement(income={}, expenses={})
 
     @property
@@ -106,7 +101,6 @@ class Book:
             accounts = Account(accounts)
         if isinstance(accounts, Account):
             getattr(self.chart, key).append(accounts)
-            self._last_added = accounts.name
         return self
 
     def add_assets(self, *accounts):
@@ -124,10 +118,10 @@ class Book:
     def add_expenses(self, *accounts):
         return self._add("expenses", accounts)
 
-    def offset(self, *contra_account_names):
+    def offset(self, account_name, *contra_account_names):
         for attr in ["assets", "capital", "liabilities", "income", "expenses"]:
             for account in getattr(self.chart, attr):
-                if account.name == self._last_added:
+                if account.name == account_name:
                     account.offset(*contra_account_names)
         return self
 
@@ -166,7 +160,7 @@ class Book:
     def commit(self):
         self.ledger.post(self._current_entry)
         self.entries.append(self._current_entry.stored_entry)
-        self._current_entry = NamedEntry.empty()
+        self._current_entry = NamedEntry()
         self._current_id += 1
         return self
 

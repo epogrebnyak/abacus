@@ -1,15 +1,16 @@
-"""Accounting module for double-entry bookkeeping.
+"""Double-entry bookkeeping module.
 
 Accounting workflow used:
 
 1. create chart of accounts
-2. set retained earnings account 
+2. set retained earnings account
 3. create ledger from chart
 4. post entries to ledger
-5. close ledger at accounting period end and produce income statement
-6. make post-close entries and produce balance sheet
-7. save permanent account balances for next period  
-8. show trial balance or proxy income statement at any time after step 3
+5. show proxy income statement 
+6. close ledger at accounting period end and produce income statement
+7. make post-close entries and produce balance sheet
+8. save permanent account balances for next period  
+9. show trial balance at any time after step 3
 
 Accounting conventions used:
 
@@ -17,8 +18,7 @@ Accounting conventions used:
 - contra accounts to regular accounts are possible (eg depreciation, discounts, etc.)
 - intermediate income summary account used for net income calculation
 - T-account holds amounts on debit and credit side
-- the balancing side of most T-accoutns is fixed (eg asset is always debit side)
-- the balancing side income summary account is determined by the balance 
+- the balancing side income summary account is determined by the account balance,
 
 Assumptions and simplifications (some may be relaxed in future versions): 
 
@@ -32,10 +32,10 @@ Assumptions and simplifications (some may be relaxed in future versions):
 - entry amount can be positive or negative
 - account balances cannot go negative
 - net earnings are income less expenses, no gross profit or profit before tax calculated    
-- period end closing tranfsers net earnings to retained earnings
+- period end closing will transfers net earnings to retained earnings
 - no cash flow statement
 - no statement of changes in equity
-- no date or transaction details recorded
+- no date or transaction metadata recorded
 """
 
 import decimal
@@ -168,7 +168,7 @@ class Intermediate(AccountDefinition):
 
 @dataclass
 class SingleEntry(ABC):
-    """Single entry changes either a debit or a credit side of an account."""
+    """Base class for a single entry changes either a debit or a credit side of an account."""
 
     name: AccountName
     amount: Amount
@@ -183,7 +183,7 @@ class CreditEntry(SingleEntry):
 
 
 class IterableEntry(Iterable[SingleEntry], ABC):
-    """Base class for classes that can stream entries when posting to ledger.
+    """Base class for classes that can stream single entries when posting to ledger.
 
     Child classes:
     - MultipleEntry
@@ -195,6 +195,23 @@ class IterableEntry(Iterable[SingleEntry], ABC):
     def __iter__(self):
         """Make class iterable, similar to list[SingleEntry]."""
         pass
+
+    def is_balanced(self) -> bool:
+        """Check if sum of debits and sum credits are equal."""
+
+        def _sum(cls):
+            return sum(e.amount for e in iter(self) if isinstance(e, cls))
+
+        return _sum(DebitEntry) == _sum(CreditEntry)
+
+    def validate(self):
+        """Check if sum of debits and sum credits are equal."""
+        if not self.is_balanced():
+            self._raise_error()
+        return self
+
+    def _raise_error(self):
+        raise AbacusError(["Sum of debits does not equal to sum of credits.", self])
 
 
 @dataclass
@@ -220,28 +237,6 @@ class MultipleEntry(IterableEntry):
         self.credits.append(CreditEntry(account_name, amount))
         return self
 
-    @staticmethod
-    def _sum(xs):
-        return sum(x.amount for x in xs)
-
-    def is_balanced(self) -> bool:
-        return self._sum(self.debits) == self._sum(self.credits)
-
-    def validate(self):
-        """Check if sum of debits and sum credits are equal."""
-        if not self.is_balanced():
-            self.raise_error()
-        return self
-
-    def raise_error(self):
-        raise AbacusError(
-            [
-                "Sum of debits does not equal to sum of credits.",
-                self.debits,
-                self.credits,
-            ]
-        )
-
 
 @dataclass
 class DoubleEntry(IterableEntry):
@@ -253,8 +248,8 @@ class DoubleEntry(IterableEntry):
 
     @property
     def multiple_entry(self) -> MultipleEntry:
-        me = MultipleEntry()
-        return me.debit(self.debit, self.amount).credit(self.credit, self.amount)
+        a = self.amount
+        return MultipleEntry().debit(self.debit, a).credit(self.credit, a)
 
     def __iter__(self):
         return iter(self.multiple_entry)
@@ -281,7 +276,7 @@ class Account:
 
 @dataclass
 class Chart:
-    income_summary_account: str = "isa"
+    income_summary_account: str = "_isa"
     assets: list[Account] = field(default_factory=list)
     capital: list[Account] = field(default_factory=list)
     liabilities: list[Account] = field(default_factory=list)
@@ -317,10 +312,10 @@ class Chart:
     def validate(self) -> None:
         """Ensure all account names in chart are unique."""
         if len(self.account_names) != len(self.account_names_unique):
-            self.raise_error(self.account_names, self.account_names_unique)
+            self._raise_error(self.account_names, self.account_names_unique)
 
     @staticmethod
-    def raise_error(all_names, unique_names):
+    def _raise_error(all_names, unique_names):
         n = len(all_names) - len(unique_names)
         raise AbacusError(
             [
@@ -384,7 +379,7 @@ class TAccountBase(ABC):
     """Base class for T-account that holds amounts on the left and right sides.
 
     Parent class for:
-    
+
       - UnrestrictedDebitAccount
       - UnrestrictedCreditAccount
       - DebitAccount
@@ -512,13 +507,17 @@ class Ledger(UserDict[AccountName, TAccountBase]):
             case CreditEntry(name, amount):
                 self.data[name].credit(Amount(amount))
 
-    def post(self, entries: Iterable[SingleEntry]):
+    def post(self, entries: IterableEntry):
         """Post a stream of single entries to ledger."""
         failed = []
-        for entry in iter(entries):
+        try:
+            entries.validate()
+        except AbacusError:
+            failed.append(entries)
+        for entry in entries:
             try:
                 self._post(entry)
-            except (KeyError, AbacusError):
+            except KeyError:
                 failed.append(entry)
         if failed:
             raise AbacusError(["Could not post to ledger:", failed])
