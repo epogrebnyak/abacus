@@ -4,16 +4,17 @@ from core import (
     AbacusError,
     Account,
     Amount,
+    BalanceSheet,
     Chart,
-    CreditEntry,
-    DebitEntry,
-    Ledger,
-    close,
-    DoubleEntry,
-    MultipleEntry,
-    DebitAccount,
     CreditAccount,
+    CreditEntry,
+    DebitAccount,
+    DebitEntry,
+    DoubleEntry,
+    Ledger,
+    MultipleEntry,
     UnrestrictedCreditAccount,
+    close,
 )
 
 
@@ -38,6 +39,22 @@ def test_invalid_multiple_entry():
     with pytest.raises(AbacusError):
         me = MultipleEntry([DebitEntry("a", Amount(100)), CreditEntry("b", Amount(99))])
         me.validate()
+
+
+def test_balance_sheet_on_contra_account():
+    chart = Chart(
+        assets=[Account("cash")], capital=[Account("equity", ["treasury_shares"])]
+    )
+    ledger = Ledger.new(chart)
+    me = (
+        MultipleEntry()
+        .debit("cash", 100)
+        .credit("equity", 120)
+        .debit("treasury_shares", 20)
+    )
+    ledger.post(me)
+    bs = BalanceSheet.new(ledger, chart)
+    assert bs.capital["equity"] == 100
 
 
 def test_ledger_post_method():

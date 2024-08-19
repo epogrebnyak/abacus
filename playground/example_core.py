@@ -1,9 +1,14 @@
-from core import Account, BalanceSheet, Chart, Ledger, Amount
 from ui import NamedEntry
+
+from core import Account, BalanceSheet, Chart, Ledger
 
 # Create chart of accounts with contra accounts
 chart = Chart(
-    assets=[Account("cash"), Account("ar"), Account("ppe", contra_accounts=["wt"])],
+    assets=[
+        Account("cash"),
+        Account("ar"),
+        Account("ppe", contra_accounts=["wear_and_tear"]),
+    ],
     capital=[Account("equity"), Account("retained_earnings")],
     liabilities=[Account("ap"), Account("ict_due"), Account("div_due")],
     income=[Account("sales", contra_accounts=["refunds", "voids"])],
@@ -27,10 +32,10 @@ entries = [
     NamedEntry("Provided cashback").amount(20).debit("refunds").credit("ar"),
     NamedEntry("Received payment for services").amount(40).debit("cash").credit("ar"),
     NamedEntry("Accrued staff salaries").amount(120).debit("salaries").credit("ap"),
-    NamedEntry("Accounted for office wear and tear")
+    NamedEntry("Accounted for office equipment wear and tear")
     .amount(20)
     .debit("depreciation")
-    .credit("wt"),
+    .credit("wear_and_tear"),
 ]
 ledger.post_many(entries)
 
@@ -38,30 +43,23 @@ ledger.post_many(entries)
 # What is the sequence of events at accouting period end:
 # - calculate income tax
 
-for name, (a, b) in ledger.trial_balance.tuples().items():
-    print(f"{name}: {a} {b}")
+# for name, (a, b) in ledger.trial_balance.tuples().items():
+#    print(f"{name}: {a} {b}")
 
 # Close ledger at accounting period end
-closing_entries, ledger, income_summary = ledger.close(chart)
+closing_entries, ledger, income_statement = ledger.close(chart)
 
 # Show income statement data
-print(income_summary.dict())
-assert income_summary.dict() == {
+# print(income_statement.dict())
+assert income_statement.dict() == {
     "income": {"sales": 180},
     "expenses": {"salaries": 120, "depreciation": 20},
 }
 
 # Show balance sheet data
-# TODO: show balance sheet data with contra accounts
-print(chart)
+# print(chart)
 balance_sheet = BalanceSheet.new(ledger, chart)
-print(balance_sheet.dict())
-# - get trail balance
-# - create proxy balance
-# - close contra accounts
-# - create BalanceSheet
-# - use depreciation as example
-# - maybe need name after contra accounts
+# print(balance_sheet.dict())
 
 # Show account balances
 print(ledger.trial_balance.amounts())
@@ -69,7 +67,7 @@ assert ledger.trial_balance.amounts() == {
     "cash": 240,
     "ppe": 200,
     "equity": 300,
-    "wt": 20,
+    "wear_and_tear": 20,
     "retained_earnings": 40,
     "ap": 120,
     "ict_due": 0,

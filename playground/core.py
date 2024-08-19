@@ -5,42 +5,45 @@ Accounting workflow used:
 2. set retained earnigns account 
 3. create ledger from chart
 4. post entries to ledger
-5. show trial balance at any time
-6. close ledger at accounting period end and produce income statement
-7. make post-close entries and produce balance sheet
-8. save permanent account balances for next period  
+5. close ledger at accounting period end and produce income statement
+6. make post-close entries and produce balance sheet
+7. save permanent account balances for next period  
+8. show trial balance at any time after step 3
+
 
 Accounting conventions used:
-- regular accounts of 5 types (asset, liability, capital, income, expense)
-- contra accounts to regular accounts are possibe (eg depreciation, discounts, etc.)
-- the only intermediate account is income summary account used for profit calculation
-- accounts holds amounts on debit and credit side ("T-account")
-- the balancing side of the account can be fixed (eg asset is always debit side)
-  or can be determined by the balance (eg income summary account is credit side 
-  if balance is positive)
-- be default accounts balances cannot go negative
+- regular accounts of five types (asset, liability, capital, income, expense)
+- contra accounts to regular accounts are possible (eg depreciation, discounts, etc.)
+- intermediate income summary account used for profit calculation
+- T-account holds amounts on debit and credit side
+- the balancing side of most T-accoutns is fixed (eg asset is always debit side)
+- the balancing side income summary account is determined by the balance 
 
 Assumptions and simplifications (some may be relaxed in future versions): 
+- one currency
 - one level of accounts, no subaccounts
 - account names must be globally unique
 - chart always has "retained earnigns account"
 - chart always has "income summary account" 
-- there are no journals, entries are posted to ledger directly
+- no journals, entries are posted to ledger directly
 - an entry can touch any accounts
 - entry amount can be positive or negative 
-- one currency
+- account balances cannot go negative
 - net earnings are income less expenses, no gross profit or profit before tax calculated    
 - period end closing tranfsers net earnings to retained earnings
 - no cash flow statement
 - no statement of changes in equity
+- no date or transaction details recorded
 """
 
 import decimal
 from abc import ABC, abstractmethod
-from collections import UserDict, UserList
+from collections import UserDict
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable
+
+from pydantic import BaseModel
 
 
 class AbacusError(Exception):
@@ -97,11 +100,10 @@ class AccountDefinition(ABC):
     Usage examples of child classes:
         Regular(T5.Asset)
         Contra(T5.Income)
-        Intermediate(Profit.IncomeSummaryAccount)
+        Intermediate(Profit.IncomeStatementAccount)
 
-    Regular and Contra classes define any of five account types
-    and their contra accounts. Intermediate class used for profit accounts
-    that live for a short while when closing the ledger.
+    Regular and Contra classes define any of five account types and their contra accounts.
+    Intermediate class used for profit accounts that live for a short while when closing the ledger.
     """
 
     @staticmethod
@@ -132,12 +134,12 @@ class Regular(AccountDefinition):
 class Contra(AccountDefinition):
     """A contra account to any of five types of accounts.
 
-    Examples of contra accounts (generated text below):
-        - contra property, plant, equipment: accumulated depreciation
-        - contra liability: discount on bonds payable
-        - contra capital: treasury stock
-        - contra income: refunds
-        - contra expense: purchase discounts
+    Examples of contra accounts:
+      - contra property, plant, equipment - accumulated depreciation,
+      - contra liability - discount on bonds payable,
+      - contra capital - treasury stock,
+      - contra income - refunds,
+      - contra expense - purchase discounts.
     """
 
     t: T5
@@ -147,7 +149,7 @@ class Contra(AccountDefinition):
 
 
 class Profit(Enum):
-    IncomeSummaryAccount = "isa"
+    IncomeStatementAccount = "isa"
     OtherComprehensiveIncome = "oci"  # not implemented yet
 
 
@@ -177,58 +179,69 @@ class CreditEntry(SingleEntry):
     """An entry that increases the credit side of an account."""
 
 
-class UnbalancedEntry(UserList[SingleEntry]):
-    """Unbalanced entry is a list of single entries that may not be balanced."""
+class IterableEntry(Iterable[SingleEntry], ABC):
+    """Base class for classes that can stream entries when posting to ledger.
 
-    def debit(self, account_name, amount):
-        self.data.append(DebitEntry(account_name, amount))
-        return self
+    Child classes:
+    - MultipleEntry
+    - DoubleEntry
+    - ui.NamedEntry
+    """
 
-    def credit(self, account_name, amount):
-        self.data.append(CreditEntry(account_name, amount))
-        return self
-
-
-class MultipleEntry(UnbalancedEntry):
-    """Multiple entry is a list of single entries this is guaranteed to be balanced."""
-
-    def __init__(self, data=None):
-        if data is None:
-            data = []
-        super().__init__(data)
-        self.validate()
-
-    def _sum(self, type: type[DebitEntry | CreditEntry]):
-        """Sum of entries of either of debit or of credit type."""
-        return sum(x.amount for x in self.data if isinstance(x, type))
-
-    def validate(self):
-        """Check if sum of debits and sum credits are equal."""
-        a = self._sum(DebitEntry)
-        b = self._sum(CreditEntry)
-        if a != b:
-            raise AbacusError(f"Sum of debits {a} is not equal to sum of credits {b}.")
-
-
-class EntryBase(Iterable):
-    """Base class for classes that can stream entries.
-    Streaming entries is useful for posting entries to ledger.
-
-    Used for DoubleEntry and ui.NamedEntry classes."""
-
-    @property
     @abstractmethod
-    def multiple_entry(self) -> MultipleEntry:
-        """Return multiple entry."""
-        pass
-
     def __iter__(self):
         """Make class iterable, similar to list[SingleEntry]."""
-        return self.multiple_entry.__iter__()
+        pass
 
 
 @dataclass
-class DoubleEntry(EntryBase):
+class MultipleEntry(IterableEntry):
+
+    debits: list[DebitEntry] = field(default_factory=list)
+    credits: list[CreditEntry] = field(default_factory=list)
+
+    def __iter__(self):
+        return iter(self.debits + self.credits)
+
+    @classmethod
+    def from_list(cls, entries: list[SingleEntry]):
+        debits = [x for x in entries if isinstance(x, DebitEntry)]
+        credits = [x for x in entries if isinstance(x, CreditEntry)]
+        return cls(debits, credits)
+
+    def debit(self, account_name, amount):
+        self.debits.append(DebitEntry(account_name, amount))
+        return self
+
+    def credit(self, account_name, amount):
+        self.credits.append(CreditEntry(account_name, amount))
+        return self
+
+    @staticmethod
+    def _sum(xs):
+        return sum(x.amount for x in xs)
+
+    def is_balanced(self) -> bool:
+        return self._sum(self.debits) == self._sum(self.credits)
+
+    def validate(self):
+        """Check if sum of debits and sum credits are equal."""
+        if not self.is_balanced():
+            self.raise_error()
+        return self
+
+    def raise_error(self):
+        raise AbacusError(
+            [
+                "Sum of debits does not equal to sum of credits.",
+                self.debits,
+                self.credits,
+            ]
+        )
+
+
+@dataclass
+class DoubleEntry(IterableEntry):
     """Create entry from debit account name, credit account name and entry amount."""
 
     debit: AccountName
@@ -240,6 +253,9 @@ class DoubleEntry(EntryBase):
         me = MultipleEntry()
         return me.debit(self.debit, self.amount).credit(self.credit, self.amount)
 
+    def __iter__(self):
+        return iter(self.multiple_entry)
+
 
 @dataclass
 class Account:
@@ -248,8 +264,13 @@ class Account:
     name: AccountName
     contra_accounts: list[AccountName] = field(default_factory=list)
 
+    def offset(self, *contra_account_names):
+        """Add contra account to the list of contra accounts."""
+        self.contra_accounts.extend(contra_account_names)
+        return self
+
     def stream(self, account_type: T5):
-        """Yield account definitions for the regular account and associated contra accounts (if any)."""
+        """Yield account definitions for the regular account and associated contra accounts."""
         yield self.name, Regular(account_type)
         for contra_name in self.contra_accounts:
             yield contra_name, Contra(account_type)
@@ -271,10 +292,7 @@ class Chart:
         yield from self.stream(self.liabilities, T5.Liability)
         yield from self.stream(self.income, T5.Income)
         yield from self.stream(self.expenses, T5.Expense)
-        yield self.income_summary_account, Intermediate(Profit.IncomeSummaryAccount)
-
-    def account_names(self):
-        return [name for name, _ in self.items()]
+        yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
 
     @staticmethod
     def stream(accounts: list[Account], account_type: T5):
@@ -285,12 +303,18 @@ class Chart:
     def __post_init__(self):
         self.validate()
 
+    @property
+    def account_names(self) -> list[AccountName]:
+        return [name for name, _ in self.items()]
+
+    @property
+    def account_names_unique(self) -> list[AccountName]:
+        return list(set(self.account_names))
+
     def validate(self) -> None:
         """Ensure all account names in chart are unique."""
-        all_names = self.account_names()
-        unique_names = list(set(all_names))
-        if len(unique_names) != len(all_names):
-            self._raise_error(all_names, unique_names)
+        if len(self.account_names) != len(self.account_names_unique):
+            self._raise_error(self.account_names, self.account_names_unique)
 
     @staticmethod
     def _raise_error(all_names, unique_names):
@@ -306,11 +330,11 @@ class Chart:
 
     def set_retained_earnings(self, account_name: AccountName):
         """Set retained earnings account name.
-        Adds new account to capital accounts
-        if *account_name* not found in chart.
+
+        Adds new account to capital accounts if *account_name* not found in chart.
         """
         _capital_account_names = self.capital
-        if account_name not in self.account_names():
+        if account_name not in self.account_names:
             _capital_account_names.append(Account(account_name))
         return ClosableChart(
             income_summary_account=self.income_summary_account,
@@ -327,7 +351,7 @@ class Chart:
 class ClosableChart(Chart):
     """Chart of accounts that can be closed at accounting period end.
 
-    Has *retained_earnings_account* specified, suggested values:
+    Suggested values for *retained_earnings_account* parameter are:
     - "retained_earnings" for corporation,
     - "owner_capital_account" for sole proprietorship.
 
@@ -388,8 +412,8 @@ class TAccountBase(ABC):
         self, my_name: AccountName, destination_name: AccountName
     ) -> "DoubleEntry":
         """
-        Make closing entry to transfer account balance from *my_name* account
-        to *destination_name* account.
+        Make closing entry to transfer account balance
+        from *my_name* account to *destination_name* account.
 
         When closing a debit account, the closing entry will be:
            - Cr my_name
@@ -400,16 +424,16 @@ class TAccountBase(ABC):
             - Cr destination_name
         """
 
-        def make_entry(debit, credit):
-            return DoubleEntry(debit, credit, self.balance)
+        def make_entry(dr, cr):
+            return DoubleEntry(dr, cr, self.balance)
 
         match self.side:
             case Side.Debit:
                 # Dr destination_name, Cr my_name
-                return make_entry(destination_name, my_name)
+                return make_entry(dr=destination_name, cr=my_name)
             case Side.Credit:
                 # Dr my_name, Cr destination_name
-                return make_entry(my_name, destination_name)
+                return make_entry(dr=my_name, cr=destination_name)
 
 
 class UnrestrictedDebitAccount(TAccountBase):
@@ -485,10 +509,10 @@ class Ledger(UserDict[AccountName, TAccountBase]):
     def post(self, entries: Iterable[SingleEntry]):
         """Post a stream of single entries to ledger."""
         failed = []
-        for entry in entries:
+        for entry in iter(entries):
             try:
                 self._post(entry)
-            except KeyError:
+            except (KeyError, AbacusError):
                 failed.append(entry)
         if failed:
             raise AbacusError(["Could not post to ledger:", failed])
@@ -509,7 +533,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
     def close(self, chart: ClosableChart):
         """Close ledger at accounting period end."""
-        # this is dulpicate check, made to make mypy happy
+        # This is a dulpicate check, made to make mypy happy at return statement.
         if not chart.retained_earnings_account:
             raise AbacusError("Retained earnings account was not set.")
         return close(self, chart, chart.retained_earnings_account)
@@ -517,7 +541,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
 def close(
     ledger: Ledger, chart: Chart, retained_earnings_account: AccountName
-) -> tuple[list[DoubleEntry], Ledger, "IncomeSummary"]:
+) -> tuple[list[DoubleEntry], Ledger, "IncomeStatement"]:
     """Close ledger at accounting period end in the following order.
 
        1. Close income and expense contra accounts.
@@ -538,13 +562,13 @@ def close(
         ledger.post(entry)
         del ledger[from_]
 
-    # 1. Close contra income and contra expense accounts
+    # 1. Close contra income and contra expense accounts.
     for account in chart.income + chart.expenses:
         for contra_account_name in account.contra_accounts:
             proceed(from_=contra_account_name, to_=account.name)
 
-    # 2. Close income and expense accounts
-    income_summary = IncomeSummary()
+    # 2. Close income and expense accounts and create income statement.
+    income_summary = IncomeStatement(income={}, expenses={})
     for account in chart.income:
         b = ledger[account.name].balance
         income_summary.income[account.name] = b
@@ -554,21 +578,14 @@ def close(
         income_summary.expenses[account.name] = b
         proceed(account.name, chart.income_summary_account)
 
-    # 3. Close income summary account to retained earnings account
+    # 3. Close income summary account to retained earnings account.
     proceed(chart.income_summary_account, retained_earnings_account)
 
     # NOTE: we actually did mutate the incoming ledger, may want to create a copy instead
     return closing_entries, ledger, income_summary
 
 
-def net_balance(ledger: Ledger, account: Account):
-    b = ledger[account.name].balance
-    for name in account.contra_accounts:
-        b -= ledger[name].balance
-    return b
-
-
-class Report(ABC):
+class Report(BaseModel):
     """Base class for financial reports."""
 
     def dict(self):
@@ -576,11 +593,12 @@ class Report(ABC):
         return self.__dict__
 
 
-class TrialBalance(UserDict[str, tuple[Side, Amount]], Report):
+class TrialBalance(UserDict[str, tuple[Side, Amount]]):
     """Trial balance contains account names, account sides and balances."""
 
     @classmethod
     def new(cls, ledger: Ledger):
+        """Create trial balance from ledger."""
         return cls(
             {
                 account_name: (t_account.side, t_account.balance)
@@ -589,14 +607,10 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]], Report):
         )
 
     def tuples(self) -> dict[str, tuple[Amount, Amount]]:
-        """Return account names and a tuples like (0, balances) or (balance, 0)."""
+        """Return account names and tuples like (0, balances) or (balance, 0)."""
 
         def to_tuples(side: Side, balance: Amount):
-            match side:
-                case Side.Debit:
-                    return balance, 0
-                case Side.Credit:
-                    return 0, balance
+            return (balance, 0) if side.is_debit() else (0, balance)
 
         return {
             name: to_tuples(side, balance) for name, (side, balance) in self.items()
@@ -611,17 +625,16 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]], Report):
         return [
             (
                 DebitEntry(name, balance)
-                if side == Side.Debit
+                if side.is_debit()
                 else CreditEntry(name, balance)
             )
             for name, (side, balance) in self.items()
         ]
 
 
-@dataclass
-class IncomeSummary(Report):
-    income: dict[AccountName, Amount] = field(default_factory=dict)
-    expenses: dict[AccountName, Amount] = field(default_factory=dict)
+class IncomeStatement(BaseModel):
+    income: dict[AccountName, Amount]
+    expenses: dict[AccountName, Amount]
 
     @property
     def net_earnings(self):
@@ -631,17 +644,26 @@ class IncomeSummary(Report):
     # FIXME: note we have not method of knowing the net_earnings without closing the accounts.
 
 
-@dataclass
-class BalanceSheet(Report):
+def net_balance(ledger: Ledger, account: Account) -> Amount:
+    """Calculate net balance of an account by substracting the balances of its contra accounts."""
+    b = ledger[account.name].balance
+    for contra_name in account.contra_accounts:
+        b -= ledger[contra_name].balance
+    return b
+
+
+class BalanceSheet(BaseModel):
     assets: dict[AccountName, Amount]
     capital: dict[AccountName, Amount]
     liabilities: dict[AccountName, Amount]
 
     @classmethod
     def new(cls, ledger: Ledger, chart: Chart):
-        # FIXME: this is a temporary solution, we need to implement contra accounts
+        """Create balance sheet from ledger and chart.
 
-        def subset(accounts: list[Account]):
+        Account will balances will be shown net of contra account balances."""
+
+        def subset(accounts: list[Account]) -> dict[str, Amount]:
             return {account.name: net_balance(ledger, account) for account in accounts}
 
         return cls(
