@@ -59,7 +59,7 @@ def test_balance_sheet_on_contra_account():
 
 def test_ledger_post_method():
     book = Ledger({"a": DebitAccount(), "b": CreditAccount()})
-    e = MultipleEntry().debit("a", 100).credit("b", 100)
+    e = MultipleEntry().dr("a", 100).cr("b", 100)
     book.post(e)
     assert book == {
         "a": DebitAccount(Amount(100), Amount(0)),
@@ -76,7 +76,7 @@ def test_end_to_end():
         DoubleEntry("cash", "equity", 100),
         DoubleEntry("inventory", "cash", 90),
         DoubleEntry("cogs", "inventory", 60),
-        MultipleEntry().debit("cash", 75).debit("refunds", 2).credit("sales", 77),
+        MultipleEntry().dr("cash", 75).dr("refunds", 2).cr("sales", 77),
     ]
 
     chart = Chart(

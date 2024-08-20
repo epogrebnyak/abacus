@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from pydantic import BaseModel
 
-from .core import (
+from core import (
     T5,
     AbacusError,
     Account,
@@ -47,7 +47,7 @@ class NamedEntry(IterableEntry):
     ):
         """Add debit entry or debit account name."""
         amount = Amount(amount or self._amount)
-        self._entry.debit(account_name, amount)
+        self._entry.dr(account_name, amount)
         return self
 
     def credit(
@@ -55,7 +55,7 @@ class NamedEntry(IterableEntry):
     ):
         """Add credit entry or credit account name."""
         amount = Amount(amount or self._amount)
-        self._entry.credit(account_name, amount)
+        self._entry.cr(account_name, amount)
         return self
 
     def __iter__(self):

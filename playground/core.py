@@ -219,11 +219,11 @@ class MultipleEntry(IterableEntry):
     def __iter__(self):
         return iter(self.debits + self.credits)
 
-    def debit(self, account_name, amount):
+    def dr(self, account_name, amount):
         self.debits.append(DebitEntry(account_name, amount))
         return self
 
-    def credit(self, account_name, amount):
+    def cr(self, account_name, amount):
         self.credits.append(CreditEntry(account_name, amount))
         return self
 
@@ -239,7 +239,7 @@ class DoubleEntry(IterableEntry):
     @property
     def multiple_entry(self) -> MultipleEntry:
         a = self.amount
-        return MultipleEntry().debit(self.debit, a).credit(self.credit, a)
+        return MultipleEntry().dr(self.debit, a).cr(self.credit, a)
 
     def __iter__(self):
         return iter(self.multiple_entry)
