@@ -2,7 +2,6 @@ import pytest
 
 from core import (
     AbacusError,
-    Account,
     Amount,
     BalanceSheet,
     Chart,
@@ -42,16 +41,13 @@ def test_invalid_multiple_entry():
 
 
 def test_balance_sheet_on_contra_account():
-    chart = Chart(
-        assets=[Account("cash")], capital=[Account("equity", ["treasury_shares"])]
+    chart = (
+        Chart()
+        .add_asset("cash")
+        .add_capital("equity", contra_accounts=["treasury_shares"])
     )
     ledger = Ledger.new(chart)
-    me = (
-        MultipleEntry()
-        .debit("cash", 100)
-        .credit("equity", 120)
-        .debit("treasury_shares", 20)
-    )
+    me = MultipleEntry().dr("cash", 100).dr("treasury_shares", 20).cr("equity", 120)
     ledger.post(me)
     bs = BalanceSheet.new(ledger, chart)
     assert bs.capital["equity"] == 100
@@ -79,13 +75,13 @@ def test_end_to_end():
         MultipleEntry().dr("cash", 75).dr("refunds", 2).cr("sales", 77),
     ]
 
-    chart = Chart(
-        income_summary_account="isa",
-        assets=[Account("cash"), Account("inventory")],
-        capital=[Account("equity")],
-        expenses=[Account("cogs")],
-        income=[Account("sales", contra_accounts=["refunds"])],
-    ).set_retained_earnings(account_name="retained_earnings")
+    chart = Chart()
+    chart.set_retained_earnings("retained_earnings")
+    chart.add_asset("cash")
+    chart.add_asset("inventory")
+    chart.add_capital("equity")
+    chart.add_expense("cogs")
+    chart.add_income("sales", contra_accounts=["refunds"])
 
     ledger = Ledger.new(chart)
     ledger.post_many(entries)

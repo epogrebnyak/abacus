@@ -1,19 +1,22 @@
 from ui import NamedEntry
 
-from core import Account, BalanceSheet, Chart, Ledger
+from core import BalanceSheet, Chart, Ledger
 
 # Create chart of accounts with contra accounts
-chart = Chart(
-    assets=[
-        Account("cash"),
-        Account("ar"),
-        Account("ppe", contra_accounts=["wear_and_tear"]),
-    ],
-    capital=[Account("equity"), Account("retained_earnings")],
-    liabilities=[Account("ap"), Account("ict_due"), Account("div_due")],
-    income=[Account("sales", contra_accounts=["refunds", "voids"])],
-    expenses=[Account("salaries"), Account("depreciation")],
-).set_retained_earnings(account_name="retained_earnings")
+chart = (
+    Chart()
+    .set_retained_earnings("retained_earnings")
+    .add_asset("cash")
+    .add_asset("ar")
+    .add_asset("ppe", ["depreciation"])
+    .add_capital("equity")
+    .add_liability("ap")
+    .add_liability("ict_due")
+    .add_liability("div_due")
+    .add_income("sales", ["refunds", "voids"])
+    .add_expense("salaries")
+    .add_expense("expense:depreciation")  # avoiding duplicate name
+)
 
 # Create ledger from chart
 ledger = Ledger.new(chart)
@@ -32,10 +35,10 @@ entries = [
     NamedEntry("Provided cashback").amount(20).debit("refunds").credit("ar"),
     NamedEntry("Received payment for services").amount(40).debit("cash").credit("ar"),
     NamedEntry("Accrued staff salaries").amount(120).debit("salaries").credit("ap"),
-    NamedEntry("Accounted for office equipment wear and tear")
+    NamedEntry("Accounted for office depreciation")
     .amount(20)
-    .debit("depreciation")
-    .credit("wear_and_tear"),
+    .debit("expense:depreciation")
+    .credit("depreciation"),
 ]
 ledger.post_many(entries)
 
@@ -53,7 +56,7 @@ closing_entries, ledger, income_statement = ledger.close(chart)
 # print(income_statement.dict())
 assert income_statement.dict() == {
     "income": {"sales": 180},
-    "expenses": {"salaries": 120, "depreciation": 20},
+    "expenses": {"salaries": 120, "expense:depreciation": 20},
 }
 
 # Show balance sheet data
@@ -62,12 +65,12 @@ balance_sheet = BalanceSheet.new(ledger, chart)
 # print(balance_sheet.dict())
 
 # Show account balances
-print(ledger.trial_balance.amounts())
+# print(ledger.trial_balance.amounts())
 assert ledger.trial_balance.amounts() == {
     "cash": 240,
     "ppe": 200,
     "equity": 300,
-    "wear_and_tear": 20,
+    "depreciation": 20,
     "retained_earnings": 40,
     "ap": 120,
     "ict_due": 0,

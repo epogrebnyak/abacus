@@ -4,13 +4,10 @@ from pydantic import BaseModel
 
 from core import (
     T5,
-    AbacusError,
-    Account,
     AccountName,
     Amount,
     BalanceSheet,
     Chart,
-    ClosableChart,
     IncomeStatement,
     IterableEntry,
     Ledger,
@@ -88,7 +85,7 @@ class Book:
     company_name: str
     chart_path: str = "./chart.json"
     entries_path: str = "./entries.linejson"
-    chart: Chart | ClosableChart = Chart()
+    chart: Chart = Chart()
     ledger: Ledger | None = None
     entries: list[StoredEntry] = field(default_factory=list)
     _current_entry: NamedEntry = NamedEntry()
@@ -109,26 +106,23 @@ class Book:
 
     def _add(
         self,
-        t5: str,
-        account_name: str ,
+        t: T5,
+        account_name: str,
         title: str | None,
         offsets: list[str] | None,
     ):
-        offsets = offsets or []
-        account = Account(account_name, offsets)
-        attr = t5_to_attr(t5)
-        getattr(self.chart, attr).append(account)
-        title # not implemented: title not used
+        self.chart.accounts.put(t, account_name, offsets or [])
+        title  # not implemented: title not used
         return self
 
     def add_asset(self, account, *, title=None, offsets=None):
         return self._add(T5.Asset, account, title, offsets)
-    
+
     def add_assets(self, *account_names):
         for name in account_names:
             self.add_asset(name)
         return self
-    
+
     def add_liability(self, account, *, title=None, offsets=None):
         return self._add(T5.Liability, account, title, offsets)
 
@@ -152,7 +146,7 @@ class Book:
         for name in account_names:
             self.add_income(name)
         return self
-    
+
     def add_expense(self, account, *, title=None, offsets=None):
         return self._add(T5.Expense, account, title, offsets)
 
@@ -160,13 +154,13 @@ class Book:
         for name in account_names:
             self.add_expense(name)
         return self
-    
+
     def set_income_summary_account(self, account_name: str):
         self.chart.income_summary_account = account_name
         return self
 
     def set_retained_earnings(self, account_name: str):
-        self.chart = self.chart.set_retained_earnings(account_name)
+        self.chart.set_retained_earnings(account_name)
         return self
 
     def open(self):

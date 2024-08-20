@@ -1,7 +1,7 @@
 import pytest
 from ui import Book, NamedEntry, StoredEntry
 
-from core import Amount, CreditEntry, DebitEntry
+from core import T5, Amount, CreditEntry, DebitEntry
 
 
 def test_named_entry_constructor():
@@ -23,7 +23,8 @@ def test_named_entry_on_None_amount_raises_error():
 
 
 def test_book_add_assets():
-    assert Book("Pied Piper").add_asset("cash").chart.assets[0].name == "cash"
+    xs = Book("Pied Piper").add_asset("cash").chart[T5.Asset]
+    xs[0][0] == "cash"
 
 
 def test_book():

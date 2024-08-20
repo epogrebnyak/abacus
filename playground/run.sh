@@ -1,9 +1,10 @@
-pytest .
-mypy core.py
-ruff check . --fix
+set -e
+# isort . --float-to-top
+black .
 python example_core.py
 python example_ui.py
-isort . --float-to-top
-black .
+pytest . -q
+mypy core.py
+ruff check . --fix
  
 

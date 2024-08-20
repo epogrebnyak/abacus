@@ -1,0 +1,117 @@
+@dataclass
+class Account:
+    """Account definition with account name and names of associated contra accounts."""
+
+    name: AccountName
+    contra_accounts: list[AccountName] = field(default_factory=list)
+
+    def offset(self, *contra_account_names):
+        """Add contra account to the list of contra accounts."""
+        self.contra_accounts.extend(contra_account_names)
+        return self
+
+    def stream(self, account_type: T5):
+        """Yield account definitions for the regular account and associated contra accounts."""
+        yield self.name, Regular(account_type)
+        for contra_name in self.contra_accounts:
+            yield contra_name, Contra(account_type)
+
+
+@dataclass
+class Chart:
+    income_summary_account: str = "_isa"
+    assets: list[Account] = field(default_factory=list)
+    capital: list[Account] = field(default_factory=list)
+    liabilities: list[Account] = field(default_factory=list)
+    income: list[Account] = field(default_factory=list)
+    expenses: list[Account] = field(default_factory=list)
+
+    def items(self) -> Iterable[tuple[AccountName, Regular | Contra | Intermediate]]:
+        """Assign account types to account names."""
+        yield from self.stream(self.assets, T5.Asset)
+        yield from self.stream(self.capital, T5.Capital)
+        yield from self.stream(self.liabilities, T5.Liability)
+        yield from self.stream(self.income, T5.Income)
+        yield from self.stream(self.expenses, T5.Expense)
+        yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
+
+    @staticmethod
+    def stream(accounts: list[Account], account_type: T5):
+        """Yield account definitions for a list of accounts."""
+        for account in accounts:
+            yield from account.stream(account_type)
+
+    def __post_init__(self):
+        self.validate()
+
+    @property
+    def account_names(self) -> list[AccountName]:
+        return [name for name, _ in self.items()]
+
+    @property
+    def account_names_unique(self) -> list[AccountName]:
+        return list(set(self.account_names))
+
+    def validate(self) -> None:
+        """Ensure all account names in chart are unique."""
+        if len(self.account_names) != len(self.account_names_unique):
+            self._raise_error(self.account_names, self.account_names_unique)
+
+    @staticmethod
+    def _raise_error(all_names, unique_names):
+        n = len(all_names) - len(unique_names)
+        raise AbacusError(
+            [
+                f"Chart contains {n} duplicate account names",
+                set(all_names) - set(unique_names),
+                sorted(unique_names),
+                sorted(all_names),
+            ]
+        )
+
+    def set_retained_earnings(self, account_name: AccountName):
+        """Set retained earnings account name.
+
+        Adds new account to capital accounts if *account_name* not found in chart.
+        """
+        _capital_account_names = self.capital
+        if account_name not in self.account_names:
+            _capital_account_names.append(Account(account_name))
+        return ClosableChart(
+            income_summary_account=self.income_summary_account,
+            assets=self.assets,
+            capital=_capital_account_names,
+            liabilities=self.liabilities,
+            income=self.income,
+            expenses=self.expenses,
+            retained_earnings_account=account_name,
+        )
+
+
+@dataclass
+class ClosableChart(Chart):
+    """Chart of accounts that can be closed at accounting period end.
+
+    Suggested values for *retained_earnings_account* parameter are:
+
+        - "retained_earnings" for corporation,
+        - "owner_capital_account" for sole proprietorship.
+
+    See: https://www.accountingcoach.com/blog/what-is-the-income-summary-account
+    """
+
+    # Added None as default to allow inhertance from Chart.
+    retained_earnings_account: AccountName | None = None
+
+    def assert_re_was_set(self):
+        if not self.retained_earnings_account:
+            raise AbacusError(f"Account {self.retained_earnings_account} was not set.")
+
+    def assert_re_in_chart(self):
+        re = self.retained_earnings_account
+        if re not in [account.name for account in self.capital]:
+            raise AbacusError(f"Account {re} was not set as capital account.")
+
+    def __post_init__(self):
+        self.assert_re_was_set()
+        self.assert_re_in_chart()
