@@ -39,7 +39,7 @@ import decimal
 from abc import ABC, abstractmethod
 from collections import UserDict
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Iterable
 
@@ -179,7 +179,7 @@ class IterableEntry(Iterable[SingleEntry], ABC):
     """Base class for classes that can stream single entries when posting to ledger.
 
     Child classes:
-    - MultipleEntry
+    - Entry
     - DoubleEntry
     - ui.NamedEntry
     """
@@ -207,11 +207,9 @@ class IterableEntry(Iterable[SingleEntry], ABC):
         raise AbacusError(["Sum of debits does not equal to sum of credits.", self])
 
 
-@dataclass
-class MultipleEntry(IterableEntry):
-
-    debits: list[tuple[AccountName, Amount]] = field(default_factory=list)
-    credits: list[tuple[AccountName, Amount]] = field(default_factory=list)
+class Entry(BaseModel):
+    debits: list[tuple[AccountName, Amount]] = []
+    credits: list[tuple[AccountName, Amount]] = []
 
     def __iter__(self):
         _drs = [DebitEntry(name, amount) for name, amount in self.debits]
@@ -226,27 +224,25 @@ class MultipleEntry(IterableEntry):
         self.credits += [(account_name, amount)]
         return self
 
+    def validate_balance(self):
+        if not self.is_balanced():
+            self._raise_error()
+        return self
 
-def double_entry(
-    debit: AccountName, credit: AccountName, amount: Amount
-) -> MultipleEntry:
-    return MultipleEntry().dr(debit, amount).cr(credit, amount)
+    def is_balanced(self) -> bool:
+        """Check if sum of debits and sum credits are equal."""
+
+        def _sum(xs):
+            return sum(a for _, a in xs)
+
+        return _sum(self.debits) == _sum(self.credits)
+
+    def _raise_error(self):
+        raise AbacusError(["Sum of debits does not equal to sum of credits.", self])
 
 
-@dataclass
-class DoubleEntry(IterableEntry):
-    """Create entry from debit account name, credit account name and entry amount."""
-
-    debit: AccountName
-    credit: AccountName
-    amount: Amount
-
-    @property
-    def multiple_entry(self) -> MultipleEntry:
-        return double_entry(self.debit, self.credit, self.amount)
-
-    def __iter__(self):
-        return iter(self.multiple_entry)
+def double_entry(debit: AccountName, credit: AccountName, amount: Amount) -> Entry:
+    return Entry().dr(debit, amount).cr(credit, amount)
 
 
 class FastChart(BaseModel):
@@ -345,7 +341,7 @@ class TAccountBase(ABC):
 
     def make_closing_entry(
         self, my_name: AccountName, destination_name: AccountName
-    ) -> "MultipleEntry":
+    ) -> "Entry":
         """
         Make closing entry to transfer account balance
         from *my_name* account to *destination_name* account.
@@ -359,7 +355,7 @@ class TAccountBase(ABC):
             - Cr destination_name
         """
 
-        def make_entry(dr, cr) -> MultipleEntry:
+        def make_entry(dr, cr) -> Entry:
             return double_entry(dr, cr, self.balance)
 
         return (
@@ -432,21 +428,21 @@ class Ledger(UserDict[AccountName, TAccountBase]):
     def copy(self):
         return Ledger({name: deepcopy(account) for name, account in self.items()})
 
-    def _post(self, entry: SingleEntry):
+    def _post(self, single_entry: SingleEntry):
         """Post single entry to ledger. Will raise `KeyError` if account name is not found."""
-        match entry:
+        match single_entry:
             case DebitEntry(name, amount):
                 self.data[name].debit(Amount(amount))
             case CreditEntry(name, amount):
                 self.data[name].credit(Amount(amount))
 
-    def post(self, iterable_entry: IterableEntry):
+    def post(self, entry: Entry):
         """Post a stream of single entries to ledger."""
         not_found = []
         cannot_post = []
-        for entry in iter(iterable_entry):
+        for single_entry in iter(entry):
             try:
-                self._post(entry)
+                self._post(single_entry)
             except KeyError:
                 not_found.append(entry)
             except AbacusError:
@@ -459,7 +455,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
                 }
             )
 
-    def post_many(self, entries: list[MultipleEntry]):
+    def post_many(self, entries: list[Entry]):
         """Post several streams of entries to ledger."""
         for entry in entries:
             self.post(entry)
@@ -475,15 +471,12 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
     def close(self, chart: FastChart):
         """Close ledger at accounting period end."""
-        # This is a dulpicate check, made to make mypy happy at return statement.
-        if not chart.retained_earnings_account:
-            raise AbacusError("Retained earnings account was not set.")
         return close(self, chart)
 
 
 def close(
     ledger: Ledger, chart: FastChart
-) -> tuple[list[MultipleEntry], Ledger, "IncomeStatement"]:
+) -> tuple[list[Entry], Ledger, "IncomeStatement"]:
     """Close ledger at accounting period end in the following order.
 
        1. Close income and expense contra accounts.

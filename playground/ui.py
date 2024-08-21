@@ -11,10 +11,10 @@ from core import (
     AccountName,
     Amount,
     BalanceSheet,
+    Entry,
     FastChart,
     IncomeStatement,
     Ledger,
-    MultipleEntry,
     TrialBalance,
 )
 
@@ -49,12 +49,6 @@ def test_chart_new():
 
 
 test_chart_new()
-
-
-# may substitute MultipleEntry with Entry
-class Entry(BaseModel):
-    debits: list[tuple[AccountName, Amount]] = []
-    credits: list[tuple[AccountName, Amount]] = []
 
 
 # type alias for int | float | Decimal
@@ -95,9 +89,6 @@ class NamedEntry(Entry):
         t = account_name, Amount(amount or self._amount)
         self.credits.append(t)
         return self
-
-    def __iter__(self):
-        return iter(MultipleEntry(self.debits, self.credits))
 
 
 class EntryList(BaseModel):
