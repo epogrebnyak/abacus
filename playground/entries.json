@@ -1,0 +1,293 @@
+{
+  "saved": [
+    {
+      "debits": [
+        [
+          "cash",
+          "1500"
+        ]
+      ],
+      "credits": [
+        [
+          "equity",
+          "1500"
+        ]
+      ],
+      "title": "Shareholder investment"
+    },
+    {
+      "debits": [
+        [
+          "inventory",
+          "1000"
+        ]
+      ],
+      "credits": [
+        [
+          "cash",
+          "1000"
+        ]
+      ],
+      "title": "Bought inventory (no VAT)"
+    },
+    {
+      "debits": [
+        [
+          "ar",
+          "1200"
+        ]
+      ],
+      "credits": [
+        [
+          "sales",
+          "1000"
+        ],
+        [
+          "vat",
+          "200"
+        ]
+      ],
+      "title": "Invoice with 20% VAT"
+    },
+    {
+      "debits": [
+        [
+          "cogs",
+          "600"
+        ]
+      ],
+      "credits": [
+        [
+          "inventory",
+          "600"
+        ]
+      ],
+      "title": "Registered costs"
+    },
+    {
+      "debits": [
+        [
+          "cash",
+          "900"
+        ]
+      ],
+      "credits": [
+        [
+          "ar",
+          "900"
+        ]
+      ],
+      "title": "Accepted payment"
+    },
+    {
+      "debits": [
+        [
+          "refunds",
+          "50"
+        ]
+      ],
+      "credits": [
+        [
+          "ar",
+          "50"
+        ]
+      ],
+      "title": "Made refund"
+    },
+    {
+      "debits": [
+        [
+          "cashback",
+          "50"
+        ]
+      ],
+      "credits": [
+        [
+          "cash",
+          "50"
+        ]
+      ],
+      "title": "Made cashback"
+    },
+    {
+      "debits": [
+        [
+          "salaries",
+          "150"
+        ]
+      ],
+      "credits": [
+        [
+          "cash",
+          "150"
+        ]
+      ],
+      "title": "Paid salaries"
+    },
+    {
+      "debits": [
+        [
+          "cit",
+          "30"
+        ]
+      ],
+      "credits": [
+        [
+          "cit_due",
+          "30"
+        ]
+      ],
+      "title": "Accrue corporate income tax 20%"
+    },
+    {
+      "debits": [
+        [
+          "sales",
+          "50"
+        ]
+      ],
+      "credits": [
+        [
+          "refunds",
+          "50"
+        ]
+      ],
+      "title": "Closing entry"
+    },
+    {
+      "debits": [
+        [
+          "sales",
+          "50"
+        ]
+      ],
+      "credits": [
+        [
+          "cashback",
+          "50"
+        ]
+      ],
+      "title": "Closing entry"
+    },
+    {
+      "debits": [
+        [
+          "sales",
+          "900"
+        ]
+      ],
+      "credits": [
+        [
+          "_isa",
+          "900"
+        ]
+      ],
+      "title": "Closing entry"
+    },
+    {
+      "debits": [
+        [
+          "_isa",
+          "600"
+        ]
+      ],
+      "credits": [
+        [
+          "cogs",
+          "600"
+        ]
+      ],
+      "title": "Closing entry"
+    },
+    {
+      "debits": [
+        [
+          "_isa",
+          "150"
+        ]
+      ],
+      "credits": [
+        [
+          "salaries",
+          "150"
+        ]
+      ],
+      "title": "Closing entry"
+    },
+    {
+      "debits": [
+        [
+          "_isa",
+          "30"
+        ]
+      ],
+      "credits": [
+        [
+          "cit",
+          "30"
+        ]
+      ],
+      "title": "Closing entry"
+    },
+    {
+      "debits": [
+        [
+          "_isa",
+          "120"
+        ]
+      ],
+      "credits": [
+        [
+          "re",
+          "120"
+        ]
+      ],
+      "title": "Closing entry"
+    },
+    {
+      "debits": [
+        [
+          "ts",
+          "30"
+        ]
+      ],
+      "credits": [
+        [
+          "cash",
+          "30"
+        ]
+      ],
+      "title": "Bought back shares"
+    },
+    {
+      "debits": [
+        [
+          "re",
+          "60"
+        ]
+      ],
+      "credits": [
+        [
+          "dividend",
+          "60"
+        ]
+      ],
+      "title": "Announced dividend"
+    },
+    {
+      "debits": [
+        [
+          "cit_due",
+          "30"
+        ]
+      ],
+      "credits": [
+        [
+          "cash",
+          "30"
+        ]
+      ],
+      "title": "Pay corporate income tax"
+    }
+  ]
+}

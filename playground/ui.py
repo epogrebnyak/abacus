@@ -1,5 +1,9 @@
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import List
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from core import (
@@ -7,12 +11,89 @@ from core import (
     AccountName,
     Amount,
     BalanceSheet,
-    Chart,
+    Contra,
     IncomeStatement,
+    Intermediate,
     Ledger,
     MultipleEntry,
+    Profit,
+    Regular,
     TrialBalance,
 )
+
+# Use fastapi to create Chart object below
+
+
+app = FastAPI()
+
+
+class FastChart(BaseModel):
+    income_summary_account: str
+    retained_earnings_account: str
+    accounts: dict[str, tuple[T5, list[str]]]
+
+    @classmethod
+    def new(cls, income_summary_account: str, retained_earnings_account: str):
+        return cls(
+            income_summary_account=income_summary_account,
+            retained_earnings_account=retained_earnings_account,
+            accounts={retained_earnings_account: (T5.Capital, [])},
+        )
+
+    def set_retained_earnings(self, account_name: str):
+        del self.accounts[self.retained_earnings_account]
+        self.retained_earnings_account = account_name
+        self.accounts[account_name] = (T5.Capital, [])
+        return self
+
+    def add(self, t: T5, account_name: str, offsets: list[str] | None = None):
+        self.accounts[account_name] = (t, offsets or [])
+        return self
+
+    def items(self):
+        for account_name, (t, offsets) in self.accounts.items():
+            yield account_name, Regular(t)
+            for offset in offsets:
+                yield offset, Contra(t)
+        yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
+
+    def __getitem__(self, t: T5):
+        return [
+            (name, contra_names)
+            for name, (_t, contra_names) in self.accounts.items()
+            if _t == t
+        ]
+
+
+@app.post("/chart/new")
+def create_chart(
+    income_summary_account: str = "isa", retained_earnings_account: str = "re"
+) -> FastChart:
+    return FastChart(
+        income_summary_account=income_summary_account,
+        retained_earnings_account=retained_earnings_account,
+        accounts={retained_earnings_account: (T5.Capital, [])},
+    )
+
+
+client = TestClient(app)
+
+
+def test_chart_new():
+    payload = {
+        "income_summary_account": "current_profit",
+        "retained_earnings_account": "retained_earnings",
+    }
+    response = client.post("/chart/new", params=payload)
+    assert response.status_code == 200
+    assert response.json() == {
+        "income_summary_account": "current_profit",
+        "retained_earnings_account": "retained_earnings",
+        "accounts": {"retained_earnings": ["capital", []]},
+    }
+
+
+test_chart_new()
 
 
 # may substitute MultipleEntry with Entry
@@ -60,29 +141,47 @@ class NamedEntry(Entry):
         self.credits.append(t)
         return self
 
-    @property
-    def _multiple_entry(self):
-        return MultipleEntry(self.debits, self.credits)
-
     def __iter__(self):
-        return iter(self._multiple_entry)
+        return iter(MultipleEntry(self.debits, self.credits))
+
+
+class EntryList(BaseModel):
+    saved: List[NamedEntry] = []
+    _current: NamedEntry = NamedEntry()
+    _current_id: int = 0  # for testing and future use
+
+    def append(self, entry: NamedEntry):
+        self.saved.append(entry)
+        self._current = NamedEntry()
+        self._current_id += 1
+        return self
 
 
 @dataclass
 class Book:
     company: str
-    chart: Chart = Chart()
+    chart: FastChart = field(default_factory=create_chart)
     ledger: Ledger | None = None
-    entries: list[NamedEntry] = field(default_factory=list)
-    _current_entry: NamedEntry = field(default_factory=NamedEntry)
-    _current_id: int = 0
+    entries: EntryList = field(default_factory=EntryList)
     income_statement: IncomeStatement = IncomeStatement(income={}, expenses={})
+    _chart_path: Path = Path("./chart.json")
+    _entries_path: Path = Path("./entries.json")
 
-    def save_chart(self, path=Path("./chart.json")):
-        path.write_text(self.chart.json())
+    def save_chart(self, path: Path | None = None):
+        _path = path or self._chart_path
+        _path.write_text(self.chart.model_dump_json(indent=2))
 
-    def save_ledger(self, path=Path("./ledger.json")):
-        path.write_text(self.ledger.json())
+    def save_entries(self, path: Path | None = None):
+        _path = path or self._entries_path
+        _path.write_text(self.entries.model_dump_json(indent=2))
+
+    def load_chart(self, path: Path | None = None):
+        _path = path or self._chart_path
+        self.chart = FastChart.model_validate_json(_path.read_text())
+
+    def load_entries(self, path: Path | None = None):
+        _path = path or self._entries_path
+        self.entries = EntryList.model_validate_json(_path.read_text())
 
     @property
     def trial_balance(self):
@@ -100,10 +199,10 @@ class Book:
         self,
         t: T5,
         account_name: str,
-        title: str | None,
+        title: str | None,  # reserved
         offsets: list[str] | None,
     ):
-        self.chart.accounts.put(t, account_name, offsets or [])
+        self.chart.add(t, account_name, offsets or [])
         return self
 
     def add_asset(self, account, *, title=None, offsets=None):
@@ -183,8 +282,6 @@ class Book:
         """Post current entry to ledger and write it to entry store."""
         self.ledger.post(self._current_entry)
         self.entries.append(self._current_entry)
-        self._current_entry = NamedEntry()
-        self._current_id += 1
         return self
 
     def close(self):

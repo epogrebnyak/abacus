@@ -472,7 +472,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
             )
 
     def post_many(self, entries: list[MultipleEntry]):
-        """Post several multiple entries to ledger."""
+        """Post several streams of entries to ledger."""
         for entry in entries:
             self.post(entry)
 

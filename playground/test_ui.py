@@ -37,7 +37,7 @@ def test_book():
         .debit("cash")
         .credit("equity")
         .commit()
-        .entries[-1]
+        .entries.saved[-1]
     )
     # Had to override the __eq__ method in NamedEntry.
     assert entry == NamedEntry(

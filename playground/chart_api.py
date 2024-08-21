@@ -1,9 +1,10 @@
 # Use fastapi to create Chart object below
 
 from fastapi import FastAPI
-from pydantic import BaseModel
-from core import T5
 from fastapi.testclient import TestClient
+from pydantic import BaseModel
+
+from core import T5
 
 app = FastAPI()
 

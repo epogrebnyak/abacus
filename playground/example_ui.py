@@ -34,7 +34,8 @@ book.entry("Bought back shares").amount(30).debit("ts").credit("cash").commit()
 book.entry("Announced dividend").amount(60).debit("re").credit("dividend").commit()
 book.entry("Pay corporate income tax").amount(30).debit("cit_due").credit("cash").commit()
 # fmt: on
-assert book._current_id == 12
+print(book.entries._current_id)
+assert book.entries._current_id == 19
 print((a := book.income_statement).json())
 assert a.dict() == {
     "income": {"sales": 900},
@@ -46,5 +47,17 @@ assert b.dict() == {
     "capital": {"equity": 1470, "re": 60},
     "liabilities": {"vat": 200, "dividend": 60, "cit_due": 0},
 }
-# book.save_chart()
-# book.save_ledger()
+book.save_chart()
+book.save_entries()
+
+
+def load_book(company):
+    book = Book(company)
+    book.load_chart()
+    book.load_entries()
+    return book
+
+
+book2 = load_book("Duffin Mills")
+assert book2.entries.saved == book.entries.saved
+assert book2.chart == book.chart
