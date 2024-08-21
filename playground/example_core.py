@@ -1,10 +1,10 @@
-from ui import NamedEntry
+from ui import NamedEntry, create_chart
 
-from core import BalanceSheet, Chart, Ledger
+from core import BalanceSheet, Ledger
 
 # Create chart of accounts with contra accounts
 chart = (
-    Chart()
+    create_chart()
     .set_retained_earnings("retained_earnings")
     .add_asset("cash")
     .add_asset("ar")

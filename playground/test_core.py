@@ -1,10 +1,10 @@
 import pytest
+from ui import FastChart, create_chart
 
 from core import (
     AbacusError,
     Amount,
     BalanceSheet,
-    Chart,
     CreditAccount,
     DebitAccount,
     DoubleEntry,
@@ -38,17 +38,17 @@ def test_invalid_multiple_entry():
         me.validate()
 
 
-def test_balance_sheet_on_contra_account():
+def test_balance_sheet_respects_contra_account():
     chart = (
-        Chart()
+        create_chart("isa", "re")
         .add_asset("cash")
         .add_capital("equity", contra_accounts=["treasury_shares"])
     )
     ledger = Ledger.new(chart)
-    me = MultipleEntry().dr("cash", 100).dr("treasury_shares", 20).cr("equity", 120)
+    me = MultipleEntry().dr("cash", 100).dr("treasury_shares", 21).cr("equity", 120)
     ledger.post(me)
     bs = BalanceSheet.new(ledger, chart)
-    assert bs.capital["equity"] == 100
+    assert bs.capital["equity"] == 99
 
 
 def test_ledger_post_method():
@@ -61,7 +61,7 @@ def test_ledger_post_method():
     }
 
 
-def test_ledger_copy():
+def test_ledger_copy_is_callable():
     Ledger({"cash": DebitAccount(), "equity": CreditAccount()}).copy()
 
 
@@ -73,7 +73,7 @@ def test_end_to_end():
         MultipleEntry().dr("cash", 75).dr("refunds", 2).cr("sales", 77),
     ]
 
-    chart = Chart()
+    chart = FastChart.new("__isa__", "__re__")
     chart.set_retained_earnings("retained_earnings")
     chart.add_asset("cash")
     chart.add_asset("inventory")
@@ -92,9 +92,9 @@ def test_end_to_end():
         "sales": (0, 77),
         "refunds": (2, 0),
         "cogs": (60, 0),
-        "isa": (0, 0),
+        "__isa__": (0, 0),
     }
-    _, ledger, income_summary = close(ledger, chart, chart.retained_earnings_account)
+    _, ledger, income_summary = close(ledger, chart)
     assert income_summary.net_earnings == 15
     tb2 = ledger.trial_balance
     balances = tb2.amounts()

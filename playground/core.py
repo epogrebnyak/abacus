@@ -106,14 +106,14 @@ class AccountDefinition(ABC):
     Intermediate class used for profit accounts that live for a short while when closing the ledger.
     """
 
-    @staticmethod
-    def from_side(side: Side) -> "DebitAccount | CreditAccount":
-        """Create debit or credit account based on the specified side."""
-        return DebitAccount() if side.is_debit() else CreditAccount()
-
     @abstractmethod
     def taccount(self) -> "DebitAccount | CreditAccount | DebitOrCreditAccount":
         """Create T-account for this account definition."""
+
+
+def from_side(side: Side) -> "DebitAccount | CreditAccount":
+    """Create debit or credit account based on the specified side."""
+    return DebitAccount() if side.is_debit() else CreditAccount()
 
 
 @dataclass
@@ -123,7 +123,7 @@ class Regular(AccountDefinition):
     t: T5
 
     def taccount(self):
-        return self.from_side(self.t.side)
+        return from_side(self.t.side)
 
 
 @dataclass
@@ -141,7 +141,7 @@ class Contra(AccountDefinition):
     t: T5
 
     def taccount(self):
-        return self.from_side(self.t.side.reverse())
+        return from_side(self.t.side.reverse())
 
 
 class Profit(Enum):
@@ -214,9 +214,9 @@ class MultipleEntry(IterableEntry):
     credits: list[tuple[AccountName, Amount]] = field(default_factory=list)
 
     def __iter__(self):
-        drs = [DebitEntry(name, amount) for name, amount in self.debits]
-        crs = [CreditEntry(name, amount) for name, amount in self.credits]
-        return iter(drs + crs)
+        _drs = [DebitEntry(name, amount) for name, amount in self.debits]
+        _crs = [CreditEntry(name, amount) for name, amount in self.credits]
+        return iter(_drs + _crs)
 
     def dr(self, account_name, amount):
         self.debits += [(account_name, amount)]
@@ -243,82 +243,70 @@ class DoubleEntry(IterableEntry):
 
     @property
     def multiple_entry(self) -> MultipleEntry:
-        a = self.amount
-        return MultipleEntry().dr(self.debit, a).cr(self.credit, a)
+        return double_entry(self.debit, self.credit, self.amount)
 
     def __iter__(self):
         return iter(self.multiple_entry)
 
 
-class ChartDict(UserDict[AccountName, tuple[T5, list[AccountName]]]):
+class FastChart(BaseModel):
+    income_summary_account: str
+    retained_earnings_account: str
+    accounts: dict[str, tuple[T5, list[str]]]
 
-    def put(
-        self, t: T5, name: AccountName, contra_accounts: list[AccountName] | None = None
+    @classmethod
+    def new(
+        cls,
+        income_summary_account: str = "__isa__",
+        retained_earnings_account: str = "retained_earnings",
     ):
+        return cls(
+            income_summary_account=income_summary_account,
+            retained_earnings_account=retained_earnings_account,
+            accounts={retained_earnings_account: (T5.Capital, [])},
+        )
+
+    def set_retained_earnings(self, account_name: str):
+        del self.accounts[self.retained_earnings_account]  # rarely may not exist
+        self.retained_earnings_account = account_name
+        self.accounts[account_name] = (T5.Capital, [])
+        return self
+
+    def add(self, t: T5, account_name: str, offsets: list[str] | None = None):
         """Add account name, type and contra accounts to chart."""
-        self.data[name] = (t, contra_accounts or [])
+        self.accounts[account_name] = (t, offsets or [])
+        return self
 
-    def ask(self, t: T5) -> list[tuple[AccountName, list[AccountName]]]:
-        """Return account names and contra accounts for a given account type."""
-        return [
-            (name, contra_names) for name, (t_, contra_names) in self.items() if t_ == t
-        ]
-
-
-@dataclass
-class Chart:
-    income_summary_account: str = "isa"
-    retained_earnings_account: str = "re"
-    accounts: ChartDict = ChartDict({"re": (T5.Capital, [])})
+    def items(self):
+        """Assign account types to account names."""
+        for account_name, (t, offsets) in self.accounts.items():
+            yield account_name, Regular(t)
+            for offset in offsets:
+                yield offset, Contra(t)
+        yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
 
     def __getitem__(self, t: T5):
-        return self.accounts.ask(t)
+        """Return account names and contra accounts for a given account type."""
+        return [
+            (name, contra_names)
+            for name, (_t, contra_names) in self.accounts.items()
+            if _t == t
+        ]
 
-    def set_retained_earnings(self, name: AccountName):
-        # Retained earnings in guaraneed to be capital accounts.
-        del self.accounts[self.retained_earnings_account]
-        self.retained_earnings_account = name
-        self.accounts.put(T5.Capital, name)
-        return self
+    def add_asset(self, account: str, contra_accounts=None):
+        return self.add(T5.Asset, account, contra_accounts)
 
-    def add_asset(
-        self, name: AccountName, contra_accounts: list[AccountName] | None = None
-    ):
-        self.accounts.put(T5.Asset, name, contra_accounts)
-        return self
+    def add_liability(self, account: str, contra_accounts=None):
+        return self.add(T5.Liability, account, contra_accounts)
 
-    def add_liability(
-        self, name: AccountName, contra_accounts: list[AccountName] | None = None
-    ):
-        self.accounts.put(T5.Liability, name, contra_accounts)
-        return self
+    def add_capital(self, account: str, contra_accounts=None):
+        return self.add(T5.Capital, account, contra_accounts)
 
-    def add_capital(
-        self, name: AccountName, contra_accounts: list[AccountName] | None = None
-    ):
-        self.accounts.put(T5.Capital, name, contra_accounts)
-        return self
+    def add_expense(self, account: str, contra_accounts=None):
+        return self.add(T5.Expense, account, contra_accounts)
 
-    def add_income(
-        self, name: AccountName, contra_accounts: list[AccountName] | None = None
-    ):
-        self.accounts.put(T5.Income, name, contra_accounts)
-        return self
-
-    def add_expense(
-        self, name: AccountName, contra_accounts: list[AccountName] | None = None
-    ):
-        self.accounts.put(T5.Expense, name, contra_accounts)
-        return self
-
-    def items(self) -> Iterable[tuple[AccountName, Regular | Contra | Intermediate]]:
-        """Assign account types to account names."""
-        for name, (t, contra_accounts) in self.accounts.items():
-            yield name, Regular(t)
-            for contra_name in contra_accounts:
-                yield contra_name, Contra(t)
-        yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
-        yield self.retained_earnings_account, Regular(T5.Capital)
+    def add_income(self, account: str, contra_accounts=None):
+        return self.add(T5.Income, account, contra_accounts)
 
 
 @dataclass
@@ -437,7 +425,7 @@ class DebitOrCreditAccount(TAccountBase):
 
 class Ledger(UserDict[AccountName, TAccountBase]):
     @classmethod
-    def new(cls, chart: Chart):
+    def new(cls, chart: FastChart):
         """Create new ledger from chart of accounts."""
         return cls({name: definition.taccount() for name, definition in chart.items()})
 
@@ -485,16 +473,16 @@ class Ledger(UserDict[AccountName, TAccountBase]):
         """Return account balances."""
         return {name: account.balance for name, account in self.items()}
 
-    def close(self, chart: Chart):
+    def close(self, chart: FastChart):
         """Close ledger at accounting period end."""
         # This is a dulpicate check, made to make mypy happy at return statement.
         if not chart.retained_earnings_account:
             raise AbacusError("Retained earnings account was not set.")
-        return close(self, chart, chart.retained_earnings_account)
+        return close(self, chart)
 
 
 def close(
-    ledger: Ledger, chart: Chart, retained_earnings_account: AccountName
+    ledger: Ledger, chart: FastChart
 ) -> tuple[list[MultipleEntry], Ledger, "IncomeStatement"]:
     """Close ledger at accounting period end in the following order.
 
@@ -608,7 +596,7 @@ class BalanceSheet(Report):
     liabilities: dict[AccountName, Amount]
 
     @classmethod
-    def new(cls, ledger: Ledger, chart: Chart):
+    def new(cls, ledger: Ledger, chart: FastChart):
         """Create balance sheet from ledger and chart.
 
         Account will balances will be shown net of contra account balances."""

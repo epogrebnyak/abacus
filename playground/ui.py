@@ -11,13 +11,10 @@ from core import (
     AccountName,
     Amount,
     BalanceSheet,
-    Contra,
+    FastChart,
     IncomeStatement,
-    Intermediate,
     Ledger,
     MultipleEntry,
-    Profit,
-    Regular,
     TrialBalance,
 )
 
@@ -27,53 +24,11 @@ from core import (
 app = FastAPI()
 
 
-class FastChart(BaseModel):
-    income_summary_account: str
-    retained_earnings_account: str
-    accounts: dict[str, tuple[T5, list[str]]]
-
-    @classmethod
-    def new(cls, income_summary_account: str, retained_earnings_account: str):
-        return cls(
-            income_summary_account=income_summary_account,
-            retained_earnings_account=retained_earnings_account,
-            accounts={retained_earnings_account: (T5.Capital, [])},
-        )
-
-    def set_retained_earnings(self, account_name: str):
-        del self.accounts[self.retained_earnings_account]
-        self.retained_earnings_account = account_name
-        self.accounts[account_name] = (T5.Capital, [])
-        return self
-
-    def add(self, t: T5, account_name: str, offsets: list[str] | None = None):
-        self.accounts[account_name] = (t, offsets or [])
-        return self
-
-    def items(self):
-        for account_name, (t, offsets) in self.accounts.items():
-            yield account_name, Regular(t)
-            for offset in offsets:
-                yield offset, Contra(t)
-        yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
-
-    def __getitem__(self, t: T5):
-        return [
-            (name, contra_names)
-            for name, (_t, contra_names) in self.accounts.items()
-            if _t == t
-        ]
-
-
 @app.post("/chart/new")
 def create_chart(
     income_summary_account: str = "isa", retained_earnings_account: str = "re"
 ) -> FastChart:
-    return FastChart(
-        income_summary_account=income_summary_account,
-        retained_earnings_account=retained_earnings_account,
-        accounts={retained_earnings_account: (T5.Capital, [])},
-    )
+    return FastChart.new(income_summary_account, retained_earnings_account)
 
 
 client = TestClient(app)
