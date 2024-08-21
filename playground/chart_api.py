@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from core import T5
+from fastapi.testclient import TestClient
 
 app = FastAPI()
 
@@ -27,9 +28,9 @@ def create_chart(
         accounts={retained_earnings_account: (T5.Capital, [])},
     )
 
-from fastapi.testclient import TestClient
 
 client = TestClient(app)
+
 
 def test_chart_new():
     payload = {

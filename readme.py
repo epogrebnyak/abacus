@@ -1,6 +1,6 @@
 from playground.ui import Book
 
-# Start company 
+# Start company
 book = Book(company_name="Pied Piper")
 
 # Create chart of accounts
@@ -15,7 +15,9 @@ book.set_retained_earnings("re")
 book.open()
 book.entry("Shareholder investment").amount(300).debit("cash").credit("equity").commit()
 book.entry("Bought inventory").amount(200).debit("inventory").credit("cash").commit()
-book.entry("Invoiced sales").debit("ar", 380).debit("refunds", 20).credit("sales", 400).commit()
+book.entry("Invoiced sales").debit("ar", 380).debit("refunds", 20).credit(
+    "sales", 400
+).commit()
 book.entry("Shippled goods").amount(200).debit("cogs").credit("inventory").commit()
 
 # Close ledger and make post-close entries

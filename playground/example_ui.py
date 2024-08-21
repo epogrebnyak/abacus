@@ -25,6 +25,8 @@ book.entry("Accepted payment").amount(900).credit("ar").debit("cash").commit()
 book.entry("Made refund").amount(50).debit("refunds").credit("ar").commit()
 book.entry("Made cashback").amount(50).debit("cashback").credit("cash").commit()
 book.entry("Paid salaries").amount(150).credit("cash").debit("salaries").commit()
+#from pprint import pprint
+#pprint(book)
 assert book.proxy_net_earnings == 150
 book.entry("Accrue corporate income tax 20%").amount(30).credit("cit_due").debit("cit").commit()
 book.close()
@@ -34,13 +36,15 @@ book.entry("Pay corporate income tax").amount(30).debit("cit_due").credit("cash"
 # fmt: on
 assert book._current_id == 12
 print((a := book.income_statement).json())
-assert a == {
+assert a.dict() == {
     "income": {"sales": 900},
     "expenses": {"cogs": 600, "salaries": 150, "cit": 30},
 }
 print((b := book.balance_sheet).json())
-assert b == {
+assert b.dict() == {
     "assets": {"cash": 1140, "ar": 250, "inventory": 400},
     "capital": {"equity": 1470, "re": 60},
     "liabilities": {"vat": 200, "dividend": 60, "cit_due": 0},
 }
+# book.save_chart()
+# book.save_ledger()

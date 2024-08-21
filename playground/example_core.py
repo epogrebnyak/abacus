@@ -23,49 +23,44 @@ ledger = Ledger.new(chart)
 
 # Define entries and post them to ledger
 entries = [
-    NamedEntry("Shareholder investment")
+    NamedEntry(title="Shareholder investment")
     .amount(300)
     .debit(account_name="cash")
     .credit(account_name="equity"),
-    NamedEntry("Bought office furniture").amount(200).debit("ppe").credit("cash"),
-    NamedEntry("Provided services worth $200 with $100 prepayment")
+    NamedEntry(title="Bought office furniture").amount(200).debit("ppe").credit("cash"),
+    NamedEntry(title="Provided services worth $200 with $100 prepayment")
     .debit("cash", 100)
     .debit("ar", 100)
     .credit("sales", 200),
-    NamedEntry("Provided cashback").amount(20).debit("refunds").credit("ar"),
-    NamedEntry("Received payment for services").amount(40).debit("cash").credit("ar"),
-    NamedEntry("Accrued staff salaries").amount(120).debit("salaries").credit("ap"),
-    NamedEntry("Accounted for office depreciation")
+    NamedEntry(title="Provided cashback").amount(20).debit("refunds").credit("ar"),
+    NamedEntry(title="Received payment for services")
+    .amount(40)
+    .debit("cash")
+    .credit("ar"),
+    NamedEntry(title="Accrued staff salaries")
+    .amount(120)
+    .debit("salaries")
+    .credit("ap"),
+    NamedEntry(title="Accounted for office depreciation")
     .amount(20)
     .debit("expense:depreciation")
     .credit("depreciation"),
 ]
 ledger.post_many(entries)
 
-# TODO: accure income tax, pay 50% didividend
-# What is the sequence of events at accouting period end:
-# - calculate income tax
-
-# for name, (a, b) in ledger.trial_balance.tuples().items():
-#    print(f"{name}: {a} {b}")
-
 # Close ledger at accounting period end
 closing_entries, ledger, income_statement = ledger.close(chart)
 
 # Show income statement data
-# print(income_statement.dict())
 assert income_statement.dict() == {
     "income": {"sales": 180},
     "expenses": {"salaries": 120, "expense:depreciation": 20},
 }
 
 # Show balance sheet data
-# print(chart)
 balance_sheet = BalanceSheet.new(ledger, chart)
-# print(balance_sheet.dict())
 
 # Show account balances
-# print(ledger.trial_balance.amounts())
 assert ledger.trial_balance.amounts() == {
     "cash": 240,
     "ppe": 200,

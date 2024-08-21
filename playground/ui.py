@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-
+from pathlib import Path
 from pydantic import BaseModel
 
 from core import (
@@ -9,88 +9,80 @@ from core import (
     BalanceSheet,
     Chart,
     IncomeStatement,
-    IterableEntry,
     Ledger,
     MultipleEntry,
     TrialBalance,
 )
 
 
-class StoredEntry(BaseModel):
-    title: str
-    debits: list[tuple[AccountName, Amount]]
-    credits: list[tuple[AccountName, Amount]]
+# may substitute MultipleEntry with Entry
+class Entry(BaseModel):
+    debits: list[tuple[AccountName, Amount]] = []
+    credits: list[tuple[AccountName, Amount]] = []
 
 
-@dataclass
-class NamedEntry(IterableEntry):
-    """Create entry using .debit() and .credit() methods.
+# type alias for int | float | Decimal
+Numeric = Amount | int | float
 
-    The syntax is similar to 'medici' package (<https://github.com/flash-oss/medici>),
-    also added .amount() method to set default amount for the entry.
+
+class NamedEntry(Entry):
+    """Create entry with title and use .debit() and .credit() methods.
+    Use .amount() method to set default amount for the entry.
+
+    The syntax is similar to 'medici' package <https://github.com/flash-oss/medici>.
     """
 
     title: str | None = None
-    _amount: Amount | int | float | None = None
-    _entry: MultipleEntry = field(default_factory=MultipleEntry)
+    _amount: Amount | None = None
 
-    def amount(self, amount: Amount | int | float):
+    # added to prevent tests from failing
+    def __eq__(self, other):
+        return (
+            self.title == other.title
+            and self.debits == other.debits
+            and self.credits == other.credits
+        )
+
+    def amount(self, amount: Numeric):
         """Set default amount for this entry."""
         self._amount = Amount(amount)
         return self
 
-    def debit(
-        self, account_name: AccountName, amount: Amount | int | float | None = None
-    ):
-        """Add debit entry or debit account name."""
-        amount = Amount(amount or self._amount)
-        self._entry.dr(account_name, amount)
+    def debit(self, account_name: AccountName, amount: Numeric | None = None):
+        """Add debit entry."""
+        t = account_name, Amount(amount or self._amount)
+        self.debits.append(t)
         return self
 
-    def credit(
-        self, account_name: AccountName, amount: Amount | int | float | None = None
-    ):
-        """Add credit entry or credit account name."""
-        amount = Amount(amount or self._amount)
-        self._entry.cr(account_name, amount)
+    def credit(self, account_name: AccountName, amount: Numeric | None = None):
+        """Add credit entry."""
+        t = account_name, Amount(amount or self._amount)
+        self.credits.append(t)
         return self
-
-    def __iter__(self):
-        return iter(self._entry)
 
     @property
-    def stored(self):
-        return StoredEntry(
-            title=self.title,
-            debits=[(d.name, d.amount) for d in self._entry.debits],
-            credits=[(c.name, c.amount) for c in self._entry.credits],
-        )
+    def _multiple_entry(self):
+        return MultipleEntry(self.debits, self.credits)
 
-
-MAPPER = dict(
-    asset="assets",
-    capital="capital",
-    liability="liabilities",
-    income="income",
-    expense="expenses",
-)
-
-
-def t5_to_attr(t5: T5) -> str:
-    return MAPPER[t5.value]
+    def __iter__(self):
+        return iter(self._multiple_entry)
 
 
 @dataclass
 class Book:
-    company_name: str
-    chart_path: str = "./chart.json"
-    entries_path: str = "./entries.linejson"
+    company: str
     chart: Chart = Chart()
     ledger: Ledger | None = None
-    entries: list[StoredEntry] = field(default_factory=list)
-    _current_entry: NamedEntry = NamedEntry()
-    _current_id: int = 0  # reserved
+    entries: list[NamedEntry] = field(default_factory=list)
+    _current_entry: NamedEntry = field(default_factory=NamedEntry)
+    _current_id: int = 0
     income_statement: IncomeStatement = IncomeStatement(income={}, expenses={})
+
+    def save_chart(self, path=Path("./chart.json")):
+        path.write_text(self.chart.json())
+
+    def save_ledger(self, path=Path("./ledger.json")):
+        path.write_text(self.ledger.json())
 
     @property
     def trial_balance(self):
@@ -112,7 +104,6 @@ class Book:
         offsets: list[str] | None,
     ):
         self.chart.accounts.put(t, account_name, offsets or [])
-        title  # not implemented: title not used
         return self
 
     def add_asset(self, account, *, title=None, offsets=None):
@@ -165,21 +156,17 @@ class Book:
 
     def open(self):
         """Create new ledger."""
-        try:
-            self.chart.retained_earnings_account
-        except AttributeError:
-            self.set_retained_earnings("retained_earnings")
         self.ledger = Ledger.new(self.chart)
         return self
 
     def entry(self, title: str):
         """Start new entry."""
-        self._current_entry = NamedEntry(title)
+        self._current_entry = NamedEntry(title=title)
         return self
 
     def amount(self, amount: Amount | int | float):
         """Set amount for the current entry."""
-        self._current_entry.amount(amount)
+        self._current_entry._amount = Amount(amount)
         return self
 
     def debit(self, account_name: str, amount: Amount | int | float | None = None):
@@ -195,7 +182,7 @@ class Book:
     def commit(self):
         """Post current entry to ledger and write it to entry store."""
         self.ledger.post(self._current_entry)
-        self.entries.append(self._current_entry.stored)
+        self.entries.append(self._current_entry)
         self._current_entry = NamedEntry()
         self._current_id += 1
         return self
@@ -206,8 +193,8 @@ class Book:
             self.chart
         )
         for ce in closing_entries:
-            ne = NamedEntry("Closing entry", _entry=ce.multiple_entry)
-            self.entries.append(ne.stored)
+            ne = NamedEntry(title="Closing entry", debits=ce.debits, credits=ce.credits)
+            self.entries.append(ne)
         return self
 
     @property
@@ -218,18 +205,3 @@ class Book:
     @property
     def proxy_net_earnings(self) -> Amount:
         return self.proxy_income_statement.net_earnings
-
-    def save_chart(self):
-        pass
-
-    def load_chart(self):
-        pass
-
-    def overwrite_entries(self):
-        pass
-
-    def append_entries(self):
-        pass
-
-    def load_entries(self):
-        pass

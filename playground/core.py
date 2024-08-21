@@ -210,19 +210,27 @@ class IterableEntry(Iterable[SingleEntry], ABC):
 @dataclass
 class MultipleEntry(IterableEntry):
 
-    debits: list[DebitEntry] = field(default_factory=list)
-    credits: list[CreditEntry] = field(default_factory=list)
+    debits: list[tuple[AccountName, Amount]] = field(default_factory=list)
+    credits: list[tuple[AccountName, Amount]] = field(default_factory=list)
 
     def __iter__(self):
-        return iter(self.debits + self.credits)
+        drs = [DebitEntry(name, amount) for name, amount in self.debits]
+        crs = [CreditEntry(name, amount) for name, amount in self.credits]
+        return iter(drs + crs)
 
     def dr(self, account_name, amount):
-        self.debits.append(DebitEntry(account_name, amount))
+        self.debits += [(account_name, amount)]
         return self
 
     def cr(self, account_name, amount):
-        self.credits.append(CreditEntry(account_name, amount))
+        self.credits += [(account_name, amount)]
         return self
+
+
+def double_entry(
+    debit: AccountName, credit: AccountName, amount: Amount
+) -> MultipleEntry:
+    return MultipleEntry().dr(debit, amount).cr(credit, amount)
 
 
 @dataclass
@@ -349,7 +357,7 @@ class TAccountBase(ABC):
 
     def make_closing_entry(
         self, my_name: AccountName, destination_name: AccountName
-    ) -> "DoubleEntry":
+    ) -> "MultipleEntry":
         """
         Make closing entry to transfer account balance
         from *my_name* account to *destination_name* account.
@@ -363,14 +371,14 @@ class TAccountBase(ABC):
             - Cr destination_name
         """
 
-        def make_entry(dr, cr):
-            return DoubleEntry(dr, cr, self.balance)
+        def make_entry(dr, cr) -> MultipleEntry:
+            return double_entry(dr, cr, self.balance)
 
-        match self.side:
-            case Side.Debit:
-                return make_entry(dr=destination_name, cr=my_name)
-            case Side.Credit:
-                return make_entry(dr=my_name, cr=destination_name)
+        return (
+            make_entry(dr=destination_name, cr=my_name)
+            if self.side.is_debit()
+            else make_entry(dr=my_name, cr=destination_name)
+        )
 
 
 class UnrestrictedDebitAccount(TAccountBase):
@@ -487,7 +495,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
 def close(
     ledger: Ledger, chart: Chart, retained_earnings_account: AccountName
-) -> tuple[list[DoubleEntry], Ledger, "IncomeStatement"]:
+) -> tuple[list[MultipleEntry], Ledger, "IncomeStatement"]:
     """Close ledger at accounting period end in the following order.
 
        1. Close income and expense contra accounts.

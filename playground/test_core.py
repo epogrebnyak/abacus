@@ -6,9 +6,7 @@ from core import (
     BalanceSheet,
     Chart,
     CreditAccount,
-    CreditEntry,
     DebitAccount,
-    DebitEntry,
     DoubleEntry,
     Ledger,
     MultipleEntry,
@@ -36,7 +34,7 @@ def test_unrestircted_credit_account_may_be_negative():
 
 def test_invalid_multiple_entry():
     with pytest.raises(AbacusError):
-        me = MultipleEntry([DebitEntry("a", Amount(100)), CreditEntry("b", Amount(99))])
+        me = MultipleEntry().dr("a", Amount(100)).cr("b", Amount(99))
         me.validate()
 
 
