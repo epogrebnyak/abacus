@@ -41,6 +41,7 @@ from collections import UserDict
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
+from itertools import chain, starmap
 from typing import Any, Iterable
 
 from pydantic import BaseModel
@@ -212,33 +213,39 @@ class Entry(BaseModel):
     credits: list[tuple[AccountName, Amount]] = []
 
     def __iter__(self):
-        _drs = [DebitEntry(name, amount) for name, amount in self.debits]
-        _crs = [CreditEntry(name, amount) for name, amount in self.credits]
-        return iter(_drs + _crs)
+        return chain(
+            starmap(DebitEntry, self.debits), starmap(CreditEntry, self.credits)
+        )
 
     def dr(self, account_name, amount):
+        """Add debit part to entry."""
         self.debits += [(account_name, amount)]
         return self
 
     def cr(self, account_name, amount):
+        """Add credit part to entry."""
         self.credits += [(account_name, amount)]
         return self
 
     def validate_balance(self):
+        """Raise error if sum of debits and sum credits are not equal."""
         if not self.is_balanced():
             self._raise_error()
         return self
 
     def is_balanced(self) -> bool:
-        """Check if sum of debits and sum credits are equal."""
-
-        def _sum(xs):
-            return sum(a for _, a in xs)
-
-        return _sum(self.debits) == _sum(self.credits)
+        """Return True if sum of debits equals to sum credits."""
+        return sum(amount for _, amount in self.debits) == sum(
+            amount for _, amount in self.credits
+        )
 
     def _raise_error(self):
         raise AbacusError(["Sum of debits does not equal to sum of credits.", self])
+
+    def add_title(self, title: str):
+        from ui import NamedEntry
+
+        return NamedEntry(title=title, debits=self.debits, credits=self.credits)
 
 
 def double_entry(debit: AccountName, credit: AccountName, amount: Amount) -> Entry:
@@ -252,7 +259,13 @@ class FastChart(BaseModel):
 
     def model_post_init(self, __context: Any) -> None:
         self.accounts[self.retained_earnings_account] = (T5.Capital, [])
-        return self
+
+    @classmethod
+    def default(cls):
+        return cls(
+            income_summary_account="__isa__",
+            retained_earnings_account="retained_earnings",
+        )
 
     def set_retained_earnings(self, account_name: str):
         del self.accounts[self.retained_earnings_account]

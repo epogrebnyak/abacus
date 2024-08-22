@@ -1,9 +1,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
+from typing import ClassVar, List
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from core import (
@@ -18,7 +16,7 @@ from core import (
     TrialBalance,
 )
 
-# type alias for int | float | Decimal
+# type alias for user inputed number
 Numeric = Amount | int | float
 
 
@@ -47,13 +45,13 @@ class NamedEntry(Entry):
 
     def debit(self, account_name: AccountName, amount: Numeric | None = None):
         """Add debit entry."""
-        t = account_name, Amount(amount or self._amount)
+        t = account_name, Amount(amount or self._amount)  # type: ignore
         self.debits.append(t)
         return self
 
     def credit(self, account_name: AccountName, amount: Numeric | None = None):
         """Add credit entry."""
-        t = account_name, Amount(amount or self._amount)
+        t = account_name, Amount(amount or self._amount)  # type: ignore
         self.credits.append(t)
         return self
 
@@ -63,9 +61,17 @@ class EntryList(BaseModel):
     _current: NamedEntry = NamedEntry()
     _current_id: int = 0  # for testing and future use
 
+    def commit(self):
+        self.saved.append(self._current)
+        self._current = None
+        return self
+
     def append(self, entry: NamedEntry):
         self.saved.append(entry)
-        self._current = NamedEntry()
+        return self
+
+    def extend(self, entries: List[NamedEntry]):
+        self.saved.extend(entries)
         return self
 
     def increment(self):
@@ -73,25 +79,33 @@ class EntryList(BaseModel):
         return self
 
 
-def default_chart() -> FastChart:
-    return FastChart(
-        income_summary_account="__isa__", retained_earnings_account="retained_earnings"
-    )
+# TODO: test EntryStore
+
+
+class EntryStore(EntryList):
+    _path: ClassVar[Path] = Path("./entries.json")
+
+    def save(self, path: Path | None = None):
+        _path = path or self._path
+        _path.write_text(self.model_dump_json(indent=2))
+
+    @classmethod
+    def load(cls, path: Path | None = None):
+        _path = path or cls._path
+        return cls.model_validate_json(_path.read_text())
 
 
 @dataclass
 class Book:
     company: str
-    chart: FastChart = field(default_factory=default_chart)
+    chart: FastChart = field(default_factory=FastChart.default)
     entries: EntryList = field(default_factory=EntryList)
     _ledger: Ledger | None = None
     _income_statement: IncomeStatement | None = None
     _chart_path: Path = Path("./chart.json")
     _entries_path: Path = Path("./entries.json")
 
-    @property
-    def income_statement(self):
-        return self._income_statement or self.proxy_income_statement
+    # FIXME: use ChartManager and EntriesManager to handle paths
 
     def save_chart(self, path: Path | None = None):
         _path = path or self._chart_path
@@ -111,13 +125,16 @@ class Book:
 
     @property
     def trial_balance(self):
-        return TrialBalance.new(self.ledger, self.chart)
+        """Return trial balance."""
+        return TrialBalance.new(self._ledger)
 
     @property
     def balance_sheet(self):
-        return BalanceSheet.new(self.ledger, self.chart)
+        """Return balance sheet."""
+        return BalanceSheet.new(self._ledger, self.chart)
 
     def set_title(self, account_name: str, title: str):
+        """Set descriptive title for account."""
         # not implemented yet
         return self
 
@@ -128,55 +145,69 @@ class Book:
         title: str | None,  # reserved
         offsets: list[str] | None,
     ):
+        """Add new account to chart."""
         self.chart.add(t, account_name, offsets or [])
-        self.set_title(account_name, title)
+        if title:
+            self.set_title(account_name, title)
         return self
 
     def add_asset(self, account, *, title=None, offsets=None):
+        """Add asset account to chart."""
         return self._add(T5.Asset, account, title, offsets)
 
     def add_assets(self, *account_names):
+        """Add several asset accounts to chart."""
         for name in account_names:
             self.add_asset(name)
         return self
 
     def add_liability(self, account, *, title=None, offsets=None):
+        """Add liability account to chart."""
         return self._add(T5.Liability, account, title, offsets)
 
     def add_liabilities(self, *account_names):
+        """Add several liability accounts to chart."""
         for name in account_names:
             self.add_liability(name)
         return self
 
     def add_capital(self, account, *, title=None, offsets=None):
+        """Add capital account to chart."""
         return self._add(T5.Capital, account, title, offsets)
 
     def add_capitals(self, *account_names):
+        """Add several capital accounts to chart."""
         for name in account_names:
             self.add_capital(name)
         return self
 
     def add_income(self, account, *, title=None, offsets=None):
+        """Add income account to chart."""
         return self._add(T5.Income, account, title, offsets)
 
     def add_incomes(self, *account_names):
+        """Add several income accounts to chart."""
         for name in account_names:
             self.add_income(name)
         return self
 
     def add_expense(self, account, *, title=None, offsets=None):
+        """Add expense account to chart."""
         return self._add(T5.Expense, account, title, offsets)
 
     def add_expenses(self, *account_names):
+        """Add several expense accounts to chart."""
         for name in account_names:
             self.add_expense(name)
         return self
 
     def set_income_summary_account(self, account_name: str):
+        """Set name of income summary account."""
         self.chart.income_summary_account = account_name
         return self
 
     def set_retained_earnings(self, account_name: str):
+        """Set name of retained earnings account."""
         self.chart.set_retained_earnings(account_name)
         return self
 
@@ -187,46 +218,62 @@ class Book:
 
     def entry(self, title: str):
         """Start new entry."""
-        self._current_entry = NamedEntry(title=title)
+        self.entries._current = NamedEntry(title=title)
         return self
 
     def amount(self, amount: Amount | int | float):
         """Set amount for the current entry."""
-        self._current_entry._amount = Amount(amount)
+        self.entries._current.amount(amount)
         return self
 
     def debit(self, account_name: str, amount: Amount | int | float | None = None):
         """Add debit part to current entry."""
-        self._current_entry.debit(account_name, amount)
+        self.entries._current.debit(account_name, amount)
         return self
 
     def credit(self, account_name: str, amount: Amount | int | float | None = None):
         """Add credit part to current entry."""
-        self._current_entry.credit(account_name, amount)
+        self.entries._current.credit(account_name, amount)
         return self
 
     def commit(self):
         """Post current entry to ledger and write it to entry store."""
-        self._ledger.post(self._current_entry)
-        self.entries.append(self._current_entry)
         self.entries.increment()
+        self.follow()
+        return self
+
+    def follow(self):
+        """Commit current entry, reuse previous transaction id."""
+        self._ledger.post(self.entries._current)
+        self.entries.commit()
         return self
 
     def close(self):
         """Close ledger."""
-        closing_entries, self._ledger, self._income_statement = self._ledger.close(
+        closingentries, self._ledger, self._income_statement = self._ledger.close(
             self.chart
         )
-        for ce in closing_entries:
-            ne = NamedEntry(title="Closing entry", debits=ce.debits, credits=ce.credits)
-            self.entries.append(ne)
+        self.entries.increment()
+        for ce in closingentries:
+            self.entries.append(ce.add_title("Closing entry"))
         return self
+
+    def is_closed(self) -> bool:
+        """Return True if ledger was closed."""
+        return self._income_statement is not None
 
     @property
     def proxy_income_statement(self):
-        _, _, income_statement = self.ledger.copy().close(self.chart)
+        """Income statement proxy (to use before ledger is closed)."""
+        _, _, income_statement = self._ledger.copy().close(self.chart)
         return income_statement
 
     @property
     def proxy_net_earnings(self) -> Amount:
+        """Net earnings proxy (to use before ledger is closed)."""
         return self.proxy_income_statement.net_earnings
+
+    @property
+    def income_statement(self):
+        """Return income statement."""
+        return self._income_statement or self.proxy_income_statement

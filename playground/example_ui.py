@@ -25,8 +25,6 @@ book.entry("Accepted payment").amount(900).credit("ar").debit("cash").commit()
 book.entry("Made refund").amount(50).debit("refunds").credit("ar").commit()
 book.entry("Made cashback").amount(50).debit("cashback").credit("cash").commit()
 book.entry("Paid salaries").amount(150).credit("cash").debit("salaries").commit()
-#from pprint import pprint
-#pprint(book)
 assert book.proxy_net_earnings == 150
 book.entry("Accrue corporate income tax 20%").amount(30).credit("cit_due").debit("cit").commit()
 book.close()
@@ -35,7 +33,9 @@ book.entry("Announced dividend").amount(60).debit("re").credit("dividend").commi
 book.entry("Pay corporate income tax").amount(30).debit("cit_due").credit("cash").commit()
 # fmt: on
 print(book.entries._current_id)
-assert book.entries._current_id == 19
+assert (
+    book.entries._current_id == 13
+)  # 12 + 1 block of closing entries, 19 entries added in total)
 print((a := book.income_statement).json())
 assert a.dict() == {
     "income": {"sales": 900},
@@ -51,6 +51,7 @@ book.save_chart()
 book.save_entries()
 
 
+# FIXME: move to tests
 def load_book(company):
     book = Book(company)
     book.load_chart()

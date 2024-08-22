@@ -2,6 +2,7 @@ import pytest
 from ui import FastChart
 
 from core import (
+    T5,
     AbacusError,
     Amount,
     BalanceSheet,
@@ -12,7 +13,6 @@ from core import (
     UnrestrictedCreditAccount,
     close,
     double_entry,
-    T5,
 )
 
 
