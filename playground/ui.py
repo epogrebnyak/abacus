@@ -112,7 +112,7 @@ class Book:
         return BalanceSheet.new(self.ledger, self.chart)
 
     def set_title(self, account_name: str, title: str):
-        pass  # not implemented yet
+        # not implemented yet
         return self
 
     def _add(
@@ -123,6 +123,7 @@ class Book:
         offsets: list[str] | None,
     ):
         self.chart.add(t, account_name, offsets or [])
+        self.set_title(account_name, title)
         return self
 
     def add_asset(self, account, *, title=None, offsets=None):
