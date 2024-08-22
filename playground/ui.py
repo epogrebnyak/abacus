@@ -182,7 +182,7 @@ class Book:
 
     def open(self):
         """Create new ledger."""
-        self.ledger = Ledger.new(self.chart)
+        self._ledger = Ledger.new(self.chart)
         return self
 
     def entry(self, title: str):
@@ -207,14 +207,14 @@ class Book:
 
     def commit(self):
         """Post current entry to ledger and write it to entry store."""
-        self.ledger.post(self._current_entry)
+        self._ledger.post(self._current_entry)
         self.entries.append(self._current_entry)
         self.entries.increment()
         return self
 
     def close(self):
         """Close ledger."""
-        closing_entries, self.ledger, self._income_statement = self.ledger.close(
+        closing_entries, self._ledger, self._income_statement = self._ledger.close(
             self.chart
         )
         for ce in closing_entries:
