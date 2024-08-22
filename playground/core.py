@@ -176,38 +176,6 @@ class CreditEntry(SingleEntry):
     """An entry that increases the credit side of an account."""
 
 
-class IterableEntry(Iterable[SingleEntry], ABC):
-    """Base class for classes that can stream single entries when posting to ledger.
-
-    Child classes:
-    - Entry
-    - DoubleEntry
-    - ui.NamedEntry
-    """
-
-    @abstractmethod
-    def __iter__(self):
-        """Make class iterable, similar to list[SingleEntry]."""
-        pass
-
-    def is_balanced(self) -> bool:
-        """Check if sum of debits and sum credits are equal."""
-
-        def _sum(cls):
-            return sum(e.amount for e in iter(self) if isinstance(e, cls))
-
-        return _sum(DebitEntry) == _sum(CreditEntry)
-
-    def validate(self):
-        """Check if sum of debits and sum credits are equal."""
-        if not self.is_balanced():
-            self._raise_error()
-        return self
-
-    def _raise_error(self):
-        raise AbacusError(["Sum of debits does not equal to sum of credits.", self])
-
-
 class Entry(BaseModel):
     debits: list[tuple[AccountName, Amount]] = []
     credits: list[tuple[AccountName, Amount]] = []
@@ -452,11 +420,16 @@ class Ledger(UserDict[AccountName, TAccountBase]):
                 not_found.append(entry)
             except AbacusError:
                 cannot_post.append(entry)
-        if not_found or cannot_post:
+        if not_found:
             raise AbacusError(
                 {
-                    "Could not post to ledger": cannot_post,
-                    "Account does not exist": not_found,
+                    "Accounts do not exist": not_found,
+                }
+            )
+        if cannot_post:
+            raise AbacusError(
+                {
+                    "Could not post to ledger (negative balance)": cannot_post,
                 }
             )
 
