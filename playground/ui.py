@@ -66,6 +66,9 @@ class EntryList(BaseModel):
     def append(self, entry: NamedEntry):
         self.saved.append(entry)
         self._current = NamedEntry()
+        return self
+    
+    def increment(self):
         self._current_id += 1
         return self
 
@@ -199,6 +202,7 @@ class Book:
         """Post current entry to ledger and write it to entry store."""
         self.ledger.post(self._current_entry)
         self.entries.append(self._current_entry)
+        self.entries.increment()
         return self
 
     def close(self):
