@@ -82,7 +82,9 @@ def test_end_to_end():
         Entry().dr("cash", 75).dr("refunds", 2).cr("sales", 77),
     ]
 
-    chart = FastChart(income_summary_account="__isa__", retained_earnings_account="__re__")
+    chart = FastChart(
+        income_summary_account="__isa__", retained_earnings_account="__re__"
+    )
     chart.set_retained_earnings("retained_earnings")
     chart.add_asset("cash")
     chart.add_asset("inventory")

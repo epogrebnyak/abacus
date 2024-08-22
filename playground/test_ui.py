@@ -39,9 +39,30 @@ def test_book():
         .commit()
         .entries.saved[-1]
     )
-    # Had to override the __eq__ method in NamedEntry.
     assert entry == NamedEntry(
         title="Shareholder investment",
         debits=[("cash", Amount(1500))],
         credits=[("equity", Amount(1500))],
     )
+
+
+# fmt: off
+@pytest.fixture
+def simple_book():
+       return (
+        Book("Simple Book, Inc.")
+        .add_asset("cash")
+        .add_capital("equity")
+        .add_income("sales")
+        .add_expense("salary")
+        .open()
+        .entry("Shareholder investment").amount(1500).debit("cash").credit("equity").commit()
+        .entry("Provided services").amount(800).debit("cash").credit("sales").commit()
+        .entry("Paid wages").amount(400).debit("salary").credit("cash").commit()
+        .close()
+    )
+# fmt: on
+
+
+def test_income_statement(simple_book):
+    assert simple_book.income_statement.net_earnings == 400

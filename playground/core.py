@@ -254,7 +254,6 @@ class FastChart(BaseModel):
         self.accounts[self.retained_earnings_account] = (T5.Capital, [])
         return self
 
-
     def set_retained_earnings(self, account_name: str):
         del self.accounts[self.retained_earnings_account]
         self.retained_earnings_account = account_name

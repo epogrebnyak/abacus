@@ -67,25 +67,31 @@ class EntryList(BaseModel):
         self.saved.append(entry)
         self._current = NamedEntry()
         return self
-    
+
     def increment(self):
         self._current_id += 1
         return self
+
 
 def default_chart() -> FastChart:
     return FastChart(
         income_summary_account="__isa__", retained_earnings_account="retained_earnings"
     )
 
+
 @dataclass
 class Book:
     company: str
     chart: FastChart = field(default_factory=default_chart)
     entries: EntryList = field(default_factory=EntryList)
-    ledger: Ledger | None = None
-    income_statement: IncomeStatement = IncomeStatement(income={}, expenses={})
+    _ledger: Ledger | None = None
+    _income_statement: IncomeStatement | None = None
     _chart_path: Path = Path("./chart.json")
     _entries_path: Path = Path("./entries.json")
+
+    @property
+    def income_statement(self):
+        return self._income_statement or self.proxy_income_statement
 
     def save_chart(self, path: Path | None = None):
         _path = path or self._chart_path
@@ -208,7 +214,7 @@ class Book:
 
     def close(self):
         """Close ledger."""
-        closing_entries, self.ledger, self.income_statement = self.ledger.close(
+        closing_entries, self.ledger, self._income_statement = self.ledger.close(
             self.chart
         )
         for ce in closing_entries:
