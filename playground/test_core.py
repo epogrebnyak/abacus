@@ -40,14 +40,16 @@ def test_invalid_multiple_entry():
 
 
 def test_chart_on_retained_earnings():
-    chart = FastChart.new("isa", "re2")
-    assert chart.retained_earnings_account == "re2"
-    assert chart.accounts["re2"] == (T5.Capital, [])
+    chart = FastChart(
+        income_summary_account="isa", retained_earnings_account="this_is_re"
+    )
+    assert chart.retained_earnings_account == "this_is_re"
+    assert chart.accounts["this_is_re"] == (T5.Capital, [])
 
 
 def test_balance_sheet_respects_contra_account():
     chart = (
-        FastChart.new(income_summary_account="isa", retained_earnings_account="re")
+        FastChart(income_summary_account="isa", retained_earnings_account="re")
         .add_asset("cash")
         .add_capital("equity", contra_accounts=["treasury_shares"])
     )
@@ -80,7 +82,7 @@ def test_end_to_end():
         Entry().dr("cash", 75).dr("refunds", 2).cr("sales", 77),
     ]
 
-    chart = FastChart.new("__isa__", "__re__")
+    chart = FastChart(income_summary_account="__isa__", retained_earnings_account="__re__")
     chart.set_retained_earnings("retained_earnings")
     chart.add_asset("cash")
     chart.add_asset("inventory")

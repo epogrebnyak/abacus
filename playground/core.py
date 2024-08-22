@@ -41,7 +41,7 @@ from collections import UserDict
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable
+from typing import Any, Iterable
 
 from pydantic import BaseModel
 
@@ -248,22 +248,15 @@ def double_entry(debit: AccountName, credit: AccountName, amount: Amount) -> Ent
 class FastChart(BaseModel):
     income_summary_account: str
     retained_earnings_account: str
-    accounts: dict[str, tuple[T5, list[str]]]
+    accounts: dict[str, tuple[T5, list[str]]] = {}
 
-    @classmethod
-    def new(
-        cls,
-        income_summary_account: str = "__isa__",
-        retained_earnings_account: str = "retained_earnings",
-    ):
-        return cls(
-            income_summary_account=income_summary_account,
-            retained_earnings_account=retained_earnings_account,
-            accounts={retained_earnings_account: (T5.Capital, [])},
-        )
+    def model_post_init(self, __context: Any) -> None:
+        self.accounts[self.retained_earnings_account] = (T5.Capital, [])
+        return self
+
 
     def set_retained_earnings(self, account_name: str):
-        del self.accounts[self.retained_earnings_account]  # rarely may not exist
+        del self.accounts[self.retained_earnings_account]
         self.retained_earnings_account = account_name
         self.accounts[account_name] = (T5.Capital, [])
         return self

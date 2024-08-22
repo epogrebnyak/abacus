@@ -69,13 +69,17 @@ class EntryList(BaseModel):
         self._current_id += 1
         return self
 
+def default_chart() -> FastChart:
+    return FastChart(
+        income_summary_account="__isa__", retained_earnings_account="retained_earnings"
+    )
 
 @dataclass
 class Book:
     company: str
-    chart: FastChart = field(default_factory=FastChart.new)
-    ledger: Ledger | None = None
+    chart: FastChart = field(default_factory=default_chart)
     entries: EntryList = field(default_factory=EntryList)
+    ledger: Ledger | None = None
     income_statement: IncomeStatement = IncomeStatement(income={}, expenses={})
     _chart_path: Path = Path("./chart.json")
     _entries_path: Path = Path("./entries.json")
