@@ -81,18 +81,31 @@ class EntryList(BaseModel):
 
 # TODO: test EntryStore
 
+from abc import ABC, abstractmethod
 
-class EntryStore(EntryList):
-    _path: ClassVar[Path] = Path("./entries.json")
+
+class LoadSaveMixin(BaseModel, ABC):
+    _path: Path | None = None
+
+    @property
+    @abstractmethod
+    def _default_path() -> Path:
+        pass
+    
+
+    def load(cls, path: Path | None = None):
+        _p = path or cls._default_path
+        return cls.model_validate_json(_p.read_text())
 
     def save(self, path: Path | None = None):
-        _path = path or self._path
+        _path = path or self._path or self._default_path
         _path.write_text(self.model_dump_json(indent=2))
 
-    @classmethod
-    def load(cls, path: Path | None = None):
-        _path = path or cls._path
-        return cls.model_validate_json(_path.read_text())
+class EntryStore(EntryList, LoadSaveMixin):
+
+    @property
+    def _default_path(sef) -> Path:
+        return Path("./entries.json")
 
 
 @dataclass
