@@ -18,39 +18,6 @@ from core import (
     TrialBalance,
 )
 
-# Use fastapi to create Chart object below
-
-
-app = FastAPI()
-
-
-@app.post("/chart/new")
-def create_chart(
-    income_summary_account: str = "isa", retained_earnings_account: str = "re"
-) -> FastChart:
-    return FastChart.new(income_summary_account, retained_earnings_account)
-
-
-client = TestClient(app)
-
-
-def test_chart_new():
-    payload = {
-        "income_summary_account": "current_profit",
-        "retained_earnings_account": "retained_earnings",
-    }
-    response = client.post("/chart/new", params=payload)
-    assert response.status_code == 200
-    assert response.json() == {
-        "income_summary_account": "current_profit",
-        "retained_earnings_account": "retained_earnings",
-        "accounts": {"retained_earnings": ["capital", []]},
-    }
-
-
-test_chart_new()
-
-
 # type alias for int | float | Decimal
 Numeric = Amount | int | float
 
@@ -106,7 +73,7 @@ class EntryList(BaseModel):
 @dataclass
 class Book:
     company: str
-    chart: FastChart = field(default_factory=create_chart)
+    chart: FastChart = field(default_factory=FastChart.new)
     ledger: Ledger | None = None
     entries: EntryList = field(default_factory=EntryList)
     income_statement: IncomeStatement = IncomeStatement(income={}, expenses={})

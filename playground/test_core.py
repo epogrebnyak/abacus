@@ -1,5 +1,5 @@
 import pytest
-from ui import FastChart, create_chart
+from ui import FastChart
 
 from core import (
     AbacusError,
@@ -12,6 +12,7 @@ from core import (
     UnrestrictedCreditAccount,
     close,
     double_entry,
+    T5,
 )
 
 
@@ -38,9 +39,15 @@ def test_invalid_multiple_entry():
         me.validate_balance()
 
 
+def test_chart_on_retained_earnings():
+    chart = FastChart.new("isa", "re2")
+    assert chart.retained_earnings_account == "re2"
+    assert chart.accounts["re2"] == (T5.Capital, [])
+
+
 def test_balance_sheet_respects_contra_account():
     chart = (
-        create_chart("isa", "re")
+        FastChart.new(income_summary_account="isa", retained_earnings_account="re")
         .add_asset("cash")
         .add_capital("equity", contra_accounts=["treasury_shares"])
     )
