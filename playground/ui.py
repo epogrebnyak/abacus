@@ -57,14 +57,19 @@ class NamedEntry(Entry):
         return self
 
 
-class EntryList(NamedEntry):
+class EntryList(BaseModel):
     entries: List[NamedEntry] = []
+    closing_entries: List[NamedEntry] = []
+    post_close_entries: List[NamedEntry] = []
     _current_entry: NamedEntry | None = None
     _current_id: int = 0  # for testing and future use
 
+    def is_closed(self) -> bool:
+        return len(self.closing_entries) > 0
+       
     def __iter__(self):
-        return iter(self.entries)
-
+        return iter(self.entries + self.closing_entries + self.post_close_entries)
+    
     def head(self, title: str):
         self._current_entry = NamedEntry(title=title)
         return self
@@ -87,7 +92,10 @@ class EntryList(NamedEntry):
         return self
 
     def commit(self):
-        self.entries.append(self._current_entry)
+        if self.is_closed():
+            self.post_close_entries.append(self._current_entry)
+        else:    
+            self.entries.append(self._current_entry)
         self._current_entry = None
         return self
 
@@ -95,10 +103,9 @@ class EntryList(NamedEntry):
         self._current_id += 1
         return self
 
-    def append(self, entry: NamedEntry):
-        self.entries.append(entry)
+    def add_closing_entry(self, entry: Entry):
+        self.closing_entries.append(entry.add_title("Closing entry"))
         return self
-
 
 class LoadSaveMixin(BaseModel):
     _default_path: ClassVar[Path]
@@ -148,11 +155,14 @@ class Book:
     def load(cls, company: str) -> "Book":
         book = cls(company)
         book.chart = ChartStore.from_file()
-        book.entries = EntryStore.from_file()
+        book.entries = EntryStore.from_file()        
         book.open()
         book._ledger.post_many(book.entries)  # type: ignore
-        # FIXME: this leaves income statement undefined if book was closed
-        return book
+        if book.is_closed():
+           ledger = Ledger.new(book.chart)
+           ledger.post_many(book.entries.entries)
+           _, _, book.income_statement = ledger.close(book.chart)
+        return book    
 
     @property
     def trial_balance(self):
@@ -266,6 +276,11 @@ class Book:
         """Add credit part to current entry."""
         self.entries.credit(account_name, amount)
         return self
+    
+    def double_entry(self, title, dr_account, cr_account, amount):
+        """Add double entry."""
+        self.entry(title).amount(amount).debit(dr_account).credit(cr_account)
+        return self
 
     def commit(self):
         """Post current entry to ledger and write it to entry store."""
@@ -281,23 +296,22 @@ class Book:
 
     def close(self):
         """Close ledger."""
-        closingentries, self._ledger, self._income_statement = self._ledger.close(
+        closing_entries, self._ledger, self._income_statement = self._ledger.close(
             self.chart
         )
         self.entries.increment()
-        for ce in closingentries:
-            self.entries.append(ce.add_title("Closing entry"))
+        for ce in closing_entries:
+            self.entries.add_closing_entry(ce)
         return self
 
     def is_closed(self) -> bool:
         """Return True if ledger was closed."""
-        return self._income_statement is not None
+        return self.entries.is_closed()
 
     @property
     def proxy_income_statement(self):
         """Income statement proxy (to use before ledger is closed)."""
-        _, _, income_statement = self._ledger.copy().close(self.chart)
-        return income_statement
+        return IncomeStatement.new(self._ledger.copy(), self.chart)
 
     @property
     def proxy_net_earnings(self) -> Amount:

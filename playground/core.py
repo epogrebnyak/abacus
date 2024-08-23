@@ -391,6 +391,8 @@ class DebitOrCreditAccount(TAccountBase):
     def side(self) -> Side:
         return Side.Credit if self.right >= self.left else Side.Debit
 
+def error(message, data):
+    raise AbacusError({message: data})
 
 class Ledger(UserDict[AccountName, TAccountBase]):
     @classmethod
@@ -421,17 +423,9 @@ class Ledger(UserDict[AccountName, TAccountBase]):
             except AbacusError:
                 cannot_post.append(entry)
         if not_found:
-            raise AbacusError(
-                {
-                    "Accounts do not exist": not_found,
-                }
-            )
+            error("Accounts do not exist", not_found)
         if cannot_post:
-            raise AbacusError(
-                {
-                    "Could not post to ledger (negative balance)": cannot_post,
-                }
-            )
+            error("Could not post to ledger (negative balance)", cannot_post)
 
     def post_many(self, entries: list[Entry]):
         """Post several streams of entries to ledger."""
@@ -475,24 +469,23 @@ def close(
         ledger.post(entry)
         del ledger[from_]
 
-    # 1. Close contra income and contra expense accounts.
+    # 1. Create income statement
+    # FIXME: maybe does not belong here 
+    income_summary = IncomeStatement.new(ledger, chart)            
+
+    # 2. Close contra income and contra expense accounts.
     for t in T5.Income, T5.Expense:
         for name, contra_names in chart[t]:
             for contra_name in contra_names:
                 proceed(from_=contra_name, to_=name)
 
-    # 2. Close income and expense accounts and create income statement.
-    income_summary = IncomeStatement(income={}, expenses={})
+    # 3. Close income and expense accounts to income summary account.
     for name, _ in chart[T5.Income]:
-        b = ledger[name].balance
-        income_summary.income[name] = b
         proceed(name, chart.income_summary_account)
     for name, _ in chart[T5.Expense]:
-        b = ledger[name].balance
-        income_summary.expenses[name] = b
         proceed(name, chart.income_summary_account)
 
-    # 3. Close income summary account to retained earnings account.
+    # 4. Close income summary account to retained earnings account.
     proceed(chart.income_summary_account, chart.retained_earnings_account)
 
     return closing_entries, ledger, income_summary
@@ -544,6 +537,15 @@ class Report(BaseModel):
 class IncomeStatement(Report):
     income: dict[AccountName, Amount]
     expenses: dict[AccountName, Amount]
+
+    @classmethod
+    def new(cls, ledger: Ledger, chart: FastChart):
+        """Create income statement from ledger and chart."""
+        income_summary = cls(income={}, expenses={})
+        for name, contra_names in chart[T5.Income]:
+            income_summary.income[name] = net_balance(ledger, name, contra_names)
+        for name, contra_names in chart[T5.Expense]:
+            income_summary.expenses[name] = net_balance(ledger, name, contra_names)
 
     @property
     def net_earnings(self):
