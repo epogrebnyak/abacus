@@ -168,17 +168,18 @@ class Book:
         book.chart = ChartStore.from_file()
         book.entries = EntryStore.from_file()
         book.open()
-        book.ledger.post_many(book.entries.entries_before_close)  # type: ignore
-        if book.is_closed():
-            book._income_statement = IncomeStatement.new(book.ledger, book.chart)
-            book.ledger.post_many(book.entries.closing_entries)
-            # remove temporary accounts to make ledger identical to the one saved
-            temporary_accounts = set(
-                e.name for entry in book.entries.closing_entries for e in iter(entry)
-            ) - set([book.chart.retained_earnings_account])
-            for name in temporary_accounts:
-                del book.ledger[name]
+        book.ledger.post_many(book.entries.entries_before_close)
+        if book.entries.closing_entries:
+            book._replicate_entries(book.entries)
         return book
+
+    def _replicate_entries(self, entries):
+        self._income_statement = IncomeStatement.new(self.ledger, self.chart)
+        self.ledger.post_many(entries.closing_entries)
+        # Must remove temporary accounts to make ledger identical to the one saved.
+        for name in self.chart.temporary_accounts:
+            del self.ledger[name]
+        self.ledger.post_many(entries.entries_after_close)
 
     @property
     def trial_balance(self):

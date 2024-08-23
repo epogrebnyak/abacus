@@ -262,6 +262,15 @@ class FastChart(BaseModel):
             if _t == t
         ]
 
+    @property
+    def temporary_accounts(self):
+        """Return temporary accounts."""
+        yield self.income_summary_account
+        for t in T5.Income, T5.Expense:
+            for name, contra_names in self[t]:
+                yield name
+                yield from contra_names
+
     def add_asset(self, account: str, contra_accounts=None):
         return self.add(T5.Asset, account, contra_accounts)
 
