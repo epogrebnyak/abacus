@@ -1,7 +1,9 @@
-import pytest
-from ui import Book, NamedEntry
+from pathlib import Path
 
-from core import T5, Amount
+import pytest
+from ui import Book, EntryStore, LoadSaveMixin, NamedEntry
+
+from core import T5, Amount, double_entry
 
 
 def test_named_entry_constructor():
@@ -27,7 +29,7 @@ def test_book_add_assets():
 
 
 def test_book():
-    entry = (
+    entry_store = (
         Book("test")
         .add_asset("cash")
         .add_capital("equity")
@@ -37,9 +39,9 @@ def test_book():
         .debit("cash")
         .credit("equity")
         .commit()
-        .entries.saved[-1]
+        .entries
     )
-    assert entry == NamedEntry(
+    assert entry_store.entries[-1] == NamedEntry(
         title="Shareholder investment",
         debits=[("cash", Amount(1500))],
         credits=[("equity", Amount(1500))],
@@ -109,3 +111,44 @@ def test_trial_balance_after_close(simple_book):
         "equity": (0, 1500),
         "retained_earnings": (0, 400),
     }
+
+
+@pytest.fixture
+def tmp_json(tmp_path):
+    return Path(tmp_path / "test.json")
+
+
+def test_provide_filed_needs_own_constructor(tmp_path):
+    class M(LoadSaveMixin):
+        _default_path = Path("abc.json")
+        pass
+
+    p = tmp_path / "test.json"
+    a = M()
+    assert a._path == Path("abc.json")
+    a.set_path(p)
+    assert a._path == p
+
+
+def test_entry_store(tmp_json):
+    a = (
+        EntryStore()
+        .set_path(tmp_json)
+        .head("Start business")
+        .amount(500)
+        .debit("cash")
+        .credit("equity")
+        .commit()
+    )
+    a.to_file()
+    b = EntryStore.from_file(path=tmp_json)
+    assert b.entries[0] == double_entry("cash", "equity", 500).add_title(
+        "Start business"
+    )
+
+
+def test_entry_store_on_simple_book(simple_book, tmp_json):
+    simple_book.entries.to_file(path=tmp_json)
+    b = EntryStore.from_file(tmp_json)
+    print(b.entries)
+    assert b.entries == simple_book.entries.entries

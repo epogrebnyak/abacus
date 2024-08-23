@@ -1,1 +1,1 @@
-from ui import Book
+from ui import Book  # noqa: F401

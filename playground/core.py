@@ -42,7 +42,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
 from itertools import chain, starmap
-from typing import Any, Iterable
+from typing import Any
 
 from pydantic import BaseModel
 

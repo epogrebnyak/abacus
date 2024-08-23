@@ -47,18 +47,9 @@ assert b.dict() == {
     "capital": {"equity": 1470, "re": 60},
     "liabilities": {"vat": 200, "dividend": 60, "cit_due": 0},
 }
-book.save_chart()
-book.save_entries()
+book.save()
 
 
-# FIXME: move to tests
-def load_book(company):
-    book = Book(company)
-    book.load_chart()
-    book.load_entries()
-    return book
-
-
-book2 = load_book("Duffin Mills")
-assert book2.entries.saved == book.entries.saved
+book2 = Book.load("Duffin Mills")
+assert book2.entries.entries == book.entries.entries
 assert book2.chart == book.chart

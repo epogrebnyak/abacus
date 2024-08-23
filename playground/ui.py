@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import ClassVar, List
+from typing import Any, ClassVar, List
 
 from pydantic import BaseModel
 
@@ -57,84 +57,95 @@ class NamedEntry(Entry):
 
 
 class EntryList(BaseModel):
-    saved: List[NamedEntry] = []
-    _current: NamedEntry = NamedEntry()
+    entries: List[NamedEntry] = []
+    _current: NamedEntry | None = None
     _current_id: int = 0  # for testing and future use
 
+    def __iter__(self):
+        return iter(self.entries)
+
+    def head(self, title: str):
+        self._current = NamedEntry(title=title)
+        return self
+
+    def amount(self, amount: Numeric):
+        self._current.amount(amount)  # type: ignore
+        return self
+
+    def debit(self, account_name: AccountName, amount: Numeric | None = None):
+        self._current.debit(account_name, amount)  # type: ignore
+        return self
+
+    def credit(self, account_name: AccountName, amount: Numeric | None = None):
+        self._current.credit(account_name, amount)  # type: ignore
+        return self
+
     def commit(self):
-        self.saved.append(self._current)
+        self.entries.append(self._current)
         self._current = None
-        return self
-
-    def append(self, entry: NamedEntry):
-        self.saved.append(entry)
-        return self
-
-    def extend(self, entries: List[NamedEntry]):
-        self.saved.extend(entries)
         return self
 
     def increment(self):
         self._current_id += 1
         return self
 
+    def append(self, entry: NamedEntry):
+        self.entries.append(entry)
+        return self
 
-# TODO: test EntryStore
 
-from abc import ABC, abstractmethod
+class LoadSaveMixin(BaseModel):
+    _default_path: ClassVar[Path]
+    _path: Path
 
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        self._path = self._default_path
 
-class LoadSaveMixin(BaseModel, ABC):
-    _path: Path | None = None
+    def set_path(self, path: Path):
+        self._path = path
+        return self
 
-    @property
-    @abstractmethod
-    def _default_path() -> Path:
-        pass
-    
+    @classmethod
+    def from_file(cls, path: Path | None = None):
+        _path = path or cls._default_path
+        return cls.model_validate_json(_path.read_text())
 
-    def load(cls, path: Path | None = None):
-        _p = path or cls._default_path
-        return cls.model_validate_json(_p.read_text())
-
-    def save(self, path: Path | None = None):
-        _path = path or self._path or self._default_path
+    def to_file(self, path: Path | None = None):
+        _path = (path or self._path) or self._default_path
         _path.write_text(self.model_dump_json(indent=2))
 
-class EntryStore(EntryList, LoadSaveMixin):
 
-    @property
-    def _default_path(sef) -> Path:
-        return Path("./entries.json")
+class EntryStore(EntryList, LoadSaveMixin):
+    _default_path: ClassVar[Path] = Path("./entries.json")
+
+
+class ChartStore(FastChart, LoadSaveMixin):
+    _default_path: ClassVar[Path] = Path("./chart.json")
 
 
 @dataclass
 class Book:
     company: str
-    chart: FastChart = field(default_factory=FastChart.default)
-    entries: EntryList = field(default_factory=EntryList)
+    chart: ChartStore = field(default_factory=ChartStore.default)
+    entries: EntryStore = field(default_factory=EntryStore)  # type: ignore
     _ledger: Ledger | None = None
     _income_statement: IncomeStatement | None = None
-    _chart_path: Path = Path("./chart.json")
-    _entries_path: Path = Path("./entries.json")
 
-    # FIXME: use ChartManager and EntriesManager to handle paths
+    def save(self):
+        self.chart.to_file()
+        self.entries.to_file()
+        return self
 
-    def save_chart(self, path: Path | None = None):
-        _path = path or self._chart_path
-        _path.write_text(self.chart.model_dump_json(indent=2))
-
-    def save_entries(self, path: Path | None = None):
-        _path = path or self._entries_path
-        _path.write_text(self.entries.model_dump_json(indent=2))
-
-    def load_chart(self, path: Path | None = None):
-        _path = path or self._chart_path
-        self.chart = FastChart.model_validate_json(_path.read_text())
-
-    def load_entries(self, path: Path | None = None):
-        _path = path or self._entries_path
-        self.entries = EntryList.model_validate_json(_path.read_text())
+    @classmethod
+    def load(cls, company: str) -> "Book":
+        book = cls(company)
+        book.chart = ChartStore.from_file()
+        book.entries = EntryStore.from_file()
+        book.open()
+        book._ledger.post_many(book.entries)  # type: ignore
+        # FIXME: this leaves income statement undefined if book was closed
+        return book
 
     @property
     def trial_balance(self):
@@ -231,22 +242,22 @@ class Book:
 
     def entry(self, title: str):
         """Start new entry."""
-        self.entries._current = NamedEntry(title=title)
+        self.entries.head(title)
         return self
 
-    def amount(self, amount: Amount | int | float):
+    def amount(self, amount: Numeric):
         """Set amount for the current entry."""
-        self.entries._current.amount(amount)
+        self.entries.amount(amount)
         return self
 
-    def debit(self, account_name: str, amount: Amount | int | float | None = None):
+    def debit(self, account_name: str, amount: Numeric | None = None):
         """Add debit part to current entry."""
-        self.entries._current.debit(account_name, amount)
+        self.entries.debit(account_name, amount)
         return self
 
-    def credit(self, account_name: str, amount: Amount | int | float | None = None):
+    def credit(self, account_name: str, amount: Numeric | None = None):
         """Add credit part to current entry."""
-        self.entries._current.credit(account_name, amount)
+        self.entries.credit(account_name, amount)
         return self
 
     def commit(self):
