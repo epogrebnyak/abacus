@@ -1,9 +1,9 @@
 from pathlib import Path
 
 import pytest
-from ui import Book, EntryStore, LoadSaveMixin, NamedEntry
+from ui import Book, EntryStore, NamedEntry
 
-from core import T5, Amount, double_entry
+from core import T5, Amount, IncomeStatement, double_entry
 
 
 def test_named_entry_constructor():
@@ -29,7 +29,7 @@ def test_book_add_assets():
 
 
 def test_book():
-    entry_store = (
+    book = (
         Book("test")
         .add_asset("cash")
         .add_capital("equity")
@@ -39,9 +39,8 @@ def test_book():
         .debit("cash")
         .credit("equity")
         .commit()
-        .entries
     )
-    assert entry_store.entries[-1] == NamedEntry(
+    assert book.entries.entries_before_close[-1] == NamedEntry(
         title="Shareholder investment",
         debits=[("cash", Amount(1500))],
         credits=[("equity", Amount(1500))],
@@ -118,18 +117,6 @@ def tmp_json(tmp_path):
     return Path(tmp_path / "test.json")
 
 
-def test_provide_filed_needs_own_constructor(tmp_path):
-    class M(LoadSaveMixin):
-        _default_path = Path("abc.json")
-        pass
-
-    p = tmp_path / "test.json"
-    a = M()
-    assert a._path == Path("abc.json")
-    a.set_path(p)
-    assert a._path == p
-
-
 def test_entry_store(tmp_json):
     a = (
         EntryStore()
@@ -142,13 +129,51 @@ def test_entry_store(tmp_json):
     )
     a.to_file()
     b = EntryStore.from_file(path=tmp_json)
-    assert b.entries[0] == double_entry("cash", "equity", 500).add_title(
+    assert b.entries_before_close[0] == double_entry("cash", "equity", 500).add_title(
         "Start business"
     )
 
 
-def test_entry_store_on_simple_book(simple_book, tmp_json):
+def test_entry_store_with_simple_book_reloads_after_save(simple_book, tmp_json):
     simple_book.entries.to_file(path=tmp_json)
-    b = EntryStore.from_file(tmp_json)
-    print(b.entries)
-    assert b.entries == simple_book.entries.entries
+    a = EntryStore.from_file(tmp_json).entries_before_close
+    b = simple_book.entries.entries_before_close
+    print(len(a), len(b))
+    assert a[0] == b[0]
+    assert a[1] == b[1]
+    assert a[2] == b[2]
+    assert a == b  # tweaked EntryList.__eq__ method for this
+
+
+def test_closed_simple_book_reloads_after_save(simple_book, tmp_json):
+    simple_book.close().save()
+    new_book = Book.load("")
+    assert simple_book.entries == new_book.entries
+    assert simple_book.chart == new_book.chart
+    assert simple_book.income_statement == new_book.income_statement
+    assert simple_book.balance_sheet == new_book.balance_sheet
+    assert simple_book.trial_balance == new_book.trial_balance
+
+
+@pytest.fixture
+def book_after_close():
+    book = (
+        Book("Lost Data Ltd")
+        .add_asset("cash")
+        .add_income("sales", offsets=["refunds"])
+        .open()
+    )
+    book.double_entry("Regiter sales", "cash", "sales", 5).commit()
+    book.double_entry("Issue refund", "refunds", "cash", 3).commit()
+    book.close()
+    return book
+
+
+def test_income_statement_after_close_again(book_after_close):
+    ref = IncomeStatement(income={"sales": 2}, expenses={})
+    assert book_after_close.income_statement == ref
+
+
+def test_income_statement_after_save_and_load(book_after_close):
+    ref = IncomeStatement(income={"sales": 2}, expenses={})
+    assert book_after_close.save().load("Lost Data Ltd").income_statement == ref

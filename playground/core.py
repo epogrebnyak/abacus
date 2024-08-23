@@ -42,7 +42,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
 from itertools import chain, starmap
-from typing import Any
+from typing import Any, Sequence
 
 from pydantic import BaseModel
 
@@ -391,8 +391,10 @@ class DebitOrCreditAccount(TAccountBase):
     def side(self) -> Side:
         return Side.Credit if self.right >= self.left else Side.Debit
 
+
 def error(message, data):
     raise AbacusError({message: data})
+
 
 class Ledger(UserDict[AccountName, TAccountBase]):
     @classmethod
@@ -427,7 +429,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
         if cannot_post:
             error("Could not post to ledger (negative balance)", cannot_post)
 
-    def post_many(self, entries: list[Entry]):
+    def post_many(self, entries: Sequence[Entry]):
         """Post several streams of entries to ledger."""
         for entry in entries:
             self.post(entry)
@@ -470,8 +472,8 @@ def close(
         del ledger[from_]
 
     # 1. Create income statement
-    # FIXME: maybe does not belong here 
-    income_summary = IncomeStatement.new(ledger, chart)            
+    # FIXME: maybe does not belong here
+    income_summary = IncomeStatement.new(ledger, chart)
 
     # 2. Close contra income and contra expense accounts.
     for t in T5.Income, T5.Expense:
@@ -546,6 +548,7 @@ class IncomeStatement(Report):
             income_summary.income[name] = net_balance(ledger, name, contra_names)
         for name, contra_names in chart[T5.Expense]:
             income_summary.expenses[name] = net_balance(ledger, name, contra_names)
+        return income_summary
 
     @property
     def net_earnings(self):

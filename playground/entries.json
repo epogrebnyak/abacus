@@ -1,5 +1,5 @@
 {
-  "entries": [
+  "entries_before_close": [
     {
       "debits": [
         [
@@ -13,7 +13,22 @@
           "5"
         ]
       ],
-      "title": "Sales"
+      "title": "Regiter sales"
+    },
+    {
+      "debits": [
+        [
+          "refunds",
+          "3"
+        ]
+      ],
+      "credits": [
+        [
+          "cash",
+          "3"
+        ]
+      ],
+      "title": "Issue refund"
     }
   ],
   "closing_entries": [
@@ -21,13 +36,28 @@
       "debits": [
         [
           "sales",
-          "5"
+          "3"
+        ]
+      ],
+      "credits": [
+        [
+          "refunds",
+          "3"
+        ]
+      ],
+      "title": "Closing entry"
+    },
+    {
+      "debits": [
+        [
+          "sales",
+          "2"
         ]
       ],
       "credits": [
         [
           "__isa__",
-          "5"
+          "2"
         ]
       ],
       "title": "Closing entry"
@@ -36,17 +66,17 @@
       "debits": [
         [
           "__isa__",
-          "5"
+          "2"
         ]
       ],
       "credits": [
         [
           "retained_earnings",
-          "5"
+          "2"
         ]
       ],
       "title": "Closing entry"
     }
   ],
-  "post_close_entries": []
+  "entries_after_close": []
 }

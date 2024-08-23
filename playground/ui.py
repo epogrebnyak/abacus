@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PrivateAttr
 
 from core import (
     T5,
@@ -58,18 +58,27 @@ class NamedEntry(Entry):
 
 
 class EntryList(BaseModel):
-    entries: List[NamedEntry] = []
+    entries_before_close: List[NamedEntry] = []
     closing_entries: List[NamedEntry] = []
-    post_close_entries: List[NamedEntry] = []
+    entries_after_close: List[NamedEntry] = []
     _current_entry: NamedEntry | None = None
     _current_id: int = 0  # for testing and future use
 
+    def __eq__(self, other):
+        return (
+            self.entries_before_close == other.entries_before_close
+            and self.closing_entries == other.closing_entries
+            and self.entries_after_close == other.entries_after_close
+        )
+
     def is_closed(self) -> bool:
         return len(self.closing_entries) > 0
-       
+
     def __iter__(self):
-        return iter(self.entries + self.closing_entries + self.post_close_entries)
-    
+        return iter(
+            self.entries_before_close + self.closing_entries + self.entries_after_close
+        )
+
     def head(self, title: str):
         self._current_entry = NamedEntry(title=title)
         return self
@@ -92,10 +101,11 @@ class EntryList(BaseModel):
         return self
 
     def commit(self):
+        """Add current entry to list of saved entries."""
         if self.is_closed():
-            self.post_close_entries.append(self._current_entry)
-        else:    
-            self.entries.append(self._current_entry)
+            self.entries_after_close.append(self._current_entry)
+        else:
+            self.entries_before_close.append(self._current_entry)
         self._current_entry = None
         return self
 
@@ -106,6 +116,7 @@ class EntryList(BaseModel):
     def add_closing_entry(self, entry: Entry):
         self.closing_entries.append(entry.add_title("Closing entry"))
         return self
+
 
 class LoadSaveMixin(BaseModel):
     _default_path: ClassVar[Path]
@@ -143,7 +154,7 @@ class Book:
     chart: ChartStore = field(default_factory=ChartStore.default)
     entries: EntryStore = field(default_factory=EntryStore)  # type: ignore
     names: dict[str, str] = field(default_factory=dict)  # FIXME: data lost on save
-    _ledger: Ledger | None = None
+    ledger: Ledger = PrivateAttr(default_factory=Ledger)
     _income_statement: IncomeStatement | None = None
 
     def save(self):
@@ -155,24 +166,29 @@ class Book:
     def load(cls, company: str) -> "Book":
         book = cls(company)
         book.chart = ChartStore.from_file()
-        book.entries = EntryStore.from_file()        
+        book.entries = EntryStore.from_file()
         book.open()
-        book._ledger.post_many(book.entries)  # type: ignore
+        book.ledger.post_many(book.entries.entries_before_close)  # type: ignore
         if book.is_closed():
-           ledger = Ledger.new(book.chart)
-           ledger.post_many(book.entries.entries)
-           _, _, book.income_statement = ledger.close(book.chart)
-        return book    
+            book._income_statement = IncomeStatement.new(book.ledger, book.chart)
+            book.ledger.post_many(book.entries.closing_entries)
+            # remove temporary accounts to make ledger identical to the one saved
+            temporary_accounts = set(
+                e.name for entry in book.entries.closing_entries for e in iter(entry)
+            ) - set([book.chart.retained_earnings_account])
+            for name in temporary_accounts:
+                del book.ledger[name]
+        return book
 
     @property
     def trial_balance(self):
         """Return trial balance."""
-        return TrialBalance.new(self._ledger)
+        return TrialBalance.new(self.ledger)
 
     @property
     def balance_sheet(self):
         """Return balance sheet."""
-        return BalanceSheet.new(self._ledger, self.chart)
+        return BalanceSheet.new(self.ledger, self.chart)
 
     def set_title(self, account_name: str, title: str):
         """Set descriptive title for account."""
@@ -254,7 +270,7 @@ class Book:
 
     def open(self):
         """Create new ledger."""
-        self._ledger = Ledger.new(self.chart)
+        self.ledger = Ledger.new(self.chart)
         return self
 
     def entry(self, title: str):
@@ -276,7 +292,7 @@ class Book:
         """Add credit part to current entry."""
         self.entries.credit(account_name, amount)
         return self
-    
+
     def double_entry(self, title, dr_account, cr_account, amount):
         """Add double entry."""
         self.entry(title).amount(amount).debit(dr_account).credit(cr_account)
@@ -290,13 +306,13 @@ class Book:
 
     def follow(self):
         """Commit current entry, reuse previous transaction id."""
-        self._ledger.post(self.entries._current_entry)
+        self.ledger.post(self.entries._current_entry)
         self.entries.commit()
         return self
 
     def close(self):
         """Close ledger."""
-        closing_entries, self._ledger, self._income_statement = self._ledger.close(
+        closing_entries, self.ledger, self._income_statement = self.ledger.close(
             self.chart
         )
         self.entries.increment()
@@ -311,7 +327,7 @@ class Book:
     @property
     def proxy_income_statement(self):
         """Income statement proxy (to use before ledger is closed)."""
-        return IncomeStatement.new(self._ledger.copy(), self.chart)
+        return IncomeStatement.new(self.ledger.copy(), self.chart)
 
     @property
     def proxy_net_earnings(self) -> Amount:

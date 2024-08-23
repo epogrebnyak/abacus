@@ -47,9 +47,9 @@ assert b.dict() == {
     "capital": {"equity": 1470, "re": 60},
     "liabilities": {"vat": 200, "dividend": 60, "cit_due": 0},
 }
+
+
 book.save()
-
-
 book2 = Book.load("Duffin Mills")
-assert book2.entries.entries == book.entries.entries
+assert book2.entries == book.entries
 assert book2.chart == book.chart
