@@ -35,7 +35,7 @@ book.entry("Pay corporate income tax").amount(30).debit("cit_due").credit("cash"
 print(book.entries._current_id)
 assert (
     book.entries._current_id == 13
-)  # 12 + 1 block of closing entries, 19 entries added in total)
+)  # 12 + 1 block of closing entries, 19 entries added in total
 print((a := book.income_statement).json())
 assert a.dict() == {
     "income": {"sales": 900},

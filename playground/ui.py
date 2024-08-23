@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from core import (
     T5,
+    AbacusError,
     AccountName,
     Amount,
     BalanceSheet,
@@ -56,33 +57,38 @@ class NamedEntry(Entry):
         return self
 
 
-class EntryList(BaseModel):
+class EntryList(NamedEntry):
     entries: List[NamedEntry] = []
-    _current: NamedEntry | None = None
+    _current_entry: NamedEntry | None = None
     _current_id: int = 0  # for testing and future use
 
     def __iter__(self):
         return iter(self.entries)
 
     def head(self, title: str):
-        self._current = NamedEntry(title=title)
+        self._current_entry = NamedEntry(title=title)
+        return self
+
+    def has_entry(self):
+        if self._current_entry is None:
+            raise AbacusError("No current entry set.")
         return self
 
     def amount(self, amount: Numeric):
-        self._current.amount(amount)  # type: ignore
+        self.has_entry()._current_entry.amount(amount)
         return self
 
     def debit(self, account_name: AccountName, amount: Numeric | None = None):
-        self._current.debit(account_name, amount)  # type: ignore
+        self.has_entry()._current_entry.debit(account_name, amount)
         return self
 
     def credit(self, account_name: AccountName, amount: Numeric | None = None):
-        self._current.credit(account_name, amount)  # type: ignore
+        self.has_entry()._current_entry.credit(account_name, amount)
         return self
 
     def commit(self):
-        self.entries.append(self._current)
-        self._current = None
+        self.entries.append(self._current_entry)
+        self._current_entry = None
         return self
 
     def increment(self):
@@ -129,6 +135,7 @@ class Book:
     company: str
     chart: ChartStore = field(default_factory=ChartStore.default)
     entries: EntryStore = field(default_factory=EntryStore)  # type: ignore
+    names: dict[str, str] = field(default_factory=dict)  # FIXME: data lost on save
     _ledger: Ledger | None = None
     _income_statement: IncomeStatement | None = None
 
@@ -159,7 +166,7 @@ class Book:
 
     def set_title(self, account_name: str, title: str):
         """Set descriptive title for account."""
-        # not implemented yet
+        self.names[account_name] = title
         return self
 
     def _add(
@@ -268,7 +275,7 @@ class Book:
 
     def follow(self):
         """Commit current entry, reuse previous transaction id."""
-        self._ledger.post(self.entries._current)
+        self._ledger.post(self.entries._current_entry)
         self.entries.commit()
         return self
 
