@@ -39,7 +39,7 @@ import decimal
 from abc import ABC, abstractmethod
 from collections import UserDict
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from itertools import chain, starmap
 from typing import Any, Sequence
@@ -220,12 +220,6 @@ def double_entry(debit: AccountName, credit: AccountName, amount: Amount) -> Ent
     return Entry().dr(debit, amount).cr(credit, amount)
 
 
-@dataclass
-class Account:
-    t: T5
-    contra_account_names: list[AccountName] = field(default_factory=list)
-
-
 class FastChart(BaseModel):
     income_summary_account: str
     retained_earnings_account: str
@@ -247,11 +241,6 @@ class FastChart(BaseModel):
         self.accounts[account_name] = (T5.Capital, [])
         return self
 
-    def _add(self, t: T5, account_name: str, offsets: list[str] | None = None):
-        """Add account name, type and contra accounts to chart."""
-        self[account_name] = (t, offsets or [])
-        return self
-
     def items(self):
         """Assign account types to account names."""
         for account_name, (t, offsets) in self.accounts.items():
@@ -266,6 +255,11 @@ class FastChart(BaseModel):
                 self.accounts[key] = (t, contra_names)
             case t:
                 self.accounts[key] = (t, [])
+
+    def _add(self, t: T5, account_name: str, offsets: list[str] | None = None):
+        """Add account name, type and contra accounts to chart."""
+        self[account_name] = (t, offsets or [])
+        return self
 
     def __getitem__(self, key: str):
         return self.accounts[key]
