@@ -4,12 +4,12 @@ from abacus import Book
 book = Book(company="Pied Piper")
 
 # Create chart of accounts
-book.add_assets("cash", "inventory", "ar")
-book.add_capital("equity")
-book.add_income("sales", offsets=["refunds"])
-book.add_expense("cogs")
-book.add_liabilities("dividend", "vat")
-book.set_retained_earnings("re")
+book.chart.add_assets("cash", "inventory", "ar")
+book.chart.add_capital("equity")
+book.chart.add_income("sales", offsets=["refunds"])
+book.chart.add_expense("cogs")
+book.chart.add_liabilities("dividend", "vat")
+book.chart.set_retained_earnings("re")
 
 # Open ledger and post entries
 # fmt: off

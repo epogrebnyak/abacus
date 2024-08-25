@@ -21,6 +21,84 @@ from core import (
 Numeric = Amount | int | float
 
 
+class Chart(FastChart):
+    names: dict[str, str] = {}
+
+    def set_title(self, account_name: str, title: str):
+        self.names[account_name] = title
+        return self
+
+    def add(
+        self,
+        t: T5,
+        account_name: str,
+        title: str | None,  # reserved
+        offsets: list[str] | None,
+    ):
+        """Add new account to chart."""
+        self[account_name] = (t, offsets or [])
+        if title:
+            self.set_title(account_name, title)
+        return self
+
+    def add_asset(self, account, *, title=None, offsets=None):
+        """Add asset account to chart."""
+        return self.add(T5.Asset, account, title, offsets)
+
+    def add_assets(self, *account_names):
+        """Add several asset accounts to chart."""
+        for name in account_names:
+            self.add_asset(name)
+        return self
+
+    def add_liability(self, account, *, title=None, offsets=None):
+        """Add liability account to chart."""
+        return self.add(T5.Liability, account, title, offsets)
+
+    def add_liabilities(self, *account_names):
+        """Add several liability accounts to chart."""
+        for name in account_names:
+            self.add_liability(name)
+        return self
+
+    def add_capital(self, account, *, title=None, offsets=None):
+        """Add capital account to chart."""
+        return self.add(T5.Capital, account, title, offsets)
+
+    def add_capitals(self, *account_names):
+        """Add several capital accounts to chart."""
+        for name in account_names:
+            self.add_capital(name)
+        return self
+
+    def add_income(self, account, *, title=None, offsets=None):
+        """Add income account to chart."""
+        return self.add(T5.Income, account, title, offsets)
+
+    def add_incomes(self, *account_names):
+        """Add several income accounts to chart."""
+        for name in account_names:
+            self.add_income(name)
+        return self
+
+    def add_expense(self, account, *, title=None, offsets=None):
+        """Add expense account to chart."""
+        return self.add(T5.Expense, account, title, offsets)
+
+    def add_expenses(self, *account_names):
+        """Add several expense accounts to chart."""
+        for name in account_names:
+            self.add_expense(name)
+        return self
+
+    def set_income_summary_account(self, account_name: str):
+        """Set name of income summary account."""
+        self.income_summary_account = account_name
+        return self
+
+    # .set_retained_earnings_account() already defined in FastChart
+
+
 class NamedEntry(Entry):
     """Create entry with title and use .debit() and .credit() methods.
     Use .amount() method to set default amount for the entry.
@@ -71,13 +149,17 @@ class EntryList(BaseModel):
             and self.entries_after_close == other.entries_after_close
         )
 
-    def is_closed(self) -> bool:
-        return len(self.closing_entries) > 0
+    def all_entries(self):
+        return self.entries_before_close + self.closing_entries + self.entries
 
     def __iter__(self):
-        return iter(
-            self.entries_before_close + self.closing_entries + self.entries_after_close
-        )
+        return iter(self.all_entries())
+
+    def __len__(self):
+        return len(self.all_entries)
+
+    def is_closed(self) -> bool:
+        return len(self.closing_entries) > 0
 
     def head(self, title: str):
         self._current_entry = NamedEntry(title=title)
@@ -144,7 +226,7 @@ class EntryStore(EntryList, LoadSaveMixin):
     _default_path: ClassVar[Path] = Path("./entries.json")
 
 
-class ChartStore(FastChart, LoadSaveMixin):
+class ChartStore(Chart, LoadSaveMixin):
     _default_path: ClassVar[Path] = Path("./chart.json")
 
 
@@ -191,82 +273,26 @@ class Book:
         """Return balance sheet."""
         return BalanceSheet.new(self.ledger, self.chart)
 
+    def add_account(
+        self,
+        account_type: str,  # FIXME: use T5 values only
+        account_name: str,
+        title: str | None = None,
+        offsets: list[str] | None = None,
+    ):
+        """Add account to chart. Use T5 values for *account_type*:
+        - 'asset'
+        - 'liability'
+        - 'capital'
+        - 'income'
+        - 'expense'
+        """
+        self.chart.add(T5(account_type), account_name, title=title, offsets=offsets)
+        return self
+
     def set_title(self, account_name: str, title: str):
         """Set descriptive title for account."""
         self.names[account_name] = title
-        return self
-
-    def _add(
-        self,
-        t: T5,
-        account_name: str,
-        title: str | None,  # reserved
-        offsets: list[str] | None,
-    ):
-        """Add new account to chart."""
-        self.chart.add(t, account_name, offsets or [])
-        if title:
-            self.set_title(account_name, title)
-        return self
-
-    def add_asset(self, account, *, title=None, offsets=None):
-        """Add asset account to chart."""
-        return self._add(T5.Asset, account, title, offsets)
-
-    def add_assets(self, *account_names):
-        """Add several asset accounts to chart."""
-        for name in account_names:
-            self.add_asset(name)
-        return self
-
-    def add_liability(self, account, *, title=None, offsets=None):
-        """Add liability account to chart."""
-        return self._add(T5.Liability, account, title, offsets)
-
-    def add_liabilities(self, *account_names):
-        """Add several liability accounts to chart."""
-        for name in account_names:
-            self.add_liability(name)
-        return self
-
-    def add_capital(self, account, *, title=None, offsets=None):
-        """Add capital account to chart."""
-        return self._add(T5.Capital, account, title, offsets)
-
-    def add_capitals(self, *account_names):
-        """Add several capital accounts to chart."""
-        for name in account_names:
-            self.add_capital(name)
-        return self
-
-    def add_income(self, account, *, title=None, offsets=None):
-        """Add income account to chart."""
-        return self._add(T5.Income, account, title, offsets)
-
-    def add_incomes(self, *account_names):
-        """Add several income accounts to chart."""
-        for name in account_names:
-            self.add_income(name)
-        return self
-
-    def add_expense(self, account, *, title=None, offsets=None):
-        """Add expense account to chart."""
-        return self._add(T5.Expense, account, title, offsets)
-
-    def add_expenses(self, *account_names):
-        """Add several expense accounts to chart."""
-        for name in account_names:
-            self.add_expense(name)
-        return self
-
-    def set_income_summary_account(self, account_name: str):
-        """Set name of income summary account."""
-        self.chart.income_summary_account = account_name
-        return self
-
-    def set_retained_earnings(self, account_name: str):
-        """Set name of retained earnings account."""
-        self.chart.set_retained_earnings(account_name)
         return self
 
     def open(self):

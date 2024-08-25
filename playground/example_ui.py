@@ -1,20 +1,20 @@
 from ui import Book
 
 book = Book("Duffin Mills")
-book.add_asset("cash")
-book.add_asset("inventory")
-book.add_asset("ar", title="Accounts receivable")
-book.add_capital("equity", offsets=["ts"])
-book.set_title("ts", "Treasury shares")
-book.add_income("sales", offsets=["refunds", "cashback"])
-book.add_expense("cogs", title="Cost of goods sold")
-book.add_expense("salaries")
-book.add_expense("cit", title="Income tax")
-book.add_liability("vat", title="VAT payable")
-book.add_liability("dividend")
-book.add_liability("cit_due", title="Income tax payable")
-book.set_retained_earnings("re")
-book.set_income_summary_account("_isa")
+book.chart.add_asset("cash")
+book.chart.add_asset("inventory")
+book.chart.add_asset("ar", title="Accounts receivable")
+book.chart.add_capital("equity", offsets=["ts"])
+book.chart.set_title("ts", "Treasury shares")
+book.chart.add_income("sales", offsets=["refunds", "cashback"])
+book.chart.add_expense("cogs", title="Cost of goods sold")
+book.chart.add_expense("salaries")
+book.chart.add_expense("cit", title="Income tax")
+book.chart.add_liability("vat", title="VAT payable")
+book.chart.add_liability("dividend")
+book.chart.add_liability("cit_due", title="Income tax payable")
+book.chart.set_retained_earnings("re")
+book.chart.set_income_summary_account("_isa")
 book.open()
 # fmt: off
 book.entry("Shareholder investment").amount(1500).debit("cash").credit("equity").commit()
@@ -32,7 +32,7 @@ book.entry("Bought back shares").amount(30).debit("ts").credit("cash").commit()
 book.entry("Announced dividend").amount(60).debit("re").credit("dividend").commit()
 book.entry("Pay corporate income tax").amount(30).debit("cit_due").credit("cash").commit()
 # fmt: on
-print(book.entries._current_id)
+print("Total entries added:", book.entries._current_id)
 assert (
     book.entries._current_id == 13
 )  # 12 + 1 block of closing entries, 19 entries added in total

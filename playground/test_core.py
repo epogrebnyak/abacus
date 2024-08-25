@@ -16,6 +16,18 @@ from core import (
 )
 
 
+def test_fast_chart_setter_by_default():
+    chart = FastChart.default()
+    chart["equity"] = T5.Capital
+    assert chart["equity"] == (T5.Capital, [])
+
+
+def test_fast_chart_setter_no_default():
+    chart = FastChart.default()
+    chart["equity"] = T5.Capital, ["ts"]
+    assert chart["equity"] == (T5.Capital, ["ts"])
+
+
 def test_debit_account_stays_positive():
     with pytest.raises(AbacusError):
         DebitAccount(Amount(100), 0).credit(Amount(101))

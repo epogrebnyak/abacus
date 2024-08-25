@@ -39,7 +39,7 @@ import decimal
 from abc import ABC, abstractmethod
 from collections import UserDict
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from itertools import chain, starmap
 from typing import Any, Sequence
@@ -220,6 +220,12 @@ def double_entry(debit: AccountName, credit: AccountName, amount: Amount) -> Ent
     return Entry().dr(debit, amount).cr(credit, amount)
 
 
+@dataclass
+class Account:
+    t: T5
+    contra_account_names: list[AccountName] = field(default_factory=list)
+
+
 class FastChart(BaseModel):
     income_summary_account: str
     retained_earnings_account: str
@@ -241,9 +247,9 @@ class FastChart(BaseModel):
         self.accounts[account_name] = (T5.Capital, [])
         return self
 
-    def add(self, t: T5, account_name: str, offsets: list[str] | None = None):
+    def _add(self, t: T5, account_name: str, offsets: list[str] | None = None):
         """Add account name, type and contra accounts to chart."""
-        self.accounts[account_name] = (t, offsets or [])
+        self[account_name] = (t, offsets or [])
         return self
 
     def items(self):
@@ -254,7 +260,17 @@ class FastChart(BaseModel):
                 yield offset, Contra(t)
         yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
 
-    def __getitem__(self, t: T5):
+    def __setitem__(self, key, value):
+        match value:
+            case (t, contra_names):
+                self.accounts[key] = (t, contra_names)
+            case t:
+                self.accounts[key] = (t, [])
+
+    def __getitem__(self, key: str):
+        return self.accounts[key]
+
+    def accounts_by_type(self, t: T5):
         """Return account names and contra accounts for a given account type."""
         return [
             (name, contra_names)
@@ -267,24 +283,24 @@ class FastChart(BaseModel):
         """Return temporary accounts."""
         yield self.income_summary_account
         for t in T5.Income, T5.Expense:
-            for name, contra_names in self[t]:
+            for name, contra_names in self.accounts_by_type(t):
                 yield name
                 yield from contra_names
 
     def add_asset(self, account: str, contra_accounts=None):
-        return self.add(T5.Asset, account, contra_accounts)
+        return self._add(T5.Asset, account, contra_accounts)
 
     def add_liability(self, account: str, contra_accounts=None):
-        return self.add(T5.Liability, account, contra_accounts)
+        return self._add(T5.Liability, account, contra_accounts)
 
     def add_capital(self, account: str, contra_accounts=None):
-        return self.add(T5.Capital, account, contra_accounts)
+        return self._add(T5.Capital, account, contra_accounts)
 
     def add_expense(self, account: str, contra_accounts=None):
-        return self.add(T5.Expense, account, contra_accounts)
+        return self._add(T5.Expense, account, contra_accounts)
 
     def add_income(self, account: str, contra_accounts=None):
-        return self.add(T5.Income, account, contra_accounts)
+        return self._add(T5.Income, account, contra_accounts)
 
 
 @dataclass
@@ -486,14 +502,14 @@ def close(
 
     # 2. Close contra income and contra expense accounts.
     for t in T5.Income, T5.Expense:
-        for name, contra_names in chart[t]:
+        for name, contra_names in chart.accounts_by_type(t):
             for contra_name in contra_names:
                 proceed(from_=contra_name, to_=name)
 
     # 3. Close income and expense accounts to income summary account.
-    for name, _ in chart[T5.Income]:
+    for name, _ in chart.accounts_by_type(T5.Income):
         proceed(name, chart.income_summary_account)
-    for name, _ in chart[T5.Expense]:
+    for name, _ in chart.accounts_by_type(T5.Expense):
         proceed(name, chart.income_summary_account)
 
     # 4. Close income summary account to retained earnings account.
@@ -553,9 +569,9 @@ class IncomeStatement(Report):
     def new(cls, ledger: Ledger, chart: FastChart):
         """Create income statement from ledger and chart."""
         income_summary = cls(income={}, expenses={})
-        for name, contra_names in chart[T5.Income]:
+        for name, contra_names in chart.accounts_by_type(T5.Income):
             income_summary.income[name] = net_balance(ledger, name, contra_names)
-        for name, contra_names in chart[T5.Expense]:
+        for name, contra_names in chart.accounts_by_type(T5.Expense):
             income_summary.expenses[name] = net_balance(ledger, name, contra_names)
         return income_summary
 
@@ -589,7 +605,7 @@ class BalanceSheet(Report):
         def subset(t: T5) -> dict[str, Amount]:
             return {
                 name: net_balance(ledger, name, contra_names)
-                for (name, contra_names) in chart[t]
+                for (name, contra_names) in chart.accounts_by_type(t)
             }
 
         return cls(

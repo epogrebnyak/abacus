@@ -1,5 +1,5 @@
 {
-  "entries": [
+  "entries_before_close": [
     {
       "debits": [
         [
@@ -138,7 +138,9 @@
         ]
       ],
       "title": "Accrue corporate income tax 20%"
-    },
+    }
+  ],
+  "closing_entries": [
     {
       "debits": [
         [
@@ -243,7 +245,9 @@
         ]
       ],
       "title": "Closing entry"
-    },
+    }
+  ],
+  "entries_after_close": [
     {
       "debits": [
         [

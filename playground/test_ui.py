@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from ui import Book, EntryStore, NamedEntry
+from ui import Book, Chart, EntryStore, NamedEntry
 
 from core import T5, Amount, IncomeStatement, double_entry
 
@@ -23,16 +23,16 @@ def test_named_entry_on_None_amount_raises_error():
         NamedEntry().debit(account_name="cash")
 
 
-def test_book_add_assets():
-    xs = Book("Pied Piper").add_asset("cash").chart[T5.Asset]
-    xs[0] == ("cash", [])
+def test_chart_add_assets():
+    chart = Chart.default().add_asset("cash")
+    assert chart.accounts_by_type(T5.Asset) == [("cash", [])]
 
 
 def test_book():
     book = (
         Book("test")
-        .add_asset("cash")
-        .add_capital("equity")
+        .add_account("asset", "cash")
+        .add_account("capital", "equity")
         .open()
         .entry("Shareholder investment")
         .amount(1500)
@@ -50,17 +50,17 @@ def test_book():
 # fmt: off
 @pytest.fixture
 def simple_book():
-       return (
-        Book("Simple Book, Inc.")
-        .add_asset("cash")
-        .add_capital("equity")
-        .add_income("sales")
-        .add_expense("salary")
-        .open()
-        .entry("Shareholder investment").amount(1500).debit("cash").credit("equity").commit()
-        .entry("Provided services").amount(800).debit("cash").credit("sales").commit()
-        .entry("Paid wages").amount(400).debit("salary").credit("cash").commit()
-    )
+    book = Book("Simple Book, Inc.")
+    book.chart.add_asset("cash")
+    book.chart.add_asset("cash")
+    book.chart.add_capital("equity")
+    book.chart.add_income("sales")
+    book.chart.add_expense("salary")
+    book.open()
+    book.entry("Shareholder investment").amount(1500).debit("cash").credit("equity").commit()
+    book.entry("Provided services").amount(800).debit("cash").credit("sales").commit()
+    book.entry("Paid wages").amount(400).debit("salary").credit("cash").commit()
+    return book
 # fmt: on
 
 
@@ -157,12 +157,10 @@ def test_closed_simple_book_reloads_after_save(simple_book, tmp_json):
 
 @pytest.fixture
 def book_after_close():
-    book = (
-        Book("Lost Data Ltd")
-        .add_asset("cash")
-        .add_income("sales", offsets=["refunds"])
-        .open()
-    )
+    book = Book("Lost Data Ltd")
+    book.chart.add_asset("cash")
+    book.chart.add_income("sales", offsets=["refunds"])
+    book.open()
     book.double_entry("Regiter sales", "cash", "sales", 5).commit()
     book.double_entry("Issue refund", "refunds", "cash", 3).commit()
     book.close()
