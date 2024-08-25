@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, ClassVar, List
+from typing import ClassVar, List
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -201,33 +201,56 @@ class EntryList(BaseModel):
 
 
 class LoadSaveMixin(BaseModel):
-    _default_path: ClassVar[Path]
-    _path: Path
+    default_directory: ClassVar[Path] = Path(".")
+    default_filename: ClassVar[str] = "data.json"
+    directory: Path | None = None
+    filename: str | None = None
 
-    def __init__(self, **data: Any):
+    # do not use post_model_init() for parent class
+    def __init__(self, **data) -> None:
         super().__init__(**data)
-        self._path = self._default_path
+        if self.directory is None:
+            self.directory = self.default_directory
+        if self.filename is None:
+            self.filename = self.default_filename
 
-    def set_path(self, path: Path):
-        self._path = path
-        return self
+    @property
+    def path(self) -> Path:
+        if isinstance(self.directory, Path) and self.filename is not None:
+            return self.directory / self.filename
+        raise AbacusError("Directory and filename were not set.")
 
     @classmethod
-    def from_file(cls, path: Path | None = None):
-        _path = path or cls._default_path
+    def from_file(
+        cls, directory: Path | str | None = None, filename: str | Path | None = None
+    ):
+        _path = Path(directory or cls.default_directory) / (
+            filename or cls.default_filename
+        )
         return cls.model_validate_json(_path.read_text())
 
-    def to_file(self, path: Path | None = None):
-        _path = (path or self._path) or self._default_path
+    def to_file(
+        self, directory: Path | str | None = None, filename: str | Path | None = None
+    ):
+        _path = Path(directory or self.directory) / (filename or self.filename)  # type: ignore
         _path.write_text(self.model_dump_json(indent=2))
+        return _path
 
 
 class EntryStore(EntryList, LoadSaveMixin):
-    _default_path: ClassVar[Path] = Path("./entries.json")
+    default_filename: ClassVar[str] = "entries.json"
 
 
 class ChartStore(Chart, LoadSaveMixin):
-    _default_path: ClassVar[Path] = Path("./chart.json")
+    default_filename: ClassVar[str] = "chart.json"
+
+
+class AccountBalancesDict(BaseModel):
+    data: dict[str, Amount]
+
+
+class AccountBalancesStore(AccountBalancesDict, LoadSaveMixin):
+    default_filename: ClassVar[str] = "balances.json"
 
 
 @dataclass
@@ -239,23 +262,28 @@ class Book:
     ledger: Ledger = PrivateAttr(default_factory=Ledger)
     _income_statement: IncomeStatement | None = None
 
-    def save(self):
-        self.chart.to_file()
-        self.entries.to_file()
+    def save(self, directory: Path = Path(".")):
+        self.chart.to_file(directory=directory)
+        self.entries.to_file(directory=directory)
+        self.account_balances.to_file(directory=directory)
         return self
 
+    @property
+    def account_balances(self) -> AccountBalancesStore:
+        return AccountBalancesStore(data=self.trial_balance.amounts())  # type: ignore
+
     @classmethod
-    def load(cls, company: str) -> "Book":
+    def load(cls, company: str, directory: Path = Path(".")) -> "Book":
         book = cls(company)
-        book.chart = ChartStore.from_file()
-        book.entries = EntryStore.from_file()
+        book.chart = ChartStore.from_file(directory=directory)
+        book.entries = EntryStore.from_file(directory=directory)
         book.open()
         book.ledger.post_many(book.entries.entries_before_close)
         if book.entries.closing_entries:
-            book._replicate_entries(book.entries)
+            book._replicate_closing_entries(book.entries)
         return book
 
-    def _replicate_entries(self, entries):
+    def _replicate_closing_entries(self, entries):
         self._income_statement = IncomeStatement.new(self.ledger, self.chart)
         self.ledger.post_many(entries.closing_entries)
         # Must remove temporary accounts to make ledger identical to the one saved.
@@ -295,9 +323,17 @@ class Book:
         self.names[account_name] = title
         return self
 
-    def open(self):
+    def open(self, opening_balances: dict[str, Amount] | None = None):
         """Create new ledger."""
         self.ledger = Ledger.new(self.chart)
+        self.entry("Opening balances")
+        if opening_balances:
+            for account_name, amount in opening_balances.items():
+                if self.ledger[account_name].side.is_debit():
+                    self.debit(account_name, amount)
+                else:
+                    self.credit(account_name, amount)
+            self.commit()
         return self
 
     def entry(self, title: str):

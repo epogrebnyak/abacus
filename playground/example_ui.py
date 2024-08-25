@@ -1,4 +1,4 @@
-from ui import Book
+from ui import AccountBalancesStore, Book
 
 book = Book("Duffin Mills")
 book.chart.add_asset("cash")
@@ -16,8 +16,19 @@ book.chart.add_liability("cit_due", title="Income tax payable")
 book.chart.set_retained_earnings("re")
 book.chart.set_income_summary_account("_isa")
 book.open()
+book.entry("Shareholder investment").amount(1500).debit("cash").credit(
+    "equity"
+).commit()
+book.account_balances.to_file(filename="balances.json")
+book.chart.to_file(filename="chart.json")
+
+book = Book("Duffin Mills")
+book.chart = book.chart.from_file(filename="chart.json")
+opening_balances = AccountBalancesStore.from_file(filename="balances.json")
+assert opening_balances.data["cash"] == 1500
+assert opening_balances.data["equity"] == 1500
+book.open(opening_balances={"cash": 1500, "equity": 1500})
 # fmt: off
-book.entry("Shareholder investment").amount(1500).debit("cash").credit("equity").commit()
 book.entry("Bought inventory (no VAT)").amount(1000).debit("inventory").credit("cash").commit()
 book.entry("Invoice with 20% VAT").debit("ar", 1200).credit("sales", 1000).credit("vat", 200).commit()
 book.entry("Registered costs").amount(600).debit("cogs").credit("inventory").commit()

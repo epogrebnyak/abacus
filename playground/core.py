@@ -444,12 +444,12 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
     def close(self, chart: FastChart):
         """Close ledger at accounting period end."""
-        return close(self, chart)
+        income_statement = IncomeStatement.new(self, chart)
+        closing_entries, ledger = close(self, chart)
+        return closing_entries, ledger, income_statement
 
 
-def close(
-    ledger: Ledger, chart: FastChart
-) -> tuple[list[Entry], Ledger, "IncomeStatement"]:
+def close(ledger: Ledger, chart: FastChart) -> tuple[list[Entry], Ledger]:
     """Close ledger at accounting period end in the following order.
 
        1. Close income and expense contra accounts.
@@ -458,9 +458,8 @@ def close(
 
     Returns:
         closing_entries: list of closing entries,
-        ledger: ledger after account closing with permanent accounts only --
-                temporary and intermediate accounts will be removed,
-        income_summary: income statement data.
+        ledger: ledger after account closing with permanent accounts only,
+                temporary and intermediate accounts will be removed.
     """
     closing_entries = []
 
@@ -470,26 +469,24 @@ def close(
         ledger.post(entry)
         del ledger[from_]
 
-    # 1. Create income statement
-    # FIXME: maybe does not belong here
-    income_summary = IncomeStatement.new(ledger, chart)
-
-    # 2. Close contra income and contra expense accounts.
+    # 1. Close contra income and contra expense accounts.
     for t in T5.Income, T5.Expense:
         for name, contra_names in chart.accounts_by_type(t):
             for contra_name in contra_names:
                 proceed(from_=contra_name, to_=name)
 
-    # 3. Close income and expense accounts to income summary account.
+    # 2. Close income and expense accounts to income summary account.
     for name, _ in chart.accounts_by_type(T5.Income):
         proceed(name, chart.income_summary_account)
     for name, _ in chart.accounts_by_type(T5.Expense):
         proceed(name, chart.income_summary_account)
 
-    # 4. Close income summary account to retained earnings account.
+    # 3. Close income summary account to retained earnings account.
     proceed(chart.income_summary_account, chart.retained_earnings_account)
 
-    return closing_entries, ledger, income_summary
+    # Note: ledger will be modified inline, no need to return it.
+
+    return closing_entries, ledger
 
 
 class TrialBalance(UserDict[str, tuple[Side, Amount]]):
@@ -518,17 +515,6 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
     def amounts(self) -> dict[str, Amount]:
         """Return account names and balances."""
         return {name: balance for name, (_, balance) in self.items()}
-
-    def entries(self) -> list[SingleEntry]:
-        """Return trial balance as a list of single entries."""
-        return [
-            (
-                DebitEntry(name, balance)
-                if side.is_debit()
-                else CreditEntry(name, balance)
-            )
-            for name, (side, balance) in self.items()
-        ]
 
 
 class Report(BaseModel):

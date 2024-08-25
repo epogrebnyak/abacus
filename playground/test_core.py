@@ -9,6 +9,7 @@ from core import (
     CreditAccount,
     DebitAccount,
     Entry,
+    IncomeStatement,
     Ledger,
     UnrestrictedCreditAccount,
     close,
@@ -115,8 +116,9 @@ def test_end_to_end():
         "cogs": (60, 0),
         "__isa__": (0, 0),
     }
-    _, ledger, income_summary = close(ledger, chart)
+    income_summary = IncomeStatement.new(ledger, chart)
     assert income_summary.net_earnings == 15
+    _, ledger = close(ledger, chart)
     tb2 = ledger.trial_balance
     balances = tb2.amounts()
     assert balances == {

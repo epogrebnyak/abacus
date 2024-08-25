@@ -1,4 +1,6 @@
 {
+  "directory": ".",
+  "filename": "entries.json",
   "entries_before_close": [
     {
       "debits": [
