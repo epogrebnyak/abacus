@@ -226,7 +226,7 @@ class FastChart(BaseModel):
     accounts: dict[str, tuple[T5, list[str]]] = {}
 
     def model_post_init(self, __context: Any) -> None:
-        self.accounts[self.retained_earnings_account] = (T5.Capital, [])
+        self.set_account(self.retained_earnings_account, T5.Capital)
 
     @classmethod
     def default(cls):
@@ -249,19 +249,15 @@ class FastChart(BaseModel):
                 yield offset, Contra(t)
         yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
 
-    def __setitem__(self, key, value):
-        match value:
-            case (t, contra_names):
-                self.accounts[key] = (t, contra_names)
-            case t:
-                self.accounts[key] = (t, [])
-
-    def _add(self, t: T5, account_name: str, offsets: list[str] | None = None):
+    def set_account(
+        self, account_name: str, t: T5, contra_accounts: list[str] | None = None
+    ):
         """Add account name, type and contra accounts to chart."""
-        self[account_name] = (t, offsets or [])
+        self.accounts[account_name] = (t, contra_accounts or [])
         return self
 
     def __getitem__(self, key: str):
+        """Get type and contra accounts for a given account name."""
         return self.accounts[key]
 
     def accounts_by_type(self, t: T5):
@@ -281,28 +277,12 @@ class FastChart(BaseModel):
                 yield name
                 yield from contra_names
 
-    def add_asset(self, account: str, contra_accounts=None):
-        return self._add(T5.Asset, account, contra_accounts)
-
-    def add_liability(self, account: str, contra_accounts=None):
-        return self._add(T5.Liability, account, contra_accounts)
-
-    def add_capital(self, account: str, contra_accounts=None):
-        return self._add(T5.Capital, account, contra_accounts)
-
-    def add_expense(self, account: str, contra_accounts=None):
-        return self._add(T5.Expense, account, contra_accounts)
-
-    def add_income(self, account: str, contra_accounts=None):
-        return self._add(T5.Income, account, contra_accounts)
-
 
 @dataclass
 class TAccountBase(ABC):
     """Base class for T-account that holds amounts on the left and right sides.
 
     Parent class for:
-
       - UnrestrictedDebitAccount
       - UnrestrictedCreditAccount
       - DebitAccount

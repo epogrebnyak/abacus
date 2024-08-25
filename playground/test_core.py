@@ -1,5 +1,5 @@
 import pytest
-from ui import FastChart
+from ui import Chart
 
 from core import (
     T5,
@@ -16,15 +16,17 @@ from core import (
 )
 
 
-def test_fast_chart_setter_by_default():
-    chart = FastChart.default()
-    chart["equity"] = T5.Capital
-    assert chart["equity"] == (T5.Capital, [])
+def test_chart_setter_by_default():
+    chart = Chart.default()
+    assert chart["retained_earnings"] == (T5.Capital, [])
+    assert chart.income_summary_account == "__isa__"
+    assert chart.retained_earnings_account == "retained_earnings"
+    assert chart.names == {}
 
 
-def test_fast_chart_setter_no_default():
-    chart = FastChart.default()
-    chart["equity"] = T5.Capital, ["ts"]
+def test_fast_chart_setter_with_offsets():
+    chart = Chart.default()
+    chart.set_account("equity", T5.Capital, ["ts"])
     assert chart["equity"] == (T5.Capital, ["ts"])
 
 
@@ -52,18 +54,16 @@ def test_invalid_multiple_entry():
 
 
 def test_chart_on_retained_earnings():
-    chart = FastChart(
-        income_summary_account="isa", retained_earnings_account="this_is_re"
-    )
+    chart = Chart(income_summary_account="isa", retained_earnings_account="this_is_re")
     assert chart.retained_earnings_account == "this_is_re"
     assert chart.accounts["this_is_re"] == (T5.Capital, [])
 
 
 def test_balance_sheet_respects_contra_account():
     chart = (
-        FastChart(income_summary_account="isa", retained_earnings_account="re")
+        Chart(income_summary_account="isa", retained_earnings_account="re")
         .add_asset("cash")
-        .add_capital("equity", contra_accounts=["treasury_shares"])
+        .add_capital("equity", offsets=["treasury_shares"])
     )
     ledger = Ledger.new(chart)
     me = Entry().dr("cash", 100).dr("treasury_shares", 21).cr("equity", 120)
@@ -94,15 +94,13 @@ def test_end_to_end():
         Entry().dr("cash", 75).dr("refunds", 2).cr("sales", 77),
     ]
 
-    chart = FastChart(
-        income_summary_account="__isa__", retained_earnings_account="__re__"
-    )
+    chart = Chart(income_summary_account="__isa__", retained_earnings_account="__re__")
     chart.set_retained_earnings("retained_earnings")
     chart.add_asset("cash")
     chart.add_asset("inventory")
     chart.add_capital("equity")
     chart.add_expense("cogs")
-    chart.add_income("sales", contra_accounts=["refunds"])
+    chart.add_income("sales", offsets=["refunds"])
 
     ledger = Ledger.new(chart)
     ledger.post_many(entries)

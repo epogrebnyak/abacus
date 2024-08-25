@@ -1,21 +1,21 @@
 from ui import NamedEntry
 
-from core import BalanceSheet, FastChart, Ledger
+from core import T5, BalanceSheet, FastChart, Ledger
 
 # Create chart of accounts with contra accounts
 chart = (
     FastChart.default()
     .set_retained_earnings("retained_earnings")
-    .add_asset("cash")
-    .add_asset("ar")
-    .add_asset("ppe", ["depreciation"])
-    .add_capital("equity")
-    .add_liability("ap")
-    .add_liability("ict_due")
-    .add_liability("div_due")
-    .add_income("sales", ["refunds", "voids"])
-    .add_expense("salaries")
-    .add_expense("expense:depreciation")  # avoiding duplicate name
+    .set_account("cash", T5.Asset)
+    .set_account("ar", T5.Asset)
+    .set_account("ppe", T5.Asset, ["depreciation"])
+    .set_account("equity", T5.Capital)
+    .set_account("ap", T5.Liability)
+    .set_account("ict_due", T5.Liability)
+    .set_account("div_due", T5.Liability)
+    .set_account("sales", T5.Income, ["refunds", "voids"])
+    .set_account("salaries", T5.Expense)
+    .set_account("expense:depreciation", T5.Expense)  # avoiding duplicate name
 )
 
 # Create ledger from chart

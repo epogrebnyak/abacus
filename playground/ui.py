@@ -36,7 +36,7 @@ class Chart(FastChart):
         offsets: list[str] | None,
     ):
         """Add new account to chart."""
-        self[account_name] = (t, offsets or [])
+        self.set_account(account_name, t, offsets or [])
         if title:
             self.set_title(account_name, title)
         return self
