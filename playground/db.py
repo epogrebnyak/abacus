@@ -1,62 +1,63 @@
+from decimal import Decimal
+from enum import Enum
+from pathlib import Path
 from typing import Optional
 
-from sqlmodel import Field, SQLModel, create_engine, Session, select
-
-from enum import Enum
-from decimal import Decimal
-from pathlib import Path
+from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
 
 
 class Side(str, Enum):
     debit = "debit"
-    credit = "credit" 
+    credit = "credit"
 
 
-class EntryHeader(SQLModel, table=True):
+class Header(SQLModel, table=True):
     count_id: Optional[int] = Field(default=None, primary_key=True)
     title: str
+    entries: list["Single"] = Relationship(back_populates="header")
 
-class SingleEntry(SQLModel, table=True):
+    def debit(self, account: str, amount: Decimal):
+        self.entries.append(Single(side=Side.debit, account=account, amount=amount))
+
+    def credit(self, account: str, amount: Decimal):
+        self.entries.append(Single(side=Side.credit, account=account, amount=amount))
+
+
+class Single(SQLModel, table=True):
     count_id: Optional[int] = Field(default=None, primary_key=True)
     side: Side
     account: str
     amount: Decimal
-    header_id: int | None = Field(default=None, foreign_key="entryheader.count_id")
+    header_id: int | None = Field(default=None, foreign_key="header.count_id")
+    header: Optional[Header] = Relationship(back_populates="entries")
 
 
-SE = SingleEntry
-def dr(account: str, amount: Decimal, links_to:int) -> SingleEntry:
-    return SE(side=Side.debit, account=account, amount=amount, header_id=links_to)
+def make_engine(filename: str = "db.sqlite", wipe: bool = False):
+    if wipe:    
+       Path(filename).unlink(missing_ok=True)
+    engine = create_engine(f"sqlite:///{filename}", echo=False)
+    SQLModel.metadata.create_all(engine)
+    return engine
 
-def cr(account: str, amount: Decimal, links_to:int) -> SingleEntry:
-    return SE(side=Side.credit, account=account, amount=amount, header_id=links_to)
 
-Path("db.sqlite").unlink(missing_ok=True)
-engine = create_engine("sqlite:///db.sqlite", echo=False)
-SQLModel.metadata.create_all(engine)
+engine = make_engine(wipe=True)
 with Session(engine) as session:
-    h = EntryHeader(title="Initial investment")
+    h = Header(title="Initial investment")
+    h.debit("cash", 100)
+    h.credit("equity", 100)
     session.add(h)
     session.commit()
-    print("Created header:", x := h.count_id)
-    e1 = dr("cash", 100, x)
-    e2 = cr("equity", 100, x)
-    print(e1, e2)
-    session.add(e1)
-    session.add(e2)
-    session.commit()
-    h = EntryHeader(title="More investment")
-    e1.header_id = h.count_id
-    e2.header_id = h.count_id
-    session.add(dr("cash", 55, h.count_id))
-    session.add(cr("cash", 55, h.count_id))
-    session.commit()
+    print("Created header")
+    print("  title:  ", h.title)
+    print("  entries:", h.entries)
 
-def select_heroes():
+
+def selects():
     with Session(engine) as session:
-        statement = select(SingleEntry)
+        statement = select(Single)
         results = session.exec(statement)
-        for hero in results:
-            print(hero)
+        for entry in results:
+            print(entry)
 
-select_heroes()
+
+selects()
