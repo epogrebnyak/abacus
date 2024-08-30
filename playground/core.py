@@ -423,7 +423,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
         if not_found:
             raise error("Accounts do not exist", not_found)
         if cannot_post:
-            raise error("Could not post to ledger (negative balance)", cannot_post)
+            raise error("Could not post to ledger", cannot_post)
 
     def post_many(self, entries: Sequence[Entry]):
         """Post several streams of entries to ledger."""
