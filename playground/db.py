@@ -33,15 +33,14 @@ class Single(SQLModel, table=True):
 
 
 def make_engine(filename: str = "db.sqlite", wipe: bool = False):
-    if wipe:    
-       Path(filename).unlink(missing_ok=True)
+    if wipe:
+        Path(filename).unlink(missing_ok=True)
     engine = create_engine(f"sqlite:///{filename}", echo=False)
     SQLModel.metadata.create_all(engine)
     return engine
 
 
-engine = make_engine(wipe=True)
-with Session(engine) as session:
+def populate(session):
     h = Header(title="Initial investment")
     h.debit("cash", 100)
     h.credit("equity", 100)
@@ -52,12 +51,18 @@ with Session(engine) as session:
     print("  entries:", h.entries)
 
 
-def selects():
-    with Session(engine) as session:
-        statement = select(Single)
-        results = session.exec(statement)
-        for entry in results:
-            print(entry)
+def query(session):
+    statement = select(Single)
+    results = session.exec(statement)
+    for entry in results:
+        print(entry)
 
 
-selects()
+engine = make_engine(wipe=True)
+with Session(engine) as session:
+    populate(session)
+    query(session)
+
+
+# Decimal('100.0000000000')
+# Save accounts to Chart too

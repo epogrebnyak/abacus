@@ -1,6 +1,6 @@
 from ui import NamedEntry
 
-from core import T5, BalanceSheet, FastChart, Ledger
+from core import T5, BalanceSheet, FastChart, IncomeStatement, Ledger
 
 # Create chart of accounts with contra accounts
 chart = (
@@ -49,7 +49,9 @@ entries = [
 ledger.post_many(entries)
 
 # Close ledger at accounting period end
-closing_entries, ledger, income_statement = ledger.close(chart)
+income_statement = IncomeStatement.new(ledger, chart)
+closing_entries = ledger.close(chart)
+balance_sheet = BalanceSheet.new(ledger, chart)
 
 # Show income statement data
 assert income_statement.dict() == {
@@ -58,9 +60,6 @@ assert income_statement.dict() == {
 }
 
 # Show balance sheet data
-balance_sheet = BalanceSheet.new(ledger, chart)
-
-# Show account balances
 assert ledger.trial_balance.amounts() == {
     "cash": 240,
     "ppe": 200,

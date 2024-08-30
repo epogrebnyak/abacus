@@ -375,12 +375,11 @@ class Book:
 
     def close(self):
         """Close ledger."""
-        closing_entries, self.ledger, self._income_statement = self.ledger.close(
-            self.chart
-        )
+        self._income_statement = IncomeStatement.new(self.ledger, self.chart)
+        closing_entries = self.ledger.close(self.chart)
         self.entries.increment()
-        for ce in closing_entries:
-            self.entries.add_closing_entry(ce)
+        for closing_entry in closing_entries:
+            self.entries.add_closing_entry(closing_entry)
         return self
 
     def is_closed(self) -> bool:
