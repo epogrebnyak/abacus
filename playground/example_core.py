@@ -60,7 +60,7 @@ assert income_statement.dict() == {
 }
 
 # Show balance sheet data
-assert ledger.trial_balance.amounts() == {
+assert ledger.balances() == {
     "cash": 240,
     "ppe": 200,
     "equity": 300,

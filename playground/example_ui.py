@@ -43,10 +43,6 @@ book.entry("Bought back shares").amount(30).debit("ts").credit("cash").commit()
 book.entry("Announced dividend").amount(60).debit("re").credit("dividend").commit()
 book.entry("Pay corporate income tax").amount(30).debit("cit_due").credit("cash").commit()
 # fmt: on
-print("Total entries added:", book.entries._current_id)
-assert (
-    book.entries._current_id == 13
-)  # 12 + 1 block of closing entries, 19 entries added in total
 print((a := book.income_statement).json())
 assert a.dict() == {
     "income": {"sales": 900},

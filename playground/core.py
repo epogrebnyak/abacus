@@ -498,10 +498,6 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
             name: to_tuples(side, balance) for name, (side, balance) in self.items()
         }
 
-    def amounts(self) -> dict[str, Amount]:
-        """Return account names and balances."""
-        return {name: balance for name, (_, balance) in self.items()}
-
 
 class Report(BaseModel):
     """Base class for financial reports."""

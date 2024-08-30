@@ -96,8 +96,6 @@ class Chart(FastChart):
         self.income_summary_account = account_name
         return self
 
-    # .set_retained_earnings_account() already defined in FastChart
-
 
 class NamedEntry(Entry):
     """Create entry with title and use .debit() and .credit() methods.
@@ -109,7 +107,6 @@ class NamedEntry(Entry):
     title: str | None = None
     _amount: Amount | None = None
 
-    # added to prevent tests from failing
     def __eq__(self, other):
         return (
             self.title == other.title
@@ -140,7 +137,7 @@ class EntryList(BaseModel):
     closing_entries: List[NamedEntry] = []
     entries_after_close: List[NamedEntry] = []
     _current_entry: NamedEntry | None = None
-    _current_id: int = 0  # for testing and future use
+    _count_id: int = 0  # for testing and future use
 
     def __eq__(self, other):
         return (
@@ -149,14 +146,11 @@ class EntryList(BaseModel):
             and self.entries_after_close == other.entries_after_close
         )
 
-    def all_entries(self):
-        return self.entries_before_close + self.closing_entries + self.entries
-
     def __iter__(self):
-        return iter(self.all_entries())
+        return iter(self.entries_before_close + self.closing_entries + self.entries)
 
     def __len__(self):
-        return len(self.all_entries)
+        return len(list(iter(self)))
 
     def is_closed(self) -> bool:
         return len(self.closing_entries) > 0
@@ -192,7 +186,7 @@ class EntryList(BaseModel):
         return self
 
     def increment(self):
-        self._current_id += 1
+        self._count_id += 1
         return self
 
     def add_closing_entry(self, entry: Entry):
@@ -206,7 +200,6 @@ class LoadSaveMixin(BaseModel):
     directory: Path | None = None
     filename: str | None = None
 
-    # do not use post_model_init() for parent class
     def __init__(self, **data) -> None:
         super().__init__(**data)
         if self.directory is None:
@@ -258,7 +251,6 @@ class Book:
     company: str
     chart: ChartStore = field(default_factory=ChartStore.default)
     entries: EntryStore = field(default_factory=EntryStore)  # type: ignore
-    names: dict[str, str] = field(default_factory=dict)  # FIXME: data lost on save
     ledger: Ledger = PrivateAttr(default_factory=Ledger)
     _income_statement: IncomeStatement | None = None
 
@@ -270,7 +262,7 @@ class Book:
 
     @property
     def account_balances(self) -> AccountBalancesStore:
-        return AccountBalancesStore(data=self.trial_balance.amounts())  # type: ignore
+        return AccountBalancesStore(data=self.ledger.balances())  # type: ignore
 
     @classmethod
     def load(cls, company: str, directory: Path = Path(".")) -> "Book":
@@ -286,7 +278,6 @@ class Book:
     def _replicate_closing_entries(self, entries):
         self._income_statement = IncomeStatement.new(self.ledger, self.chart)
         self.ledger.post_many(entries.closing_entries)
-        # Must remove temporary accounts to make ledger identical to the one saved.
         for name in self.chart.temporary_accounts:
             del self.ledger[name]
         self.ledger.post_many(entries.entries_after_close)
@@ -318,23 +309,22 @@ class Book:
         self.chart.add(T5(account_type), account_name, title=title, offsets=offsets)
         return self
 
-    def set_title(self, account_name: str, title: str):
-        """Set descriptive title for account."""
-        self.names[account_name] = title
-        return self
-
     def open(self, opening_balances: dict[str, Amount] | None = None):
         """Create new ledger."""
         self.ledger = Ledger.new(self.chart)
-        self.entry("Opening balances")
         if opening_balances:
-            for account_name, amount in opening_balances.items():
-                if self.ledger[account_name].side.is_debit():
-                    self.debit(account_name, amount)
-                else:
-                    self.credit(account_name, amount)
-            self.commit()
+            self.commit_opening_entry(opening_balances)
         return self
+
+    def commit_opening_entry(self, opening_balances, title="Opening balances"):
+        """Create and commit opening balances entry."""
+        self.entry(title)
+        for account_name, amount in opening_balances.items():
+            if self.ledger[account_name].side.is_debit():
+                self.debit(account_name, amount)
+            else:
+                self.credit(account_name, amount)
+        self.commit()
 
     def entry(self, title: str):
         """Start new entry."""
@@ -363,22 +353,14 @@ class Book:
 
     def commit(self):
         """Post current entry to ledger and write it to entry store."""
-        self.entries.increment()
-        self.follow()
-        return self
-
-    def follow(self):
-        """Commit current entry, reuse previous transaction id."""
-        self.ledger.post(self.entries._current_entry)
+        self.ledger.post(self.entries._current_entry)  # type: ignore
         self.entries.commit()
         return self
 
     def close(self):
         """Close ledger."""
         self._income_statement = IncomeStatement.new(self.ledger, self.chart)
-        closing_entries = self.ledger.close(self.chart)
-        self.entries.increment()
-        for closing_entry in closing_entries:
+        for closing_entry in self.ledger.close(self.chart):
             self.entries.add_closing_entry(closing_entry)
         return self
 

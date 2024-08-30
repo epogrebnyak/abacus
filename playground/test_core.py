@@ -118,9 +118,7 @@ def test_end_to_end():
     income_summary = IncomeStatement.new(ledger, chart)
     assert income_summary.net_earnings == 15
     ledger.close(chart)
-    tb2 = ledger.trial_balance
-    balances = tb2.amounts()
-    assert balances == {
+    assert ledger.balances() == {
         "cash": 85,
         "inventory": 30,
         "equity": 100,
