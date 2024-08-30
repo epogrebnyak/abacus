@@ -51,6 +51,10 @@ class AbacusError(Exception):
     """Custom error for the abacus project."""
 
 
+def error(message, data):
+    return AbacusError({message: data})
+
+
 AccountName = str
 Amount = decimal.Decimal
 
@@ -198,7 +202,7 @@ class Entry(BaseModel):
     def validate_balance(self):
         """Raise error if sum of debits and sum credits are not equal."""
         if not self.is_balanced():
-            self._raise_error()
+            raise error("Sum of debits does not equal to sum of credits", self)
         return self
 
     def is_balanced(self) -> bool:
@@ -206,9 +210,6 @@ class Entry(BaseModel):
         return sum(amount for _, amount in self.debits) == sum(
             amount for _, amount in self.credits
         )
-
-    def _raise_error(self):
-        raise AbacusError(["Sum of debits does not equal to sum of credits.", self])
 
     def add_title(self, title: str):
         from ui import NamedEntry
@@ -391,10 +392,6 @@ class DebitOrCreditAccount(TAccountBase):
         return Side.Credit if self.right >= self.left else Side.Debit
 
 
-def error(message, data):
-    raise AbacusError({message: data})
-
-
 class Ledger(UserDict[AccountName, TAccountBase]):
     @classmethod
     def new(cls, chart: FastChart):
@@ -419,14 +416,14 @@ class Ledger(UserDict[AccountName, TAccountBase]):
         for single_entry in iter(entry):
             try:
                 self._post(single_entry)
-            except KeyError:
-                not_found.append(entry)
-            except AbacusError:
-                cannot_post.append(entry)
+            except KeyError as e:
+                not_found.append((e, single_entry))
+            except AbacusError as e:
+                cannot_post.append((e, single_entry))
         if not_found:
-            error("Accounts do not exist", not_found)
+            raise error("Accounts do not exist", not_found)
         if cannot_post:
-            error("Could not post to ledger (negative balance)", cannot_post)
+            raise error("Could not post to ledger (negative balance)", cannot_post)
 
     def post_many(self, entries: Sequence[Entry]):
         """Post several streams of entries to ledger."""
@@ -450,9 +447,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
         3. Close income summary account to retained earnings.
 
         Returns:
-            closing_entries: list of closing entries,
-            ledger: ledger after account closing with permanent accounts only,
-                    temporary and intermediate accounts will be removed.
+            closing_entries: list of closing entries
         """
         closing_entries = []
 
@@ -512,26 +507,6 @@ class Report(BaseModel):
     """Base class for financial reports."""
 
 
-class IncomeStatement(Report):
-    income: dict[AccountName, Amount]
-    expenses: dict[AccountName, Amount]
-
-    @classmethod
-    def new(cls, ledger: Ledger, chart: FastChart):
-        """Create income statement from ledger and chart."""
-        income_summary = cls(income={}, expenses={})
-        for name, contra_names in chart.accounts_by_type(T5.Income):
-            income_summary.income[name] = net_balance(ledger, name, contra_names)
-        for name, contra_names in chart.accounts_by_type(T5.Expense):
-            income_summary.expenses[name] = net_balance(ledger, name, contra_names)
-        return income_summary
-
-    @property
-    def net_earnings(self):
-        """Calculate net earnings as income less expenses."""
-        return sum(self.income.values()) - sum(self.expenses.values())
-
-
 def net_balance(
     ledger: Ledger, name: AccountName, contra_names: list[AccountName]
 ) -> Amount:
@@ -542,6 +517,35 @@ def net_balance(
     return b
 
 
+@dataclass
+class Reporter:
+    ledger: Ledger
+    chart: FastChart
+
+    def fill(self, t: T5) -> dict[AccountName, Amount]:
+        """Produce net balances of accounts by type."""
+        return {
+            name: net_balance(self.ledger, name, contra_names)
+            for (name, contra_names) in self.chart.accounts_by_type(t)
+        }
+
+
+class IncomeStatement(Report):
+    income: dict[AccountName, Amount]
+    expenses: dict[AccountName, Amount]
+
+    @classmethod
+    def new(cls, ledger: Ledger, chart: FastChart):
+        """Create income statement from ledger and chart."""
+        reporter = Reporter(ledger, chart)
+        return cls(income=reporter.fill(T5.Income), expenses=reporter.fill(T5.Expense))
+
+    @property
+    def net_earnings(self):
+        """Calculate net earnings as income less expenses."""
+        return sum(self.income.values()) - sum(self.expenses.values())
+
+
 class BalanceSheet(Report):
     assets: dict[AccountName, Amount]
     capital: dict[AccountName, Amount]
@@ -550,17 +554,10 @@ class BalanceSheet(Report):
     @classmethod
     def new(cls, ledger: Ledger, chart: FastChart):
         """Create balance sheet from ledger and chart.
-
         Account will balances will be shown net of contra account balances."""
-
-        def subset(t: T5) -> dict[str, Amount]:
-            return {
-                name: net_balance(ledger, name, contra_names)
-                for (name, contra_names) in chart.accounts_by_type(t)
-            }
-
+        reporter = Reporter(ledger, chart)
         return cls(
-            assets=subset(T5.Asset),
-            capital=subset(T5.Capital),
-            liabilities=subset(T5.Liability),
+            assets=reporter.fill(T5.Asset),
+            capital=reporter.fill(T5.Capital),
+            liabilities=reporter.fill(T5.Liability),
         )
