@@ -38,7 +38,7 @@ book.entries.post("Accepted payment").amount(900).credit("ar").debit("cash").com
 book.entries.post("Made refund").amount(50).debit("refunds").credit("ar").commit()
 book.entries.post("Made cashback").amount(50).debit("cashback").credit("cash").commit()
 book.entries.post("Paid salaries").amount(150).credit("cash").debit("salaries").commit()
-assert book.proxy_net_earnings == 150
+assert book.income_statement.net_earnings == 150
 book.entries.post("Accrue corporate income tax 20%").amount(30).credit("cit_due").debit("cit").commit()
 book.close()
 book.entries.post("Bought back shares").amount(30).debit("ts").credit("cash").commit()

@@ -14,7 +14,6 @@ from core import (
     FastChart,
     IncomeStatement,
     Ledger,
-    TrialBalance,
 )
 
 # type alias for user inputed number
@@ -155,40 +154,50 @@ class EntryList(BaseModel):
             self.entries_before_close == other.entries_before_close
             and self.closing_entries == other.closing_entries
             and self.entries_after_close == other.entries_after_close
-            # excluded _current_entry from comparison
+            # excluded _current_entry and hook from comparison
         )
 
     def __iter__(self):
         return iter(self.entries_before_close + self.closing_entries + self.entries)
 
     def __len__(self):
-        return len(list(iter(self)))
+        return (
+            len(self.entries_before_close)
+            + len(self.closing_entries)
+            + len(self.entries_after_close)
+        )
 
     def is_closed(self) -> bool:
         return len(self.closing_entries) > 0
 
     def post(self, title: str):
+        """Create new entry with title."""
         self._current_entry = NamedEntry(title=title)
         return self
 
     def has_entry(self):
+        """Ensure that current entry was set, raise error if not."""
         if self._current_entry is None:
             raise AbacusError("No current entry set.")
         return self
 
     def amount(self, amount: Numeric):
+        """Set default amount for current entry."""
         self.has_entry()._current_entry.amount(amount)
         return self
 
     def debit(self, account_name: AccountName, amount: Numeric | None = None):
+        """Add debit side to current entry."""
         self.has_entry()._current_entry.debit(account_name, amount)
         return self
 
     def credit(self, account_name: AccountName, amount: Numeric | None = None):
+        """Add credit side to current entry."""
         self.has_entry()._current_entry.credit(account_name, amount)
         return self
 
     def double_entry(self, title, dr_account, cr_account, amount):
+        """Create double entry."""
         self.post(title).amount(amount).debit(dr_account).credit(cr_account)
         return self
 
@@ -205,7 +214,7 @@ class EntryList(BaseModel):
 
     def add_closing_entry(self, entry: Entry):
         """Add closing entry to the records."""
-        # We do not post to ledger as closing entries are already posted via Ledger.close()
+        # Closing entries are already posted via Ledger.close()
         self.closing_entries.append(entry.add_title("Closing entry"))
         return self
 
@@ -301,7 +310,7 @@ class Book:
     @property
     def trial_balance(self):
         """Return trial balance."""
-        return TrialBalance.new(self.ledger)
+        return self.ledger.trial_balance
 
     @property
     def balance_sheet(self):
@@ -313,10 +322,10 @@ class Book:
         self.ledger = Ledger.new(self.chart)
         self.entries._post_entry_hook = self.ledger.post
         if opening_balances:
-            self.commit_opening_entry(opening_balances)
+            self._commit_opening_entry(opening_balances)
         return self
 
-    def commit_opening_entry(self, opening_balances, title="Opening balances"):
+    def _commit_opening_entry(self, opening_balances, title="Opening balances"):
         """Create and commit opening balances entry."""
         entry = self.entries.post(title)
         for account_name, amount in opening_balances.items():
@@ -338,16 +347,9 @@ class Book:
         return self.entries.is_closed()
 
     @property
-    def proxy_income_statement(self):
-        """Income statement proxy (to use before ledger is closed)."""
-        return IncomeStatement.new(self.ledger.copy(), self.chart)
-
-    @property
-    def proxy_net_earnings(self) -> Amount:
-        """Net earnings proxy (to use before ledger is closed)."""
-        return self.proxy_income_statement.net_earnings
-
-    @property
     def income_statement(self):
         """Return income statement."""
-        return self._income_statement or self.proxy_income_statement
+        if self.is_closed():
+            return self._income_statement
+        else:
+            return IncomeStatement.new(self.ledger.copy(), self.chart)
