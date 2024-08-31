@@ -1,12 +1,15 @@
 from dataclasses import dataclass, field
 
+
 def idle():
     raise NotImplementedError
+
 
 @dataclass
 class Item:
     name: str
     hook: callable = field(default=idle)
+
 
 @dataclass
 class Base:
@@ -20,6 +23,6 @@ class Base:
         self.store[key] = value
 
 
-b = Base(Item('abc'), {})
-b.item.hook('1', 'occupied')
+b = Base(Item("abc"), {})
+b.item.hook("1", "occupied")
 print(b.store)

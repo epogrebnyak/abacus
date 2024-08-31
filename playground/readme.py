@@ -14,17 +14,17 @@ book.chart.set_retained_earnings("re")
 # Open ledger and post entries
 # fmt: off
 book.open()
-book.entry("Shareholder investment").amount(300).debit("cash").credit("equity").commit()
-book.entry("Bought inventory").amount(250).debit("inventory").credit("cash").commit()
-book.entry("Invoiced customer").debit("ar", 360).credit("sales", 300).credit("vat", 60).commit()
-book.entry("Shipped goods").amount(200).debit("cogs").credit("inventory").commit()
-book.entry("Issued partial refund").debit("refunds", 20).credit("ar", 20).commit()
-book.entry("Accepted payment").amount(180).debit("cash").credit("ar").commit()
+book.entries.post("Shareholder investment").amount(300).debit("cash").credit("equity").commit()
+book.entries.post("Bought inventory").amount(250).debit("inventory").credit("cash").commit()
+book.entries.post("Invoiced customer").debit("ar", 360).credit("sales", 300).credit("vat", 60).commit()
+book.entries.post("Shipped goods").amount(200).debit("cogs").credit("inventory").commit()
+book.entries.post("Issued partial refund").debit("refunds", 20).credit("ar", 20).commit()
+book.entries.post("Accepted payment").amount(180).debit("cash").credit("ar").commit()
 # fmt: on
 
 # Close ledger and make post-close entries
 book.close()
-book.entry("Accrue dividend").amount(40).debit("re").credit("dividend").commit()
+book.entries.post("Accrue dividend").amount(40).debit("re").credit("dividend").commit()
 
 # Show reports
 print(book.balance_sheet.json())

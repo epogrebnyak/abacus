@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import ClassVar, List
+from typing import Callable, ClassVar, List
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -148,13 +148,14 @@ class EntryList(BaseModel):
     closing_entries: List[NamedEntry] = []
     entries_after_close: List[NamedEntry] = []
     _current_entry: NamedEntry | None = None
-    _count_id: int = 0  # for testing and future use
+    _post_entry_hook: Callable | None = None
 
     def __eq__(self, other):
         return (
             self.entries_before_close == other.entries_before_close
             and self.closing_entries == other.closing_entries
             and self.entries_after_close == other.entries_after_close
+            # excluded _current_entry from comparison
         )
 
     def __iter__(self):
@@ -166,7 +167,7 @@ class EntryList(BaseModel):
     def is_closed(self) -> bool:
         return len(self.closing_entries) > 0
 
-    def head(self, title: str):
+    def post(self, title: str):
         self._current_entry = NamedEntry(title=title)
         return self
 
@@ -187,20 +188,24 @@ class EntryList(BaseModel):
         self.has_entry()._current_entry.credit(account_name, amount)
         return self
 
+    def double_entry(self, title, dr_account, cr_account, amount):
+        self.post(title).amount(amount).debit(dr_account).credit(cr_account)
+        return self
+
     def commit(self):
-        """Add current entry to list of saved entries."""
+        """Add current entry to list of saved entries and post to ledger."""
         if self.is_closed():
             self.entries_after_close.append(self._current_entry)
         else:
             self.entries_before_close.append(self._current_entry)
+        if self._post_entry_hook is not None:
+            self._post_entry_hook(self._current_entry)
         self._current_entry = None
         return self
 
-    def increment(self):
-        self._count_id += 1
-        return self
-
     def add_closing_entry(self, entry: Entry):
+        """Add closing entry to the records."""
+        # We do not post to ledger as closing entries are already posted via Ledger.close()
         self.closing_entries.append(entry.add_title("Closing entry"))
         return self
 
@@ -303,70 +308,23 @@ class Book:
         """Return balance sheet."""
         return BalanceSheet.new(self.ledger, self.chart)
 
-    def add_account(
-        self,
-        account_type: str,  # FIXME: use T5 values only
-        account_name: str,
-        title: str | None = None,
-        offsets: list[str] | None = None,
-    ):
-        """Add account to chart. Use T5 values for *account_type*:
-        - 'asset'
-        - 'liability'
-        - 'capital'
-        - 'income'
-        - 'expense'
-        """
-        self.chart.add(T5(account_type), account_name, title=title, offsets=offsets)
-        return self
-
     def open(self, opening_balances: dict[str, Amount] | None = None):
         """Create new ledger."""
         self.ledger = Ledger.new(self.chart)
+        self.entries._post_entry_hook = self.ledger.post
         if opening_balances:
             self.commit_opening_entry(opening_balances)
         return self
 
     def commit_opening_entry(self, opening_balances, title="Opening balances"):
         """Create and commit opening balances entry."""
-        self.entry(title)
+        entry = self.entries.post(title)
         for account_name, amount in opening_balances.items():
             if self.ledger[account_name].side.is_debit():
-                self.debit(account_name, amount)
+                entry.debit(account_name, amount)
             else:
-                self.credit(account_name, amount)
-        self.commit()
-
-    def entry(self, title: str):
-        """Start new entry."""
-        self.entries.head(title)
-        return self
-
-    def amount(self, amount: Numeric):
-        """Set amount for the current entry."""
-        self.entries.amount(amount)
-        return self
-
-    def debit(self, account_name: str, amount: Numeric | None = None):
-        """Add debit part to current entry."""
-        self.entries.debit(account_name, amount)
-        return self
-
-    def credit(self, account_name: str, amount: Numeric | None = None):
-        """Add credit part to current entry."""
-        self.entries.credit(account_name, amount)
-        return self
-
-    def double_entry(self, title, dr_account, cr_account, amount):
-        """Add double entry."""
-        self.entry(title).amount(amount).debit(dr_account).credit(cr_account)
-        return self
-
-    def commit(self):
-        """Post current entry to ledger and write it to entry store."""
-        self.ledger.post(self.entries._current_entry)  # type: ignore
-        self.entries.commit()
-        return self
+                entry.credit(account_name, amount)
+        entry.commit()
 
     def close(self):
         """Close ledger."""
