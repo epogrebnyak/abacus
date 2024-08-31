@@ -63,7 +63,8 @@ def test_balance_sheet_respects_contra_account():
     chart = (
         Chart(income_summary_account="isa", retained_earnings_account="re")
         .add_asset("cash")
-        .add_capital("equity", offsets=["treasury_shares"])
+        .add_capital("equity")
+        .offset("equity", "treasury_shares")
     )
     ledger = Ledger.new(chart)
     me = Entry().dr("cash", 100).dr("treasury_shares", 21).cr("equity", 120)
@@ -100,7 +101,8 @@ def test_end_to_end():
     chart.add_asset("inventory")
     chart.add_capital("equity")
     chart.add_expense("cogs")
-    chart.add_income("sales", offsets=["refunds"])
+    chart.add_income("sales")
+    chart.offset("sales", "refunds")
 
     ledger = Ledger.new(chart)
     ledger.post_many(entries)

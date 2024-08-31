@@ -35,7 +35,9 @@ class Chart(FastChart):
         contra_account_title: str | None = None,
     ):
         """Add contra account to chart."""
-        self[account_name].offsets.append(contra_account_name)
+        t, offsets = self[account_name]
+        offsets.append(contra_account_name) 
+        self.accounts[account_name] = (t, offsets)
         self.set_title(contra_account_name, contra_account_title)
         return self
 
@@ -44,7 +46,7 @@ class Chart(FastChart):
         t: T5,
         account_name: str,
         title: str | None,
-        offsets: list[str] | None,
+        offsets: List[str] | None = None,
     ):
         """Add new account to chart."""
         self.set_account(account_name, t, offsets or [])
