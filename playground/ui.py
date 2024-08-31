@@ -24,21 +24,32 @@ Numeric = Amount | int | float
 class Chart(FastChart):
     names: dict[str, str] = {}
 
-    def set_title(self, account_name: str, title: str):
-        self.names[account_name] = title
+    def set_title(self, account_name: str, title: str | None):
+        if title:
+            self.names[account_name] = title
+        return self
+
+    def offset(
+        self,
+        account_name: str,
+        contra_account_name: str,
+        contra_account_title: str | None = None,
+    ):
+        """Add contra account to chart."""
+        self[account_name].offsets.append(contra_account_name)
+        self.set_title(contra_account_name, contra_account_title)
         return self
 
     def add(
         self,
         t: T5,
         account_name: str,
-        title: str | None,  # reserved
+        title: str | None,
         offsets: list[str] | None,
     ):
         """Add new account to chart."""
         self.set_account(account_name, t, offsets or [])
-        if title:
-            self.set_title(account_name, title)
+        self.set_title(account_name, title)
         return self
 
     def add_asset(self, account, *, title=None, offsets=None):

@@ -1,15 +1,22 @@
-"""Double-entry bookkeeping module.
+"""Core double-entry accounting objects.
+
+This module contains classes:
+
+  - chart of accounts (FastChart)
+  - general ledger (Ledger)
+  - multiple enry (Entry), and
+  - reports (TrialBalance, IncomeStatement, BalanceSheet)
 
 Accounting workflow:
 
 1. create chart of accounts and set retained earnings account
-2. create ledger from chart
+2. create ledger from chart with opening balances
 3. post entries to ledger
-4. show proxy income statement 
-5. close ledger at accounting period end and make income statement
-6. make post-close entries and produce balance sheet
-7. save permanent account balances for next period  
-8. show trial balance at any time after step 3
+4. show trial balance at any time
+5. show proxy income statement if necessary 
+6. close ledger at accounting period end and make income statement
+7. make post-close entries and make balance sheet
+8. save permanent account balances for next period  
 
 Accounting conventions:
 
@@ -75,6 +82,11 @@ class Side(Enum):
         """Return True if this is a debit side."""
         return self == Side.Debit
 
+    @property
+    def taccount(self) -> "DebitAccount | CreditAccount":
+        """Create debit or credit account based on the specified side."""
+        return DebitAccount() if self.is_debit() else CreditAccount()
+
     def __repr__(self):
         """Make this enum look better in messages."""
         return str(self)
@@ -116,11 +128,6 @@ class AccountDefinition(ABC):
         """Create T-account for this account definition."""
 
 
-def from_side(side: Side) -> "DebitAccount | CreditAccount":
-    """Create debit or credit account based on the specified side."""
-    return DebitAccount() if side.is_debit() else CreditAccount()
-
-
 @dataclass
 class Regular(AccountDefinition):
     """Regular account of any of five types of accounts."""
@@ -128,7 +135,7 @@ class Regular(AccountDefinition):
     t: T5
 
     def taccount(self):
-        return from_side(self.t.side)
+        return self.t.side.taccount
 
 
 @dataclass
@@ -146,7 +153,7 @@ class Contra(AccountDefinition):
     t: T5
 
     def taccount(self):
-        return from_side(self.t.side.reverse())
+        return self.t.side.reverse().taccount
 
 
 class Profit(Enum):
@@ -191,12 +198,12 @@ class Entry(BaseModel):
 
     def dr(self, account_name, amount):
         """Add debit part to entry."""
-        self.debits += [(account_name, amount)]
+        self.debits.append((account_name, amount))
         return self
 
     def cr(self, account_name, amount):
         """Add credit part to entry."""
-        self.credits += [(account_name, amount)]
+        self.credits.append((account_name, amount))
         return self
 
     def validate_balance(self):
@@ -212,12 +219,14 @@ class Entry(BaseModel):
         )
 
     def add_title(self, title: str):
+        """Create named entry with title."""
         from ui import NamedEntry
 
         return NamedEntry(title=title, debits=self.debits, credits=self.credits)
 
 
 def double_entry(debit: AccountName, credit: AccountName, amount: Amount) -> Entry:
+    """Create double entry with one debit and one credit part."""
     return Entry().dr(debit, amount).cr(credit, amount)
 
 
@@ -231,12 +240,14 @@ class FastChart(BaseModel):
 
     @classmethod
     def default(cls):
+        """Create chart of accounts with two required account names."""
         return cls(
             income_summary_account="__isa__",
             retained_earnings_account="retained_earnings",
         )
 
     def set_retained_earnings(self, account_name: str):
+        """Set retained earnings account name."""
         del self.accounts[self.retained_earnings_account]
         self.retained_earnings_account = account_name
         self.accounts[account_name] = (T5.Capital, [])
@@ -319,11 +330,11 @@ class TAccountBase(ABC):
         Make closing entry to transfer account balance
         from *my_name* account to *destination_name* account.
 
-        When closing a debit account, the closing entry will be:
+        When closing a debit account the closing entry is:
            - Cr my_name
            - Dr destination_name
 
-        When closing a credit account, the closing entry will be:
+        When closing a credit account the closing entry is:
             - Dr my_name
             - Cr destination_name
         """
@@ -451,7 +462,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
         """
         closing_entries = []
 
-        def proceed(from_, to_):
+        def proceed(from_: AccountName, to_: AccountName):
             entry = self.data[from_].make_closing_entry(from_, to_)
             closing_entries.append(entry)
             self.post(entry)
@@ -464,6 +475,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
                     proceed(from_=contra_name, to_=name)
 
         # 2. Close income and expense accounts to income summary account.
+        #    Note: can be just two multiple entries, one for incomes and one for expenses.
         for name, _ in chart.accounts_by_type(T5.Income):
             proceed(name, chart.income_summary_account)
         for name, _ in chart.accounts_by_type(T5.Expense):
@@ -499,10 +511,6 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
         }
 
 
-class Report(BaseModel):
-    """Base class for financial reports."""
-
-
 def net_balance(
     ledger: Ledger, name: AccountName, contra_names: list[AccountName]
 ) -> Amount:
@@ -524,6 +532,10 @@ class Reporter:
             name: net_balance(self.ledger, name, contra_names)
             for (name, contra_names) in self.chart.accounts_by_type(t)
         }
+
+
+class Report(BaseModel):
+    """Base class for financial reports."""
 
 
 class IncomeStatement(Report):
