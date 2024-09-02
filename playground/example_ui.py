@@ -16,7 +16,7 @@ book.chart.add_liability("cit_due", title="Income tax payable")
 book.chart.set_retained_earnings("re")
 book.chart.set_income_summary_account("_isa")
 book.open()
-book.entries.post("Shareholder investment").amount(1500).debit("cash").credit(
+book.entry("Shareholder investment").amount(1500).debit("cash").credit(
     "equity"
 ).commit()
 book.account_balances.to_file(filename="balances.json")
@@ -31,19 +31,19 @@ book.open(opening_balances={"cash": 1500, "equity": 1500})
 assert book.ledger["cash"].balance == 1500
 assert book.ledger["equity"].balance == 1500
 # fmt: off
-book.entries.post("Bought inventory (no VAT)").amount(1000).debit("inventory").credit("cash").commit()
-book.entries.post("Invoice with 20% VAT").debit("ar", 1200).credit("sales", 1000).credit("vat", 200).commit()
-book.entries.post("Registered costs").amount(600).debit("cogs").credit("inventory").commit()
-book.entries.post("Accepted payment").amount(900).credit("ar").debit("cash").commit()
-book.entries.post("Made refund").amount(50).debit("refunds").credit("ar").commit()
-book.entries.post("Made cashback").amount(50).debit("cashback").credit("cash").commit()
-book.entries.post("Paid salaries").amount(150).credit("cash").debit("salaries").commit()
+book.entry("Bought inventory (no VAT)").amount(1000).debit("inventory").credit("cash").commit()
+book.entry("Invoice with 20% VAT").debit("ar", 1200).credit("sales", 1000).credit("vat", 200).commit()
+book.entry("Registered costs").amount(600).debit("cogs").credit("inventory").commit()
+book.entry("Accepted payment").amount(900).credit("ar").debit("cash").commit()
+book.entry("Made refund").amount(50).debit("refunds").credit("ar").commit()
+book.entry("Provided  cashback").amount(50).debit("cashback").credit("cash").commit()
+book.entry("Paid salaries").amount(150).credit("cash").debit("salaries").commit()
 assert book.income_statement.net_earnings == 150
-book.entries.post("Accrue corporate income tax 20%").amount(30).credit("cit_due").debit("cit").commit()
+book.entry("Accrue corporate income tax 20%").amount(30).credit("cit_due").debit("cit").commit()
 book.close()
-book.entries.post("Bought back shares").amount(30).debit("ts").credit("cash").commit()
-book.entries.post("Announced dividend").amount(60).debit("re").credit("dividend").commit()
-book.entries.post("Pay corporate income tax").amount(30).debit("cit_due").credit("cash").commit()
+book.entry("Bought back shares").amount(30).debit("ts").credit("cash").commit()
+book.entry("Announced dividend").amount(60).debit("re").credit("dividend").commit()
+book.entry("Pay corporate income tax").amount(30).debit("cit_due").credit("cash").commit()
 # fmt: on
 print((a := book.income_statement).json())
 assert a.dict() == {

@@ -36,8 +36,7 @@ class Chart(FastChart):
     ):
         """Add contra account to chart."""
         t, offsets = self[account_name]
-        offsets.append(contra_account_name) 
-        self.accounts[account_name] = (t, offsets)
+        self.accounts[account_name] = (t, offsets + [contra_account_name])
         self.set_title(contra_account_name, contra_account_title)
         return self
 
@@ -144,20 +143,32 @@ class NamedEntry(Entry):
         return self
 
 
+def idle(named_entry: NamedEntry) -> None:
+    """Do nothing."""
+    pass
+
+
+class UserEntry(NamedEntry):
+    _post: Callable[[NamedEntry], None] = idle
+    _append: Callable[[NamedEntry], None] = idle
+
+    def commit(self):
+        """Add current entry to list of saved entries and post to ledger."""
+        named_entry = NamedEntry(
+            title=self.title,
+            debits=self.debits,
+            credits=self.credits,
+        )
+        named_entry.validate_balance()
+        self._post(named_entry)
+        self._append(named_entry)
+        return self
+
+
 class EntryList(BaseModel):
     entries_before_close: List[NamedEntry] = []
     closing_entries: List[NamedEntry] = []
     entries_after_close: List[NamedEntry] = []
-    _current_entry: NamedEntry | None = None
-    _post_entry_hook: Callable | None = None
-
-    def __eq__(self, other):
-        return (
-            self.entries_before_close == other.entries_before_close
-            and self.closing_entries == other.closing_entries
-            and self.entries_after_close == other.entries_after_close
-            # excluded _current_entry and hook from comparison
-        )
 
     def __iter__(self):
         return iter(self.entries_before_close + self.closing_entries + self.entries)
@@ -170,54 +181,20 @@ class EntryList(BaseModel):
         )
 
     def is_closed(self) -> bool:
+        """Return True if ledger was closed."""
         return len(self.closing_entries) > 0
 
-    def post(self, title: str):
-        """Create new entry with title."""
-        self._current_entry = NamedEntry(title=title)
-        return self
-
-    def has_entry(self):
-        """Ensure that current entry was set, raise error if not."""
-        if self._current_entry is None:
-            raise AbacusError("No current entry set.")
-        return self
-
-    def amount(self, amount: Numeric):
-        """Set default amount for current entry."""
-        self.has_entry()._current_entry.amount(amount)
-        return self
-
-    def debit(self, account_name: AccountName, amount: Numeric | None = None):
-        """Add debit side to current entry."""
-        self.has_entry()._current_entry.debit(account_name, amount)
-        return self
-
-    def credit(self, account_name: AccountName, amount: Numeric | None = None):
-        """Add credit side to current entry."""
-        self.has_entry()._current_entry.credit(account_name, amount)
-        return self
-
-    def double_entry(self, title, dr_account, cr_account, amount):
-        """Create double entry."""
-        self.post(title).amount(amount).debit(dr_account).credit(cr_account)
-        return self
-
-    def commit(self):
-        """Add current entry to list of saved entries and post to ledger."""
+    def append(self, entry: NamedEntry):
+        """Append entry to the list."""
         if self.is_closed():
-            self.entries_after_close.append(self._current_entry)
+            self.entries_after_close.append(entry)
         else:
-            self.entries_before_close.append(self._current_entry)
-        if self._post_entry_hook is not None:
-            self._post_entry_hook(self._current_entry)
-        self._current_entry = None
+            self.entries_before_close.append(entry)
         return self
 
-    def add_closing_entry(self, entry: Entry):
-        """Add closing entry to the records."""
-        # Closing entries are already posted via Ledger.close()
-        self.closing_entries.append(entry.add_title("Closing entry"))
+    def append_closing(self, entry: NamedEntry):
+        """Append closing entry to the list."""
+        self.closing_entries.append(entry)
         return self
 
 
@@ -281,6 +258,17 @@ class Book:
     ledger: Ledger = PrivateAttr(default_factory=Ledger)
     _income_statement: IncomeStatement | None = None
 
+    def entry(self, title: str) -> UserEntry:
+        """Create new entry with callbacks to ledger and entry store."""
+        _current_entry = UserEntry(title=title)
+        _current_entry._post = self.ledger.post
+        _current_entry._append = self.entries.append
+        return _current_entry
+
+    def double_entry(self, title, dr_account, cr_account, amount) -> UserEntry:
+        """Create double entry."""
+        return self.entry(title).amount(amount).debit(dr_account).credit(cr_account)
+
     def save(self, directory: Path = Path(".")):
         self.chart.to_file(directory=directory)
         self.entries.to_file(directory=directory)
@@ -322,14 +310,13 @@ class Book:
     def open(self, opening_balances: dict[str, Amount] | None = None):
         """Create new ledger."""
         self.ledger = Ledger.new(self.chart)
-        self.entries._post_entry_hook = self.ledger.post
         if opening_balances:
             self._commit_opening_entry(opening_balances)
         return self
 
     def _commit_opening_entry(self, opening_balances, title="Opening balances"):
         """Create and commit opening balances entry."""
-        entry = self.entries.post(title)
+        entry = self.entry(title)
         for account_name, amount in opening_balances.items():
             if self.ledger[account_name].side.is_debit():
                 entry.debit(account_name, amount)
@@ -337,21 +324,18 @@ class Book:
                 entry.credit(account_name, amount)
         entry.commit()
 
-    def close(self):
+    def close(self, title="Closing entry"):
         """Close ledger."""
         self._income_statement = IncomeStatement.new(self.ledger, self.chart)
         for closing_entry in self.ledger.close(self.chart):
-            self.entries.add_closing_entry(closing_entry)
+            named_entry = closing_entry.add_title(title)
+            self.entries.append_closing(named_entry)
         return self
-
-    def is_closed(self) -> bool:
-        """Return True if ledger was closed."""
-        return self.entries.is_closed()
 
     @property
     def income_statement(self):
         """Return income statement."""
-        if self.is_closed():
+        if self.entries.is_closed():
             return self._income_statement
         else:
             return IncomeStatement.new(self.ledger.copy(), self.chart)

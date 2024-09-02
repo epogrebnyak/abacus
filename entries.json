@@ -1,4 +1,6 @@
 {
+  "directory": ".",
+  "filename": "entries.json",
   "entries_before_close": [
     {
       "debits": [
@@ -13,7 +15,7 @@
           "1500"
         ]
       ],
-      "title": "Shareholder investment"
+      "title": "Opening balances"
     },
     {
       "debits": [

@@ -34,7 +34,7 @@ def test_book():
     book.chart.add_capital("equity")
     book.open()
     (
-        book.entries.post("Shareholder investment")
+        book.entry("Shareholder investment")
         .amount(1500)
         .debit("cash")
         .credit("equity")
@@ -57,16 +57,16 @@ def simple_book():
     book.chart.add_income("sales")
     book.chart.add_expense("salary")
     book.open()
-    book.entries.post("Shareholder investment").amount(1500).debit("cash").credit("equity").commit()
-    book.entries.post("Provided services").amount(800).debit("cash").credit("sales").commit()
-    book.entries.post("Paid wages").amount(400).debit("salary").credit("cash").commit()
+    book.entry("Shareholder investment").amount(1500).debit("cash").credit("equity").commit()
+    book.entry("Provided services").amount(800).debit("cash").credit("sales").commit()
+    book.entry("Paid wages").amount(400).debit("salary").credit("cash").commit()
     return book
 # fmt: on
 
 
 def test_book_is_closed(simple_book):
-    assert simple_book.is_closed() is False
-    assert simple_book.close().is_closed() is True
+    assert simple_book.entries.is_closed() is False
+    assert simple_book.close().entries.is_closed() is True
 
 
 def test_income_statement_before_close(simple_book):
@@ -120,22 +120,22 @@ def test_trial_balance_after_close(simple_book):
 
 
 def test_entries_store(tmp_path):
-    entries = (
-        EntryStore(directory=tmp_path, filename="test.json")
-        .post("Start business")
-        .amount(500)
+    ne = (
+        NamedEntry(title="Shareholder investment")
+        .amount(1500)
         .debit("cash")
         .credit("equity")
-        .commit()
     )
+    entries = EntryStore(directory=tmp_path, filename="test.json")
+    entries.append(ne)
     _path = entries.to_file()
     print(entries)
     print(_path)
     assert Path(_path).exists()
     assert Path(tmp_path / "test.json").exists()
     b = EntryStore.from_file(tmp_path, "test.json")
-    assert b.entries_before_close[0] == double_entry("cash", "equity", 500).add_title(
-        "Start business"
+    assert b.entries_before_close[0] == double_entry("cash", "equity", 1500).add_title(
+        "Shareholder investment"
     )
 
 
@@ -169,8 +169,8 @@ def book_after_close():
     book.chart.add_asset("cash")
     book.chart.add_income("sales", offsets=["refunds"])
     book.open()
-    book.entries.double_entry("Regiter sales", "cash", "sales", 5).commit()
-    book.entries.double_entry("Issue refund", "refunds", "cash", 3).commit()
+    book.double_entry("Regiter sales", "cash", "sales", 5).commit()
+    book.double_entry("Issue refund", "refunds", "cash", 3).commit()
     book.close()
     return book
 
@@ -190,9 +190,7 @@ def test_opening_balances(tmp_path):
     _book.chart.add_asset("cash")
     _book.chart.add_capital("equity")
     _book.open()
-    _book.entries.double_entry(
-        "Shareholder investment", "cash", "equity", 1500
-    ).commit()
+    _book.double_entry("Shareholder investment", "cash", "equity", 1500).commit()
     _book.account_balances.to_file(directory=tmp_path)
     _book.save(directory=tmp_path)
     book = Book("Duffin Mills")

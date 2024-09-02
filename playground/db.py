@@ -1,30 +1,32 @@
 from decimal import Decimal
-from enum import Enum
 from pathlib import Path
 from typing import Optional
 
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
-
+from ui import Chart
 
 from core import T5, Side
 
+
 class BaseAccount(SQLModel):
-   name: str = Field(primary_key=True)
-   title: str | None = None
+    name: str = Field(primary_key=True)
+    title: str | None = None
 
-class IncomeSummaryAccount(BaseAccount, table=True):
-    ...
 
-class RetainedEarningsAccount(BaseAccount, table=True):
-    ...
+class IncomeSummaryAccount(BaseAccount, table=True): ...
+
+
+class RetainedEarningsAccount(BaseAccount, table=True): ...
 
 
 class RegularAccount(BaseAccount, table=True):
     t5: T5
 
+
 class ContraAccount(BaseAccount, table=True):
-    offsets: str = Field(foreign_key="regularaccount.name") 
- 
+    offsets: str = Field(foreign_key="regularaccount.name")
+
+
 class Header(SQLModel, table=True):
     count_id: Optional[int] = Field(default=None, primary_key=True)
     title: str
@@ -82,7 +84,6 @@ def query(session):
     for entry in results:
         print(entry)
 
-from ui import Chart
 
 def load_chart(session):
     isa = session.exec(select(IncomeSummaryAccount)).one()
@@ -92,7 +93,8 @@ def load_chart(session):
         chart.add(t=account.t5, account_name=account.name, title=account.title)
     for contra_account in session.exec(select(ContraAccount)):
         chart.offset(contra_account.offsets, contra_account.name, contra_account.title)
-    return chart    
+    return chart
+
 
 def save_chart(session, chart):
     isa = IncomeSummaryAccount(name=chart.income_summary_account)
@@ -103,9 +105,12 @@ def save_chart(session, chart):
         a = RegularAccount(name=account, t5=t, title=chart.names.get(account))
         session.add(a)
         for offset in offsets:
-            c = ContraAccount(name=offset, offsets=account, title=chart.names.get(offset))
+            c = ContraAccount(
+                name=offset, offsets=account, title=chart.names.get(offset)
+            )
             session.add(c)
     session.commit()
+
 
 engine = make_engine(wipe=True)
 with Session(engine) as session:
