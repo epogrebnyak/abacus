@@ -230,42 +230,32 @@ def double_entry(debit: AccountName, credit: AccountName, amount: Amount) -> Ent
     return Entry().dr(debit, amount).cr(credit, amount)
 
 
-class AccountDictValue(BaseModel):
-    t: T5
-    contra_account_names: list[str] = []
-
-    def offset(self, contra_account_name: str):
-        """Add contra account to this account."""
-        self.contra_account_names.append(contra_account_name)
-        return self
-
-
 class AccountDict(BaseModel):
-    data: dict[str, AccountDictValue] = {}
+    data: dict[str, tuple[T5, list[str]]] = {}
 
     def set(self, t: T5, account_name: str):
         """Add account name, type and contra accounts to chart."""
-        self.data[account_name] = AccountDictValue(t=t)
+        self.data[account_name] = (t, [])
         return self
 
     def offset(self, account_name: str, contra_account_name: str):
         """Add contra account to an account."""
-        self.data[account_name].offset(contra_account_name)
+        self.data[account_name][1].append(contra_account_name)
         return self
 
     def _definitions(self):
         """Yield account names and account definitions."""
-        for account_name, value in self.data.items():
-            yield account_name, Regular(value.t)
-            for contra_account_name in value.contra_account_names:
-                yield contra_account_name, Contra(value.t)
+        for account_name, (t, contra_account_names) in self.data.items():
+            yield account_name, Regular(t)
+            for contra_account_name in contra_account_names:
+                yield contra_account_name, Contra(t)
 
     def by_type(self, t: T5):
         """Return account names and contra accounts for a given account type."""
         return [
-            (name, value.contra_account_names)
-            for name, value in self.data.items()
-            if value.t == t
+            (name, contra_account_names)
+            for name, (_t, contra_account_names) in self.data.items()
+            if _t == t
         ]
 
 

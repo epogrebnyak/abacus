@@ -5,7 +5,6 @@ from core import (
     T5,
     AbacusError,
     AccountDict,
-    AccountDictValue,
     Amount,
     BalanceSheet,
     CreditAccount,
@@ -20,9 +19,7 @@ from core import (
 
 def test_chart_setter_by_default():
     chart = Chart()
-    assert chart.accounts.data["retained_earnings"] == AccountDictValue(
-        t=T5.Capital, contra_account_names=[]
-    )
+    assert chart.accounts.data["retained_earnings"] == (T5.Capital, [])
     assert chart.income_summary_account == "__isa__"
     assert chart.retained_earnings_account == "retained_earnings"
     assert chart.names == {}
@@ -32,9 +29,7 @@ def test_fast_chart_setter_with_offsets():
     chart = Chart()
     chart.accounts.set(T5.Capital, "equity")
     chart.accounts.offset("equity", "ts")
-    assert chart.accounts.data["equity"] == AccountDictValue(
-        t=T5.Capital, contra_account_names=["ts"]
-    )
+    assert chart.accounts.data["equity"] ==(T5.Capital, ["ts"])
 
 
 def test_debit_account_stays_positive():
@@ -68,8 +63,8 @@ def test_chart_on_retained_earnings():
         names={},
     )
     assert chart.retained_earnings_account == "this_is_re"
-    assert chart.accounts.data["this_is_re"] == AccountDictValue(
-        t=T5.Capital, countra_account_names=[]
+    assert chart.accounts.data["this_is_re"] == (
+        T5.Capital, []
     )
 
 
