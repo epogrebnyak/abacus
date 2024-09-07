@@ -243,7 +243,7 @@ class AccountDict(BaseModel):
         self.data[account_name][1].append(contra_account_name)
         return self
 
-    def _definitions(self):
+    def definitions(self):
         """Yield account names and account definitions."""
         for account_name, (t, contra_account_names) in self.data.items():
             yield account_name, Regular(t)
@@ -269,7 +269,7 @@ class Chart(AccountDict):
 
     def definitions(self):
         """Add income summary account to definitions."""
-        yield from self._definitions()
+        yield from super().definitions()
         yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
 
     @property
@@ -503,11 +503,9 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
     def tuples(self) -> dict[str, tuple[Amount, Amount]]:
         """Return account names and tuples like (0, balances) or (balance, 0)."""
 
-        def to_tuples(side: Side, balance: Amount):
-            return (balance, 0) if side.is_debit() else (0, balance)
-
         return {
-            name: to_tuples(side, balance) for name, (side, balance) in self.items()
+            name: ((balance, Amount(0)) if side.is_debit() else (Amount(0), balance))
+            for name, (side, balance) in self.items()
         }
 
 
