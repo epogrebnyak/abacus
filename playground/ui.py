@@ -33,10 +33,9 @@ class Chart(FastChart):
         account_name: str,
         contra_account_name: str,
         contra_account_title: str | None = None,
-    ):
+    ) -> "Chart":
         """Add contra account to chart."""
-        t, offsets = self[account_name]
-        self.accounts[account_name] = (t, offsets + [contra_account_name])
+        self.add_contra_account(account_name, contra_account_name)
         self.set_title(contra_account_name, contra_account_title)
         return self
 
@@ -48,7 +47,10 @@ class Chart(FastChart):
         offsets: List[str] | None = None,
     ):
         """Add new account to chart."""
-        self.set_account(account_name, t, offsets or [])
+        self.set_account(t, account_name)
+        if offsets:
+            for offset in offsets:
+                self.add_contra_account(account_name, offset)
         self.set_title(account_name, title)
         return self
 
@@ -100,11 +102,6 @@ class Chart(FastChart):
         """Add several expense accounts to chart."""
         for name in account_names:
             self.add_expense(name)
-        return self
-
-    def set_income_summary_account(self, account_name: str):
-        """Set name of income summary account."""
-        self.income_summary_account = account_name
         return self
 
 

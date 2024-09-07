@@ -13,8 +13,10 @@ book.chart.add_expense("cit", title="Income tax")
 book.chart.add_liability("vat", title="VAT payable")
 book.chart.add_liability("dividend")
 book.chart.add_liability("cit_due", title="Income tax payable")
-book.chart.set_retained_earnings("re")
+book.chart.set_retained_earnings_account("re")
 book.chart.set_income_summary_account("_isa")
+print(book.chart.accounts)
+print(book.chart.names)
 book.open()
 book.entry("Shareholder investment").amount(1500).debit("cash").credit(
     "equity"

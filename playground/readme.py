@@ -9,7 +9,7 @@ book.chart.add_capital("equity")
 book.chart.add_income("sales", offsets=["refunds"])
 book.chart.add_expense("cogs")
 book.chart.add_liabilities("dividend", "vat")
-book.chart.set_retained_earnings("re")
+book.chart.set_retained_earnings_account("re")
 
 # Open ledger and post entries
 # fmt: off

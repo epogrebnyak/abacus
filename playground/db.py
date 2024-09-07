@@ -1,4 +1,5 @@
 from decimal import Decimal
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -27,9 +28,16 @@ class ContraAccount(BaseAccount, table=True):
     offsets: str = Field(foreign_key="regularaccount.name")
 
 
+class Kind(Enum):
+    before_close = "before_close"
+    closing = "closing"
+    after_close = "after_close"
+
+
 class Header(SQLModel, table=True):
     count_id: Optional[int] = Field(default=None, primary_key=True)
     title: str
+    Kind: Kind
     entries: list["Single"] = Relationship(back_populates="header")
 
     def debit(self, account: str, amount: Decimal):

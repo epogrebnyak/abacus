@@ -58,7 +58,7 @@ class AbacusError(Exception):
     """Custom error for the abacus project."""
 
 
-def error(message, data):
+def error(message: str, data):
     return AbacusError({message: data})
 
 
@@ -230,13 +230,33 @@ def double_entry(debit: AccountName, credit: AccountName, amount: Amount) -> Ent
     return Entry().dr(debit, amount).cr(credit, amount)
 
 
+class AccountDictValue(BaseModel):
+    t: T5
+    contra_account_names: list[str] = []
+
+    def offset(self, contra_account_name: str):
+        """Add contra account to this account."""
+        self.contra_account_names.append(contra_account_name)
+        return self
+
+
 class FastChart(BaseModel):
     income_summary_account: str
     retained_earnings_account: str
-    accounts: dict[str, tuple[T5, list[str]]] = {}
+    accounts: dict[str, AccountDictValue] = {}
+
+    def set_account(self, t: T5, account_name: str):
+        """Add account name, type and contra accounts to chart."""
+        self.accounts[account_name] = AccountDictValue(t=t)
+        return self
+
+    def add_contra_account(self, account_name: str, contra_account_name: str):
+        """Add contra account to an account."""
+        self.accounts[account_name].offset(contra_account_name)
+        return self
 
     def model_post_init(self, __context: Any) -> None:
-        self.set_account(self.retained_earnings_account, T5.Capital)
+        self.set_account(T5.Capital, self.retained_earnings_account)
 
     @classmethod
     def default(cls):
@@ -246,27 +266,25 @@ class FastChart(BaseModel):
             retained_earnings_account="retained_earnings",
         )
 
-    def set_retained_earnings(self, account_name: str):
+    def set_income_summary_account(self, account_name: str):
+        """Set income summary account name."""
+        self.income_summary_account = account_name
+        return self
+
+    def set_retained_earnings_account(self, account_name: str):
         """Set retained earnings account name."""
         del self.accounts[self.retained_earnings_account]
         self.retained_earnings_account = account_name
-        self.accounts[account_name] = (T5.Capital, [])
+        self.set_account(T5.Capital, account_name)
         return self
 
     def items(self):
         """Assign account types to account names."""
-        for account_name, (t, offsets) in self.accounts.items():
-            yield account_name, Regular(t)
-            for offset in offsets:
-                yield offset, Contra(t)
+        for account_name, value in self.accounts.items():
+            yield account_name, Regular(value.t)
+            for contra_account_name in value.contra_account_names:
+                yield contra_account_name, Contra(value.t)
         yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
-
-    def set_account(
-        self, account_name: str, t: T5, contra_accounts: list[str] | None = None
-    ):
-        """Add account name, type and contra accounts to chart."""
-        self.accounts[account_name] = (t, contra_accounts or [])
-        return self
 
     def __getitem__(self, key: str):
         """Get type and contra accounts for a given account name."""
@@ -275,9 +293,9 @@ class FastChart(BaseModel):
     def accounts_by_type(self, t: T5):
         """Return account names and contra accounts for a given account type."""
         return [
-            (name, contra_names)
-            for name, (_t, contra_names) in self.accounts.items()
-            if _t == t
+            (name, value.contra_account_names)
+            for name, value in self.accounts.items()
+            if value.t == t
         ]
 
     @property

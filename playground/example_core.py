@@ -2,20 +2,25 @@ from ui import NamedEntry
 
 from core import T5, BalanceSheet, FastChart, IncomeStatement, Ledger
 
+print(FastChart.default())
+
 # Create chart of accounts with contra accounts
 chart = (
     FastChart.default()
-    .set_retained_earnings("retained_earnings")
-    .set_account("cash", T5.Asset)
-    .set_account("ar", T5.Asset)
-    .set_account("ppe", T5.Asset, ["depreciation"])
-    .set_account("equity", T5.Capital)
-    .set_account("ap", T5.Liability)
-    .set_account("ict_due", T5.Liability)
-    .set_account("div_due", T5.Liability)
-    .set_account("sales", T5.Income, ["refunds", "voids"])
-    .set_account("salaries", T5.Expense)
-    .set_account("expense:depreciation", T5.Expense)  # avoiding duplicate name
+    .set_retained_earnings_account("retained_earnings")
+    .set_account(T5.Asset, "cash")
+    .set_account(T5.Asset, "ar")
+    .set_account(T5.Asset, "ppe")
+    .add_contra_account("ppe", "depreciation")
+    .set_account(T5.Capital, "equity")
+    .set_account(T5.Liability, "ap")
+    .set_account(T5.Liability, "ict_due")
+    .set_account(T5.Liability, "div_due")
+    .set_account(T5.Income, "sales")
+    .add_contra_account("sales", "refunds")
+    .add_contra_account("sales", "voids")
+    .set_account(T5.Expense, "salaries")
+    .set_account(T5.Expense, "expense:depreciation")  # avoiding duplicate name
 )
 
 # Create ledger from chart
@@ -54,6 +59,7 @@ closing_entries = ledger.close(chart)
 balance_sheet = BalanceSheet.new(ledger, chart)
 
 # Show income statement data
+print(income_statement)
 assert income_statement.dict() == {
     "income": {"sales": 180},
     "expenses": {"salaries": 120, "expense:depreciation": 20},

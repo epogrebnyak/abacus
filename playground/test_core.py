@@ -4,6 +4,7 @@ from ui import Chart
 from core import (
     T5,
     AbacusError,
+    AccountDictValue,
     Amount,
     BalanceSheet,
     CreditAccount,
@@ -18,7 +19,9 @@ from core import (
 
 def test_chart_setter_by_default():
     chart = Chart.default()
-    assert chart["retained_earnings"] == (T5.Capital, [])
+    assert chart["retained_earnings"] == AccountDictValue(
+        t=T5.Capital, contra_account_names=[]
+    )
     assert chart.income_summary_account == "__isa__"
     assert chart.retained_earnings_account == "retained_earnings"
     assert chart.names == {}
@@ -26,8 +29,11 @@ def test_chart_setter_by_default():
 
 def test_fast_chart_setter_with_offsets():
     chart = Chart.default()
-    chart.set_account("equity", T5.Capital, ["ts"])
-    assert chart["equity"] == (T5.Capital, ["ts"])
+    chart.set_account(T5.Capital, "equity")
+    chart.offset("equity", "ts")
+    assert chart["equity"] == AccountDictValue(
+        t=T5.Capital, contra_account_names=["ts"]
+    )
 
 
 def test_debit_account_stays_positive():
@@ -56,7 +62,9 @@ def test_invalid_multiple_entry():
 def test_chart_on_retained_earnings():
     chart = Chart(income_summary_account="isa", retained_earnings_account="this_is_re")
     assert chart.retained_earnings_account == "this_is_re"
-    assert chart.accounts["this_is_re"] == (T5.Capital, [])
+    assert chart.accounts["this_is_re"] == AccountDictValue(
+        t=T5.Capital, countra_account_names=[]
+    )
 
 
 def test_balance_sheet_respects_contra_account():
@@ -96,7 +104,7 @@ def test_end_to_end():
     ]
 
     chart = Chart(income_summary_account="__isa__", retained_earnings_account="__re__")
-    chart.set_retained_earnings("retained_earnings")
+    chart.set_retained_earnings_account("retained_earnings")
     chart.add_asset("cash")
     chart.add_asset("inventory")
     chart.add_capital("equity")
