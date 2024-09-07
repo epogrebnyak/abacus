@@ -24,8 +24,8 @@ def test_named_entry_on_None_amount_raises_error():
 
 
 def test_chart_add_assets():
-    chart = Chart.default().add_asset("cash")
-    assert chart.accounts_by_type(T5.Asset) == [("cash", [])]
+    chart = Chart().add_asset("cash")
+    assert chart.accounts.by_type(T5.Asset) == [("cash", [])]
 
 
 def test_book():

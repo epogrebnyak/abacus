@@ -240,70 +240,63 @@ class AccountDictValue(BaseModel):
         return self
 
 
-class FastChart(BaseModel):
-    income_summary_account: str
-    retained_earnings_account: str
-    accounts: dict[str, AccountDictValue] = {}
+class AccountDict(BaseModel):
+    data: dict[str, AccountDictValue] = {}
 
-    def set_account(self, t: T5, account_name: str):
+    def set(self, t: T5, account_name: str):
         """Add account name, type and contra accounts to chart."""
-        self.accounts[account_name] = AccountDictValue(t=t)
+        self.data[account_name] = AccountDictValue(t=t)
         return self
 
-    def add_contra_account(self, account_name: str, contra_account_name: str):
+    def offset(self, account_name: str, contra_account_name: str):
         """Add contra account to an account."""
-        self.accounts[account_name].offset(contra_account_name)
+        self.data[account_name].offset(contra_account_name)
         return self
 
-    def model_post_init(self, __context: Any) -> None:
-        self.set_account(T5.Capital, self.retained_earnings_account)
-
-    @classmethod
-    def default(cls):
-        """Create chart of accounts with two required account names."""
-        return cls(
-            income_summary_account="__isa__",
-            retained_earnings_account="retained_earnings",
-        )
-
-    def set_income_summary_account(self, account_name: str):
-        """Set income summary account name."""
-        self.income_summary_account = account_name
-        return self
-
-    def set_retained_earnings_account(self, account_name: str):
-        """Set retained earnings account name."""
-        del self.accounts[self.retained_earnings_account]
-        self.retained_earnings_account = account_name
-        self.set_account(T5.Capital, account_name)
-        return self
-
-    def items(self):
-        """Assign account types to account names."""
-        for account_name, value in self.accounts.items():
+    def _definitions(self):
+        """Yield account names and account definitions."""
+        for account_name, value in self.data.items():
             yield account_name, Regular(value.t)
             for contra_account_name in value.contra_account_names:
                 yield contra_account_name, Contra(value.t)
-        yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
 
-    def __getitem__(self, key: str):
-        """Get type and contra accounts for a given account name."""
-        return self.accounts[key]
-
-    def accounts_by_type(self, t: T5):
+    def by_type(self, t: T5):
         """Return account names and contra accounts for a given account type."""
         return [
             (name, value.contra_account_names)
-            for name, value in self.accounts.items()
+            for name, value in self.data.items()
             if value.t == t
         ]
+
+
+class FastChart(BaseModel):
+    income_summary_account: str = "__isa__"
+    retained_earnings_account: str = "retained_earnings"
+    accounts: AccountDict = AccountDict()
+
+    def model_post_init(self, __context: Any) -> None:
+        """Link retained earnings account to capital type."""
+        self.set_retained_earnings_account(self.retained_earnings_account)
+
+    def set_retained_earnings_account(self, account_name: str):
+        """Set retained earnings account name."""
+        if self.retained_earnings_account in self.accounts.data.keys():
+            del self.accounts.data[self.retained_earnings_account]
+        self.accounts.set(T5.Capital, account_name)
+        self.retained_earnings_account = account_name
+        return self
+
+    def definitions(self):
+        """Add income summary account to definitions."""
+        yield from self.accounts._definitions()
+        yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
 
     @property
     def temporary_accounts(self):
         """Return temporary accounts."""
         yield self.income_summary_account
         for t in T5.Income, T5.Expense:
-            for name, contra_names in self.accounts_by_type(t):
+            for name, contra_names in self.accounts.by_type(t):
                 yield name
                 yield from contra_names
 
@@ -425,7 +418,9 @@ class Ledger(UserDict[AccountName, TAccountBase]):
     @classmethod
     def new(cls, chart: FastChart):
         """Create new ledger from chart of accounts."""
-        return cls({name: definition.taccount() for name, definition in chart.items()})
+        return cls(
+            {name: definition.taccount() for name, definition in chart.definitions()}
+        )
 
     def copy(self):
         return Ledger({name: deepcopy(account) for name, account in self.items()})
@@ -488,15 +483,15 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
         # 1. Close contra income and contra expense accounts.
         for t in T5.Income, T5.Expense:
-            for name, contra_names in chart.accounts_by_type(t):
+            for name, contra_names in chart.accounts.by_type(t):
                 for contra_name in contra_names:
                     proceed(from_=contra_name, to_=name)
 
         # 2. Close income and expense accounts to income summary account.
         #    Note: can be just two multiple entries, one for incomes and one for expenses.
-        for name, _ in chart.accounts_by_type(T5.Income):
+        for name, _ in chart.accounts.by_type(T5.Income):
             proceed(name, chart.income_summary_account)
-        for name, _ in chart.accounts_by_type(T5.Expense):
+        for name, _ in chart.accounts.by_type(T5.Expense):
             proceed(name, chart.income_summary_account)
 
         # 3. Close income summary account to retained earnings account.
@@ -548,7 +543,7 @@ class Reporter:
         """Produce net balances of accounts by type."""
         return {
             name: net_balance(self.ledger, name, contra_names)
-            for (name, contra_names) in self.chart.accounts_by_type(t)
+            for (name, contra_names) in self.chart.accounts.by_type(t)
         }
 
 

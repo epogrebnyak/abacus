@@ -4,6 +4,7 @@ from ui import Chart
 from core import (
     T5,
     AbacusError,
+    AccountDict,
     AccountDictValue,
     Amount,
     BalanceSheet,
@@ -18,8 +19,8 @@ from core import (
 
 
 def test_chart_setter_by_default():
-    chart = Chart.default()
-    assert chart["retained_earnings"] == AccountDictValue(
+    chart = Chart()
+    assert chart.accounts.data["retained_earnings"] == AccountDictValue(
         t=T5.Capital, contra_account_names=[]
     )
     assert chart.income_summary_account == "__isa__"
@@ -28,10 +29,10 @@ def test_chart_setter_by_default():
 
 
 def test_fast_chart_setter_with_offsets():
-    chart = Chart.default()
-    chart.set_account(T5.Capital, "equity")
-    chart.offset("equity", "ts")
-    assert chart["equity"] == AccountDictValue(
+    chart = Chart()
+    chart.accounts.set(T5.Capital, "equity")
+    chart.accounts.offset("equity", "ts")
+    assert chart.accounts.data["equity"] == AccountDictValue(
         t=T5.Capital, contra_account_names=["ts"]
     )
 
@@ -60,16 +61,26 @@ def test_invalid_multiple_entry():
 
 
 def test_chart_on_retained_earnings():
-    chart = Chart(income_summary_account="isa", retained_earnings_account="this_is_re")
+    chart = Chart(
+        income_summary_account="isa",
+        retained_earnings_account="this_is_re",
+        accounts=AccountDict(),
+        names={},
+    )
     assert chart.retained_earnings_account == "this_is_re"
-    assert chart.accounts["this_is_re"] == AccountDictValue(
+    assert chart.accounts.data["this_is_re"] == AccountDictValue(
         t=T5.Capital, countra_account_names=[]
     )
 
 
 def test_balance_sheet_respects_contra_account():
     chart = (
-        Chart(income_summary_account="isa", retained_earnings_account="re")
+        Chart(
+            income_summary_account="isa",
+            retained_earnings_account="re",
+            accounts=AccountDict(),
+            names={},
+        )
         .add_asset("cash")
         .add_capital("equity")
         .offset("equity", "treasury_shares")
@@ -103,7 +114,12 @@ def test_end_to_end():
         Entry().dr("cash", 75).dr("refunds", 2).cr("sales", 77),
     ]
 
-    chart = Chart(income_summary_account="__isa__", retained_earnings_account="__re__")
+    chart = Chart(
+        income_summary_account="__isa__",
+        retained_earnings_account="__re__",
+        accounts=AccountDict(),
+        names={},
+    )
     chart.set_retained_earnings_account("retained_earnings")
     chart.add_asset("cash")
     chart.add_asset("inventory")

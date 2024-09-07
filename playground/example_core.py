@@ -1,27 +1,29 @@
 from ui import NamedEntry
 
-from core import T5, BalanceSheet, FastChart, IncomeStatement, Ledger
-
-print(FastChart.default())
+from core import T5, AccountDict, BalanceSheet, FastChart, IncomeStatement, Ledger
 
 # Create chart of accounts with contra accounts
-chart = (
-    FastChart.default()
-    .set_retained_earnings_account("retained_earnings")
-    .set_account(T5.Asset, "cash")
-    .set_account(T5.Asset, "ar")
-    .set_account(T5.Asset, "ppe")
-    .add_contra_account("ppe", "depreciation")
-    .set_account(T5.Capital, "equity")
-    .set_account(T5.Liability, "ap")
-    .set_account(T5.Liability, "ict_due")
-    .set_account(T5.Liability, "div_due")
-    .set_account(T5.Income, "sales")
-    .add_contra_account("sales", "refunds")
-    .add_contra_account("sales", "voids")
-    .set_account(T5.Expense, "salaries")
-    .set_account(T5.Expense, "expense:depreciation")  # avoiding duplicate name
+chart_dict = AccountDict()
+chart_dict.set(T5.Asset, "cash")
+chart_dict.set(T5.Asset, "ar")
+chart_dict.set(T5.Asset, "ppe")
+chart_dict.offset("ppe", "depreciation")
+chart_dict.set(T5.Capital, "equity")
+chart_dict.set(T5.Liability, "ap")
+chart_dict.set(T5.Liability, "ict_due")
+chart_dict.set(T5.Liability, "div_due")
+chart_dict.set(T5.Income, "sales")
+chart_dict.offset("sales", "refunds")
+chart_dict.offset("sales", "voids")
+chart_dict.set(T5.Expense, "salaries")
+chart_dict.set(T5.Expense, "expense:depreciation")  # avoiding duplicate name
+
+chart = FastChart(
+    income_summary_account="isa",
+    retained_earnings_account="retained_earnings",
+    accounts=chart_dict,
 )
+
 
 # Create ledger from chart
 ledger = Ledger.new(chart)

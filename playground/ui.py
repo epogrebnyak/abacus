@@ -23,6 +23,10 @@ Numeric = Amount | int | float
 class Chart(FastChart):
     names: dict[str, str] = {}
 
+    def set_income_summary_account(self, account_name: str):
+        self.income_summary_account = account_name
+        return self
+
     def set_title(self, account_name: str, title: str | None):
         if title:
             self.names[account_name] = title
@@ -35,7 +39,7 @@ class Chart(FastChart):
         contra_account_title: str | None = None,
     ) -> "Chart":
         """Add contra account to chart."""
-        self.add_contra_account(account_name, contra_account_name)
+        self.accounts.offset(account_name, contra_account_name)
         self.set_title(contra_account_name, contra_account_title)
         return self
 
@@ -47,10 +51,10 @@ class Chart(FastChart):
         offsets: List[str] | None = None,
     ):
         """Add new account to chart."""
-        self.set_account(t, account_name)
+        self.accounts.set(t, account_name)
         if offsets:
             for offset in offsets:
-                self.add_contra_account(account_name, offset)
+                self.accounts.offset(account_name, offset)
         self.set_title(account_name, title)
         return self
 
@@ -250,7 +254,7 @@ class AccountBalancesStore(AccountBalancesDict, LoadSaveMixin):
 @dataclass
 class Book:
     company: str
-    chart: ChartStore = field(default_factory=ChartStore.default)
+    chart: ChartStore = field(default_factory=ChartStore)
     entries: EntryStore = field(default_factory=EntryStore)  # type: ignore
     ledger: Ledger = PrivateAttr(default_factory=Ledger)
     _income_statement: IncomeStatement | None = None
