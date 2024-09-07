@@ -1,12 +1,11 @@
 import pytest
-from ui import Chart
 
 from core import (
     T5,
     AbacusError,
-    AccountDict,
     Amount,
     BalanceSheet,
+    Chart,
     CreditAccount,
     DebitAccount,
     Entry,
@@ -16,20 +15,14 @@ from core import (
     double_entry,
 )
 
-
-def test_chart_setter_by_default():
-    chart = Chart()
-    assert chart.accounts.data["retained_earnings"] == (T5.Capital, [])
-    assert chart.income_summary_account == "__isa__"
-    assert chart.retained_earnings_account == "retained_earnings"
-    assert chart.names == {}
+# from ui import Chart
 
 
 def test_fast_chart_setter_with_offsets():
     chart = Chart()
-    chart.accounts.set(T5.Capital, "equity")
-    chart.accounts.offset("equity", "ts")
-    assert chart.accounts.data["equity"] ==(T5.Capital, ["ts"])
+    chart.set(T5.Capital, "equity")
+    chart.offset("equity", "ts")
+    assert chart.data["equity"] == (T5.Capital, ["ts"])
 
 
 def test_debit_account_stays_positive():
@@ -57,15 +50,12 @@ def test_invalid_multiple_entry():
 
 def test_chart_on_retained_earnings():
     chart = Chart(
+        data={},
         income_summary_account="isa",
         retained_earnings_account="this_is_re",
-        accounts=AccountDict(),
-        names={},
     )
     assert chart.retained_earnings_account == "this_is_re"
-    assert chart.accounts.data["this_is_re"] == (
-        T5.Capital, []
-    )
+    assert chart.data["this_is_re"] == (T5.Capital, [])
 
 
 def test_balance_sheet_respects_contra_account():
@@ -73,11 +63,9 @@ def test_balance_sheet_respects_contra_account():
         Chart(
             income_summary_account="isa",
             retained_earnings_account="re",
-            accounts=AccountDict(),
-            names={},
         )
-        .add_asset("cash")
-        .add_capital("equity")
+        .set(T5.Asset, "cash")
+        .set(T5.Capital, "equity")
         .offset("equity", "treasury_shares")
     )
     ledger = Ledger.new(chart)
@@ -111,16 +99,13 @@ def test_end_to_end():
 
     chart = Chart(
         income_summary_account="__isa__",
-        retained_earnings_account="__re__",
-        accounts=AccountDict(),
-        names={},
+        retained_earnings_account="retained_earnings",
     )
-    chart.set_retained_earnings_account("retained_earnings")
-    chart.add_asset("cash")
-    chart.add_asset("inventory")
-    chart.add_capital("equity")
-    chart.add_expense("cogs")
-    chart.add_income("sales")
+    chart.set(T5.Asset, "cash")
+    chart.set(T5.Asset, "inventory")
+    chart.set(T5.Capital, "equity")
+    chart.set(T5.Expense, "cogs")
+    chart.set(T5.Income, "sales")
     chart.offset("sales", "refunds")
 
     ledger = Ledger.new(chart)

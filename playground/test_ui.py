@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from ui import AccountBalancesStore, Book, Chart, EntryStore, NamedEntry
+from ui import AccountBalancesStore, Book, EntryStore, NamedEntry, UserChart
 
 from core import T5, Amount, IncomeStatement, double_entry
 
@@ -24,8 +24,16 @@ def test_named_entry_on_None_amount_raises_error():
 
 
 def test_chart_add_assets():
-    chart = Chart().add_asset("cash")
-    assert chart.accounts.by_type(T5.Asset) == [("cash", [])]
+    chart = UserChart().add_asset("cash")
+    assert chart.by_type(T5.Asset) == [("cash", [])]
+
+
+def test_chart_setter_by_default():
+    chart = UserChart()
+    assert chart.data["retained_earnings"] == (T5.Capital, [])
+    assert chart.income_summary_account == "__isa__"
+    assert chart.retained_earnings_account == "retained_earnings"
+    assert chart.names == {}
 
 
 def test_book():

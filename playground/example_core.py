@@ -1,6 +1,6 @@
 from ui import NamedEntry
 
-from core import T5, AccountDict, BalanceSheet, FastChart, IncomeStatement, Ledger
+from core import T5, AccountDict, BalanceSheet, Chart, IncomeStatement, Ledger
 
 # Create chart of accounts with contra accounts
 chart_dict = AccountDict()
@@ -17,13 +17,14 @@ chart_dict.offset("sales", "refunds")
 chart_dict.offset("sales", "voids")
 chart_dict.set(T5.Expense, "salaries")
 chart_dict.set(T5.Expense, "expense:depreciation")  # avoiding duplicate name
+print(chart_dict)
 
-chart = FastChart(
+chart = Chart(
+    data=chart_dict.data,
     income_summary_account="isa",
     retained_earnings_account="retained_earnings",
-    accounts=chart_dict,
 )
-
+print(chart)
 
 # Create ledger from chart
 ledger = Ledger.new(chart)

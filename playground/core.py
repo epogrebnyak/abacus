@@ -2,7 +2,7 @@
 
 This module contains classes:
 
-  - chart of accounts (FastChart)
+  - chart of accounts (Chart)
   - general ledger (Ledger)
   - multiple enry (Entry), and
   - reports (TrialBalance, IncomeStatement, BalanceSheet)
@@ -234,7 +234,7 @@ class AccountDict(BaseModel):
     data: dict[str, tuple[T5, list[str]]] = {}
 
     def set(self, t: T5, account_name: str):
-        """Add account name, type and contra accounts to chart."""
+        """Add account name and type."""
         self.data[account_name] = (t, [])
         return self
 
@@ -259,26 +259,17 @@ class AccountDict(BaseModel):
         ]
 
 
-class FastChart(BaseModel):
+class Chart(AccountDict):
     income_summary_account: str = "__isa__"
     retained_earnings_account: str = "retained_earnings"
-    accounts: AccountDict = AccountDict()
 
     def model_post_init(self, __context: Any) -> None:
         """Link retained earnings account to capital type."""
-        self.set_retained_earnings_account(self.retained_earnings_account)
-
-    def set_retained_earnings_account(self, account_name: str):
-        """Set retained earnings account name."""
-        if self.retained_earnings_account in self.accounts.data.keys():
-            del self.accounts.data[self.retained_earnings_account]
-        self.accounts.set(T5.Capital, account_name)
-        self.retained_earnings_account = account_name
-        return self
+        self.set(T5.Capital, self.retained_earnings_account)
 
     def definitions(self):
         """Add income summary account to definitions."""
-        yield from self.accounts._definitions()
+        yield from self._definitions()
         yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
 
     @property
@@ -286,7 +277,7 @@ class FastChart(BaseModel):
         """Return temporary accounts."""
         yield self.income_summary_account
         for t in T5.Income, T5.Expense:
-            for name, contra_names in self.accounts.by_type(t):
+            for name, contra_names in self.by_type(t):
                 yield name
                 yield from contra_names
 
@@ -406,7 +397,7 @@ class DebitOrCreditAccount(TAccountBase):
 
 class Ledger(UserDict[AccountName, TAccountBase]):
     @classmethod
-    def new(cls, chart: FastChart):
+    def new(cls, chart: Chart):
         """Create new ledger from chart of accounts."""
         return cls(
             {name: definition.taccount() for name, definition in chart.definitions()}
@@ -453,7 +444,13 @@ class Ledger(UserDict[AccountName, TAccountBase]):
         """Return account balances."""
         return {name: account.balance for name, account in self.items()}
 
-    def close(self, chart: FastChart) -> list[Entry]:
+    def net_balance(self, name: AccountName, contra_names: list[AccountName]) -> Amount:
+        """Calculate net balance of an account by substracting the balances of its contra accounts."""
+        return self[name].balance - sum(
+            self[contra_name].balance for contra_name in contra_names
+        )
+
+    def close(self, chart: Chart) -> list[Entry]:
         """Close ledger at accounting period end in the following order.
 
         1. Close income and expense contra accounts.
@@ -473,15 +470,15 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
         # 1. Close contra income and contra expense accounts.
         for t in T5.Income, T5.Expense:
-            for name, contra_names in chart.accounts.by_type(t):
+            for name, contra_names in chart.by_type(t):
                 for contra_name in contra_names:
                     proceed(from_=contra_name, to_=name)
 
         # 2. Close income and expense accounts to income summary account.
         #    Note: can be just two multiple entries, one for incomes and one for expenses.
-        for name, _ in chart.accounts.by_type(T5.Income):
+        for name, _ in chart.by_type(T5.Income):
             proceed(name, chart.income_summary_account)
-        for name, _ in chart.accounts.by_type(T5.Expense):
+        for name, _ in chart.by_type(T5.Expense):
             proceed(name, chart.income_summary_account)
 
         # 3. Close income summary account to retained earnings account.
@@ -514,26 +511,16 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
         }
 
 
-def net_balance(
-    ledger: Ledger, name: AccountName, contra_names: list[AccountName]
-) -> Amount:
-    """Calculate net balance of an account by substracting the balances of its contra accounts."""
-    b = ledger[name].balance
-    for contra_name in contra_names:
-        b -= ledger[contra_name].balance
-    return b
-
-
 @dataclass
 class Reporter:
     ledger: Ledger
-    chart: FastChart
+    chart: Chart
 
     def fill(self, t: T5) -> dict[AccountName, Amount]:
         """Produce net balances of accounts by type."""
         return {
-            name: net_balance(self.ledger, name, contra_names)
-            for (name, contra_names) in self.chart.accounts.by_type(t)
+            name: self.ledger.net_balance(name, contra_names)
+            for (name, contra_names) in self.chart.by_type(t)
         }
 
 
@@ -546,7 +533,7 @@ class IncomeStatement(Report):
     expenses: dict[AccountName, Amount]
 
     @classmethod
-    def new(cls, ledger: Ledger, chart: FastChart):
+    def new(cls, ledger: Ledger, chart: Chart):
         """Create income statement from ledger and chart."""
         reporter = Reporter(ledger, chart)
         return cls(income=reporter.fill(T5.Income), expenses=reporter.fill(T5.Expense))
@@ -563,7 +550,7 @@ class BalanceSheet(Report):
     liabilities: dict[AccountName, Amount]
 
     @classmethod
-    def new(cls, ledger: Ledger, chart: FastChart):
+    def new(cls, ledger: Ledger, chart: Chart):
         """Create balance sheet from ledger and chart.
         Account will balances will be shown net of contra account balances."""
         reporter = Reporter(ledger, chart)

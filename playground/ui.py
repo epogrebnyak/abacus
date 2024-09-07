@@ -10,8 +10,8 @@ from core import (
     AccountName,
     Amount,
     BalanceSheet,
+    Chart,
     Entry,
-    FastChart,
     IncomeStatement,
     Ledger,
 )
@@ -20,8 +20,14 @@ from core import (
 Numeric = Amount | int | float
 
 
-class Chart(FastChart):
+class UserChart(Chart):
     names: dict[str, str] = {}
+
+    def set_retained_earnings_account(self, account_name: str):
+        del self.data[self.retained_earnings_account]
+        self.set(T5.Capital, account_name)
+        self.retained_earnings_account = account_name
+        return self
 
     def set_income_summary_account(self, account_name: str):
         self.income_summary_account = account_name
@@ -37,9 +43,10 @@ class Chart(FastChart):
         account_name: str,
         contra_account_name: str,
         contra_account_title: str | None = None,
-    ) -> "Chart":
+    ) -> "UserChart":
         """Add contra account to chart."""
-        self.accounts.offset(account_name, contra_account_name)
+        # call parent method .offset() using super
+        super().offset(account_name, contra_account_name)
         self.set_title(contra_account_name, contra_account_title)
         return self
 
@@ -51,10 +58,10 @@ class Chart(FastChart):
         offsets: List[str] | None = None,
     ):
         """Add new account to chart."""
-        self.accounts.set(t, account_name)
+        self.set(t, account_name)
         if offsets:
             for offset in offsets:
-                self.accounts.offset(account_name, offset)
+                super().offset(account_name, offset)
         self.set_title(account_name, title)
         return self
 
@@ -239,7 +246,7 @@ class EntryStore(EntryList, LoadSaveMixin):
     default_filename: ClassVar[str] = "entries.json"
 
 
-class ChartStore(Chart, LoadSaveMixin):
+class ChartStore(UserChart, LoadSaveMixin):
     default_filename: ClassVar[str] = "chart.json"
 
 
