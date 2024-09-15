@@ -20,35 +20,26 @@ from core import (
 Numeric = Amount | int | float
 
 
+@dataclass
 class UserChart(Chart):
     names: dict[str, str] = {}
-
-    def set_retained_earnings_account(self, account_name: str):
-        del self.data[self.retained_earnings_account]
-        self.set(T5.Capital, account_name)
-        self.retained_earnings_account = account_name
-        return self
-
-    def set_income_summary_account(self, account_name: str):
-        self.income_summary_account = account_name
-        return self
 
     def set_title(self, account_name: str, title: str | None):
         if title:
             self.names[account_name] = title
         return self
 
-    def offset(
-        self,
-        account_name: str,
-        contra_account_name: str,
-        contra_account_title: str | None = None,
-    ) -> "UserChart":
-        """Add contra account to chart."""
-        # call parent method .offset() using super
-        super().offset(account_name, contra_account_name)
-        self.set_title(contra_account_name, contra_account_title)
-        return self
+    # def offset(
+    #     self,
+    #     account_name: str,
+    #     contra_account_name: str,
+    #     contra_account_title: str | None = None,
+    # ) -> "UserChart":
+    #     """Add contra account to chart."""
+    #     # call parent method .offset() using super
+    #     super().offset(account_name, contra_account_name)
+    #     self.set_title(contra_account_name, contra_account_title)
+    #     return self
 
     def add(
         self,

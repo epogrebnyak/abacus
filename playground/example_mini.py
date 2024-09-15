@@ -1,4 +1,4 @@
-from mini import (
+from core import (
     T5,
     BalanceSheet,
     Chart,

@@ -4,7 +4,7 @@ This module contains classes:
 
   - chart of accounts (Chart)
   - general ledger (Ledger)
-  - multiple enry (Entry), and
+  - multiple entry (Entry), and
   - reports (TrialBalance, IncomeStatement, BalanceSheet)
 
 Accounting workflow:
@@ -46,10 +46,9 @@ import decimal
 from abc import ABC, abstractmethod
 from collections import UserDict
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from itertools import chain, starmap
-from typing import Any, Sequence
+from typing import Sequence, Type
 
 from pydantic import BaseModel
 
@@ -74,9 +73,7 @@ class Side(Enum):
 
     def reverse(self) -> "Side":
         """Change side from debit to credit or vice versa."""
-        if self == Side.Debit:
-            return Side.Credit
-        return Side.Debit
+        return Side.Credit if self == Side.Debit else Side.Debit
 
     def is_debit(self) -> bool:
         """Return True if this is a debit side."""
@@ -85,7 +82,7 @@ class Side(Enum):
     @property
     def taccount(self) -> "DebitAccount | CreditAccount":
         """Create debit or credit account based on the specified side."""
-        return DebitAccount() if self.is_debit() else CreditAccount()
+        return DebitAccount if self.is_debit() else CreditAccount
 
     def __repr__(self):
         """Make this enum look better in messages."""
@@ -109,66 +106,145 @@ class T5(Enum):
         return Side.Credit
 
 
-class AccountDefinition(ABC):
-    """Abstract base class for regular, contra or intermediate account definitions.
+class Definition:
+    """Base class for Regular, Contra and Just classes:
 
-    Parent class for Regular, Contra and Intermediate classes.
-
-    Usage examples of child classes:
-        Regular(T5.Asset)
-        Contra(T5.Income)
-        Intermediate(Profit.IncomeStatementAccount)
-
-    Regular and Contra classes define any of five account types and their contra accounts.
-    Intermediate class used for profit accounts that live for a short while when closing the ledger.
+    Regular(T5.Asset)
+    Contra("equity")
+    Just(DebitorCreditAccount)
     """
-
-    @abstractmethod
-    def taccount(self) -> "DebitAccount | CreditAccount | DebitOrCreditAccount":
-        """Create T-account for this account definition."""
 
 
 @dataclass
-class Regular(AccountDefinition):
+class Regular(Definition):
     """Regular account of any of five types of accounts."""
 
     t: T5
 
-    def taccount(self):
-        return self.t.side.taccount
+
+@dataclass
+class Contra(Definition):
+    """A contra account to an existing account."""
+
+    linked_to: str
 
 
 @dataclass
-class Contra(AccountDefinition):
-    """A contra account to any of five types of accounts.
-
-    Examples of contra accounts:
-      - contra property, plant, equipment - accumulated depreciation,
-      - contra liability - discount on bonds payable,
-      - contra capital - treasury stock,
-      - contra income - refunds,
-      - contra expense - purchase discounts.
-    """
-
-    t: T5
-
-    def taccount(self):
-        return self.t.side.reverse().taccount
+class Just(Definition):
+    taccount_class: Type["TAccount"]
 
 
-class Profit(Enum):
-    IncomeStatementAccount = "isa"
-    OtherComprehensiveIncome = "oci"  # not implemented yet
+class ChartDict(UserDict[str, Definition]):
+
+    def set(self, t: T5, name: str):
+        """Add regular account to chart."""
+        self.data[name] = Regular(t)
+        return self
+
+    def offset(self, existing_name: str, contra_name: str):
+        """Add contra account to chart."""
+        if existing_name not in self.data.keys():
+            raise AbacusError(f"Account name {existing_name} not found in chart")
+        self.data[contra_name] = Contra(existing_name)
+        return self
+
+    def just(self, taccount_class: Type["TAccount"], name: str):
+        """Add any account type to chart."""
+        self.data[name] = Just(taccount_class)
+        return self
+
+    def taccount(self, definition) -> "TAccount":
+        """Decide what kind of T-account to create for the definition."""
+        match definition:
+            case Regular(t):
+                return t.side.taccount()
+            case Contra(linked_to):
+                return self[linked_to].t.side.reverse().taccount()
+            case Just(taccount_class):
+                return taccount_class()
+
+    def ledger(self) -> "Ledger":
+        return Ledger(
+            {name: self.taccount(definition) for name, definition in self.items()}
+        )
+
+    def set_re(self, name: str):
+        """Set retained earnings account in chart."""
+        if self.get(name) == Regular(T5.Capital):
+            return self
+        elif name in self.keys():
+            raise AbacusError(f"{name} already in chart and not a capital account.")
+        else:
+            self.set(T5.Capital, name)
+        return self
+
+    def set_isa(self, name: str):
+        """Set income summary account in chart."""
+        self.just(DebitOrCreditAccount, name)
+        return self
+
+    def by_type(self, t: T5) -> list[AccountName]:
+        """Return account names for a given account type."""
+        return [
+            name
+            for name, definition in self.items()
+            if isinstance(definition, Regular) and definition.t == t
+        ]
+
+    def find_contra_accounts(self, name: AccountName) -> list[AccountName]:
+        """Find contra accounts for a given account name."""
+        return [
+            _name
+            for _name, definition in self.items()
+            if isinstance(definition, Contra) and definition.linked_to == name
+        ]
 
 
 @dataclass
-class Intermediate(AccountDefinition):
-    """Intermediate account, used for profit accounts only."""
+class Chart:
+    income_summary_account: str
+    retained_earnings_account: str
+    accounts: ChartDict = field(default_factory=ChartDict)
 
-    t: Profit
+    def __post_init__(self):
+        self.accounts.set_isa(self.income_summary_account)
+        self.accounts.set_re(self.retained_earnings_account)
 
-    def taccount(self):
-        return DebitOrCreditAccount()
+    def set_income_summary_account(self, name: str):
+        """Set income summary account in chart."""
+        del self.accounts[self.income_summary_account]
+        self.accounts.set_isa(name)
+        self.income_summary_account = name
+        return self
+
+    def set_retained_earnings_account(self, name: str):
+        """Set retained earnings account in chart."""
+        del self.accounts[self.retained_earnings_account]
+        self.accounts.set_re(name)
+        self.retained_earnings_account = name
+        return self
+
+    def _yield_temporary_accounts(self):
+        yield self.income_summary_account
+        for t in T5.Income, T5.Expense:
+            for name in self.accounts.by_type(t):
+                yield name
+                yield from self.accounts.find_contra_accounts(name)
+
+    @property
+    def temporary_accounts(self):
+        """Return temporary accounts."""
+        return set(self._yield_temporary_accounts())
+
+    def net_balances_factory(self, ledger):
+        def fill(t):
+            result = {}
+            for name in self.accounts.by_type(t):
+                contra_names = self.accounts.find_contra_accounts(name)
+                result[name] = ledger.net_balance(name, contra_names)
+            return result
+
+        return fill
 
 
 @dataclass
@@ -191,10 +267,11 @@ class Entry(BaseModel):
     debits: list[tuple[AccountName, Amount]] = []
     credits: list[tuple[AccountName, Amount]] = []
 
-    def __iter__(self):
-        return chain(
-            starmap(DebitEntry, self.debits), starmap(CreditEntry, self.credits)
-        )
+    def __iter__(self):  # sequence of single entries
+        for name, amount in self.debits:
+            yield DebitEntry(name, amount)
+        for name, amount in self.credits:
+            yield CreditEntry(name, amount)
 
     def dr(self, account_name, amount):
         """Add debit part to entry."""
@@ -230,60 +307,8 @@ def double_entry(debit: AccountName, credit: AccountName, amount: Amount) -> Ent
     return Entry().dr(debit, amount).cr(credit, amount)
 
 
-class AccountDict(BaseModel):
-    data: dict[str, tuple[T5, list[str]]] = {}
-
-    def set(self, t: T5, account_name: str):
-        """Add account name and type."""
-        self.data[account_name] = (t, [])
-        return self
-
-    def offset(self, account_name: str, contra_account_name: str):
-        """Add contra account to an account."""
-        self.data[account_name][1].append(contra_account_name)
-        return self
-
-    def definitions(self):
-        """Yield account names and account definitions."""
-        for account_name, (t, contra_account_names) in self.data.items():
-            yield account_name, Regular(t)
-            for contra_account_name in contra_account_names:
-                yield contra_account_name, Contra(t)
-
-    def by_type(self, t: T5):
-        """Return account names and contra accounts for a given account type."""
-        return [
-            (name, contra_account_names)
-            for name, (_t, contra_account_names) in self.data.items()
-            if _t == t
-        ]
-
-
-class Chart(AccountDict):
-    income_summary_account: str = "__isa__"
-    retained_earnings_account: str = "retained_earnings"
-
-    def model_post_init(self, __context: Any) -> None:
-        """Link retained earnings account to capital type."""
-        self.set(T5.Capital, self.retained_earnings_account)
-
-    def definitions(self):
-        """Add income summary account to definitions."""
-        yield from super().definitions()
-        yield self.income_summary_account, Intermediate(Profit.IncomeStatementAccount)
-
-    @property
-    def temporary_accounts(self):
-        """Return temporary accounts."""
-        yield self.income_summary_account
-        for t in T5.Income, T5.Expense:
-            for name, contra_names in self.by_type(t):
-                yield name
-                yield from contra_names
-
-
 @dataclass
-class TAccountBase(ABC):
+class TAccount(ABC):
     """Base class for T-account that holds amounts on the left and right sides.
 
     Parent class for:
@@ -341,7 +366,7 @@ class TAccountBase(ABC):
         )
 
 
-class UnrestrictedDebitAccount(TAccountBase):
+class UnrestrictedDebitAccount(TAccount):
 
     @property
     def balance(self) -> Amount:
@@ -352,7 +377,7 @@ class UnrestrictedDebitAccount(TAccountBase):
         return Side.Debit
 
 
-class UnrestrictedCreditAccount(TAccountBase):
+class UnrestrictedCreditAccount(TAccount):
 
     @property
     def balance(self) -> Amount:
@@ -383,7 +408,7 @@ class CreditAccount(UnrestrictedCreditAccount):
         self.left += amount
 
 
-class DebitOrCreditAccount(TAccountBase):
+class DebitOrCreditAccount(TAccount):
     """Account that can be either debit or credit depending on the balance."""
 
     @property
@@ -395,18 +420,17 @@ class DebitOrCreditAccount(TAccountBase):
         return Side.Credit if self.right >= self.left else Side.Debit
 
 
-class Ledger(UserDict[AccountName, TAccountBase]):
+class Ledger(UserDict[AccountName, TAccount]):
+
     @classmethod
-    def new(cls, chart: Chart):
-        """Create new ledger from chart of accounts."""
-        return cls(
-            {name: definition.taccount() for name, definition in chart.definitions()}
-        )
+    def new(_, chart: Chart) -> "Ledger":
+        """Create ledger from chart."""
+        return chart.accounts.ledger()
 
     def copy(self):
         return Ledger({name: deepcopy(account) for name, account in self.items()})
 
-    def _post(self, single_entry: SingleEntry):
+    def post_single(self, single_entry: SingleEntry):
         """Post single entry to ledger. Will raise `KeyError` if account name is not found."""
         match single_entry:
             case DebitEntry(name, amount):
@@ -420,7 +444,7 @@ class Ledger(UserDict[AccountName, TAccountBase]):
         cannot_post = []
         for single_entry in iter(entry):
             try:
-                self._post(single_entry)
+                self.post_single(single_entry)
             except KeyError as e:
                 not_found.append((e, single_entry))
             except AbacusError as e:
@@ -470,15 +494,15 @@ class Ledger(UserDict[AccountName, TAccountBase]):
 
         # 1. Close contra income and contra expense accounts.
         for t in T5.Income, T5.Expense:
-            for name, contra_names in chart.by_type(t):
-                for contra_name in contra_names:
+            for name in chart.accounts.by_type(t):
+                for contra_name in chart.accounts.find_contra_accounts(name):
                     proceed(from_=contra_name, to_=name)
 
         # 2. Close income and expense accounts to income summary account.
         #    Note: can be just two multiple entries, one for incomes and one for expenses.
-        for name, _ in chart.by_type(T5.Income):
+        for name in chart.accounts.by_type(T5.Income):
             proceed(name, chart.income_summary_account)
-        for name, _ in chart.by_type(T5.Expense):
+        for name in chart.accounts.by_type(T5.Expense):
             proceed(name, chart.income_summary_account)
 
         # 3. Close income summary account to retained earnings account.
@@ -509,19 +533,6 @@ class TrialBalance(UserDict[str, tuple[Side, Amount]]):
         }
 
 
-@dataclass
-class Reporter:
-    ledger: Ledger
-    chart: Chart
-
-    def fill(self, t: T5) -> dict[AccountName, Amount]:
-        """Produce net balances of accounts by type."""
-        return {
-            name: self.ledger.net_balance(name, contra_names)
-            for (name, contra_names) in self.chart.by_type(t)
-        }
-
-
 class Report(BaseModel):
     """Base class for financial reports."""
 
@@ -533,8 +544,8 @@ class IncomeStatement(Report):
     @classmethod
     def new(cls, ledger: Ledger, chart: Chart):
         """Create income statement from ledger and chart."""
-        reporter = Reporter(ledger, chart)
-        return cls(income=reporter.fill(T5.Income), expenses=reporter.fill(T5.Expense))
+        fill = chart.net_balances_factory(ledger)
+        return cls(income=fill(T5.Income), expenses=fill(T5.Expense))
 
     @property
     def net_earnings(self):
@@ -551,9 +562,9 @@ class BalanceSheet(Report):
     def new(cls, ledger: Ledger, chart: Chart):
         """Create balance sheet from ledger and chart.
         Account will balances will be shown net of contra account balances."""
-        reporter = Reporter(ledger, chart)
+        fill = chart.net_balances_factory(ledger)
         return cls(
-            assets=reporter.fill(T5.Asset),
-            capital=reporter.fill(T5.Capital),
-            liabilities=reporter.fill(T5.Liability),
+            assets=fill(T5.Asset),
+            capital=fill(T5.Capital),
+            liabilities=fill(T5.Liability),
         )

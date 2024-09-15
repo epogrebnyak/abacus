@@ -1,8 +1,7 @@
 set -e
 isort . --float-to-top
 black .
-python mini.py
-python example_core.py
+python example_mini.py
 python example_ui.py
 python readme.py
 pytest . -q
