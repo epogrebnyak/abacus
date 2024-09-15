@@ -297,7 +297,7 @@ class Entry(BaseModel):
 
     def add_title(self, title: str):
         """Create named entry with title."""
-        from ui import NamedEntry
+        from uuii import NamedEntry
 
         return NamedEntry(title=title, debits=self.debits, credits=self.credits)
 
