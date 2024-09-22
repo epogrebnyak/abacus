@@ -117,6 +117,12 @@ class NamedEntry(Entry):
             and self.credits == other.credits
         )
 
+    @classmethod
+    def from_entry(cls, entry: Entry, title: str) -> "NamedEntry":
+        """Create named entry with title."""
+
+        return cls(title=title, debits=entry.debits, credits=entry.credits)
+
     def amount(self, amount: Numeric):
         """Set default amount for this entry."""
         self._amount = Amount(amount)

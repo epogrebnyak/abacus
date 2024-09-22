@@ -20,10 +20,19 @@ cd.set(T5.Expense, "salaries")
 cd.set_isa("isa")
 cd.set_re("re")
 assert cd.find_contra_accounts("sales") == ["refunds", "voids"]
+print(list(cd.closing_pairs("isa", "re")))
+[
+    ("refunds", "sales"),
+    ("voids", "sales"),
+    ("sales", "isa"),
+    ("salaries", "isa"),
+    ("isa", "re"),
+]
+
 keys = set(cd.keys())
 del cd["isa"]
 del cd["re"]
-chart = Chart(income_summary_account="isa", retained_earnings_account="re", accounts=cd)
+chart = cd.qualify(income_summary_account="isa", retained_earnings_account="re")
 assert "isa" in chart.accounts
 assert chart.temporary_accounts == {"isa", "refunds", "sales", "salaries", "voids"}
 ledger = chart.accounts.ledger()
