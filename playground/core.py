@@ -252,7 +252,7 @@ class Chart:
         }
 
     def validate(self):
-        """Raise error if closing pairs are not valid."""
+        """Raise error if chart dictionary or closing pairs are not valid."""
         try:
             self.accounts.ledger().close_by_pairs(self.closing_pairs)
         except KeyError as e:
