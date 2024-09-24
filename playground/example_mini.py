@@ -3,12 +3,13 @@ from core import (
     BalanceSheet,
     Chart,
     ChartDict,
+    CD,
     Entry,
     IncomeStatement,
     double_entry,
 )
 
-cd = ChartDict()
+cd = CD("isa", "re")
 cd.set(T5.Asset, "cash")
 cd.set(T5.Capital, "equity")
 cd.offset("equity", "treasury_shares")
@@ -17,11 +18,8 @@ cd.set(T5.Income, "sales")
 cd.offset("sales", "refunds")
 cd.offset("sales", "voids")
 cd.set(T5.Expense, "salaries")
-cd.set_isa("isa")
-cd.set_re("re")
 assert cd.find_contra_accounts("sales") == ["refunds", "voids"]
-print(list(cd.closing_pairs("isa", "re")))
-[
+assert list(cd.closing_pairs) == [
     ("refunds", "sales"),
     ("voids", "sales"),
     ("sales", "isa"),
@@ -29,14 +27,8 @@ print(list(cd.closing_pairs("isa", "re")))
     ("isa", "re"),
 ]
 
-keys = set(cd.keys())
-del cd["isa"]
-del cd["re"]
-chart = cd.qualify(income_summary_account="isa", retained_earnings_account="re")
-assert "isa" in chart.accounts
-assert chart.temporary_accounts == {"isa", "refunds", "sales", "salaries", "voids"}
-ledger = chart.accounts.ledger()
-assert keys == set(ledger.keys())
+assert cd.temporary_accounts == {"isa", "refunds", "sales", "salaries", "voids"}
+ledger = cd.ledger()
 entries = [
     double_entry("cash", "equity", 1200),
     double_entry("treasury_shares", "cash", 200),
@@ -60,9 +52,9 @@ assert ledger.trial_balance.tuples() == {
 }
 
 # Close ledger at accounting period end
-income_statement = IncomeStatement.new(ledger, chart)
-closing_entries = ledger.close(chart)
-balance_sheet = BalanceSheet.new(ledger, chart)
+income_statement = IncomeStatement.new(ledger, cd)
+closing_entries = ledger.close(cd)
+balance_sheet = BalanceSheet.new(ledger, cd)
 print(income_statement)
 assert income_statement.net_earnings == 1
 print(balance_sheet)

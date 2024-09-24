@@ -5,8 +5,7 @@ from core import (
     AbacusError,
     Amount,
     BalanceSheet,
-    Chart,
-    ChartDict,
+    CD,
     Contra,
     CreditAccount,
     DebitAccount,
@@ -21,26 +20,14 @@ from core import (
 )
 
 
-def test_chart_validate():
-    cd = ChartDict()
+def test_cd_creates():
+    cd = CD("isa", "re")
     cd.set(T5.Asset, "cash")
     cd.set(T5.Capital, "equity")
-    chart = Chart(cd, [("refunds", "sales")])
-    with pytest.raises(AbacusError) as e:
-        chart.validate()
-    assert str(e.value).replace("'", "") == "refunds"
+    assert cd
 
 
-def test_chart_validate_on_non_existent_contra_account():
-    cd = ChartDict()
-    cd["refunds"] = Contra("sales")
-    chart = Chart(cd, [])
-    with pytest.raises(AbacusError) as e:
-        chart.validate()
-    assert str(e.value).replace("'", "") == "sales"
-
-
-def test_account_copy_acts_deepcopy():
+def test_account_copy_acts_as_deepcopy():
     da = DebitAccount(Amount(100), Amount(0))
     net = da.copy()
     net.debit(Amount(1))
@@ -49,15 +36,14 @@ def test_account_copy_acts_deepcopy():
 
 
 def test_temporary_accounts():
-    cd = ChartDict()
+    cd = CD("isa", "re")
     cd.set(T5.Income, "sales")
     cd.offset("sales", "refunds")
-    chart = cd.qualify(income_summary_account="isa", retained_earnings_account="re")
-    assert chart.temporary_accounts == {"sales", "refunds", "isa"}
+    assert cd.temporary_accounts == {"sales", "refunds", "isa"}
 
 
 def test_closing_pairs():
-    cd = ChartDict()
+    cd = CD("isa", "re")
     cd.set(T5.Asset, "cash")
     cd.set(T5.Capital, "equity")
     cd.offset("equity", "treasury_shares")
@@ -66,7 +52,7 @@ def test_closing_pairs():
     cd.offset("sales", "refunds")
     cd.offset("sales", "voids")
     cd.set(T5.Expense, "salaries")
-    assert list(cd.closing_pairs("isa", "re")) == [
+    assert list(cd.closing_pairs) == [
         ("refunds", "sales"),
         ("voids", "sales"),
         ("sales", "isa"),
@@ -76,11 +62,11 @@ def test_closing_pairs():
 
 
 def test_fast_chart_setter_with_offsets():
-    chart_dict = ChartDict()
+    chart_dict = CD("isa", "re")
     chart_dict.set(T5.Capital, "equity")
     chart_dict.offset("equity", "ts")
-    assert chart_dict.data["equity"] == Regular(T5.Capital)
-    assert chart_dict.data["ts"] == Contra("equity")
+    assert chart_dict.accounts["equity"] == T5.Capital
+    assert chart_dict.contra_accounts["ts"] == "equity"
 
 
 def test_debit_account_stays_positive():
@@ -107,26 +93,24 @@ def test_invalid_multiple_entry():
 
 
 def test_chart_dict_elevate_on_empty_dict():
-    chart = ChartDict().qualify(
+    chart = CD(
         income_summary_account="isa",
         retained_earnings_account="this_is_re",
     )
-    assert chart.closing_pairs == [("isa", "this_is_re")]
-    assert chart.accounts["this_is_re"] == Regular(T5.Capital)
-    assert chart.accounts["isa"] == Just(DebitOrCreditAccount)
+    assert list(chart.closing_pairs) == [("isa", "this_is_re")]
+    assert chart.accounts["this_is_re"] == T5.Capital
+    assert chart.ledger_dict["isa"] == DebitOrCreditAccount
     assert chart.temporary_accounts == {"isa"}
-    assert len(chart.accounts) == 2
 
 
 def test_balance_sheet_respects_contra_account():
-    accounts = ChartDict()
-    accounts.set(T5.Asset, "cash")
-    accounts.set(T5.Capital, "equity")
-    accounts.offset("equity", "treasury_shares")
-    chart = accounts.qualify(
+    chart = CD(
         income_summary_account="isa",
         retained_earnings_account="re",
     )
+    chart.set(T5.Asset, "cash")
+    chart.set(T5.Capital, "equity")
+    chart.offset("equity", "treasury_shares")
     ledger = Ledger.new(chart)
     ledger.post_many(
         [
@@ -160,17 +144,13 @@ def test_end_to_end():
         Entry().dr("cash", 75).dr("refunds", 2).cr("sales", 77),
     ]
 
-    accounts = ChartDict()
-    accounts.set(T5.Asset, "cash")
-    accounts.set(T5.Asset, "inventory")
-    accounts.set(T5.Capital, "equity")
-    accounts.set(T5.Expense, "cogs")
-    accounts.set(T5.Income, "sales")
-    accounts.offset("sales", "refunds")
-    chart = accounts.qualify(
-        income_summary_account="__isa__", retained_earnings_account="retained_earnings"
-    )
-
+    chart = CD("__isa__", "retained_earnings")
+    chart.set(T5.Asset, "cash")
+    chart.set(T5.Asset, "inventory")
+    chart.set(T5.Capital, "equity")
+    chart.set(T5.Expense, "cogs")
+    chart.set(T5.Income, "sales")
+    chart.offset("sales", "refunds")
     ledger = Ledger.new(chart)
     ledger.post_many(entries)
     tb1 = ledger.trial_balance
