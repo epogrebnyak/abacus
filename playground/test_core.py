@@ -5,26 +5,24 @@ from core import (
     AbacusError,
     Amount,
     BalanceSheet,
-    CD,
-    Contra,
+    Chart,
     CreditAccount,
     DebitAccount,
     DebitOrCreditAccount,
     Entry,
     IncomeStatement,
-    Just,
     Ledger,
-    Regular,
     UnrestrictedCreditAccount,
     double_entry,
 )
 
 
 def test_cd_creates():
-    cd = CD("isa", "re")
+    cd = Chart("isa", "re")
     cd.set(T5.Asset, "cash")
     cd.set(T5.Capital, "equity")
-    assert cd
+    cd.dry_run()
+    assert True
 
 
 def test_account_copy_acts_as_deepcopy():
@@ -36,14 +34,14 @@ def test_account_copy_acts_as_deepcopy():
 
 
 def test_temporary_accounts():
-    cd = CD("isa", "re")
+    cd = Chart("isa", "re")
     cd.set(T5.Income, "sales")
     cd.offset("sales", "refunds")
     assert cd.temporary_accounts == {"sales", "refunds", "isa"}
 
 
 def test_closing_pairs():
-    cd = CD("isa", "re")
+    cd = Chart("isa", "re")
     cd.set(T5.Asset, "cash")
     cd.set(T5.Capital, "equity")
     cd.offset("equity", "treasury_shares")
@@ -52,7 +50,7 @@ def test_closing_pairs():
     cd.offset("sales", "refunds")
     cd.offset("sales", "voids")
     cd.set(T5.Expense, "salaries")
-    assert list(cd.closing_pairs) == [
+    assert cd.closing_pairs == [
         ("refunds", "sales"),
         ("voids", "sales"),
         ("sales", "isa"),
@@ -62,7 +60,7 @@ def test_closing_pairs():
 
 
 def test_fast_chart_setter_with_offsets():
-    chart_dict = CD("isa", "re")
+    chart_dict = Chart("isa", "re")
     chart_dict.set(T5.Capital, "equity")
     chart_dict.offset("equity", "ts")
     assert chart_dict.accounts["equity"] == T5.Capital
@@ -93,18 +91,18 @@ def test_invalid_multiple_entry():
 
 
 def test_chart_dict_elevate_on_empty_dict():
-    chart = CD(
+    chart = Chart(
         income_summary_account="isa",
         retained_earnings_account="this_is_re",
     )
-    assert list(chart.closing_pairs) == [("isa", "this_is_re")]
+    assert chart.closing_pairs == [("isa", "this_is_re")]
     assert chart.accounts["this_is_re"] == T5.Capital
-    assert chart.ledger_dict["isa"] == DebitOrCreditAccount
+    assert chart._ledger_dict["isa"] == DebitOrCreditAccount
     assert chart.temporary_accounts == {"isa"}
 
 
 def test_balance_sheet_respects_contra_account():
-    chart = CD(
+    chart = Chart(
         income_summary_account="isa",
         retained_earnings_account="re",
     )
@@ -144,7 +142,7 @@ def test_end_to_end():
         Entry().dr("cash", 75).dr("refunds", 2).cr("sales", 77),
     ]
 
-    chart = CD("__isa__", "retained_earnings")
+    chart = Chart("__isa__", "retained_earnings")
     chart.set(T5.Asset, "cash")
     chart.set(T5.Asset, "inventory")
     chart.set(T5.Capital, "equity")

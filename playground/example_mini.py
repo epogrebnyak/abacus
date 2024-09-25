@@ -2,14 +2,13 @@ from core import (
     T5,
     BalanceSheet,
     Chart,
-    ChartDict,
-    CD,
+    Chart,
     Entry,
     IncomeStatement,
     double_entry,
 )
 
-cd = CD("isa", "re")
+cd = Chart("isa", "re")
 cd.set(T5.Asset, "cash")
 cd.set(T5.Capital, "equity")
 cd.offset("equity", "treasury_shares")
@@ -19,7 +18,7 @@ cd.offset("sales", "refunds")
 cd.offset("sales", "voids")
 cd.set(T5.Expense, "salaries")
 assert cd.find_contra_accounts("sales") == ["refunds", "voids"]
-assert list(cd.closing_pairs) == [
+assert cd.closing_pairs == [
     ("refunds", "sales"),
     ("voids", "sales"),
     ("sales", "isa"),
