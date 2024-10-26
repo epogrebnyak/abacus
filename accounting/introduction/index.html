@@ -1,0 +1,873 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://epogrebnyak.github.io/abacus/accounting/introduction/">
+      
+      
+        <link rel="prev" href="../../textbook/">
+      
+      
+        <link rel="next" href="../chart_of_accounts/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
+    
+    
+      
+        <title>Introduction to accounting - abacus: accounting in code</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.0253249f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#introduction-to-accounting" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="abacus: accounting in code" class="md-header__button md-logo" aria-label="abacus: accounting in code" data-md-component="logo">
+      
+  <img src="../../assets/robot.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            abacus: accounting in code
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Introduction to accounting
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/epogrebnyak/abacus" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="abacus: accounting in code" class="md-nav__button md-logo" aria-label="abacus: accounting in code" data-md-component="logo">
+      
+  <img src="../../assets/robot.png" alt="logo">
+
+    </a>
+    abacus: accounting in code
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/epogrebnyak/abacus" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick_start/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick start
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../textbook/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Textbook examples
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Accounting basics
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Accounting basics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Introduction to accounting
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Introduction to accounting
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#limited-liability-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limited liability concept
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#balance-sheet-and-income-statement-view-of-the-firm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Balance sheet and income statement view of the firm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assets-capital-and-liabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Assets, capital and liabilities
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assets-capital-liabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Assets = Capital + Liabilities
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extended-accounting-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extended accounting identity
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recording-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recording transactions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#is-real-accounting-system-different-from-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      Is real accounting system different from above?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chart_of_accounts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Chart of accounts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    More about project
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            More about project
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/motivation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Motivation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/quotes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quotes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/similar/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Alternatives
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    API reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#limited-liability-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limited liability concept
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#balance-sheet-and-income-statement-view-of-the-firm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Balance sheet and income statement view of the firm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assets-capital-and-liabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Assets, capital and liabilities
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assets-capital-liabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Assets = Capital + Liabilities
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extended-accounting-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extended accounting identity
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recording-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recording transactions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#is-real-accounting-system-different-from-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      Is real accounting system different from above?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="introduction-to-accounting">Introduction to accounting<a class="headerlink" href="#introduction-to-accounting" title="Permanent link">&para;</a></h1>
+<p>The <code>abacus</code> user is expected to have some task in mind that is solvable using Python code or scripts. But if you are totally new to the accounting area subject? Here is an introductory guide accounting, broken into several steps.</p>
+<h2 id="limited-liability-concept">Limited liability concept<a class="headerlink" href="#limited-liability-concept" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>A firm is an entity that is legally separate from shareholders. The shareholders risk<br />
+   loosing their investment into the firm if things go bad, but are not liable for any losses beyond that amount that may arise from firm operations.</p>
+</li>
+<li>
+<p>The shareholders, creditors, trading partners and other parties want to know if
+   the firm is profitable and if it can meet obligations to repay its debt.
+   To satisfy these interesets the firm discloses financial information.</p>
+</li>
+</ol>
+<h2 id="balance-sheet-and-income-statement-view-of-the-firm">Balance sheet and income statement view of the firm<a class="headerlink" href="#balance-sheet-and-income-statement-view-of-the-firm" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>A firm keeps records of the resources that the firm owns (assets) and sources of funds —<br />
+   shareholder equity (or capital) and liabilities (debt). This is a firm financial position,
+   or balance sheet view of the firm.</p>
+</li>
+<li>
+<p>A firm also keeps records of income and expenses that indicate does the firm make a profit or make a loss. This is income statement view of the firm.</p>
+</li>
+<li>
+<p>Balance sheet and income statement are derived from the same data linked together in an
+   accounting equation as explained below.</p>
+</li>
+</ol>
+<h2 id="assets-capital-and-liabilities">Assets, capital and liabilities<a class="headerlink" href="#assets-capital-and-liabilities" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Capital and liabilities indicate who has claims on the firm. A claim shows where the money came
+   from and where the money should be distributed if the firm is liquidated. Claims also have order of precedence in a firm liquidation.</p>
+</li>
+<li>
+<p>Capital, or equity, are funds provided by firm owners. The shareholders expect the firm will make
+   a profit by allocating these funds at the best of their interest and distribute all or part of this profit back to shareholders as dividend. The profit not distributed remains with the firm as 'retained earnings'.</p>
+</li>
+<li>
+<p>Liabilities are financial obligations of the firm. These are the records of what the firm owes
+   to other parties. When a firm takes a loan for a bank it is reflected as a liability. Also when some payment is due but not yet fulfilled this amount is also reflected as a firm's liability (for example, interest payment on a loan that is die. but was not mede yet). Liabilities are classified based on duration as current liabilities (due within a year) and long term liabilities (due at time beyond one year).</p>
+</li>
+<li>
+<p>Assets is everything that is owned by the firm itself and what can be converted into cash. Assets
+   are classified into fixed, or non-current, assets (like property, plant, and equipment) and current assets (like cash and inventory).</p>
+</li>
+</ol>
+<h2 id="assets-capital-liabilities"><code>Assets = Capital + Liabilities</code><a class="headerlink" href="#assets-capital-liabilities" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>An accounting identity <code>Assets = Equity + Liabilities</code> is a statement that says the sources of funds are equal to the uses of funds. This is a published form of balance sheet statement at the end of an accounting period (a quarter or a year).</p>
+</li>
+<li>
+<p>Profit of the firm is revenue (or sales, or income) less expenses associated with this revenue:<br />
+<code>Profit = Income - Expenses</code>. The report containing this data is income statement.</p>
+</li>
+<li>
+<p>In accounting equation profit is recorded on the right side where capital and liabilities side.
+   Why so? Profit is an increment of capital invested into the firm, so it appears next to equity. When no dividends are paid, all of the current profit will add up to retained earnings, which is a component of equity. When the firm incurs a loss, this loss will diminish the firm capital.</p>
+</li>
+<li>
+<p>In <code>Assets = Equity + Liabilities</code> representation the current period profit was already
+   distributed to dividend and retained earnings and does not appear on a balance sheet as separate entity.</p>
+</li>
+</ol>
+<h2 id="extended-accounting-identity">Extended accounting identity<a class="headerlink" href="#extended-accounting-identity" title="Permanent link">&para;</a></h2>
+<p><code>Assets + Expenses = Equity + Liabilities + Income</code></p>
+<ol>
+<li>
+<p>Within a reporting period, the accounting equation can be written as
+   <code>Assets = Equity + Profit + Liabilities</code>, where <code>Profit</code> is the current period profit before dividend. Substituting <code>Profit = Income - Expenses</code> into the equation and rearranging we get the extended form of the accounting identity above.</p>
+</li>
+<li>
+<p>The extended accounting equation always holds true. Whenever a new accounting transaction is
+   recorded you are just changing some variables in this equation. In a double entry, you change two variables, in a compound entry you change several variables.</p>
+</li>
+<li>
+<p>If you try to record just one change, for example, just receipt of cash from a customer as<br />
+   increase in <code>Assets</code>, the equation will break. For cash receipt from customer, you should record an increase in <code>Income</code> and an equal increase in <code>Assets</code>.</p>
+</li>
+</ol>
+<h2 id="recording-transactions">Recording transactions<a class="headerlink" href="#recording-transactions" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>You may take a mind experiment and thinking of various business transactions and provide<br />
+   examples of four types of double entries:</p>
+</li>
+<li>
+<p>two variables of the right side are changed;</p>
+</li>
+<li>two variables of the left side are changed;</li>
+<li>both left side and right side are increased;</li>
+<li>
+<p>both right side and left side are decreased.</p>
+</li>
+<li>
+<p>You do not specifically need debits and credits to manipulate the extended accounting equation.
+   The debits and credits are just a convenient notation system that helps denote which accounts are increased and which decreased.</p>
+</li>
+</ol>
+<h2 id="is-real-accounting-system-different-from-above">Is real accounting system different from above?<a class="headerlink" href="#is-real-accounting-system-different-from-above" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>A "real" accounting system would have more components, like keeping track
+   of original paperwork or electronic documents that validate the information
+   that enters the system.</p>
+</li>
+<li>
+<p>On account system side there may be "contra" accounts added that keep track
+   of changes in original accounts, for example "depreciation" contra account
+   for "property, plant, equipment" or "refunds" contra account for "sales".</p>
+</li>
+<li>
+<p>On recognition, valuation and reporting sides important aspects are:</p>
+</li>
+<li>
+<p>accrual basis and recording of receivables and payables;</p>
+</li>
+<li>fair value, depreciation and amortization concepts, valuation changes;</li>
+<li>deferred or accrued income and expenses and adjustment entries.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      &copy; 2023-2024 Evgeniy Pogrebnyak
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>
