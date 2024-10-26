@@ -1,51 +1,14 @@
 > [!NOTE]
-> Current point of work is [issue #80](https://github.com/epogrebnyak/abacus/issues/80):
-
-A new minimal example:
-
-```python
-from playground.ui import Book
-
-# Start company
-book = Book(company_name="Pied Piper")
-
-# Create chart of accounts
-book.add_assets("cash", "inventory", "ar")
-book.add_capital("equity")
-book.add_income("sales", offsets=["refunds"])
-book.add_expense("cogs")
-book.add_liability("dividend")
-book.set_retained_earnings("re")
-
-# Open ledger and post entries
-book.open()
-book.entry("Shareholder investment").amount(300).debit("cash").credit("equity").commit()
-book.entry("Bought inventory").amount(200).debit("inventory").credit("cash").commit()
-book.entry("Invoiced sales").debit("ar", 380).debit("refunds", 20).credit("sales", 400).commit()
-book.entry("Shippled goods").amount(200).debit("cogs").credit("inventory").commit()
-
-# Close ledger at period end and make post-close entries
-book.close()
-book.entry("Accrue dividend").amount(90).debit("re").credit("dividend").commit()
-
-# Show reports
-print(book.balance_sheet.json())
-print(book.income_statement.json())
-```
-
-Result:
-
-```
-{"assets": {"cash": 100, "inventory": 0, "ar": 380}, "capital": {"equity": 300, "re": 90}, "liabilities": {"dividend": 90}}
-{"income": {"sales": 380}, "expenses": {"cogs": 200}}
-```
+> Current point of work is [abacus-minimal](https://github.com/epogrebnyak/abacus-minimal) repo,
+> that should provide an accounting engine for this project.
+> `abacus` itself is frozen util a new core from `abacus-minimal` arrives.
 
 # abacus
 
 [![pytest](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml/badge.svg)](https://github.com/epogrebnyak/abacus/actions/workflows/.pytest.yml)
 [![PyPI](https://img.shields.io/pypi/v/abacus-py?color=blue)](https://pypi.org/project/abacus-py/)
 
-A minimal yet valid double-entry accounting system in Python.
+A small yet valid double-entry accounting system in Python.
 
 > [!TIP]
 > Check out a brand new Streamlit demo for double-entry accounting at https://abacus.streamlit.app/
